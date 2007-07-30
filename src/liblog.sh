@@ -2,47 +2,49 @@
 # $Id$
 #
 #
-[ -z "$pathLOG" ] && pathLOG=/tmp
+[ -z "$_bashlyk_pathLOG" ]         && _bashlyk_pathLOG=/tmp
+[ -z "$_bashlyk_s0" ]              && _bashlyk_s0=$(basename $0 .sh)
+[ -z "$_bashlyk_fnLog" ]           && _bashlyk_fnLog="${_bashlyk_pathLOG}/${_bashlyk_s0}.log"
+[ -z "$_bashlyk_iStartTimeStamp" ] && _bashlyk_iStartTimeStamp=$(/bin/date "+%s")
+[ -z "$_bashlyk_bUseSyslog" ]      && _bashlyk_bUseSyslog=0
 #
 udfBaseId() {
- /usr/bin/basename $0 .sh
+ basename $0 .sh
 }
 #
 udfDate() {
- /bin/date "+%Y.%m.%d %H:%M:%S $*"
+ date "+%Y.%m.%d %H:%M:%S $*"
 }
 #
 udfEngine() {
  local b=0
  local s=$*
  local c=
- [ -z "$bUseSyslog" -o "$bUseSyslog" = "0" ] && c=':'
+ [ -z "$_bashlyk_bUseSyslog" -o "$_bashlyk_bUseSyslog" = "0" ] && c=':'
  udfIsTerm && b=1 || b=0
- [ $b -eq 0 ] && s="[$(printf "%05d" $$)$c $(udfDate $s0)]: $s"
+ [ $b -eq 0 ] && s="[$(printf "%05d" $$)$c $(udfDate ${_bashlyk_s0})]: $s"
  [ $b -ne 0 -o -n "$c" ] && echo $s || logger -s -t $s 2>&1
 }
 #
 udfLog() {
  if [ -z "$1" -o "$1" = "-" ]; then
-  local a
-  while read -a a; do
-   [ -n "${a[*]}" ] && udfEngine ${a[*]}
-  done
+  local s
+  while read s; do [ -n "$s" ] && udfEngine "$s"; done
  else
   [ -n "$1" ] && udfEngine $*
  fi
- return 0 
+ return 0
 }
 #
 udfMail() {
- [ -z "$sMailTo" ]  && local sMailTo=postmaster
- [ -z "$sSubject" ] && local sSubject="$HOSTNAME::$s0"
- udfLog $* | /usr/bin/mail -s "$sSubject" $sMailTo
+ [ -z "$_bashlyk_emailRcpt" ] && local _bashlyk_emailRcpt=postmaster
+ [ -z "$_bashlyk_emailSubj" ] && local _bashlyk_emailSubj="$HOSTNAME::${_bashlyk_s0}"
+ udfLog $* | /usr/bin/mail -s "${_bashlyk_emailSubj}" ${_bashlyk_emailRcpt}
  return $?
 }
 #
 udfWarn(){
- udfIsTerm && udfLog $* || udfMail $*
+ udfIsTerm && udfLog $* || udfLog $* | tee -a ${_bashlyk_fnLog} | udfMail
 }
 #
 udfThrow(){
@@ -59,20 +61,15 @@ udfIsTerm(){
 }
 #
 udfFinally(){
- udfLog "$* ($(($(/bin/date "+%s")-$iStartTimeStamp)) sec)"
+ udfLog "$* ($(($(date "+%s")-${_bashlyk_iStartTimeStamp})) sec)"
 } 
 #
 #
 #
-s0=$(udfBaseId)
-[ -z "$pathLOG" ] && pathLOG=/tmp
-fnLog=$pathLOG/$s0.log
-iStartTimeStamp=$(/bin/date "+%s")
-#bUseSyslog=0
 #
-if [ "$1" = "test" ]; then
+if [ "$1" = "bashlyk_test" ]; then
  for fn in udfLog udfWarn udfFinally udfThrow; do
   sleep 1
-  $fn "$fn test"
- done  
+  $fn "$fn $1"
+ done
 fi
