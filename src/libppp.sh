@@ -1,5 +1,5 @@
 #
-# $Id: libppp.sh 2 2007-07-30 08:34:41Z yds $
+# $Id$
 #
 [ -n "$1" ] &&  ipPeerC=$1
 [ -n "$2" ] && sPeerISP=$2

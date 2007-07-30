@@ -1,5 +1,5 @@
 #
-# $Id: libpid.sh 2 2007-07-30 08:34:41Z yds $
+# $Id$
 #
 [ -z "$pathRUN" ] && pathRUN=/tmp
 #

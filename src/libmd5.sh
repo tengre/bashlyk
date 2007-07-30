@@ -1,5 +1,5 @@
 #
-# $Id: libmd5.sh 2 2007-07-30 08:34:41Z yds $
+# $Id$
 #
 udfMD5(){
  /usr/bin/md5sum "$1" | /usr/bin/awk '{print $1}'
