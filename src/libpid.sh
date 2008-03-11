@@ -5,7 +5,7 @@
 #
 udfCheckProcess(){
  [ -n "$1" ] || return -1
- /bin/ps ax | /bin/grep -w $1 | /bin/grep -w "$2" | /bin/grep -v "grep"
+ ps ax | grep -w $1 | grep -w "$2" | grep -v -w "grep\|$$"
 } 
 #
 udfExitIfAlreadyStarted(){
