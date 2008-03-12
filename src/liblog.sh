@@ -2,7 +2,9 @@
 # $Id$
 #
 #
+
 aRequiredBin="basename date echo printf logger mail sleep tee true false"
+                HOSTNAME=${$HOSTNAME:-$(hostname)}
 _bashlyk_iStartTimeStamp=${_bashlyk_iStartTimeStamp:=$(/bin/date "+%s")}
         _bashlyk_pathLOG=${_bashlyk_pathLOG:=/tmp}
              _bashlyk_s0=${_bashlyk_s0:=$(basename $0 .sh)}
@@ -21,13 +23,28 @@ udfDate() {
 }
 #
 udfLogger() {
- local b=0
- local s=
- local c=
- [ -z "$_bashlyk_bUseSyslog" -o ${_bashlyk_bUseSyslog} -eq 0 ] && c=':'
- udfIsTerm && b=1 || b=0
- [ $b -eq 0 ] && s="$HOSTNAME ${_bashlyk_s0}[$(printf "%05d" $$)]${c} "
- [ $b -ne 0 -o -n "$c" ] && echo "$(udfDate "${s}$*")" || logger -s -t "${s}" $* 2>&1
+ LANG=C
+ local bSysLog=0
+ local bTermin=0
+ local sTagLog="${_bashlyk_s0}[$(printf "%05d" $$)]"
+ [ -z "$_bashlyk_bUseSyslog" -o ${_bashlyk_bUseSyslog} -eq 0 ] && bSysLog=0 || bSysLog=1
+ udfIsTerm && bTerm=1 || bTerm=0
+ case "${bSysLog}${bTerm}" in
+  "00")
+   echo "$(udfDate "$HOSTNAME $sTagLog: $*")" | tee -a ${_bashlyk_fnLog}
+  ;;
+  "01")
+   echo "$*"
+  ;;
+  "10")
+   echo "$(udfDate "$HOSTNAME $sTagLog: $*")" | tee -a ${_bashlyk_fnLog}
+   logger -s -t "$sTagLog" "$*" 2>/dev/null
+  ;;
+  "11")
+   echo "$*"
+   logger -s -t "$sTagLog" "$*" 2>/dev/null
+  ;;
+ esac
 }
 #
 udfLog() {
@@ -41,12 +58,12 @@ udfLog() {
 }
 #
 udfMail() {
- udfLog $* | mail -s "${_bashlyk_emailSubj}" ${_bashlyk_emailRcpt}
- return $?
+ udfLog $* | mail -e -s "${_bashlyk_emailSubj}" ${_bashlyk_emailRcpt}
+ udfLog "mailed with status: $?"
 }
 #
 udfWarn(){
- udfIsTerm && udfLog $* || udfLog $* | tee -a ${_bashlyk_fnLog} | udfMail
+ echo $* | udfMail
 }
 #
 udfThrow(){
@@ -72,7 +89,7 @@ udfFinally(){
 #
 #
 if [ "$1" = "test.liblog.bashlyk" ]; then
- for s in ${_bashlyk_pathLOG} ${_bashlyk_fnLog} ${_bashlyk_emailRcpt} ${_bashlyk_emailSubj}
+ for s in ${_bashlyk_bUseSyslog} ${_bashlyk_pathLOG} ${_bashlyk_fnLog} ${_bashlyk_emailRcpt} ${_bashlyk_emailSubj}
  do
   echo "dbg $s"
  done
