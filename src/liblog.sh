@@ -4,12 +4,12 @@
 #
 
 aRequiredBin="basename date echo printf logger mail sleep tee true false"
-                HOSTNAME=${$HOSTNAME:-$(hostname)}
+                HOSTNAME=${HOSTNAME:=$(hostname)}
 _bashlyk_iStartTimeStamp=${_bashlyk_iStartTimeStamp:=$(/bin/date "+%s")}
         _bashlyk_pathLOG=${_bashlyk_pathLOG:=/tmp}
              _bashlyk_s0=${_bashlyk_s0:=$(basename $0 .sh)}
           _bashlyk_fnLog=${_bashlyk_fnLog:="${_bashlyk_pathLOG}/${_bashlyk_s0}.log"}
-     _bashlyk_bUseSyslog=${_bashlyk_bUseSyslog:=1}
+     _bashlyk_bUseSyslog=${_bashlyk_bUseSyslog:=0}
       _bashlyk_emailRcpt=${_bashlyk_emailRcpt:=postmaster}
       _bashlyk_emailSubj=${_bashlyk_emailSubj:="$HOSTNAME::${_bashlyk_s0}"}
 #
@@ -31,13 +31,13 @@ udfLogger() {
  udfIsTerm && bTerm=1 || bTerm=0
  case "${bSysLog}${bTerm}" in
   "00")
-   echo "$(udfDate "$HOSTNAME $sTagLog: $*")" | tee -a ${_bashlyk_fnLog}
+   echo "$(udfDate "$HOSTNAME $sTagLog: $*")" >> ${_bashlyk_fnLog}
   ;;
   "01")
    echo "$*"
   ;;
   "10")
-   echo "$(udfDate "$HOSTNAME $sTagLog: $*")" | tee -a ${_bashlyk_fnLog}
+   echo "$(udfDate "$HOSTNAME $sTagLog: $*")" >> ${_bashlyk_fnLog}
    logger -s -t "$sTagLog" "$*" 2>/dev/null
   ;;
   "11")
@@ -58,20 +58,29 @@ udfLog() {
 }
 #
 udfMail() {
- udfLog $* | mail -e -s "${_bashlyk_emailSubj}" ${_bashlyk_emailRcpt}
- udfLog "mailed with status: $?"
+ {
+  if [ -z "$1" -o "$1" = "-" ]; then
+   local s
+   while read s; do [ -n "$s" ] && echo "$s"; done
+  else
+   [ -n "$1" ] && echo $*
+  fi
+ } 2>&1 | mail -e -s "${_bashlyk_emailSubj}" ${_bashlyk_emailRcpt}
+ return $PIPESTATUS
 }
 #
-udfWarn(){
- echo $* | udfMail
+udfWarn() {
+ udfMail $*
+ udfLog "sent warn message with status: $PIPESTATUS"
 }
 #
-udfThrow(){
- udfWarn $*
+udfThrow() {
+ udfMail $*
+ udfLog "sent abort message with status: $PIPESTATUS"
  exit -1
 }
 #
-udfIsTerm(){
+udfIsTerm() {
  local fd=1
  case "$1" in
   0|1|2) fd=$1 ;;
@@ -79,7 +88,7 @@ udfIsTerm(){
  [ -t "$fd" ] && true || false
 }
 #
-udfFinally(){
+udfFinally() {
  local iDiffTime=$(($(date "+%s")-${_bashlyk_iStartTimeStamp}))
  [ -n "$1" ] && udfLog "$* ($iDiffTime sec)"
  return $iDiffTime
