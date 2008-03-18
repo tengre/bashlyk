@@ -1,22 +1,55 @@
 #
 # $Id$
 #
-udfMD5(){
- /usr/bin/md5sum "$1" | /usr/bin/awk '{print $1}'
+udfGetMd5() {
+ {
+  case "$1" in
+       "-")
+          local s
+          while read s; do echo "$s"; done | md5sum
+         ;;
+  "--file")
+          [ -f "$2" ] && md5sum $2
+         ;;
+         *)
+          [ -n "$1" ] && echo "$*" | md5sum
+         ;;
+  esac
+ } | cut -f 1 -d ' '
+ return 0
 }
 #
-udfDirMD5(){
+udfGetPathMd5(){
  [ -n "$1" -a -d "$1" ] || return 1
  cd $1
- local    a=$(/bin/ls)
- local path=$(/bin/pwd)
+ local    a=$(ls)
+ local path=$(pwd)
  for s in $a
  do
-  [ -d "$s" ] && udfDirMD5 $s
+  [ -d "$s" ] && udfGetPathMd5 $s
  done
- /usr/bin/md5sum -v $path/*
+ md5sum $path/*
  cd ..
  return 0
 } 2>/dev/null
 #
+################################################
+################################################
+###### Test Block ##############################
+################################################
+################################################
+#
+if [ "$1" = "test.libmd5.bashlyk" ]; then
+  echo "Check udfGetMd5 with string $*:"
+  echo -n "from argument: " && udfGetMd5 $*
+  sleep 1
+  echo -n "from stdin   : " && echo $* | udfGetMd5 -
+  sleep 1
+  echo $* > /tmp/$1.$$.tmp
+  echo -n "from file    : " && udfGetMd5 --file /tmp/$1.$$.tmp
+  rm -f /tmp/$1.$$.tmp
+  sleep 1
+  echo "Check udfGetPathMd5 with path .:"
+  udfGetPathMd5 .
+fi
 

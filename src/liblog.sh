@@ -93,10 +93,13 @@ udfFinally() {
  [ -n "$1" ] && udfLog "$* ($iDiffTime sec)"
  return $iDiffTime
 }
-#
-#
-#
-#
+
+################################################
+################################################
+###### Test Block ##############################
+################################################
+################################################
+
 if [ "$1" = "test.liblog.bashlyk" ]; then
  for s in ${_bashlyk_bUseSyslog} ${_bashlyk_pathLOG} ${_bashlyk_fnLog} ${_bashlyk_emailRcpt} ${_bashlyk_emailSubj}
  do
