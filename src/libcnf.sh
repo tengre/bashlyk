@@ -1,6 +1,9 @@
 #
 # $Id$
 #
+[ -n "$_BASHLYK_LIBCNF" ] && return 0
+_BASHLYK_LIBCNF=1
+#
 aRequiredBin="cat date echo sleep"
 _bashlyk_pathLIB=${_bashlyk_pathLIB:=.}
 _bashlyk_pathCNF=${_bashlyk_pathCNF:=.}

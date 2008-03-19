@@ -1,6 +1,9 @@
 #
 # $Id$
 #
+[ -n "$_BASHLYK_LIBPID" ] && return 0
+_BASHLYK_LIBPID=1
+#
     aRequiredBin="cat date echo grep head mkdir ps rm sed sleep"
 _bashlyk_pathRun=${_bashlyk_pathRun:=/tmp}
      _bashlyk_s0=${_bashlyk_s0:=$(basename $0)}
@@ -52,9 +55,9 @@ udfExitIfAlreadyStarted() {
  esac
 }
 
-udfClean(){
+udfClean() {
  local fn=
- for fn in $*; do rm -f$1 "$fn"; done
+ for fn in $*; do rm -f $1 "$fn"; done
  return $?
 }
 #
@@ -67,9 +70,13 @@ udfClean(){
 if [ "$1" = "test.libpid.bashlyk" ]; then
  echo "Check udfExitIfAlreadyStarted:"
  udfExitIfAlreadyStarted
+ echo "${_bashlyk_fnPid} contain:"
+ cat ${_bashlyk_fnPid}
  sleep 1
- udfClean "v" ${_bashlyk_fnPid}
+ udfClean --verbose ${_bashlyk_fnPid}
  udfExitIfAlreadyStarted $*
+ echo "${_bashlyk_fnPid} contain:"
+ cat ${_bashlyk_fnPid}
  sleep 1
- udfClean "v" ${_bashlyk_fnPid}
+ udfClean --verbose ${_bashlyk_fnPid}
 fi

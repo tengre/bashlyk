@@ -1,0 +1,19 @@
+#!/bin/bash
+#
+# $Id$
+#
+[ -s /etc/bashlyk/bashlyk.conf ] && source /etc/bashlyk/bashlyk.conf
+#
+   _bashlyk_aLib=${_bashlyk_aLib:="log cnf pid md5"}
+_bashlyk_pathLib=${_bashlyk_pathLib:="/usr/lib/bashlyk"}
+#
+udfBashlykInit() {
+ local fn
+ for fn in ${_bashlyk_aLib}; do
+  local fnLib="${_bashlyk_pathLib}/lib${fn}.sh"
+  [ -s $fnLib ] && source $fnLib $* || eval 'echo "error with $fnLib using"; exit -1'
+ done
+}
+#
+udfBashlykInit $*
+true

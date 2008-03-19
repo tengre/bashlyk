@@ -1,6 +1,9 @@
 #
 # $Id$
 #
+[ -n "$_BASHLYK_LIBMD5" ] && return 0
+_BASHLYK_LIBMD5=1
+#
 udfGetMd5() {
  {
   case "$1" in
@@ -19,17 +22,18 @@ udfGetMd5() {
  return 0
 }
 #
-udfGetPathMd5(){
+udfGetPathMd5() {
  [ -n "$1" -a -d "$1" ] || return 1
+ local pathSrc=$(pwd)
  cd $1
- local    a=$(ls)
- local path=$(pwd)
+ local pathDst=$(pwd)
+ local       a=$(ls)
  for s in $a
  do
   [ -d "$s" ] && udfGetPathMd5 $s
  done
- md5sum $path/*
- cd ..
+ md5sum $pathDst/*
+ cd $pathSrc
  return 0
 } 2>/dev/null
 #
@@ -53,3 +57,4 @@ if [ "$1" = "test.libmd5.bashlyk" ]; then
   udfGetPathMd5 .
 fi
 
+true
