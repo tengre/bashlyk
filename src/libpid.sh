@@ -10,10 +10,10 @@ _bashlyk_pathRun=${_bashlyk_pathRun:=/tmp}
    _bashlyk_sArg="$*"
 _bashlyk_pathPid=${_bashlyk_pathPid:="${_bashlyk_pathRun}/${_bashlyk_s0}"}
   _bashlyk_fnPid=${_bashlyk_fnPid:="${_bashlyk_pathRun}/${_bashlyk_s0}.pid"}
-_bashlyk_pathLIB=${_bashlyk_pathLIB:=.}
+_bashlyk_pathLib=${_bashlyk_pathLib:=$(pwd)}
 #
-[ -s "$_bashlyk_pathLIB/liblog.sh" ] && . "${_bashlyk_pathLIB}/liblog.sh"
-[ -s "$_bashlyk_pathLIB/libmd5.sh" ] && . "${_bashlyk_pathLIB}/libmd5.sh"
+[ -s "$_bashlyk_pathLib/liblog.sh" ] && . "${_bashlyk_pathLib}/liblog.sh"
+[ -s "$_bashlyk_pathLib/libmd5.sh" ] && . "${_bashlyk_pathLib}/libmd5.sh"
 #
 udfCheckStarted() {
  [ -n "$1" ] || return -1
