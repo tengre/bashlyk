@@ -1,12 +1,13 @@
 #
 # $Id$
 #
-[ -n "$_BASHLYK_LIBCNF" ] && return 0
-_BASHLYK_LIBCNF=1
-#
 aRequiredBin="cat date echo sleep"
 _bashlyk_pathLib=${_bashlyk_pathLib:=$(pwd)}
 _bashlyk_pathCnf=${_bashlyk_pathCnf:=$(pwd)}
+#
+[ -n "$_BASHLYK_LIBCNF" ] && return 0
+_BASHLYK_LIBCNF=1
+#
 [ -s "$_bashlyk_pathLib/liblog.sh" ] && . "${_bashlyk_pathLib}/liblog.sh"
 #
 udfGetConfig() {

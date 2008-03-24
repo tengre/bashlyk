@@ -1,9 +1,6 @@
 #
 # $Id$
 #
-[ -n "$_BASHLYK_LIBLOG" ] && return 0
-_BASHLYK_LIBLOG=1
-#
 aRequiredBin="basename date echo printf logger mail sleep tee true false"
                 HOSTNAME=${HOSTNAME:=$(hostname)}
 _bashlyk_iStartTimeStamp=${_bashlyk_iStartTimeStamp:=$(/bin/date "+%s")}
@@ -14,6 +11,10 @@ _bashlyk_iStartTimeStamp=${_bashlyk_iStartTimeStamp:=$(/bin/date "+%s")}
       _bashlyk_emailRcpt=${_bashlyk_emailRcpt:=postmaster}
       _bashlyk_emailSubj=${_bashlyk_emailSubj:="$HOSTNAME::${_bashlyk_s0}"}
 #
+[ -n "$_BASHLYK_LIBLOG" ] && return 0
+_BASHLYK_LIBLOG=1
+#
+
 udfBaseId() {
  basename $0 .sh
 }

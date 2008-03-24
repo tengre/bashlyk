@@ -10,12 +10,15 @@ _bashlyk_pathLib=${_bashlyk_pathLib:="/usr/lib/bashlyk"}
 udfBashlykInit() {
  local fn
  local sUser=${USER:=$(ps -p $$ -o user=)}
- local pathCnf="${HOME}/.bashlyk"
+ local sHome=${HOME:=/tmp}
+ local pathCnf="${sHOME}/.bashlyk"
  #
  if [ "$sUser" != "root" ]; then
   _bashlyk_pathRun="${pathCnf}/run"
   _bashlyk_pathLog="${pathCnf}/log"
  fi
+ [ -d "$_bashlyk_pathRun" ] || mkdir -p $_bashlyk_pathRun
+ [ -d "$_bashlyk_pathLog" ] || mkdir -p $_bashlyk_pathLog
  for fn in ${_bashlyk_aLib}; do
   local fnLib="${_bashlyk_pathLib}/lib${fn}.sh"
   [ -s $fnLib ] && source $fnLib $* || eval 'echo "error with $fnLib using"; exit -1'
