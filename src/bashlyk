@@ -10,10 +10,10 @@ _bashlyk_pathLib=${_bashlyk_pathLib:="/usr/lib/bashlyk"}
 udfBashlykInit() {
  local fn
  local sUser=${USER:=$(ps -p $$ -o user=)}
- local sHome=${HOME:=/tmp}
- local pathCnf="${sHOME}/.bashlyk"
  #
  if [ "$sUser" != "root" ]; then
+  local sHome=${HOME:=/tmp}
+  local pathCnf="${sHome}/.bashlyk"
   _bashlyk_pathRun="${pathCnf}/run"
   _bashlyk_pathLog="${pathCnf}/log"
  fi
