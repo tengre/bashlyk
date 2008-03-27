@@ -20,8 +20,7 @@ udfCheckStarted() {
  local pid=$1
  local cmd=${2:-""}
  shift 2
- [ -n "$(ps -p $pid -o args= | grep -vw $$ | grep -w "$cmd" | grep "$*" | head -n 1)" ] && return 0 || return 1
-# [ -n "$(ps -p $pid -o args= | grep -vw $$ | grep -w "$cmd" | sed -e 's/.*$cmd//' | grep "$*" | head -n 1)" ] && return 0 || return 1
+ [ -n "$(ps -p $pid -o pid= -o args= | grep -vw $$ | grep -w "$cmd" | grep "$*" | head -n 1)" ] && return 0 || return 1
 }
 
 udfSetPid() {
@@ -31,15 +30,15 @@ udfSetPid() {
  fi
  [ -f "$_bashlyk_fnPid" ] && local pid=$(head -n 1 ${_bashlyk_fnPid})
  if [ -n "$pid" ]; then 
-  udfCheckStarted $pid ${_bashlyk_s0} $* && return $pid
+  udfCheckStarted $pid ${_bashlyk_s0} $* && echo "$pid" && return 1
  fi
- echo $$ > ${_bashlyk_fnPid} || return -1
+ echo $$ | tee ${_bashlyk_fnPid} || return -1
  echo "$0 $*" >> ${_bashlyk_fnPid}
  return 0
 }
 
 udfExitIfAlreadyStarted() {
- udfSetPid $*
+ local pid=$(udfSetPid $*)
  case $? in
   -1)
      udfWarn "Warn: Pid file ${_bashlyk_fnPid} not created...";
@@ -48,8 +47,8 @@ udfExitIfAlreadyStarted() {
    0)
      return 0
     ;;
-   *)
-    udfLog "$0 : Already started with pid = $?"
+   1)
+    udfLog "$0 : Already started with pid = $pid"
     exit 0
     ;;
  esac
