@@ -1,7 +1,11 @@
 #
 # $Id$
 #
-aRequiredBin="basename date echo printf logger mail sleep tee true false"
+[ -n "$_BASHLYK_LIBLOG" ] && return 0
+#
+# global variables
+#
+aRequiredBin="basename date echo hostname printf logger mail sleep tee true false"
                 HOSTNAME=${HOSTNAME:=$(hostname)}
 _bashlyk_iStartTimeStamp=${_bashlyk_iStartTimeStamp:=$(/bin/date "+%s")}
         _bashlyk_pathLog=${_bashlyk_pathLog:=/tmp}
@@ -9,12 +13,10 @@ _bashlyk_iStartTimeStamp=${_bashlyk_iStartTimeStamp:=$(/bin/date "+%s")}
           _bashlyk_fnLog=${_bashlyk_fnLog:="${_bashlyk_pathLog}/${_bashlyk_s0}.log"}
      _bashlyk_bUseSyslog=${_bashlyk_bUseSyslog:=0}
       _bashlyk_emailRcpt=${_bashlyk_emailRcpt:=postmaster}
-      _bashlyk_emailSubj=${_bashlyk_emailSubj:="$HOSTNAME::${_bashlyk_s0}"}
+      _bashlyk_emailSubj=${_bashlyk_emailSubj:="$HOSTNAME::$USER::${_bashlyk_s0}"}
 #
-[ -n "$_BASHLYK_LIBLOG" ] && return 0
-_BASHLYK_LIBLOG=1
+# function section
 #
-
 udfBaseId() {
  basename $0 .sh
 }
@@ -25,6 +27,7 @@ udfDate() {
 }
 #
 udfLogger() {
+ local envLang=$LANG
  LANG=C
  local bSysLog=0
  local bTermin=0
@@ -47,6 +50,7 @@ udfLogger() {
    logger -s -t "$sTagLog" "$*" 2>/dev/null
   ;;
  esac
+ LANG=$envLang
 }
 #
 udfLog() {
@@ -62,6 +66,8 @@ udfLog() {
 udfMail() {
  {
   if [ -z "$1" -o "$1" = "-" ]; then
+   shift
+   [ -n "$1" ] && printf "%s\n----\n" "$*"
    local s
    while read s; do [ -n "$s" ] && echo "$s"; done
   else
@@ -95,20 +101,22 @@ udfFinally() {
  [ -n "$1" ] && udfLog "$* ($iDiffTime sec)"
  return $iDiffTime
 }
+#
+# main section
+#
 
-################################################
-################################################
-###### Test Block ##############################
-################################################
-################################################
-
-if [ "$1" = "test.liblog.bashlyk" ]; then
- for s in ${_bashlyk_bUseSyslog} ${_bashlyk_pathLog} ${_bashlyk_fnLog} ${_bashlyk_emailRcpt} ${_bashlyk_emailSubj}
+# Test Block
+if [ -n "$(echo "${_bashlyk_aTest}" | grep -w log)" ]; then
+ for s in bUseSyslog=${_bashlyk_bUseSyslog} pathLog=${_bashlyk_pathLog} fnLog=${_bashlyk_fnLog} emailRcpt=${_bashlyk_emailRcpt} emailSubj=${_bashlyk_emailSubj}
  do
-  echo "dbg $s"
+  echo "$s"
  done
  for fn in udfLog udfWarn udfFinally udfThrow; do
   sleep 1
   $fn "$fn $1"
  done
 fi
+# Test Block
+
+_BASHLYK_LIBLOG=1
+true

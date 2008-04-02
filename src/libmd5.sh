@@ -2,7 +2,8 @@
 # $Id$
 #
 [ -n "$_BASHLYK_LIBMD5" ] && return 0
-_BASHLYK_LIBMD5=1
+#
+# function section
 #
 udfGetMd5() {
  {
@@ -36,13 +37,7 @@ udfGetPathMd5() {
  cd $pathSrc
  return 0
 } 2>/dev/null
-#
-################################################
-################################################
-###### Test Block ##############################
-################################################
-################################################
-#
+#Test Block
 if [ "$1" = "test.libmd5.bashlyk" ]; then
   echo "Check udfGetMd5 with string $*:"
   echo -n "from argument: " && udfGetMd5 $*
@@ -56,5 +51,8 @@ if [ "$1" = "test.libmd5.bashlyk" ]; then
   echo "Check udfGetPathMd5 with path .:"
   udfGetPathMd5 .
 fi
-
+#
+# main section
+#
+_BASHLYK_LIBMD5=1
 true

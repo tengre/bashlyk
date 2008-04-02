@@ -1,14 +1,19 @@
 #
 # $Id$
 #
-aRequiredBin="cat date echo sleep"
-_bashlyk_pathLib=${_bashlyk_pathLib:=$(pwd)}
-_bashlyk_pathCnf=${_bashlyk_pathCnf:=$(pwd)}
-#
 [ -n "$_BASHLYK_LIBCNF" ] && return 0
-_BASHLYK_LIBCNF=1
+#
+# global variables
+#
+aRequiredBin="cat date echo sleep"
+_bashlyk_pathCnf=${_bashlyk_pathCnf:=$(pwd)}
+_bashlyk_pathUserCnf=${_bashlyk_pathUserCnf:=$(pwd)}
+#
+# link section
 #
 [ -s "$_bashlyk_pathLib/liblog.sh" ] && . "${_bashlyk_pathLib}/liblog.sh"
+#
+# function section
 #
 udfGetConfig() {
  local aconf=
@@ -24,10 +29,10 @@ udfGetConfig() {
  #
  local conf=
  for ((i=$((${#aconf[*]}-1)); $i; --i)); do
-  [ -n "$conf" ] && conf=${aconf[$i]}".$conf" || conf=${aconf[$i]}
-  [ -s "${_bashlyk_pathCnf}/$conf" ] && . ${_bashlyk_pathCnf}/$conf
-  [ -s "$HOME/.bashlyk/$conf" ]      && . $HOME/.bashlyk/$conf
-  [ -s "$conf" ]                     && . $conf
+  [ -n "$conf" ]                         && conf=${aconf[$i]}".$conf" || conf=${aconf[$i]}
+  [ -s "${_bashlyk_pathCnf}/$conf" ]     && . ${_bashlyk_pathCnf}/$conf
+  [ -s "${_bashlyk_pathUserCnf}/$conf" ] && . "${_bashlyk_pathUserCnf}/$conf"
+  [ -s "$conf" ]                         && . $conf
  done
  return 0
 }
@@ -41,12 +46,11 @@ udfSetConfig() {
  IFS=$chIFS
  return 0
 }
-################################################
-################################################
-###### Test Block ##############################
-################################################
-################################################
-if [ "$1" = "test.libcnf.bashlyk" ]; then
+#
+# main section
+#
+#Test Block
+if [ -n "$(echo "${_bashlyk_aTest}" | grep -w cnf)" ]; then
  echo "functionality test:"
  conftest=$1.conf
  for fn in udfSetConfig udfGetConfig; do
@@ -57,3 +61,6 @@ if [ "$1" = "test.libcnf.bashlyk" ]; then
  echo "see $1.conf:"
  cat $1.conf
 fi
+#Test Block
+_BASHLYK_LIBCNF=1
+true

@@ -4,26 +4,78 @@
 #
 [ -s /etc/bashlyk/bashlyk.conf ] && source /etc/bashlyk/bashlyk.conf
 #
-   _bashlyk_aLib=${_bashlyk_aLib:="log cnf pid md5"}
-_bashlyk_pathLib=${_bashlyk_pathLib:="/usr/lib/bashlyk"}
+# global variables
 #
-udfBashlykInit() {
- local fn
- local sUser=${USER:=$(ps -p $$ -o user=)}
- #
- if [ "$sUser" != "root" ]; then
-  local sHome=${HOME:=/tmp}
-  local pathCnf="${sHome}/.bashlyk"
-  _bashlyk_pathRun="${pathCnf}/run"
-  _bashlyk_pathLog="${pathCnf}/log"
- fi
+        _bashlyk_aLib=${_bashlyk_aLib:="log cnf pid md5"}
+     _bashlyk_pathLib=${_bashlyk_pathLib:="/usr/lib/bashlyk"}
+_bashlyk_sLongOptions="--test:, --libs"
+        _bashlyk_aArg="$@"
+#
+# function section
+#
+udfGetArgs() {
+ [ -n "$@" ] || return 1
+ local aArg="$( -l ${_bashlyk_sLongOptions} -n $0 -- $0 $@)"
+ [ $? != 0 ] && return 2
+ eval set -- "$aARG"
+ while true ; do
+  case "$1" in
+   --test)
+    _bashlyk_aTest="${2:-$_bashlyk_aLib}"
+    shift 2
+   ;;
+   --libs)
+    _bashlyk_aLib="${2:-$_bashlyk_aLib}";
+    shift 2
+   ;;
+   --)
+    shift
+    break
+   ;;
+   *)
+    echo "Error: Command Line Parsing ($*)"
+    return 3
+   ;;
+  esac
+ done
+ echo "$@"
+ return 0
+}
+
+udfMain() {
+ _bashlyk_aArg="$(udfGetArgs $@)"
+ local fn pathRoot sUser sHome sDbg
+ sUser=$(ps -p $$ -o user=)
+ case $sUser in
+  'root')
+   pathRoot=
+  ;;
+  '')
+   pathRoot="/tmp/$$_$USER"
+  ;;
+  *)
+   if [ -z "$HOME" -o ! -O "$HOME" ]; then 
+    sHome=$(getent passwd ${sUser} | cut -d ":" -f 6)
+    [ -n "$sHome" -a -d "$sHome" -a -O "$sHome" ] && pathRoot="${sHome}/.bashlyk" || pathRoot="/tmp/$$_$sUser"
+   else
+    pathRoot="${HOME}/.bashlyk"
+   fi
+   _bashlyk_pathUserCnf="${pathRoot}"
+  ;;
+ esac
+ _bashlyk_pathRun="${pathRoot}${_bashlyk_pathRun}"
+ _bashlyk_pathLog="${pathRoot}${_bashlyk_pathLog}"
  [ -d "$_bashlyk_pathRun" ] || mkdir -p $_bashlyk_pathRun
  [ -d "$_bashlyk_pathLog" ] || mkdir -p $_bashlyk_pathLog
  for fn in ${_bashlyk_aLib}; do
   local fnLib="${_bashlyk_pathLib}/lib${fn}.sh"
   [ -s $fnLib ] && source $fnLib $* || eval 'echo "error with $fnLib using"; exit -1'
  done
+ udfWarn "dbg: $0 _ pathRoot=$pathRoot _ sUser=$sUser _ USER=$USER _ sHome=$sHome _ HOME=$HOME _ pathLog=$_bashlyk_pathLog _ fnLog=$_bashlyk_fnLog"
+ return 0
 }
 #
-udfBashlykInit $*
-true
+# main section
+#
+udfMain $*
+

@@ -1,6 +1,10 @@
 #
 # $Id$
 #
+[ -n "$_BASHLYK_LIBPID" ] && return 0
+#
+# global variables
+#
     aRequiredBin="cat date echo grep head mkdir ps rm sed sleep"
 _bashlyk_pathRun=${_bashlyk_pathRun:=/tmp}
      _bashlyk_s0=${_bashlyk_s0:=$(basename $0)}
@@ -9,11 +13,12 @@ _bashlyk_pathPid=${_bashlyk_pathPid:="${_bashlyk_pathRun}/${_bashlyk_s0}"}
   _bashlyk_fnPid=${_bashlyk_fnPid:="${_bashlyk_pathRun}/${_bashlyk_s0}.pid"}
 _bashlyk_pathLib=${_bashlyk_pathLib:=$(pwd)}
 #
-[ -n "$_BASHLYK_LIBPID" ] && return 0
-_BASHLYK_LIBPID=1
+# link section
 #
 [ -s "$_bashlyk_pathLib/liblog.sh" ] && . "${_bashlyk_pathLib}/liblog.sh"
 [ -s "$_bashlyk_pathLib/libmd5.sh" ] && . "${_bashlyk_pathLib}/libmd5.sh"
+#
+# function section
 #
 udfCheckStarted() {
  [ -n "$1" ] || return -1
@@ -60,12 +65,9 @@ udfClean() {
  return $?
 }
 #
-################################################
-################################################
-###### Test Block ##############################
-################################################
-################################################
+# main section
 #
+#Test Block
 if [ "$1" = "test.libpid.bashlyk" ]; then
  echo "Check udfExitIfAlreadyStarted:"
  udfExitIfAlreadyStarted
@@ -79,3 +81,6 @@ if [ "$1" = "test.libpid.bashlyk" ]; then
  sleep 1
  udfClean --verbose ${_bashlyk_fnPid}
 fi
+
+_BASHLYK_LIBPID=1
+true
