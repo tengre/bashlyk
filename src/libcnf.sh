@@ -5,7 +5,7 @@
 #
 # global variables
 #
-aRequiredBin="cat date echo sleep"
+_bashlyk_aBin+=" cat date echo grep sleep"
 _bashlyk_pathCnf=${_bashlyk_pathCnf:=$(pwd)}
 _bashlyk_pathUserCnf=${_bashlyk_pathUserCnf:=$(pwd)}
 #

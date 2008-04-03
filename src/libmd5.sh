@@ -3,6 +3,10 @@
 #
 [ -n "$_BASHLYK_LIBMD5" ] && return 0
 #
+# global variables
+#
+_bashlyk_aBin+=" cut echo md5sum sleep true"
+#
 # function section
 #
 udfGetMd5() {
@@ -37,8 +41,12 @@ udfGetPathMd5() {
  cd $pathSrc
  return 0
 } 2>/dev/null
-#Test Block
-if [ "$1" = "test.libmd5.bashlyk" ]; then
+#
+# main section
+#
+# Test Block
+if [ -n "$(echo "${_bashlyk_aTest}" | grep -w md5)" ]; then
+
   echo "Check udfGetMd5 with string $*:"
   echo -n "from argument: " && udfGetMd5 $*
   sleep 1

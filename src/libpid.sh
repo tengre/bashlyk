@@ -5,7 +5,7 @@
 #
 # global variables
 #
-    aRequiredBin="cat date echo grep head mkdir ps rm sed sleep"
+_bashlyk_aBin+=" cat date echo grep head mkdir ps rm sed sleep"
 _bashlyk_pathRun=${_bashlyk_pathRun:=/tmp}
      _bashlyk_s0=${_bashlyk_s0:=$(basename $0)}
    _bashlyk_sArg="$*"
@@ -68,7 +68,7 @@ udfClean() {
 # main section
 #
 #Test Block
-if [ "$1" = "test.libpid.bashlyk" ]; then
+if [ -n "$(echo "${_bashlyk_aTest}" | grep -w pid)" ]; then
  echo "Check udfExitIfAlreadyStarted:"
  udfExitIfAlreadyStarted
  echo "${_bashlyk_fnPid} contain:"
@@ -81,6 +81,7 @@ if [ "$1" = "test.libpid.bashlyk" ]; then
  sleep 1
  udfClean --verbose ${_bashlyk_fnPid}
 fi
+#Test Block
 
 _BASHLYK_LIBPID=1
 true

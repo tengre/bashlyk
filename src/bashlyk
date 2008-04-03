@@ -8,14 +8,14 @@
 #
         _bashlyk_aLib=${_bashlyk_aLib:="log cnf pid md5"}
      _bashlyk_pathLib=${_bashlyk_pathLib:="/usr/lib/bashlyk"}
-_bashlyk_sLongOptions="--test:, --libs"
+_bashlyk_sLongOptions="test:,libs:"
         _bashlyk_aArg="$@"
 #
 # function section
 #
 udfGetArgs() {
- [ -n "$@" ] || return 1
- local aArg="$( -l ${_bashlyk_sLongOptions} -n $0 -- $0 $@)"
+ [ -n "$*" ] || return 1
+ local aArg="$(getopt -l ${_bashlyk_sLongOptions} -n $0 -- $0 $@)"
  [ $? != 0 ] && return 2
  eval set -- "$aARG"
  while true ; do
