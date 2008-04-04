@@ -1,5 +1,6 @@
 * text=auto !eol
 src/bashlyk -text
+src/control -text
 src/libcnf.sh -text
 src/liblog.sh -text
 src/libmd5.sh -text
