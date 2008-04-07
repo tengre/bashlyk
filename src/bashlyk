@@ -46,19 +46,20 @@ udfMain() {
 # main section
 #
 udfMain $*
+exit $?
 
-#cat << _EOT | udfWarn - "debug: $0"
-# pathRoot=$pathRoot
-# sUser=$sUser
-# USER=$USER
-# sHome=$sHome
-# HOME=$HOME
-# pathLog=$_bashlyk_pathLog
-# pathPid=$_bashlyk_pathPid
-# fnLog=$_bashlyk_fnLog
-# fnPid=$_bashlyk_fnPid
-# aTest=${_bashlyk_aTest}
-# aLib=${_bashlyk_aLib}
-# Arg=${_bashlyk_sArg}
-#_EOT
+cat << _EOT | udfWarn - "debug: $0"
+ pathUserConf=${_bashlyk_pathUserCnf}
+ sUser=$sUser
+ USER=$USER
+ sHome=$sHome
+ HOME=$HOME
+ pathLog=$_bashlyk_pathLog
+ pathPid=$_bashlyk_pathPid
+ fnLog=$_bashlyk_fnLog
+ fnPid=$_bashlyk_fnPid
+ aTest=${_bashlyk_aTest}
+ aLib=${_bashlyk_aLib}
+ Arg=${_bashlyk_sArg}
+_EOT
 #

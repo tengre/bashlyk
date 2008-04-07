@@ -24,8 +24,8 @@ udfGetConfig() {
  [ -n "$1" ] && for fn in $1; do aconf[++i]=$fn; done || return -1
  IFS=$chIFS
  #
- [ -d ${_bashlyk_pathCnf} ] || \
-  eval 'udfThrow "Error: Config files folder (${_bashlyk_pathCnf}) not exist..."; exit 1'
+ #[ -d ${_bashlyk_pathCnf} ] || \
+ # eval 'udfThrow "Error: Config files folder (${_bashlyk_pathCnf}) not exist..."; exit 1'
  #
  local conf=
  for ((i=$((${#aconf[*]}-1)); $i; --i)); do
@@ -39,10 +39,12 @@ udfGetConfig() {
 #
 udfSetConfig() {
  [ -n "$1" -a -n "$2" ] || return -1
- date "+#Created %Y.%m.%d %H:%M:%S by $USER $0 ($$)" > "${_bashlyk_pathCnf}/$1"
+ local conf sKeyValue
+ [ "$1" == "$(basename $1)" ] && conf="${_bashlyk_pathUserCnf}/$1" || conf=$1
+ date "+#Created %Y.%m.%d %H:%M:%S by $USER $0 ($$)" > $conf
  local chIFS=$IFS
  IFS=';'
- for sKeyValuePair in $2; do echo "${sKeyValuePair}" >> "${_bashlyk_pathCnf}/$1"; done
+ for sKeyValue in $2; do echo "${sKeyValue}" >> $conf; done
  IFS=$chIFS
  return 0
 }

@@ -4,5 +4,6 @@ src/control -text
 src/libcnf.sh -text
 src/liblog.sh -text
 src/libmd5.sh -text
+src/libopt.sh -text
 src/libpid.sh -text
 src/libppp.sh -text
