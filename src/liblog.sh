@@ -1,7 +1,7 @@
 #
 # $Id$
 #
-[ -n "$_BASHLYK_LIBLOG" ] && return 0
+[ -n "$_BASHLYK_LIBLOG" ] && return 0 || _BASHLYK_LIBLOG=1
 #
 # global variables
 #
@@ -106,15 +106,17 @@ udfFinally() {
 #
 # Test Block
 if [ -n "$(echo "${_bashlyk_aTest}" | grep -w log)" ]; then
- for s in bUseSyslog=${_bashlyk_bUseSyslog} pathLog=${_bashlyk_pathLog} fnLog=${_bashlyk_fnLog} emailRcpt=${_bashlyk_emailRcpt} emailSubj=${_bashlyk_emailSubj}
+ echo "--- liblog.sh tests --- start"
+ for s in pathLog=${_bashlyk_pathLog} fnLog=${_bashlyk_fnLog} emailRcpt=${_bashlyk_emailRcpt} emailSubj=${_bashlyk_emailSubj}
  do
   echo "$s"
  done
- for fn in udfLog udfWarn udfFinally udfThrow; do
+ for s in udfLog udfWarn udfFinally; do
   sleep 1
-  $fn "$fn $1"
+  echo "check $s:"
+  $s "$s test"
  done
+ echo "--- liblog.sh tests ---  done"
 fi
 # Test Block
-_BASHLYK_LIBLOG=1
 true

@@ -1,17 +1,17 @@
 #
 # $Id$
 #
-[ -n "$_BASHLYK_LIBCNF" ] && return 0
+[ -n "$_BASHLYK_LIBCNF" ] && return 0 || _BASHLYK_LIBCNF=1
+#
+# link section
+#
+[ -s "$_bashlyk_pathLib/liblog.sh" ] && . "${_bashlyk_pathLib}/liblog.sh"
 #
 # global variables
 #
 _bashlyk_aBin+=" cat date echo grep sleep"
 _bashlyk_pathCnf=${_bashlyk_pathCnf:=$(pwd)}
 _bashlyk_pathUserCnf=${_bashlyk_pathUserCnf:=$(pwd)}
-#
-# link section
-#
-[ -s "$_bashlyk_pathLib/liblog.sh" ] && . "${_bashlyk_pathLib}/liblog.sh"
 #
 # function section
 #
@@ -39,10 +39,10 @@ udfGetConfig() {
 #
 udfSetConfig() {
  [ -n "$1" -a -n "$2" ] || return -1
- date "+#Created %Y.%m.%d %H:%M:%S by $USER $0 ($$)" > $_bashlyk_pathCnf/$1
+ date "+#Created %Y.%m.%d %H:%M:%S by $USER $0 ($$)" > "${_bashlyk_pathCnf}/$1"
  local chIFS=$IFS
  IFS=';'
- for sKeyValuePair in $2; do echo "${sKeyValuePair}" >> $_bashlyk_pathCnf/$1; done
+ for sKeyValuePair in $2; do echo "${sKeyValuePair}" >> "${_bashlyk_pathCnf}/$1"; done
  IFS=$chIFS
  return 0
 }
@@ -51,16 +51,16 @@ udfSetConfig() {
 #
 #Test Block
 if [ -n "$(echo "${_bashlyk_aTest}" | grep -w cnf)" ]; then
- echo "functionality test:"
- conftest=$1.conf
- for fn in udfSetConfig udfGetConfig; do
+ echo "--- libcnf.sh tests --- start"
+ _bashlyk_confTest="test.cnf.bashlyk.conf"
+ for s in udfSetConfig udfGetConfig; do
   sleep 1
-  echo "$fn $conftest $2"
-  $fn $conftest "$2"
+  echo "check $s:"
+  $s ${_bashlyk_confTest} "a=b;sDate=\"$(date)\""
  done
- echo "see $1.conf:"
- cat $1.conf
+ echo "see ${_bashlyk_confTest}:"
+ cat "${_bashlyk_pathCnf}/${_bashlyk_confTest}"
+ echo "--- libcnf.sh tests ---  done"
 fi
 #Test Block
-_BASHLYK_LIBCNF=1
 true

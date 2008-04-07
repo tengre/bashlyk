@@ -6,45 +6,14 @@
 #
 # global variables
 #
-        _bashlyk_aLib=${_bashlyk_aLib:="log cnf pid md5"}
-     _bashlyk_pathLib=${_bashlyk_pathLib:="/usr/lib/bashlyk"}
-_bashlyk_sLongOptions="test:,libs:"
-        _bashlyk_aArg="$@"
+   _bashlyk_aLib=${_bashlyk_aLib:="log,cnf,pid,md5"}
+_bashlyk_pathLib=${_bashlyk_pathLib:="/usr/lib/bashlyk"}
+   _bashlyk_sArg=$*
 #
 # function section
 #
-udfGetArgs() {
- [ -n "$*" ] || return 1
- local aArg="$(getopt -l ${_bashlyk_sLongOptions} -n $0 -- $0 $@)"
- [ $? != 0 ] && return 2
- eval set -- "$aARG"
- while true ; do
-  case "$1" in
-   --test)
-    _bashlyk_aTest="${2:-$_bashlyk_aLib}"
-    shift 2
-   ;;
-   --libs)
-    _bashlyk_aLib="${2:-$_bashlyk_aLib}";
-    shift 2
-   ;;
-   --)
-    shift
-    break
-   ;;
-   *)
-    echo "Error: Command Line Parsing ($*)"
-    return 3
-   ;;
-  esac
- done
- echo "$@"
- return 0
-}
-
 udfMain() {
- _bashlyk_aArg="$(udfGetArgs $@)"
- local fn pathRoot sUser sHome sDbg
+ local fn pathRoot sUser sHome sDbg aArg
  sUser=$(ps -p $$ -o user=)
  case $sUser in
   'root')
@@ -67,11 +36,10 @@ udfMain() {
  _bashlyk_pathLog="${pathRoot}${_bashlyk_pathLog}"
  [ -d "$_bashlyk_pathRun" ] || mkdir -p $_bashlyk_pathRun
  [ -d "$_bashlyk_pathLog" ] || mkdir -p $_bashlyk_pathLog
- for fn in ${_bashlyk_aLib}; do
+ for fn in $(echo ${_bashlyk_aLib} | tr ',' ' '); do
   local fnLib="${_bashlyk_pathLib}/lib${fn}.sh"
-  [ -s $fnLib ] && source $fnLib $* || eval 'echo "error with $fnLib using"; exit -1'
+  [ -s $fnLib ] && source $fnLib || eval 'echo "error with $fnLib using"; exit -1'
  done
- udfWarn "dbg: $0 _ pathRoot=$pathRoot _ sUser=$sUser _ USER=$USER _ sHome=$sHome _ HOME=$HOME _ pathLog=$_bashlyk_pathLog _ fnLog=$_bashlyk_fnLog"
  return 0
 }
 #
@@ -79,3 +47,18 @@ udfMain() {
 #
 udfMain $*
 
+#cat << _EOT | udfWarn - "debug: $0"
+# pathRoot=$pathRoot
+# sUser=$sUser
+# USER=$USER
+# sHome=$sHome
+# HOME=$HOME
+# pathLog=$_bashlyk_pathLog
+# pathPid=$_bashlyk_pathPid
+# fnLog=$_bashlyk_fnLog
+# fnPid=$_bashlyk_fnPid
+# aTest=${_bashlyk_aTest}
+# aLib=${_bashlyk_aLib}
+# Arg=${_bashlyk_sArg}
+#_EOT
+#
