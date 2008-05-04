@@ -9,7 +9,7 @@
 #
 # global variables
 #
-_bashlyk_aBin+="echo getopt grep tr"
+_bashlyk_aBin+="echo getopt grep tr umask"
 #
 # function section
 #
@@ -24,7 +24,7 @@ udf_2() {
 }
 #
 udfGetOpt() {
- local k v sOpt csvKeys csvHash
+ local k v confTmp csvKeys csvHash sMask sOpt
  csvKeys=$1
  shift
  local sOpt="$(getopt -l $csvKeys -n $0 -- $0 $@)"
@@ -45,8 +45,13 @@ udfGetOpt() {
   done
  done
  shift
- udfSetConfig "$$.temp.${_bashlyk_s0}.conf" "$csvHash"
- udfGetConfig "$$.temp.${_bashlyk_s0}.conf"
+ sMask=$(umask)
+ umask 0077
+ confTmp="/tmp/$$.temp.${_bashlyk_s0}.conf"
+ udfSetConfig $confTmp "$csvHash"
+ udfGetConfig $confTmp
+ rm -v $confTmp >/dev/null 2>&1
+ umask $sMask
  return 0
 }
 #
@@ -56,7 +61,7 @@ udfGetOpt() {
 if [ -n "$(echo "${_bashlyk_aTest}" | grep -w opt)" ]; then
  echo "--- libopt.sh tests --- start"
  for s in udfGetOpt; do
-  echo "check $s with options --_bashlyk_sTest1 $(uname) --_bashlyk_sTest2 --_bashlyk_sTest3 $(udfEscapeSpaces $(date)) :"
+  echo "check $s with options --_bashlyk_sTest1 $(uname) --_bashlyk_sTest2 --_bashlyk_sTest3 $(udf2_ $(date)) :"
   $s "_bashlyk_sTest1:,_bashlyk_sTest2,_bashlyk_sTest3:" --_bashlyk_sTest1 $(uname) --_bashlyk_sTest2 --_bashlyk_sTest3 $(udf2_ $(date))
   echo "see variables _bashlyk_sTest1=\"${_bashlyk_sTest1}\" _bashlyk_sTest2=\"${_bashlyk_sTest2}\" _bashlyk_sTest3=\"${_bashlyk_sTest3}\""
  done

@@ -22,7 +22,6 @@ udfBaseId() {
 }
 #
 udfDate() {
-# date "+%Y.%m.%d %H:%M:%S $*"
  date "+%b %d %H:%M:%S $*"
 }
 #
@@ -54,18 +53,20 @@ udfLogger() {
 }
 #
 udfLog() {
- if [ -z "$1" -o "$1" = "-" ]; then
-  local s
-  while read s; do [ -n "$s" ] && udfLogger "$s"; done
+ if [ "$1" = "-" ]; then
+  shift
+  local s sPrefix
+  [ -n "$*" ] && sPrefix="$* " || sPrefix=
+  while read s; do [ -n "$s" ] && udfLogger "${sPrefix}${s}"; done
  else
-  [ -n "$1" ] && udfLogger $*
+  [ -n "$*" ] && udfLogger $*
  fi
  return 0
 }
 #
 udfMail() {
  {
-  if [ -z "$1" -o "$1" = "-" ]; then
+  if [ "$1" = "-" ]; then
    shift
    [ -n "$1" ] && printf "%s\n----\n" "$*"
    local s

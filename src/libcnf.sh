@@ -16,18 +16,18 @@ _bashlyk_pathUserCnf=${_bashlyk_pathUserCnf:=$(pwd)}
 # function section
 #
 udfGetConfig() {
- local aconf=
- local i=0
- local chIFS=$IFS
+ local aconf chIFS conf fn i
  #
+ chIFS=$IFS
  IFS='.'
+ i=0
  [ -n "$1" ] && for fn in $1; do aconf[++i]=$fn; done || return -1
  IFS=$chIFS
  #
  #[ -d ${_bashlyk_pathCnf} ] || \
  # eval 'udfThrow "Error: Config files folder (${_bashlyk_pathCnf}) not exist..."; exit 1'
  #
- local conf=
+ conf=
  for ((i=$((${#aconf[*]}-1)); $i; --i)); do
   [ -n "$conf" ]                         && conf=${aconf[$i]}".$conf" || conf=${aconf[$i]}
   [ -s "${_bashlyk_pathCnf}/$conf" ]     && . ${_bashlyk_pathCnf}/$conf
