@@ -77,15 +77,6 @@ udfClean() {
 #
 # main section
 #
-#if [ -z "${_bashlyk_fnPid}" ]; then
-# if [ -n "${_bashlyk_sArg}" ]; then
-#  mkdir -p ${_bashlyk_pathPid} || return -1
-#  _bashlyk_fnPid="${_bashlyk_pathPid}/$(udfGetMd5 ${_bashlyk_s0} ${_bashlyk_sArg}).pid"
-# else
-#  _bashlyk_fnPid="${_bashlyk_pathPid}.pid"
-# fi
-#fi
-
 #Test Block
 if [ -n "$(echo "${_bashlyk_aTest}" | grep -w pid)" ]; then
  echo "--- libpid.sh tests --- start"

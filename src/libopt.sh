@@ -24,15 +24,16 @@ udf_2() {
 }
 #
 udfGetOpt() {
- local k v confTmp csvKeys csvHash sMask sOpt
+ local k v confTmp csvKeys csvHash sMask sOpt sUnknown
  csvKeys=$1
  shift
- local sOpt="$(getopt -l $csvKeys -n $0 -- $0 $@)"
- [ $? != 0 ] && return 2
+ sOpt="$(getopt -l $csvKeys -n $0 -- $0 $@)"
+ #[ $? != 0 ] && return 2
  eval set -- "$sOpt"
- for k in $(echo $csvKeys | tr ',' ' '); do
-  v=$(echo $k | tr -d ':')
-  while true; do
+ while true; do
+  [ -n "$1" ] || break
+  for k in $(echo $csvKeys | tr ',' ' '); do
+   v=$(echo $k | tr -d ':')
    [ "--$v" == "$1" ] || continue
    if [ -n "$(echo $k | grep ':$')" ]; then
     csvHash+=";$v=\"$(udf_2 $2)\""
@@ -41,16 +42,18 @@ udfGetOpt() {
     csvHash+=";$v=\"$v\""
     shift
    fi
-   break
   done
+  sUnknown+="$1 "
+  shift
  done
+ csvHash+=";sUnknown=\"$sUnknown\""
  shift
  sMask=$(umask)
  umask 0077
  confTmp="/tmp/$$.temp.${_bashlyk_s0}.conf"
  udfSetConfig $confTmp "$csvHash"
  udfGetConfig $confTmp
- rm -v $confTmp >/dev/null 2>&1
+ #rm -v $confTmp >/dev/null 2>&1
  umask $sMask
  return 0
 }
