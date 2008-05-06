@@ -41,7 +41,7 @@ udfSetConfig() {
  [ -n "$1" -a -n "$2" ] || return -1
  local conf sKeyValue
  [ "$1" == "$(basename $1)" ] && conf="${_bashlyk_pathUserCnf}/$1" || conf=$1
- date "+#Created %Y.%m.%d %H:%M:%S by $USER $0 ($$)" > $conf
+ date "+#Created %Y.%m.%d %H:%M:%S by $USER $0 ($$)" >> $conf
  local chIFS=$IFS
  IFS=';'
  for sKeyValue in $2; do echo "${sKeyValue}" >> $conf; done
