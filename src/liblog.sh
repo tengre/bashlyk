@@ -32,8 +32,12 @@ udfLogger() {
  local bTermin=0
  local sTagLog="${_bashlyk_s0}[$(printf "%05d" $$)]"
  [ -z "$_bashlyk_bUseSyslog" -o ${_bashlyk_bUseSyslog} -eq 0 ] && bSysLog=0 || bSysLog=1
- udfIsTerm && bTerm=1 || bTerm=0
- case "${bSysLog}${bTerm}" in
+ if [ -z "$_bashlyk_bTerminal" ]; then
+  udfIsTerm && bTermin=1 || bTermin=0
+ else
+  [ ${_bashlyk_bTerminal} -eq 0 ] && bTermin=0 || bTermin=1
+ fi
+ case "${bSysLog}${bTermin}" in
   "00")
    echo "$(udfDate "$HOSTNAME $sTagLog: $*")" >> ${_bashlyk_fnLog}
   ;;
@@ -94,7 +98,7 @@ udfIsTerm() {
  case "$1" in
   0|1|2) fd=$1 ;;
  esac
- [ -t "$fd" ] && true || false
+ [ -t "$fd" ] && return 0 || return 1
 }
 #
 udfFinally() {

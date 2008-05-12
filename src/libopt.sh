@@ -9,7 +9,7 @@
 #
 # global variables
 #
-_bashlyk_aBin+="echo getopt grep tr umask"
+_bashlyk_aBin+="echo getopt grep mktemp tr umask"
 #
 # function section
 #
@@ -54,15 +54,17 @@ udfGetOptHash() {
 #
 udfSetOptHash() {
  [ -n "$*" ] || return -1
- local sMask confTmp
+ local sMask confTmp iRC
  sMask=$(umask)
  umask 0077
- confTmp="/tmp/$$.temp.${_bashlyk_s0}.conf"
- udfSetConfig $confTmp "$*"
- udfGetConfig $confTmp
- #rm -v $confTmp >/dev/null 2>&1
+ confTmp=$(mktemp -t "${_bashlyk_s0}.conf.XXXXXXXX") && {
+  udfSetConfig $confTmp "$*"
+  udfGetConfig $confTmp
+  rm -f $confTmp >/dev/null 2>&1
+  iRC=0
+ } || iRC=1
  umask $sMask
- return 0
+ return $iRC
 }
 #
 udfGetOpt() {
