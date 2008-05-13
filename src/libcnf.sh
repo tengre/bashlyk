@@ -11,7 +11,6 @@
 #
 _bashlyk_aBin+=" cat date echo grep sleep"
 _bashlyk_pathCnf=${_bashlyk_pathCnf:=$(pwd)}
-_bashlyk_pathUserCnf=${_bashlyk_pathUserCnf:=$(pwd)}
 #
 # function section
 #
@@ -31,7 +30,6 @@ udfGetConfig() {
  for ((i=$((${#aconf[*]}-1)); $i; --i)); do
   [ -n "$conf" ]                         && conf=${aconf[$i]}".$conf" || conf=${aconf[$i]}
   [ -s "${_bashlyk_pathCnf}/$conf" ]     && . ${_bashlyk_pathCnf}/$conf
-  [ -s "${_bashlyk_pathUserCnf}/$conf" ] && . "${_bashlyk_pathUserCnf}/$conf"
   [ -s "$conf" ]                         && . $conf
  done
  return 0
@@ -40,7 +38,7 @@ udfGetConfig() {
 udfSetConfig() {
  [ -n "$1" -a -n "$2" ] || return -1
  local conf sKeyValue
- [ "$1" == "$(basename $1)" ] && conf="${_bashlyk_pathUserCnf}/$1" || conf=$1
+ [ "$1" == "$(basename $1)" ] && conf="${_bashlyk_pathCnf}/$1" || conf=$1
  date "+#Created %Y.%m.%d %H:%M:%S by $USER $0 ($$)" >> $conf
  local chIFS=$IFS
  IFS=';'
