@@ -1,3 +1,15 @@
+bashlyk (1.26-1) experimental; urgency=low
+
+  * Fix design bug #1210743859
+
+ -- Damir Yakupov <yds@bk.ru>  Tue May 14 10:31:00 2008 +0500
+
+bashlyk (1.26) experimental; urgency=low
+
+  * New upstream release
+
+ -- Damir Yakupov <yds@bk.ru>  Tue May 13 16:45:00 2008 +0500
+
 bashlyk (1.24) experimental; urgency=low
 
   * New upstream release

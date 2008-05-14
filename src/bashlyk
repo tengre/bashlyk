@@ -13,14 +13,16 @@ _bashlyk_pathLib=${_bashlyk_pathLib:="/usr/lib/bashlyk"}
 # function section
 #
 udfInit() {
- local pathCnf pathRoot sUser sHome
- [ -n "$1" ] && _bashlyk_sId="$1" || _bashlyk_sId="$(basename $0 .sh)"
+ local pathCnf pathRoot pathRun pathLog sUser sHome
+ [ -n "${_bashlyk}" ] && _bashlyk_sId="${_bashlyk}" || _bashlyk_sId="$(basename $0 .sh)"
  [ -z "${_bashlyk_sId}" ] && _bashlyk_sId="bashlyk"
  pathCnf="etc"
+ pathLog="var/log"
+ pathRun="var/run"
  sUser=$(ps -p $$ -o user=)
  case $sUser in
   'root')
-   pathRoot='/'
+   pathRoot=''
    pathCnf+="/${_bashlyk_sId}"
   ;;
   '')
@@ -37,9 +39,9 @@ udfInit() {
    fi
   ;;
  esac
- _bashlyk_pathRun="${pathRoot}${_bashlyk_pathRun}"
- _bashlyk_pathLog="${pathRoot}${_bashlyk_pathLog}"
- _bashlyk_pathCnf="${pathRoot}${pathCnf}"
+ _bashlyk_pathRun="${pathRoot}/${pathRun}"
+ _bashlyk_pathLog="${pathRoot}/${pathLog}"
+ _bashlyk_pathCnf="${pathRoot}/${pathCnf}"
 
  [ -t "1" ] && _bashlyk_bTerminal=1 || _bashlyk_bTerminal=0
  [ -d "$_bashlyk_pathRun" ] || mkdir -p $_bashlyk_pathRun
@@ -48,7 +50,7 @@ udfInit() {
 }
 #
 udfMain() {
- udfInit bashlyk
+ udfInit
  local fn
  for fn in $(echo ${_bashlyk_aLib} | tr ',' ' '); do
   local fnLib="${_bashlyk_pathLib}/lib${fn}.sh"
@@ -60,4 +62,3 @@ udfMain() {
 # main section
 #
 udfMain $*
-
