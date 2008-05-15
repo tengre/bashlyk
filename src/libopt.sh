@@ -13,13 +13,17 @@ _bashlyk_aBin+="echo getopt grep mktemp tr sed umask"
 #
 # function section
 #
+udfQuoteIfNeeded() {
+ [ -n "$(echo "$*" | grep -e [[:space:]])" ] && echo "\"$*\"" || echo "$*"
+}
+#
 udf2_() {
  echo "$*" | tr ' ' '_'
  return 0
 }
 #
 udf_2() {
- echo "$*" | tr '_' ' '
+ udfQuoteIfNeeded $(echo "$*" | tr '_' ' ')
  return 0
 }
 #
@@ -38,10 +42,10 @@ udfGetOptHash() {
    v=$(echo $k | tr -d ':')
    [ "--$v" == "$1" ] && bFound=1 || continue
    if [ -n "$(echo $k | grep ':$')" ]; then
-    csvHash+="$v=\"$(udf_2 $2)\";"
+    csvHash+="$v=$(udf_2 $2);"
     shift 2
    else
-    csvHash+="$v=\"$v\";"
+    csvHash+="$v=1;"
     shift
    fi
   done

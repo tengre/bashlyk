@@ -14,7 +14,7 @@ _bashlyk_sId=${_bashlyk_sId:=$(basename $0 .sh)}
 _bashlyk_emailRcpt=${_bashlyk_emailRcpt:=postmaster}
 _bashlyk_iStartTimeStamp=${_bashlyk_iStartTimeStamp:=$(/bin/date "+%s")}
 _bashlyk_emailSubj=${_bashlyk_emailSubj:="$HOSTNAME::$USER::${_bashlyk_s0}"}
-_bashlyk_fnLog=${_bashlyk_fnLog:="${_bashlyk_pathLog}/${_bashlyk_sId}.log"}
+_bashlyk_fnLog=${_bashlyk_fnLog:="${_bashlyk_pathLog}/${_bashlyk_s0}.log"}
 #
 # function section
 #
