@@ -14,8 +14,7 @@ _bashlyk_pathLib=${_bashlyk_pathLib:="/usr/lib/bashlyk"}
 #
 udfInit() {
  local pathCnf pathRoot pathRun pathLog sUser sHome
- [ -n "${_bashlyk}" ] && _bashlyk_sId="${_bashlyk}" || _bashlyk_sId="$(basename $0 .sh)"
- [ -z "${_bashlyk_sId}" ] && _bashlyk_sId="bashlyk"
+ _bashlyk_sId=${_bashlyk:="bashlyk"}
  pathCnf="etc"
  pathLog="var/log"
  pathRun="var/run"

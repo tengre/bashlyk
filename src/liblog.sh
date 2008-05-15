@@ -10,10 +10,11 @@ _bashlyk_aBin+=" basename date echo hostname false printf logger mail sleep tee 
 _bashlyk_bUseSyslog=${_bashlyk_bUseSyslog:=0}
 _bashlyk_pathLog=${_bashlyk_pathLog:=/tmp}
 _bashlyk_s0=${_bashlyk_s0:=$(basename $0)}
+_bashlyk_sId=${_bashlyk_sId:=$(basename $0 .sh)}
 _bashlyk_emailRcpt=${_bashlyk_emailRcpt:=postmaster}
 _bashlyk_iStartTimeStamp=${_bashlyk_iStartTimeStamp:=$(/bin/date "+%s")}
 _bashlyk_emailSubj=${_bashlyk_emailSubj:="$HOSTNAME::$USER::${_bashlyk_s0}"}
-_bashlyk_fnLog=${_bashlyk_fnLog:="${_bashlyk_pathLog}/${_bashlyk_s0}.log"}
+_bashlyk_fnLog=${_bashlyk_fnLog:="${_bashlyk_pathLog}/${_bashlyk_sId}.log"}
 #
 # function section
 #
