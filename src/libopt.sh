@@ -9,7 +9,7 @@
 #
 # global variables
 #
-_bashlyk_aBin+="echo getopt grep mktemp tr umask"
+_bashlyk_aBin+="echo getopt grep mktemp tr sed umask"
 #
 # function section
 #
@@ -25,7 +25,7 @@ udf_2() {
 #
 udfGetOptHash() {
  [ -n "$*" ] || return -1
- local k v csvKeys csvHash sOpt bFound
+ local k v csvKeys csvHash=';' sOpt bFound
  csvKeys=$1
  shift
  sOpt="$(getopt -l $csvKeys -n $0 -- $0 $@)"
@@ -73,15 +73,14 @@ udfGetOpt() {
  return 0
 }
 #
-#udfExcludeFromHash() {
-# [ -n "$*" ] || return -1
-# local v=$1
-# shift
-# local csv="$*"
-# if [ -n "$(echo $csv | grep -e "$v")" ]; then
-#  echo $csv | sed -e s/$v=.*;//
-# fi
-#}
+udfExcludePairFromHash() {
+ [ -n "$*" ] || return 1
+ local s=$1
+ shift
+ local csv="$*"
+ echo "$csv" | sed -e "s/;$s;//"
+ return 0
+}
 #
 # main section
 #

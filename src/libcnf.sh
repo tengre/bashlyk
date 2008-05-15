@@ -37,12 +37,13 @@ udfGetConfig() {
 #
 udfSetConfig() {
  [ -n "$1" -a -n "$2" ] || return -1
- local conf sKeyValue
+ local conf sKeyValue chIFS=$IFS
  [ "$1" == "$(basename $1)" ] && conf="${_bashlyk_pathCnf}/$1" || conf=$1
  date "+#Created %Y.%m.%d %H:%M:%S by $USER $0 ($$)" >> $conf
- local chIFS=$IFS
  IFS=';'
- for sKeyValue in $2; do echo "${sKeyValue}" >> $conf; done
+ for sKeyValue in $2; do
+  [ -n "${sKeyValue}" ] && echo "${sKeyValue}" >> $conf
+ done
  IFS=$chIFS
  return 0
 }
