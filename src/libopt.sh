@@ -9,7 +9,7 @@
 #
 # global variables
 #
-_bashlyk_aBin+="echo getopt grep mktemp tr sed umask"
+_bashlyk_aBin+=" echo getopt grep mktemp tr sed umask "
 #
 # function section
 #
@@ -88,7 +88,7 @@ udfExcludePairFromHash() {
 #
 # main section
 #
-#Test Block
+#Test Block start
 if [ -n "$(echo "${_bashlyk_aTest}" | grep -w opt)" ]; then
  echo "--- libopt.sh tests --- start"
  for s in udfGetOpt; do
@@ -98,5 +98,5 @@ if [ -n "$(echo "${_bashlyk_aTest}" | grep -w opt)" ]; then
  done
  echo "--- libcnf.sh tests ---  done"
 fi
-#Test Block
+#Test Block stop
 true

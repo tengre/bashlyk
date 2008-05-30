@@ -9,8 +9,8 @@
 #
 # global variables
 #
-_bashlyk_aBin+=" cat date echo grep sleep"
-_bashlyk_pathCnf=${_bashlyk_pathCnf:=$(pwd)}
+_bashlyk_aBin+=" cat date echo grep sleep "
+: ${_bashlyk_pathCnf=$(pwd)}
 #
 # function section
 #
@@ -50,7 +50,7 @@ udfSetConfig() {
 #
 # main section
 #
-#Test Block
+#Test Block start
 if [ -n "$(echo "${_bashlyk_aTest}" | grep -w cnf)" ]; then
  echo "--- libcnf.sh tests --- start"
  _bashlyk_confTest="test.cnf.bashlyk.conf"
@@ -63,5 +63,5 @@ if [ -n "$(echo "${_bashlyk_aTest}" | grep -w cnf)" ]; then
  cat "${_bashlyk_pathCnf}/${_bashlyk_confTest}"
  echo "--- libcnf.sh tests ---  done"
 fi
-#Test Block
+#Test Block stop
 true

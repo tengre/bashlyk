@@ -30,7 +30,7 @@ udfGetMd5() {
 udfGetPathMd5() {
  [ -n "$1" -a -d "$1" ] || return 1
  local pathSrc=$(pwd)
- cd $1
+ cd $1 2>/dev/null
  local pathDst=$(pwd)
  local       a=$(ls)
  for s in $a
@@ -40,7 +40,7 @@ udfGetPathMd5() {
  md5sum $pathDst/*
  cd $pathSrc
  return 0
-} 2>/dev/null
+} 
 #
 # main section
 #

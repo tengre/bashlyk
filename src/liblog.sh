@@ -5,16 +5,16 @@
 #
 # global variables
 #
-HOSTNAME=${HOSTNAME:=$(hostname)}
-_bashlyk_aBin+=" basename date echo hostname false printf logger mail sleep tee true"
-_bashlyk_bUseSyslog=${_bashlyk_bUseSyslog:=0}
-_bashlyk_pathLog=${_bashlyk_pathLog:=/tmp}
-_bashlyk_s0=${_bashlyk_s0:=$(basename $0)}
-_bashlyk_sId=${_bashlyk_sId:=$(basename $0 .sh)}
-_bashlyk_emailRcpt=${_bashlyk_emailRcpt:=postmaster}
-_bashlyk_iStartTimeStamp=${_bashlyk_iStartTimeStamp:=$(/bin/date "+%s")}
-_bashlyk_emailSubj=${_bashlyk_emailSubj:="$HOSTNAME::$USER::${_bashlyk_s0}"}
-_bashlyk_fnLog=${_bashlyk_fnLog:="${_bashlyk_pathLog}/${_bashlyk_s0}.log"}
+_bashlyk_aBin+=" basename date echo hostname false printf logger mail sleep tee true "
+: ${HOSTNAME=$(hostname)}
+: ${_bashlyk_bUseSyslog=0}
+: ${_bashlyk_pathLog=/tmp}
+: ${_bashlyk_s0=$(basename $0)}
+: ${_bashlyk_sId=$(basename $0 .sh)}
+: ${_bashlyk_emailRcpt=postmaster}
+: ${_bashlyk_iStartTimeStamp=$(/bin/date "+%s")}
+: ${_bashlyk_emailSubj:="$HOSTNAME::$USER::${_bashlyk_s0}"}
+: ${_bashlyk_fnLog:="${_bashlyk_pathLog}/${_bashlyk_s0}.log"}
 #
 # function section
 #
@@ -110,7 +110,7 @@ udfFinally() {
 #
 # main section
 #
-# Test Block
+# Test Block start
 if [ -n "$(echo "${_bashlyk_aTest}" | grep -w log)" ]; then
  echo "--- liblog.sh tests --- start"
  for s in pathLog=${_bashlyk_pathLog} fnLog=${_bashlyk_fnLog} emailRcpt=${_bashlyk_emailRcpt} emailSubj=${_bashlyk_emailSubj}
@@ -124,5 +124,5 @@ if [ -n "$(echo "${_bashlyk_aTest}" | grep -w log)" ]; then
  done
  echo "--- liblog.sh tests ---  done"
 fi
-# Test Block
+# Test Block end
 true

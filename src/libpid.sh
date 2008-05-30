@@ -10,16 +10,16 @@
 #
 # global variables
 #
-     _bashlyk_aBin+=" cat date echo grep head mkdir ps rm sed sleep"
-   _bashlyk_pathRun=${_bashlyk_pathRun:=/tmp}
-        _bashlyk_s0=${_bashlyk_s0:=$(basename $0)}
-   _bashlyk_pathPid=${_bashlyk_pathPid:="${_bashlyk_pathRun}/${_bashlyk_s0}"}
-    _bashlyk_fnPid0=${_bashlyk_fnPid0:="${_bashlyk_pathPid}.pid"}
-    _bashlyk_fnPidA=${_bashlyk_fnPidA:="${_bashlyk_pathPid}/$(udfGetMd5 ${_bashlyk_s0} $*).pid"}
-   _bashlyk_pathLib=${_bashlyk_pathLib:=$(pwd)}
-      _bashlyk_sArg=$*
-  _bashlyk_afnClean=
+_bashlyk_aBin+=" cat date echo grep head mkdir ps rm sed sleep"
+_bashlyk_afnClean=
 _bashlyk_apathClean=
+: ${_bashlyk_pathRun:=/tmp}
+: ${_bashlyk_s0:=$(basename $0)}
+: ${_bashlyk_pathPid:="${_bashlyk_pathRun}/${_bashlyk_s0}"}
+: ${_bashlyk_fnPid0:="${_bashlyk_pathPid}.pid"}
+: ${_bashlyk_fnPidA:="${_bashlyk_pathPid}/$(udfGetMd5 ${_bashlyk_s0} $*).pid"}
+: ${_bashlyk_pathLib:=$(pwd)}
+: ${_bashlyk_sArg=$*}
 #
 # function section
 #
@@ -77,7 +77,7 @@ udfClean() {
 #
 # main section
 #
-#Test Block
+#Test Block start
 if [ -n "$(echo "${_bashlyk_aTest}" | grep -w pid)" ]; then
  echo "--- libpid.sh tests --- start"
  echo "Check udfExitIfAlreadyStarted:"
@@ -94,5 +94,5 @@ if [ -n "$(echo "${_bashlyk_aTest}" | grep -w pid)" ]; then
  udfClean --verbose ${_bashlyk_fnPid} ${_bashlyk_pathPid}
  echo "--- libpid.sh tests ---  done"
 fi
-#Test Block
+#Test Block end
 true
