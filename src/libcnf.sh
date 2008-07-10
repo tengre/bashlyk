@@ -15,18 +15,23 @@ _bashlyk_aBin+=" cat date echo grep sleep "
 # function section
 #
 udfGetConfig() {
- local aconf chIFS conf fn i
+ local aconf chIFS conf fn i path
  #
- chIFS=$IFS
- IFS='.'
  i=0
- [ -n "$1" ] && for fn in $1; do aconf[++i]=$fn; done || return -1
- IFS=$chIFS
+ [ -n "$1" ] && {
+  path=$(dirname "$1")
+  chIFS=$IFS
+  IFS='.'
+  for fn in $(basename "$1"); do
+   aconf[++i]=$fn
+  done
+  IFS=$chIFS
+ } || return -1
  conf=
  for ((i=$((${#aconf[*]}-1)); $i; --i)); do
-  [ -n "$conf" ]                         && conf=${aconf[$i]}".$conf" || conf=${aconf[$i]}
-  [ -s "${_bashlyk_pathCnf}/$conf" ]     && . ${_bashlyk_pathCnf}/$conf
-  #[ -s "$conf" ]                         && . $conf
+  [ -n "$conf" ]                         && conf="${aconf[$i]}.${conf}" || conf=${aconf[$i]}
+  [ -s "${_bashlyk_pathCnf}/$conf" ]     && . "${_bashlyk_pathCnf}/$conf"
+  [ -s "${path}/$conf" ]                 && . "${path}/${conf}"
  done
  return 0
 }

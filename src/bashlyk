@@ -7,7 +7,7 @@
 # global variables
 #
    _bashlyk_aLib=${_bashlyk_aLib:="log,cnf,pid,md5,opt"}
-_bashlyk_pathLib=${_bashlyk_pathLib:="/usr/lib/bashlyk"}
+_bashlyk_pathLib=${_bashlyk_pathLib:="/usr/share/bashlyk"}
    _bashlyk_sArg=$*
 #
 # function section
