@@ -84,13 +84,14 @@ udfMail() {
 }
 #
 udfWarn() {
- udfMail $*
- udfLog "sent warn message with status: $PIPESTATUS"
+ [ "${_bashlyk_bTerminal}" = "1" ] && udfLog $* || {
+  udfMail $*
+  udfLog "sent warn or abort message with status: $?"
+ }
 }
 #
 udfThrow() {
- udfMail $*
- udfLog "sent abort message with status: $PIPESTATUS"
+ udfWarn $*
  exit -1
 }
 #
@@ -106,6 +107,16 @@ udfFinally() {
  local iDiffTime=$(($(date "+%s")-${_bashlyk_iStartTimeStamp}))
  [ -n "$1" ] && udfLog "$* ($iDiffTime sec)"
  return $iDiffTime
+}
+#
+udfSetLog() {
+ [ -n "$1" ] || return 1
+ _bashlyk_fnLog="$1"
+ _bashlyk_pathLog=$(dirname ${_bashlyk_fnLog})
+ [ -d "${_bashlyk_pathLog}" ] || mkdir -p "${_bashlyk_pathLog}" \
+  || udfThrow "Error: do not create path ${_bashlyk_pathLog}"
+ touch "${_bashlyk_fnLog}" || udfThrow "Error: ${_bashlyk_fnLog} not usable for logging"
+ return 0
 }
 #
 # main section

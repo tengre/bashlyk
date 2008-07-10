@@ -1,4 +1,8 @@
 * text=auto !eol
+/AUTHORS -text
+/ChangeLog -text
+/NEWS -text
+/README -text
 src/bashlyk -text
 src/libcnf.sh -text
 src/liblog.sh -text

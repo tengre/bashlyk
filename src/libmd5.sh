@@ -37,7 +37,7 @@ udfGetPathMd5() {
  do
   [ -d "$s" ] && udfGetPathMd5 $s
  done
- md5sum $pathDst/*
+ md5sum $pathDst/* 2>/dev/null
  cd $pathSrc
  return 0
 } 

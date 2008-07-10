@@ -22,15 +22,11 @@ udfGetConfig() {
  i=0
  [ -n "$1" ] && for fn in $1; do aconf[++i]=$fn; done || return -1
  IFS=$chIFS
- #
- #[ -d ${_bashlyk_pathCnf} ] || \
- # eval 'udfThrow "Error: Config files folder (${_bashlyk_pathCnf}) not exist..."; exit 1'
- #
  conf=
  for ((i=$((${#aconf[*]}-1)); $i; --i)); do
   [ -n "$conf" ]                         && conf=${aconf[$i]}".$conf" || conf=${aconf[$i]}
   [ -s "${_bashlyk_pathCnf}/$conf" ]     && . ${_bashlyk_pathCnf}/$conf
-  [ -s "$conf" ]                         && . $conf
+  #[ -s "$conf" ]                         && . $conf
  done
  return 0
 }
@@ -53,7 +49,7 @@ udfSetConfig() {
 #Test Block start
 if [ -n "$(echo "${_bashlyk_aTest}" | grep -w cnf)" ]; then
  echo "--- libcnf.sh tests --- start"
- _bashlyk_confTest="test.cnf.bashlyk.conf"
+ _bashlyk_confTest="$$.test.cnf.bashlyk.conf"
  for s in udfSetConfig udfGetConfig; do
   sleep 1
   echo "check $s:"
@@ -61,6 +57,7 @@ if [ -n "$(echo "${_bashlyk_aTest}" | grep -w cnf)" ]; then
  done
  echo "see ${_bashlyk_confTest}:"
  cat "${_bashlyk_pathCnf}/${_bashlyk_confTest}"
+ rm -fv "${_bashlyk_pathCnf}/${_bashlyk_confTest}"
  echo "--- libcnf.sh tests ---  done"
 fi
 #Test Block stop
