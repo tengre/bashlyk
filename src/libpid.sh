@@ -13,13 +13,16 @@
 _bashlyk_aBin+=" cat date echo grep head mkdir ps rm sed sleep"
 _bashlyk_afnClean=
 _bashlyk_apathClean=
-: ${_bashlyk_pathRun:=/tmp}
 : ${_bashlyk_s0:=$(basename $0)}
-: ${_bashlyk_pathPid:="${_bashlyk_pathRun}/${_bashlyk_s0}"}
-: ${_bashlyk_fnPid0:="${_bashlyk_pathPid}.pid"}
-: ${_bashlyk_fnPidA:="${_bashlyk_pathPid}/$(udfGetMd5 ${_bashlyk_s0} $*).pid"}
+: ${_bashlyk_pathRun:=/tmp}
+: ${_bashlyk_md5Id:=$(udfGetMd5 ${_bashlyk_s0} $*)}
+: ${_bashlyk_sRun:="${_bashlyk_pathRun}/${_bashlyk_s0}"}
+: ${_bashlyk_fnPid0:="${_bashlyk_sRun}.pid"}
+: ${_bashlyk_fnPidA:="${_bashlyk_sRun}/${_bashlyk_md5Id}.pid"}
+: ${_bashlyk_fnSock0:="${_bashlyk_sRun}.${$}.socket"}
+: ${_bashlyk_fnSockA:="${_bashlyk_sRun}/${_bashlyk_md5Id}.${$}.socket"}
 : ${_bashlyk_pathLib:=$(pwd)}
-: ${_bashlyk_sArg=$*}
+: ${_bashlyk_sArg:=$*}
 #
 # function section
 #
@@ -35,9 +38,9 @@ udfSetPid() {
  local fnPid
  if [ -n "$1" -a "$1" == "-a" ]; then
   fnPid=${_bashlyk_fnPidA}
-  mkdir -p ${_bashlyk_pathPid} \
-   || eval 'udfWarn "Warn: path for PIDs ${_bashlyk_pathPid} not created..."; return -1'
-  #_bashlyk_apathClean+=" ${_bashlyk_pathPid}"
+  mkdir -p ${_bashlyk_sRun} \
+   || eval 'udfWarn "Warn: path for PIDs ${_bashlyk_sRun} not created..."; return -1'
+  #_bashlyk_apathClean+=" ${_bashlyk_sRun}"
   _bashlyk_fnPid=${_bashlyk_fnPidA}
  else
   fnPid=${_bashlyk_fnPid0}
@@ -75,10 +78,8 @@ udfClean() {
  return $?
 }
 #
-# main section
-#
-#Test Block start
-if [ -n "$(echo "${_bashlyk_aTest}" | grep -w pid)" ]; then
+udfLibPid() {
+ [ -z "$(echo "${_bashlyk_sArg}" | grep -w "test\|libpid")" ] && return 0
  echo "--- libpid.sh tests --- start"
  echo "Check udfExitIfAlreadyStarted:"
  udfExitIfAlreadyStarted
@@ -91,8 +92,11 @@ if [ -n "$(echo "${_bashlyk_aTest}" | grep -w pid)" ]; then
  echo "${_bashlyk_fnPid} contain:"
  cat ${_bashlyk_fnPid}
  sleep 1
- udfClean --verbose ${_bashlyk_fnPid} ${_bashlyk_pathPid}
+ udfClean --verbose ${_bashlyk_fnPid} ${_bashlyk_sRun}
  echo "--- libpid.sh tests ---  done"
-fi
-#Test Block end
-true
+ return 0
+}
+#
+# main section
+#
+udfLibPid

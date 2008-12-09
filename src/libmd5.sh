@@ -40,12 +40,10 @@ udfGetPathMd5() {
  md5sum $pathDst/* 2>/dev/null
  cd $pathSrc
  return 0
-} 
+}
 #
-# main section
-#
-# Test Block
-if [ -n "$(echo "${_bashlyk_aTest}" | grep -w md5)" ]; then
+udfLibMd5() {
+ [ -z "$(echo "${_bashlyk_sArg}" | grep -w "test\|libmd5")" ] && return 0
  echo "--- libmd5.sh tests --- start"
  echo "Check udfGetMd5 with string $(uname -a):"
  echo -n "from argument: " && udfGetMd5 $(uname -a)
@@ -59,8 +57,9 @@ if [ -n "$(echo "${_bashlyk_aTest}" | grep -w md5)" ]; then
  echo "Check udfGetPathMd5 with path .:"
  udfGetPathMd5 .
  echo "--- libmd5.sh tests ---  done"
-fi
+ return 0
+}
 #
 # main section
 #
-true
+udfLibMd5

@@ -86,10 +86,9 @@ udfExcludePairFromHash() {
  return 0
 }
 #
-# main section
-#
-#Test Block start
-if [ -n "$(echo "${_bashlyk_aTest}" | grep -w opt)" ]; then
+udfLibOpt() {
+ local s
+ [ -z "$(echo "${_bashlyk_sArg}" | grep -w "test" | grep -w "libopt")" ] && return 0
  echo "--- libopt.sh tests --- start"
  for s in udfGetOpt; do
   echo "check $s with options --_bashlyk_sTest1 $(uname) --_bashlyk_sTest2 --_bashlyk_sTest3 $(udf2_ $(date)) :"
@@ -97,6 +96,9 @@ if [ -n "$(echo "${_bashlyk_aTest}" | grep -w opt)" ]; then
   echo "see variables _bashlyk_sTest1=\"${_bashlyk_sTest1}\" _bashlyk_sTest2=\"${_bashlyk_sTest2}\" _bashlyk_sTest3=\"${_bashlyk_sTest3}\""
  done
  echo "--- libcnf.sh tests ---  done"
-fi
-#Test Block stop
-true
+ return 0
+}
+#
+# main section
+#
+udfLibOpt

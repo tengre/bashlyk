@@ -38,14 +38,15 @@ udfInit() {
    fi
   ;;
  esac
+
  _bashlyk_pathRun="${pathRoot}/${pathRun}"
  _bashlyk_pathLog="${pathRoot}/${pathLog}"
  _bashlyk_pathCnf="${pathRoot}/${pathCnf}"
 
- [ -t "1" ] && _bashlyk_bTerminal=1 || _bashlyk_bTerminal=0
  [ -d "$_bashlyk_pathRun" ] || mkdir -p $_bashlyk_pathRun
  [ -d "$_bashlyk_pathLog" ] || mkdir -p $_bashlyk_pathLog
  [ -d "$_bashlyk_pathCnf" ] || mkdir -p $_bashlyk_pathCnf
+ [ -t "1" ] && _bashlyk_bTerminal=1 || _bashlyk_bTerminal=0
 }
 #
 udfMain() {
@@ -55,6 +56,7 @@ udfMain() {
   local fnLib="${_bashlyk_pathLib}/lib${fn}.sh"
   [ -s $fnLib ] && source $fnLib || eval 'echo "error with $fnLib using"; exit -1'
  done
+ [ $_bashlyk_bTerminal -eq 0 ] && udfSetLog
  return 0
 }
 #

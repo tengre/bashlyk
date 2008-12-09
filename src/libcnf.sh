@@ -49,21 +49,22 @@ udfSetConfig() {
  return 0
 }
 #
-# main section
-#
-#Test Block start
-if [ -n "$(echo "${_bashlyk_aTest}" | grep -w cnf)" ]; then
+udfLibCnf() {
+ [ -z "$(echo "${_bashlyk_sArg}" | grep -w "test\|libcnf")" ] && return 0
+ local s conf="$$.test.cnf.bashlyk.conf"
  echo "--- libcnf.sh tests --- start"
- _bashlyk_confTest="$$.test.cnf.bashlyk.conf"
  for s in udfSetConfig udfGetConfig; do
   sleep 1
   echo "check $s:"
-  $s ${_bashlyk_confTest} "a=b;sDate=\"$(date)\""
+  $s $conf "a=b;sDate=\"$(date)\""
  done
- echo "see ${_bashlyk_confTest}:"
- cat "${_bashlyk_pathCnf}/${_bashlyk_confTest}"
- rm -fv "${_bashlyk_pathCnf}/${_bashlyk_confTest}"
+ echo "see ${conf}:"
+ cat "${_bashlyk_pathCnf}/${conf}"
+ rm -fv "${_bashlyk_pathCnf}/${conf}"
  echo "--- libcnf.sh tests ---  done"
-fi
-#Test Block stop
-true
+ return 0
+}
+#
+# main section
+#
+udfLibCnf
