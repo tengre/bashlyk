@@ -88,7 +88,7 @@ udfExcludePairFromHash() {
 #
 udfLibOpt() {
  local s
- [ -z "$(echo "${_bashlyk_sArg}" | grep -w "test" | grep -w "libopt")" ] && return 0
+ [ -z "$(echo "${_bashlyk_sArg}" | grep -e "--bashlyk-test" | grep -w "opt")" ] && return 0
  echo "--- libopt.sh tests --- start"
  for s in udfGetOpt; do
   echo "check $s with options --_bashlyk_sTest1 $(uname) --_bashlyk_sTest2 --_bashlyk_sTest3 $(udf2_ $(date)) :"

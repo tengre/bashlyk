@@ -5,7 +5,7 @@
 #
 # global variables
 #
-_bashlyk_aBin+=" cut echo md5sum sleep true"
+_bashlyk_aBin+=" cut echo md5sum sleep true "
 #
 # function section
 #
@@ -43,7 +43,7 @@ udfGetPathMd5() {
 }
 #
 udfLibMd5() {
- [ -z "$(echo "${_bashlyk_sArg}" | grep -w "test\|libmd5")" ] && return 0
+ [ -z "$(echo "${_bashlyk_sArg}" | grep -e "--bashlyk-test" | grep -w "md5")" ] && return 0
  echo "--- libmd5.sh tests --- start"
  echo "Check udfGetMd5 with string $(uname -a):"
  echo -n "from argument: " && udfGetMd5 $(uname -a)

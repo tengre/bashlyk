@@ -4,6 +4,7 @@
 /NEWS -text
 /README -text
 src/bashlyk -text
+src/bashlyk.conf -text
 src/libcnf.sh -text
 src/liblog.sh -text
 src/libmd5.sh -text

@@ -2,7 +2,7 @@
 #
 # $Id$
 #
-[ -s /etc/bashlyk/bashlyk.conf ] && source /etc/bashlyk/bashlyk.conf
+[ -s /etc/bashlyk/bashlyk.conf ] && . /etc/bashlyk/bashlyk.conf
 #
 # global variables
 #
@@ -14,27 +14,26 @@ _bashlyk_pathLib=${_bashlyk_pathLib:="/usr/share/bashlyk"}
 #
 udfInit() {
  local pathCnf pathRoot pathRun pathLog sUser sHome
- _bashlyk_sId=${_bashlyk:="bashlyk"}
- pathCnf="etc"
- pathLog="var/log"
- pathRun="var/run"
+ _bashlyk_sId=${_bashlyk:-bashlyk}
+ pathCnf="etc/${_bashlyk}"
+ pathLog="var/log/${_bashlyk}"
+ pathRun="var/run/${_bashlyk}"
  sUser=$(ps -p $$ -o user=)
  case $sUser in
   'root')
    pathRoot=''
-   pathCnf+="/${_bashlyk_sId}"
   ;;
   '')
-   pathRoot="/tmp/$$_$USER/.${_bashlyk_sId}"
+   pathRoot="/tmp/$$_$USER/.bashlyk"
   ;;
   *)
    if [ -z "$HOME" -o ! -O "$HOME" ]; then
     sHome=$(getent passwd ${sUser} | cut -d ":" -f 6)
     [ -n "$sHome" -a -d "$sHome" -a -O "$sHome" ] \
-     && pathRoot="${sHome}/.${_bashlyk_sId}"      \
-     || pathRoot="/tmp/$$_$sUser/.${_bashlyk_sId}"
+     && pathRoot="${sHome}/.bashlyk" \
+     || pathRoot="/tmp/$$_$sUser/.bashlyk"
    else
-    pathRoot="${HOME}/.${_bashlyk_sId}"
+    pathRoot="${HOME}/.bashlyk"
    fi
   ;;
  esac
@@ -54,7 +53,7 @@ udfMain() {
  local fn
  for fn in $(echo ${_bashlyk_aLib} | tr ',' ' '); do
   local fnLib="${_bashlyk_pathLib}/lib${fn}.sh"
-  [ -s $fnLib ] && source $fnLib || eval 'echo "error with $fnLib using"; exit -1'
+  [ -s $fnLib ] && . $fnLib || eval 'echo "error with $fnLib using"; exit -1'
  done
  [ $_bashlyk_bTerminal -eq 0 ] && udfSetLog
  return 0

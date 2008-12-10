@@ -11,17 +11,12 @@
 # global variables
 #
 _bashlyk_aBin+=" cat date echo grep head mkdir ps rm sed sleep"
-_bashlyk_afnClean=
-_bashlyk_apathClean=
+: ${_bashlyk_afnClean:=}
+: ${_bashlyk_apathClean:=}
+: ${_bashlyk_fnPid:=}
+: ${_bashlyk_fnSock:=}
 : ${_bashlyk_s0:=$(basename $0)}
 : ${_bashlyk_pathRun:=/tmp}
-: ${_bashlyk_md5Id:=$(udfGetMd5 ${_bashlyk_s0} $*)}
-: ${_bashlyk_sRun:="${_bashlyk_pathRun}/${_bashlyk_s0}"}
-: ${_bashlyk_fnPid0:="${_bashlyk_sRun}.pid"}
-: ${_bashlyk_fnPidA:="${_bashlyk_sRun}/${_bashlyk_md5Id}.pid"}
-: ${_bashlyk_fnSock0:="${_bashlyk_sRun}.${$}.socket"}
-: ${_bashlyk_fnSockA:="${_bashlyk_sRun}/${_bashlyk_md5Id}.${$}.socket"}
-: ${_bashlyk_pathLib:=$(pwd)}
 : ${_bashlyk_sArg:=$*}
 #
 # function section
@@ -35,26 +30,22 @@ udfCheckStarted() {
 }
 
 udfSetPid() {
- local fnPid
- if [ -n "$1" -a "$1" == "-a" ]; then
-  fnPid=${_bashlyk_fnPidA}
-  mkdir -p ${_bashlyk_sRun} \
-   || eval 'udfWarn "Warn: path for PIDs ${_bashlyk_sRun} not created..."; return -1'
-  #_bashlyk_apathClean+=" ${_bashlyk_sRun}"
-  _bashlyk_fnPid=${_bashlyk_fnPidA}
- else
-  fnPid=${_bashlyk_fnPid0}
-  _bashlyk_fnPid=${_bashlyk_fnPid0}
- fi
- #_bashlyk_afnClean+=" $fnPid"
- [ -f "$fnPid" ] && local pid=$(head -n 1 ${fnPid})
+ local fnPid pid
+ [ -n "$_bashlyk_sArg" ] \
+  && fnPid="${_bashlyk_pathRun}/$(udfGetMd5 ${_bashlyk_s0} ${_bashlyk_sArg}).pid" \
+  || fnPid="${_bashlyk_pathRun}/${_bashlyk_s0}.pid"
+ mkdir -p ${_bashlyk_pathRun} \
+  || eval 'udfWarn "Warn: path for PIDs ${_bashlyk_pathRun} not created..."; return -1'
+ [ -f "$fnPid" ] && pid=$(head -n 1 ${fnPid})
  if [ -n "$pid" ]; then
   udfCheckStarted $pid ${_bashlyk_s0} ${_bashlyk_sArg} \
-   && eval 'udfLog "$0 : Already started with pid = $pid"; return 1'
+   && eval 'echo "$0 : Already started with pid = $pid"; return 1'
  fi
  echo $$ > ${fnPid} \
  || eval 'udfWarn "Warn: pid file $fnPid not created..."; return -1'
- echo "$0 ${_bashlyk_sArg}" >> ${fnPid}
+ echo "$0 ${_bashlyk_sArg}" >> $fnPid
+ _bashlyk_fnPid=$fnPid
+ udfCleanQueue $fnPid
  return 0
 }
 
@@ -79,20 +70,21 @@ udfClean() {
 }
 #
 udfLibPid() {
- [ -z "$(echo "${_bashlyk_sArg}" | grep -w "test\|libpid")" ] && return 0
+ [ -z "$(echo "${_bashlyk_sArg}" | grep -e "--bashlyk-test" | grep -w "pid")" ] && return 0
+ local sArg="${_bashlyk_sArg}"
  echo "--- libpid.sh tests --- start"
- echo "Check udfExitIfAlreadyStarted:"
- udfExitIfAlreadyStarted
- echo "${_bashlyk_fnPid} contain:"
- cat ${_bashlyk_fnPid}
- sleep 1
- udfClean --verbose ${_bashlyk_fnPid}
  echo "Check udfExitIfAlreadyStarted for full command line:"
  udfExitIfAlreadyStarted -a
  echo "${_bashlyk_fnPid} contain:"
  cat ${_bashlyk_fnPid}
  sleep 1
- udfClean --verbose ${_bashlyk_fnPid} ${_bashlyk_sRun}
+ echo "Check udfExitIfAlreadyStarted:"
+ _bashlyk_sArg=
+ udfExitIfAlreadyStarted
+ _bashlyk_sArg="$sArg"
+ echo "${_bashlyk_fnPid} contain:"
+ cat ${_bashlyk_fnPid}
+ sleep 1
  echo "--- libpid.sh tests ---  done"
  return 0
 }
