@@ -125,8 +125,8 @@ udfFinally() {
 udfSetLogSocket() {
  local fnSock
  [ -n "$_bashlyk_sArg" ] \
-  && fnSock="${_bashlyk_pathRun}/$(udfGetMd5 ${_bashlyk_s0} ${_bashlyk_sArg}).socket" \
-  || fnSock="${_bashlyk_pathRun}/${_bashlyk_s0}.socket"
+  && fnSock="${_bashlyk_pathRun}/$(udfGetMd5 ${_bashlyk_s0} ${_bashlyk_sArg}).${$}.socket" \
+  || fnSock="${_bashlyk_pathRun}/${_bashlyk_s0}.${$}.socket"
  mkdir -p ${_bashlyk_pathRun} \
   || eval 'udfWarn "Warn: path for Sockets ${_bashlyk_sRun} not created..."; return -1'
  [ -a $fnSock ] && rm -f $fnSock
