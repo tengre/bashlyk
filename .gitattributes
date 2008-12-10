@@ -1,8 +1,11 @@
 * text=auto !eol
 /AUTHORS -text
 /ChangeLog -text
+/Makefile.am -text
 /NEWS -text
 /README -text
+/configure.in -text
+src/Makefile.am -text
 src/bashlyk -text
 src/bashlyk.conf -text
 src/libcnf.sh -text

@@ -1,0 +1,7 @@
+##
+## $Id$
+##
+
+AC_INIT([src/bashlyk])
+AM_INIT_AUTOMAKE([bashlyk], [1.36])
+AC_OUTPUT([Makefile src/Makefile])

@@ -1,0 +1,7 @@
+##
+## $Id$
+##
+
+SUBDIRS = src
+DESTDIR = 
+
