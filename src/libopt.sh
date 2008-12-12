@@ -61,7 +61,8 @@ udfSetOptHash() {
  local sMask confTmp iRC
  sMask=$(umask)
  umask 0077
- confTmp=$(mktemp -t "${_bashlyk_s0}.conf.XXXXXXXX") && {
+ confTmp=$(mktemp -t "${_bashlyk_s0}.XXXXXXXX") && {
+  udfCleanQueue $confTmp
   udfSetConfig $confTmp "$*"
   udfGetConfig $confTmp
   rm -f $confTmp >/dev/null 2>&1
