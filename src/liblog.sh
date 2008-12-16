@@ -110,6 +110,45 @@ udfIsTerm() {
  [ -t "$fd" ] && return 0 || return 1
 }
 #
+udfOnTrap() {
+ local s
+ #
+ for s in ${_bashlyk_ajobClean}; do
+  kill $s 2>/dev/null
+ done
+ #
+ for s in ${_bashlyk_afnClean}; do
+  rm -f $s
+ done
+ #
+ for s in ${_bashlyk_apathClean}; do
+  rmdir $s 2>/dev/null
+ done
+ #
+ return 0
+}
+#
+udfCleanFileQueue() {
+ [ -n "$1" ] || return 0
+ _bashlyk_afnClean+=" $*"
+ echo "clean file ${_bashlyk_afnClean}"
+ trap "udfOnTrap" 0 1 2 5 15
+}
+#
+udfCleanPathQueue() {
+ [ -n "$1" ] || return 0
+ _bashlyk_apathClean+=" $*"
+ echo "clean path ${_bashlyk_apathClean}"
+ trap "udfOnTrap" 0 1 2 5 15
+}
+#
+udfCleanJobQueue() {
+ [ -n "$1" ] || return 0
+ _bashlyk_ajobClean+=" $*"
+ echo "clean job ${_bashlyk_ajobClean}"
+ trap "udfOnTrap" 0 1 2 5 15
+}
+#
 udfCleanQueue() {
  [ -n "$1" ] || return 0
  _bashlyk_afnClean+=" $*"
