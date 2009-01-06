@@ -8,7 +8,7 @@
 #
 # global variables
 #
-_bashlyk_aBin+=" basename date echo hostname false printf logger mail mkfifo sleep tee true jobs "
+_bashlyk_aBin+=" echo "
 #
 udfXml() {
  [ -n "$1" ] || return 1
