@@ -14,3 +14,4 @@ src/libmd5.sh -text
 src/libopt.sh -text
 src/libpid.sh -text
 src/libppp.sh -text
+src/libxml.sh -text

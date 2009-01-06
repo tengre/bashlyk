@@ -9,17 +9,19 @@
 #
 # global variables
 #
-_bashlyk_aBin+=" basename date echo hostname false printf logger mail mkfifo sleep tee true "
+_bashlyk_aBin+=" basename date echo hostname false printf logger mail mkfifo sleep tee true jobs "
 #
 : ${_bashlyk_afnClean:=}
 : ${_bashlyk_apathClean:=}
+: ${_bashlyk_ajobClean:=}
+: ${_bashlyk_apidClean:=}
 : ${HOSTNAME:=$(hostname)}
 : ${_bashlyk_bUseSyslog:=0}
 : ${_bashlyk_pathLog:=/tmp}
 : ${_bashlyk_s0:=$(basename $0)}
 : ${_bashlyk_sId:=$(basename $0 .sh)}
 : ${_bashlyk_pathRun:=/tmp}
-: ${_bashlyk_fnSock:=}
+: ${_bashlyk_fnLogSock:=}
 : ${_bashlyk_emailRcpt:=postmaster}
 : ${_bashlyk_iStartTimeStamp:=$(/bin/date "+%s")}
 : ${_bashlyk_emailSubj:="$HOSTNAME::$USER::${_bashlyk_s0}"}
@@ -117,6 +119,10 @@ udfOnTrap() {
   kill $s 2>/dev/null
  done
  #
+ for s in ${_bashlyk_apidClean}; do
+  kill $s 2>/dev/null
+ done
+ #
  for s in ${_bashlyk_afnClean}; do
   rm -f $s
  done
@@ -128,31 +134,38 @@ udfOnTrap() {
  return 0
 }
 #
-udfCleanFileQueue() {
+udfAddFile2Clean() {
  [ -n "$1" ] || return 0
  _bashlyk_afnClean+=" $*"
- echo "clean file ${_bashlyk_afnClean}"
+ #echo "clean file ${_bashlyk_afnClean}"
  trap "udfOnTrap" 0 1 2 5 15
 }
 #
-udfCleanPathQueue() {
+udfAddPath2Clean() {
  [ -n "$1" ] || return 0
  _bashlyk_apathClean+=" $*"
- echo "clean path ${_bashlyk_apathClean}"
+ #echo "clean path ${_bashlyk_apathClean}"
  trap "udfOnTrap" 0 1 2 5 15
 }
 #
-udfCleanJobQueue() {
+udfAddJob2Clean() {
  [ -n "$1" ] || return 0
  _bashlyk_ajobClean+=" $*"
- echo "clean job ${_bashlyk_ajobClean}"
+ #echo "clean job ${_bashlyk_ajobClean}"
+ trap "udfOnTrap" 0 1 2 5 15
+}
+#
+udfAddPid2Clean() {
+ [ -n "$1" ] || return 0
+ _bashlyk_apidClean+=" $*"
+ #echo "clean job ${_bashlyk_apidClean}"
  trap "udfOnTrap" 0 1 2 5 15
 }
 #
 udfCleanQueue() {
  [ -n "$1" ] || return 0
  _bashlyk_afnClean+=" $*"
- trap "rm -f ${_bashlyk_afnClean}" 0 1 2 5 15
+ trap "udfOnTrap" 0 1 2 5 15
 }
 #
 udfFinally() {
@@ -170,14 +183,15 @@ udfSetLogSocket() {
   || eval 'udfWarn "Warn: path for Sockets ${_bashlyk_sRun} not created..."; return -1'
  [ -a $fnSock ] && rm -f $fnSock
  if mkfifo -m 0600 $fnSock >/dev/null 2>&1; then
-  ( cat $fnSock | udfLog - )&
+  ( udfLog - < $fnSock )&
+  #udfAddPid2Clean "$!"
   exec >>$fnSock 2>&1
  else
   udfWarn "Warn: Socket $fnSock not created..."
   exec >>$_bashlyk_fnLog 2>&1
  fi
- _bashlyk_fnSock=$fnSock
- udfCleanQueue $fnSock
+ _bashlyk_fnLogSock=$fnSock
+ udfAddFile2Clean $fnSock
  return 0
 }
 #

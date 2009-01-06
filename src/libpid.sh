@@ -45,7 +45,7 @@ udfSetPid() {
  || eval 'udfWarn "Warn: pid file $fnPid not created..."; return -1'
  echo "$0 ${_bashlyk_sArg}" >> $fnPid
  _bashlyk_fnPid=$fnPid
- udfCleanQueue $fnPid
+ udfAddFile2Clean $fnPid
  return 0
 }
 
@@ -74,7 +74,7 @@ udfLibPid() {
  local sArg="${_bashlyk_sArg}"
  echo "--- libpid.sh tests --- start"
  echo "Check udfExitIfAlreadyStarted for full command line:"
- udfExitIfAlreadyStarted -a
+ udfExitIfAlreadyStarted
  echo "${_bashlyk_fnPid} contain:"
  cat ${_bashlyk_fnPid}
  sleep 1

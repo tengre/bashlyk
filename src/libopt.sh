@@ -62,7 +62,7 @@ udfSetOptHash() {
  sMask=$(umask)
  umask 0077
  confTmp=$(mktemp -t "${_bashlyk_s0}.XXXXXXXX") && {
-  udfCleanQueue $confTmp
+  udfAddFile2Clean $confTmp
   udfSetConfig $confTmp "$*"
   udfGetConfig $confTmp
   rm -f $confTmp >/dev/null 2>&1
@@ -73,9 +73,7 @@ udfSetOptHash() {
 }
 #
 udfGetOpt() {
- local s=$(udfGetOptHash $*)
- [ -n "$s" ] && udfSetOptHash $s
- return 0
+ udfSetOptHash $(udfGetOptHash $*)
 }
 #
 udfExcludePairFromHash() {

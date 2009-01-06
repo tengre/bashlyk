@@ -17,12 +17,16 @@ _bashlyk_aBin+=" basename cat date dirname echo grep pwd rm sleep "
 udfGetConfig() {
  [ -n "$1" ] || return -1
  #
- local aconf chIFS conf fn i=0 pathCnf=$_bashlyk_pathCnf
+ local aconf chIFS conf fn i=0 pathCnf=$_bashlyk_pathCnf s
  #
  [ "$1"  = "$(basename $1)" -a -f ${pathCnf}/$1 ] || pathCnf=
  [ "$1"  = "$(basename $1)" -a -f $1 ] && pathCnf=$(pwd)
  [ "$1" != "$(basename $1)" -a -f $1 ] && pathCnf=$(dirname $1)
- [ -n "$pathCnf" ] || return -1
+ #
+ if [ -n "$pathCnf" ]; then
+  [ -n "$_bashlyk" ]   && s="/${_bashlyk}"   || s=
+  [ -f "/etc${s}/$1" ] && pathCnf="/etc${s}" || return -1
+ fi
  #
  chIFS=$IFS
  IFS='.'
@@ -32,7 +36,7 @@ udfGetConfig() {
  IFS=$chIFS
  conf=
  for ((i=$((${#aconf[*]}-1)); $i; --i)); do
-  [ -n "$conf" ]                         && conf="${aconf[$i]}.${conf}" || conf=${aconf[$i]}
+  [ -n "$conf" ]                  && conf="${aconf[$i]}.${conf}" || conf=${aconf[$i]}
   [ -s "${pathCnf}/${conf}" ]     && . "${pathCnf}/${conf}"
  done
  return 0
@@ -61,7 +65,7 @@ udfLibCnf() {
  local s conf="$$.testlib.conf"
  echo "--- libcnf.sh tests --- start"
  printf "#\n# Relative path to config config file (${_bashlyk_pathCnf}/${conf})\n#\n"
- udfCleanQueue "${_bashlyk_pathCnf}/${conf}"
+ udfAddFile2Clean "${_bashlyk_pathCnf}/${conf}"
  for s in udfSetConfig udfGetConfig; do
   echo "check $s:"
   $s $conf "a=b;sDate=\"$(date)\""
@@ -71,7 +75,7 @@ udfLibCnf() {
  cat "${_bashlyk_pathCnf}/${conf}"
  #
  conf=$(mktemp -t "XXXXXXXX.${conf}") || udfThrow "Error: temporary file $conf do not created..."
- udfCleanQueue $conf
+ udfAddFile2Clean $conf
  printf "#\n# Absolute path to config file ($conf))\n#\n"
  for s in udfSetConfig udfGetConfig; do
   sleep 1
