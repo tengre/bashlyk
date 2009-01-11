@@ -17,6 +17,13 @@ udfXml() {
  echo "<${s[*]}>${*}</${s[0]}>"
 }
 #
+_() {
+ [ -n "$1" ] || return 1
+ local s=($1)
+ shift
+ echo "<${s[*]}>${*}</${s[0]}>"
+}
+
 #
 #
 udfLibXml() {
