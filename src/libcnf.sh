@@ -23,7 +23,7 @@ udfGetConfig() {
  [ "$1"  = "$(basename $1)" -a -f $1 ] && pathCnf=$(pwd)
  [ "$1" != "$(basename $1)" -a -f $1 ] && pathCnf=$(dirname $1)
  #
- if [ -n "$pathCnf" ]; then
+ if [ -z "$pathCnf" ]; then
   [ -n "$_bashlyk" ]   && s="/${_bashlyk}"   || s=
   [ -f "/etc${s}/$1" ] && pathCnf="/etc${s}" || return -1
  fi
