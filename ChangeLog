@@ -3,8 +3,8 @@
 Sun, 11 Jan 2009 16:52:34 +0400
 	New upstream release
 	Version 1.39
- - Добавлена библиотека для формирования xml контента (libxml.sh).
- - Добавлены новые функции для очистки временных ресурсов в библиотеку liblog.sh: udfOnTrap, udfClean{Job,File, Path}Queue
+ - Введена функция формирования xml контента ('udfXml' или '_' ) в libxml.sh.
+ - Добавлены новые функции для очистки временных ресурсов в библиотеку liblog.sh: udfOnTrap, udfAdd{Job,File,Path,Pid}2Clean
  - Изменена логика поиска файла конфигурации - при отсутствии по пути $_bashlyk_pathCnf, выполняется поиск в каталоге /etc
 
 
