@@ -27,7 +27,7 @@ _() {
 #
 #
 udfLibXml() {
- #[ -z "$(echo "${_bashlyk_sArg}" | grep -e "--bashlyk-test" | grep -w "xml")" ] && return 0
+ [ -z "$(echo "${_bashlyk_sArg}" | grep -e "--bashlyk-test" | grep -w "xml")" ] && return 0
  echo "--- libxml.sh tests --- start"
  echo "Check udfXml for xml generating"
  echo 'Code:   $(udfXml entry $(udfXml input echo test)$(udfXml variable sTest))'
