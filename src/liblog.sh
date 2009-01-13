@@ -180,7 +180,7 @@ udfSetLogSocket() {
   && fnSock="${_bashlyk_pathRun}/$(udfGetMd5 ${_bashlyk_s0} ${_bashlyk_sArg}).${$}.socket" \
   || fnSock="${_bashlyk_pathRun}/${_bashlyk_s0}.${$}.socket"
  mkdir -p ${_bashlyk_pathRun} \
-  || eval 'udfWarn "Warn: path for Sockets ${_bashlyk_sRun} not created..."; return -1'
+  || eval 'udfWarn "Warn: path for Sockets ${_bashlyk_pathRun} not created..."; return -1'
  [ -a $fnSock ] && rm -f $fnSock
  if mkfifo -m 0600 $fnSock >/dev/null 2>&1; then
   ( udfLog - < $fnSock )&
