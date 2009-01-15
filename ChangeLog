@@ -1,4 +1,7 @@
-# $Id$
+Thu, 15 Jan 2009 10:36:31 +0400
+	New upstream release
+	Version 1.40
+ - Добавлена переменная $_bashlyk_pathPrefix для логики поиска файла конфигурации
 
 Sun, 11 Jan 2009 16:52:34 +0400
 	New upstream release

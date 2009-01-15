@@ -17,16 +17,13 @@ _bashlyk_aBin+=" basename cat date dirname echo grep pwd rm sleep "
 udfGetConfig() {
  [ -n "$1" ] || return -1
  #
- local aconf chIFS conf fn i=0 pathCnf=$_bashlyk_pathCnf s
+ local aconf chIFS conf fn i=0 pathCnf=$_bashlyk_pathCnf
  #
  [ "$1"  = "$(basename $1)" -a -f ${pathCnf}/$1 ] || pathCnf=
  [ "$1"  = "$(basename $1)" -a -f $1 ] && pathCnf=$(pwd)
  [ "$1" != "$(basename $1)" -a -f $1 ] && pathCnf=$(dirname $1)
  #
- if [ -z "$pathCnf" ]; then
-  [ -n "$_bashlyk" ]   && s="/${_bashlyk}"   || s=
-  [ -f "/etc${s}/$1" ] && pathCnf="/etc${s}" || return -1
- fi
+ [ -z "$pathCnf" -a -f "/etc${_bashlyk_pathPrefix}/$1" ] && pathCnf="/etc${_bashlyk_pathPrefix}" || return -1
  #
  chIFS=$IFS
  IFS='.'

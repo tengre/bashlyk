@@ -3,5 +3,5 @@
 ##
 
 AC_INIT([src/bashlyk])
-AM_INIT_AUTOMAKE([bashlyk], [1.38])
+AM_INIT_AUTOMAKE([bashlyk], [1.40])
 AC_OUTPUT([Makefile src/Makefile])

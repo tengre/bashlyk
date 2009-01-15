@@ -13,12 +13,12 @@ _bashlyk_pathLib=${_bashlyk_pathLib:="/usr/share/bashlyk"}
 # function section
 #
 udfInit() {
- local pathCnf pathRoot pathRun pathLog sUser sHome s
+ local pathCnf pathRoot pathRun pathLog sUser sHome 
  _bashlyk_sId=${_bashlyk:-bashlyk}
- [ -n "$_bashlyk" ] && s="/${_bashlyk}" || s=
- pathCnf="etc${s}"
- pathLog="var/log${s}"
- pathRun="var/run${s}"
+ [ -n "$_bashlyk" ] && _bashlyk_pathPrefix="/${_bashlyk}" || _bashlyk_pathPrefix=
+ pathCnf="etc${_bashlyk_pathPrefix}"
+ pathLog="var/log${_bashlyk_pathPrefix}"
+ pathRun="var/run${_bashlyk_pathPrefix}"
  sUser=$(ps -p $$ -o user=)
  case $sUser in
   'root')
