@@ -21,6 +21,7 @@ _bashlyk_aBin+=" basename date echo hostname false printf logger mail mkfifo sle
 : ${_bashlyk_s0:=$(basename $0)}
 : ${_bashlyk_sId:=$(basename $0 .sh)}
 : ${_bashlyk_pathRun:=/tmp}
+: ${_bashlyk_pidLogSock:=}
 : ${_bashlyk_fnLogSock:=}
 : ${_bashlyk_emailRcpt:=postmaster}
 : ${_bashlyk_iStartTimeStamp:=$(/bin/date "+%s")}
@@ -131,6 +132,10 @@ udfOnTrap() {
   rmdir $s 2>/dev/null
  done
  #
+ [ -n "${_bashlyk_pidLogSock}" ] && {
+  exec >/dev/null 2>&1
+  wait ${_bashlyk_pidLogSock}
+ }
  return 0
 }
 #
@@ -184,7 +189,7 @@ udfSetLogSocket() {
  [ -a $fnSock ] && rm -f $fnSock
  if mkfifo -m 0600 $fnSock >/dev/null 2>&1; then
   ( udfLog - < $fnSock )&
-  #udfAddPid2Clean "$!"
+  _bashlyk_pidLogSock=$!
   exec >>$fnSock 2>&1
  else
   udfWarn "Warn: Socket $fnSock not created..."
