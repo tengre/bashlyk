@@ -1,3 +1,8 @@
+Mon, 27 Apr 2009 14:31:57 +0500
+	New upstream release
+	Version 1.41
+ - Добавлена переменная $_bashlyk_pidLogSock для завершения дочернего лог-процесса через команду wait <pid>
+
 Thu, 15 Jan 2009 10:36:31 +0400
 	New upstream release
 	Version 1.40
