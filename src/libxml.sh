@@ -1,3 +1,7 @@
+#****h* bashlyk/XML
+# FUNCTION
+#   bashlyk xml library
+#***
 #
 # $Id$
 #
