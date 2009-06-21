@@ -1,0 +1,11 @@
+options:
+    --src ./src
+    --doc ./doc
+    --html
+    --multidoc
+    --sections
+    --tell
+    --toc
+    --index
+ignore files:
+    .svn
