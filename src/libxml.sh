@@ -84,10 +84,12 @@ udfLibXml() {
   | grep -e "--bashlyk-test" | grep -w "xml")" ] \
   && return 0
  echo "--- libxml.sh tests --- start"
- echo "Check udfXml for XML code generating generating"
- echo 'Code:   $(udfXml entry $(udfXml input echo test)$(udfXml variable sTest))'
- echo "Result: $(udfXml entry $(udfXml input echo test)$(udfXml variable sTest))"
- echo "Check _ for XML code generating generating"
+ echo "Check udfXml for XML code generating generating:"
+ echo 'Code:   $(udfXml entry $(udfXml input echo test)'\
+'$(udfXml variable sTest))'
+ echo "Result: $(udfXml entry $(udfXml input echo test)\
+$(udfXml variable sTest))"
+ echo "Check _ for XML code generating generating:"
  echo 'Code:   $(_ entry $(_ input echo test)$(_ variable sTest))'
  echo "Result: $(_ entry $(_ input echo test)$(_ variable sTest))"
  echo "--- libxml.sh tests ---  done"
