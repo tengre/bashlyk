@@ -9,7 +9,7 @@
 #
 # global variables
 #
-_bashlyk_aBin+=" echo getopt grep mktemp tr sed umask "
+_bashlyk_aRequiredCmd_opt="echo getopt grep mktemp tr sed umask"
 #
 # function section
 #

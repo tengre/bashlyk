@@ -9,7 +9,8 @@
 #
 # global variables
 #
-_bashlyk_aBin+=" basename date echo hostname false printf logger mail mkfifo sleep tee true jobs "
+_bashlyk_aRequiredCmd_log="basename date echo hostname false printf logger \
+ mail mkfifo sleep tee true jobs"
 #
 : ${_bashlyk_afnClean:=}
 : ${_bashlyk_apathClean:=}
@@ -44,7 +45,8 @@ udfLogger() {
  local bSysLog=0
  local bTermin=0
  local sTagLog="${_bashlyk_s0}[$(printf "%05d" $$)]"
- [ -z "$_bashlyk_bUseSyslog" -o ${_bashlyk_bUseSyslog} -eq 0 ] && bSysLog=0 || bSysLog=1
+ [ -z "$_bashlyk_bUseSyslog" -o ${_bashlyk_bUseSyslog} -eq 0 ] \
+  && bSysLog=0 || bSysLog=1
  if [ -z "$_bashlyk_bTerminal" ]; then
   udfIsTerm && bTermin=1 || bTermin=0
  else

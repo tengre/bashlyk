@@ -10,7 +10,7 @@
 #
 # global variables
 #
-_bashlyk_aBin+=" cat date echo grep head mkdir ps rm sed sleep"
+_bashlyk_aRequiredCmd_pid="cat date echo grep head mkdir ps rm sed sleep"
 : ${_bashlyk_afnClean:=}
 : ${_bashlyk_apathClean:=}
 : ${_bashlyk_fnPid:=}

@@ -9,7 +9,7 @@
 #
 # global variables
 #
-_bashlyk_aBin+=" basename cat date dirname echo grep pwd rm sleep "
+_bashlyk_aRequiredCmd_cnf="basename cat date dirname echo grep pwd rm sleep"
 : ${_bashlyk_pathCnf:=$(pwd)}
 #
 # function section
@@ -24,7 +24,8 @@ udfGetConfig() {
  [ "$1" != "$(basename $1)" -a -f $1 ] && pathCnf=$(dirname $1)
  #
  if [ -z "$pathCnf" ]; then
-  [ -f "/etc${_bashlyk_pathPrefix}/$1" ] && pathCnf="/etc${_bashlyk_pathPrefix}" || return -1
+  [ -f "/etc${_bashlyk_pathPrefix}/$1" ] \
+   && pathCnf="/etc${_bashlyk_pathPrefix}" || return -1
  fi
  #
  chIFS=$IFS
@@ -35,8 +36,8 @@ udfGetConfig() {
  IFS=$chIFS
  conf=
  for ((i=$((${#aconf[*]}-1)); $i; --i)); do
-  [ -n "$conf" ]                  && conf="${aconf[$i]}.${conf}" || conf=${aconf[$i]}
-  [ -s "${pathCnf}/${conf}" ]     && . "${pathCnf}/${conf}"
+  [ -n "$conf" ] && conf="${aconf[$i]}.${conf}" || conf=${aconf[$i]}
+  [ -s "${pathCnf}/${conf}" ] && . "${pathCnf}/${conf}"
  done
  return 0
 }

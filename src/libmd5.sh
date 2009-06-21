@@ -5,7 +5,7 @@
 #
 # global variables
 #
-_bashlyk_aBin+=" cut echo md5sum sleep true "
+_bashlyk_aRequiredCmd_md5="cut echo md5sum sleep true"
 #
 # function section
 #
