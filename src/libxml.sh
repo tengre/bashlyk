@@ -2,16 +2,16 @@
 # $Id$
 #
 #****h* bashlyk/libxml
-# DESCRIPTION
-#   bashlyk XML library
-# AUTHOR
-#   Damir Sh. Yakupov <yds@bk.ru>
+#  DESCRIPTION
+#    bashlyk XML library
+#  AUTHOR
+#    Damir Sh. Yakupov <yds@bk.ru>
 #******
 #
 #****v* bashlyk/libxml/$_BASHLYK_LIBXML
-# DESCRIPTION
-#   If this global variable defined then library already linked
-# SOURCE
+#  DESCRIPTION
+#    If this global variable defined then library already linked
+#  SOURCE
 [ -n "$_BASHLYK_LIBXML" ] && return 0 || _BASHLYK_LIBXML=1
 #******
 #
