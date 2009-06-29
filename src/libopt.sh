@@ -94,7 +94,7 @@ udfLibOpt() {
   $s "_bashlyk_sTest1:,_bashlyk_sTest2,_bashlyk_sTest3:" --_bashlyk_sTest1 $(uname) --_bashlyk_sTest2 --_bashlyk_sTest3 $(udf2_ $(date))
   echo "see variables _bashlyk_sTest1=\"${_bashlyk_sTest1}\" _bashlyk_sTest2=\"${_bashlyk_sTest2}\" _bashlyk_sTest3=\"${_bashlyk_sTest3}\""
  done
- echo "--- libcnf.sh tests ---  done"
+ echo "--- libopt.sh tests ---  done"
  return 0
 }
 #

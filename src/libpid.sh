@@ -4,7 +4,7 @@
 #****h* bashlyk/libpid
 #  DESCRIPTION
 #    bashlyk PID library
-#    handling processes
+#    Обслуживание процессов
 #  AUTHOR
 #    Damir Sh. Yakupov <yds@bk.ru>
 #******
@@ -18,7 +18,8 @@
 #
 #****** bashlyk/libpid
 # DESCRIPTION
-#   Link section. Here linked depended library
+#   Link section
+#   Здесь указываются модули, код которых используется данной библиотекой
 # SOURCE
 [ -s "${_bashlyk_pathLib}/liblog.sh" ] && . "${_bashlyk_pathLib}/liblog.sh"
 [ -s "${_bashlyk_pathLib}/libmd5.sh" ] && . "${_bashlyk_pathLib}/libmd5.sh"
@@ -26,14 +27,14 @@
 #
 #****v* bashlyk/libpid/$_bashlyk_aRequiredCmd_pid
 #  DESCRIPTION
-#    Global variable for used system command list by this library
+#    Глобальная переменная, отражающая список используемых в данном модуле внешних утилит
 #  SOURCE
 _bashlyk_aRequiredCmd_pid="cat date echo grep head mkdir ps rm sed sleep"
 #******
 #
 #****v*  bashlyk/libpid
 #  DESCRIPTION
-#    Global variables init section
+#    Блок инициализации глобальных переменных
 #  SOURCE
 : ${_bashlyk_afnClean:=}
 : ${_bashlyk_apathClean:=}
@@ -48,11 +49,12 @@ _bashlyk_aRequiredCmd_pid="cat date echo grep head mkdir ps rm sed sleep"
 #
 #****f* bashlyk/libpid/udfCheckStarted
 #  SYNOPSIS
-#    udfCheckStarted pid [command [args]]
+#    udfCheckStarted PID [command [args]]
 #  DESCRIPTION
-#    Checking command and pid 
+#    Проверка наличия процесса с PID и указанной командной строкой
+#    PID процесса, в котором производится проверка, исключается из рассмотрения
 #  INPUTS
-#    pid     - PID
+#    PID     - PID
 #    command - command
 #    args    - arguments
 #  RETURN VALUE
@@ -75,8 +77,10 @@ udfCheckStarted() {
 #  SYNOPSIS
 #    udfSetPid
 #  DESCRIPTION
-#    Creating PID file for own process with arguments
-#    used global variables $_bashlyk_s0 and $_bashlyk_sArg
+#    Защита от повторного вызова сценария с данными аргументами.
+#    Если такой скрипт не запущен, то создается PID файл.
+#    Причём, если скрипт имеет аргументы, то этот файл создаётся в отдельном подкаталоге
+#    с именем файла в виде md5-хеша командной строки, иначе pid файл создается в самом #    #    каталоге для PID-файлов с именем, производным от имени скрипта.
 #  RETURN VALUE
 #    0 - PID file for command line successfully created
 #    1 - PID file exist and command line process already started
