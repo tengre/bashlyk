@@ -8,14 +8,13 @@
 #  AUTHOR
 #    Damir Sh. Yakupov <yds@bk.ru>
 #******
-#
 #****v* bashlyk/libpid/$_BASHLYK_LIBPID
 #  DESCRIPTION
-#    If this global variable defined then library already linked
+#    Эта глобальная переменная обеспечивает
+#    защиту от повторного использования данного модуля
 #  SOURCE
 [ -n "$_BASHLYK_LIBPID" ] && return 0 || _BASHLYK_LIBPID=1
 #******
-#
 #****** bashlyk/libpid
 # DESCRIPTION
 #   Link section
@@ -24,14 +23,13 @@
 [ -s "${_bashlyk_pathLib}/liblog.sh" ] && . "${_bashlyk_pathLib}/liblog.sh"
 [ -s "${_bashlyk_pathLib}/libmd5.sh" ] && . "${_bashlyk_pathLib}/libmd5.sh"
 #******
-#
 #****v* bashlyk/libpid/$_bashlyk_aRequiredCmd_pid
 #  DESCRIPTION
-#    Глобальная переменная, отражающая список используемых в данном модуле внешних утилит
+#    Эта глобальная переменная должна содержать список
+#    используемых в данном модуле внешних утилит
 #  SOURCE
 _bashlyk_aRequiredCmd_pid="cat date echo grep head mkdir ps rm sed sleep"
 #******
-#
 #****v*  bashlyk/libpid
 #  DESCRIPTION
 #    Блок инициализации глобальных переменных
@@ -44,22 +42,19 @@ _bashlyk_aRequiredCmd_pid="cat date echo grep head mkdir ps rm sed sleep"
 : ${_bashlyk_pathRun:=/tmp}
 : ${_bashlyk_sArg:=$*}
 #******
-#
-# function section
-#
 #****f* bashlyk/libpid/udfCheckStarted
 #  SYNOPSIS
 #    udfCheckStarted PID [command [args]]
 #  DESCRIPTION
-#    Проверка наличия процесса с PID и указанной командной строкой
+#    Проверка наличия процесса с указанными PID и командной строкой
 #    PID процесса, в котором производится проверка, исключается из рассмотрения
 #  INPUTS
 #    PID     - PID
 #    command - command
 #    args    - arguments
 #  RETURN VALUE
-#    0 - command line with PID (exclude self process) exist
-#    1 - command line with PID not exist or self process
+#    0 - Процесс с PID существует для указанной командной строки (command args)
+#    1 - Процесс с PID для проверяемой командной строки не обнаружен.
 #  EXAMPLE
 #    udfCheckStarted $pid $0 $* \
 #    && eval 'echo "$0 : Already started with pid = $pid"; return 1'
@@ -72,7 +67,6 @@ udfCheckStarted() {
  [ -n "$(ps -p $pid -o pid= -o args= | grep -vw $$ | grep -w -e "$cmd" | grep -e "$*" | head -n 1)" ] && return 0 || return 1
 }
 #******
-#
 #****f* bashlyk/libpid/udfSetPid
 #  SYNOPSIS
 #    udfSetPid
@@ -108,14 +102,13 @@ udfSetPid() {
  return 0
 }
 #******
-#
 #****f* bashlyk/libpid/udfExitIfAlreadyStarted
 #  SYNOPSIS
 #    udfExitIfAlreadyStarted
 #  DESCRIPTION
 #    Alias-wrapper for udfSetPid with extended behavior:
 #    If command line process already exist then
-#    started current process with identical command line stopped
+#    this current process with identical command line stopped
 #    else created pid file and current process don`t stopped.
 #  RETURN VALUE
 #    0 - PID file for command line successfully created
@@ -134,7 +127,6 @@ udfExitIfAlreadyStarted() {
  esac
 }
 #******
-#
 #****f* bashlyk/libpid/udfClean
 #  SYNOPSIS
 #    udfClean
@@ -157,7 +149,6 @@ udfClean() {
  return $?
 }
 #******
-#
 #****u* bashlyk/libpid/udfLibPid
 #  SYNOPSIS
 #    udfLibPid --bashlyk-test pid
@@ -187,9 +178,6 @@ udfLibPid() {
  return 0
 }
 #******
-#
-# main section
-#
 #****** bashlyk/libpid
 # DESCRIPTION
 #   Running PID library test unit if $_bashlyk_sArg ($*) contain
