@@ -104,7 +104,7 @@ udfAlias2WSpace() {
 #  OUTPUT
 #   Ассоциативный массив в виде CSV строки
 #  EXAMPLE
-#    udfGetOptHash --uname $(uname) --force 1 
+#    udfGetOptHash uname:,force --uname $(uname) --force
 #    show "uname=Linux;force=1;"
 #  SOURCE
 udfGetOptHash() {
@@ -226,13 +226,18 @@ udfExcludePairFromHash() {
 #    opt            - enable test for this library
 #  SOURCE
 udfLibOpt() {
- local s
+ local s sTest1 sTest2 sTest3
  [ -z "$(echo "${_bashlyk_sArg}" | grep -e "--bashlyk-test" | grep -w "opt")" ] && return 0
  echo "--- libopt.sh tests --- start"
  for s in udfGetOpt; do
-  echo "check $s with options --_bashlyk_sTest1 $(uname) --_bashlyk_sTest2 --_bashlyk_sTest3 $(udfWSpace2Alias $(date)) :"
-  $s "_bashlyk_sTest1:,_bashlyk_sTest2,_bashlyk_sTest3:" --_bashlyk_sTest1 $(uname) --_bashlyk_sTest2 --_bashlyk_sTest3 $(udfWSpace2Alias $(date))
-  echo "see variables _bashlyk_sTest1=\"${_bashlyk_sTest1}\" _bashlyk_sTest2=\"${_bashlyk_sTest2}\" _bashlyk_sTest3=\"${_bashlyk_sTest3}\""
+  echo "check $s with options --sTest1 $(uname) --sTest2\
+ --sTest3 $(udfWSpace2Alias $(date)) :"
+  $s "sTest1:,sTest2,sTest3:" --sTest1 $(uname) --sTest2\
+ --sTest3 $(udfWSpace2Alias $(date))
+  echo "see variables:"
+  echo " sTest1=\"${sTest1}\""
+  echo " sTest2=\"${sTest2}\""
+  echo " sTest3=\"${sTest3}\""
  done
  echo "--- libopt.sh tests ---  done"
  return 0
