@@ -8,29 +8,22 @@
 #  AUTHOR
 #    Damir Sh. Yakupov <yds@bk.ru>
 #******
-#****v* bashlyk/libpid/$_BASHLYK_LIBPID
+#****d* bashlyk/libpid/Require Once
 #  DESCRIPTION
-#    Эта глобальная переменная обеспечивает
+#    Глобальная переменная $_BASHLYK_LIBPID обеспечивает
 #    защиту от повторного использования данного модуля
 #  SOURCE
 [ -n "$_BASHLYK_LIBPID" ] && return 0 || _BASHLYK_LIBPID=1
 #******
-#****** bashlyk/libpid
+#****** bashlyk/libpid/External Modules
 # DESCRIPTION
-#   Link section
+#   Using modules section
 #   Здесь указываются модули, код которых используется данной библиотекой
 # SOURCE
 [ -s "${_bashlyk_pathLib}/liblog.sh" ] && . "${_bashlyk_pathLib}/liblog.sh"
 [ -s "${_bashlyk_pathLib}/libmd5.sh" ] && . "${_bashlyk_pathLib}/libmd5.sh"
 #******
-#****v* bashlyk/libpid/$_bashlyk_aRequiredCmd_pid
-#  DESCRIPTION
-#    Эта глобальная переменная должна содержать список
-#    используемых в данном модуле внешних утилит
-#  SOURCE
-_bashlyk_aRequiredCmd_pid="cat date echo grep head mkdir ps rm sed sleep"
-#******
-#****v*  bashlyk/libpid
+#****v*  bashlyk/libpid/Init section
 #  DESCRIPTION
 #    Блок инициализации глобальных переменных
 #  SOURCE
@@ -41,6 +34,7 @@ _bashlyk_aRequiredCmd_pid="cat date echo grep head mkdir ps rm sed sleep"
 : ${_bashlyk_s0:=$(basename $0)}
 : ${_bashlyk_pathRun:=/tmp}
 : ${_bashlyk_sArg:=$*}
+: ${_bashlyk_aRequiredCmd_pid:="cat date echo grep head mkdir ps rm sed sleep"}
 #******
 #****f* bashlyk/libpid/udfCheckStarted
 #  SYNOPSIS
@@ -178,7 +172,7 @@ udfLibPid() {
  return 0
 }
 #******
-#****** bashlyk/libpid
+#****** bashlyk/libpid/Main section
 # DESCRIPTION
 #   Running PID library test unit if $_bashlyk_sArg ($*) contain
 #   substring "--bashlyk-test pid" - command for test using

@@ -10,33 +10,30 @@
 #  AUTHOR
 #    Damir Sh. Yakupov <yds@bk.ru>
 #******
-#****v* bashlyk/libopt/$_BASHLYK_LIBOPT
+#****d* bashlyk/libopt/Once required
 #  DESCRIPTION
 #    Эта глобальная переменная обеспечивает
 #    защиту от повторного использования данного модуля
 #  SOURCE
 [ -n "$_BASHLYK_LIBOPT" ] && return 0 || _BASHLYK_LIBOPT=1
 #******
-#****** bashlyk/libopt
+#****** bashlyk/libopt/External modules
 #  DESCRIPTION
-#    Link section
+#    Using modules section
 #    Здесь указываются модули, код которых используется данной библиотекой
 #  SOURCE
 [ -s "${_bashlyk_pathLib}/libcnf.sh" ] && . "${_bashlyk_pathLib}/libcnf.sh"
 #******
-#****v* bashlyk/libopt/$_bashlyk_aRequiredCmd_opt
-#  DESCRIPTION
-#    Эта глобальная переменная должна содержать список
-#    используемых в данном модуле внешних утилит
-#  SOURCE
-_bashlyk_aRequiredCmd_opt="echo getopt grep mktemp tr sed umask"
-#******
-#****v*  bashlyk/libopt
+#****v*  bashlyk/libopt/Init section
 #  DESCRIPTION
 #    Блок инициализации глобальных переменных
+#    * $_bashlyk_sArg - аргументы командной строки вызова сценария
+#    * $_bashlyk_sWSpaceAlias - заменяющая пробел последовательность символов
+#    * $_bashlyk_aRequiredCmd_opt - список используемых в данном модуле внешних утилит
 #  SOURCE
 : ${_bashlyk_sArg:=$*}
 : ${_bashlyk_sWSpaceAlias:=___}
+: ${_bashlyk_aRequiredCmd_opt:="echo getopt grep mktemp tr sed umask"}
 #******
 #****f* bashlyk/libopt/udfQuoteIfNeeded
 #  SYNOPSIS
@@ -227,7 +224,8 @@ udfExcludePairFromHash() {
 #  SOURCE
 udfLibOpt() {
  local s sTest1 sTest2 sTest3
- [ -z "$(echo "${_bashlyk_sArg}" | grep -e "--bashlyk-test" | grep -w "opt")" ] && return 0
+ [ -z "$(echo "${_bashlyk_sArg}" | grep -e "--bashlyk-test"\
+ | grep -w "opt")" ] && return 0
  echo "--- libopt.sh tests --- start"
  for s in udfGetOpt; do
   echo "check $s with options --sTest1 $(uname) --sTest2\
@@ -243,7 +241,7 @@ udfLibOpt() {
  return 0
 }
 #******
-#****** bashlyk/libopt
+#****** bashlyk/libopt/Main section
 # DESCRIPTION
 #   Running OPT library test unit if $_bashlyk_sArg ($*) contain
 #   substring "--bashlyk-test opt" - command for test using

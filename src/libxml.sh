@@ -7,23 +7,18 @@
 #  AUTHOR
 #    Damir Sh. Yakupov <yds@bk.ru>
 #******
-#****v* bashlyk/libxml/$_BASHLYK_LIBXML
+#****d* bashlyk/libxml/Required Once
 #  DESCRIPTION
 #    If this global variable defined then library already linked
 #  SOURCE
 [ -n "$_BASHLYK_LIBXML" ] && return 0 || _BASHLYK_LIBXML=1
 #******
-#****v* bashlyk/libxml/$_bashlyk_aRequiredCmd_xml
-#  DESCRIPTION
-#    Global variable for used system command list by this library
-#  SOURCE
-_bashlyk_aRequiredCmd_xml="echo grep"
-#******
-#****v* bashlyk/$_bashlyk_sArg
+#****v* bashlyk/libxml/Init section
 #  DESCRIPTION
 #    Global variable for store arguments
 #  SOURCE
 : ${_bashlyk_sArg:=$*}
+: ${_bashlyk_aRequiredCmd_xml:="echo grep"}
 #******
 #****f* bashlyk/libxml/udfXML
 #  SYNOPSIS
@@ -86,7 +81,7 @@ $(udfXml variable sTest))"
  return 0
 }
 #******
-#****** bashlyk/libxml
+#****** bashlyk/libxml/Main section
 # DESCRIPTION
 #   Running XML library test unit if $_bashlyk_sArg ($*) contain
 #   substring "--bashlyk-test xml" - command for test using
