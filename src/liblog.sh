@@ -25,7 +25,7 @@ _bashlyk_aRequiredCmd_log="basename date echo hostname false printf logger \
 : ${_bashlyk_pidLogSock:=}
 : ${_bashlyk_fnLogSock:=}
 : ${_bashlyk_emailRcpt:=postmaster}
-: ${_bashlyk_iStartTimeStamp:=$(/bin/date "+%s")}
+: ${_bashlyk_iStartTimeStamp:=$(date "+%s")}
 : ${_bashlyk_emailSubj:="$HOSTNAME::$USER::${_bashlyk_s0}"}
 : ${_bashlyk_fnLog:="${_bashlyk_pathLog}/${_bashlyk_s0}.log"}
 #
@@ -83,23 +83,22 @@ udfLog() {
  return 0
 }
 #
+udfEcho() {
+ if [ "$1" = "-" ]; then
+  shift
+  [ -n "$1" ] && printf "%s\n----\n" "$*"
+  cat
+ else
+  [ -n "$1" ] && echo $*
+ fi
+}
+#
 udfMail() {
- {
-  if [ "$1" = "-" ]; then
-   shift
-   [ -n "$1" ] && printf "%s\n----\n" "$*"
-   local s
-   while read s; do [ -n "$s" ] && echo "$s"; done
-  else
-   [ -n "$1" ] && echo $*
-  fi
- } 2>&1 | mail -e -s "${_bashlyk_emailSubj}" ${_bashlyk_emailRcpt}
- return $PIPESTATUS
+ udfEcho $* | mail -e -s "${_bashlyk_emailSubj}" ${_bashlyk_emailRcpt}
 }
 #
 udfWarn() {
- [ "${_bashlyk_bTerminal}" = "1" ] && echo $* || udfMail $*
- return $?
+ [ "${_bashlyk_bTerminal}" = "1" ] && udfEcho $* || udfMail $*
 }
 #
 udfThrow() {

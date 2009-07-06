@@ -19,6 +19,7 @@
 #  DESCRIPTION
 #    Блок инициализации глобальных переменных
 #  SOURCE
+: ${_bashlyk_sArg:=$*}
 : ${_bashlyk_aRequiredCmd_md5:="cut echo md5sum sleep true"}
 #******
 #****f* bashlyk/libmd5/udfGetMd5
@@ -27,7 +28,7 @@
 #  DESCRIPTION
 #   Получить дайджест MD5 указанных данных
 #  INPUTS
-#    "-"  - использовать поток данных STDIN
+#    "-"  - использовать поток данных "input"
 #    --file <filename> - использовать в качестве данных указанный файл
 #    <args> - использовать строку аргументов
 #  OUTPUT
@@ -39,8 +40,7 @@ udfGetMd5() {
  {
   case "$1" in
        "-")
-          local s
-          while read s; do echo "$s"; done | md5sum
+          cat | md5sum
          ;;
   "--file")
           [ -f "$2" ] && md5sum $2
@@ -57,13 +57,16 @@ udfGetMd5() {
 #  SYNOPSIS
 #    udfGetPathMd5 <path>
 #  DESCRIPTION
-#   Получить дайджест MD5 всех файлов в каталоге <path>
+#   Получить дайджест MD5 всех нескрытых файлов в каталоге <path>
 #  INPUTS
-#    <path>  - начальный каталог для формирования списка хэша md5 файлов
+#    <path>  - начальный каталог
 #  OUTPUT
-#    Дайджест MD5
+#    Список MD5-сумм и имён нескрытых файлов в каталоге <path> рекурсивно
+#  RETURN VALUE
+#    -1 - аргумент не указан или это не каталог
+#     0 - выполнено
 #  EXAMPLE
-#    udfGetMd5 $(date)
+#    udfGetPathMd5 ~
 #  SOURCE
 udfGetPathMd5() {
  [ -n "$1" -a -d "$1" ] || return -1
@@ -80,6 +83,14 @@ udfGetPathMd5() {
  return 0
 }
 #******
+#****u* bashlyk/libmd5/udfLibMd5
+#  SYNOPSIS
+#    udfLibPid
+# DESCRIPTION
+#   bashlyk MD5 library test unit
+#   Запуск проверочных операций модуля выполняется если только аргументы командной строки
+#   cодержат ключевые слова "--bashlyk-test" и "md5"
+#  SOURCE
 udfLibMd5() {
  [ -z "$(echo "${_bashlyk_sArg}" | grep -e "--bashlyk-test" | grep -w "md5")" ] && return 0
  echo "--- libmd5.sh tests --- start"
@@ -97,7 +108,11 @@ udfLibMd5() {
  echo "--- libmd5.sh tests ---  done"
  return 0
 }
-#
-# main section
-#
+#******
+#****** bashlyk/libmd5/Main section
+# DESCRIPTION
+#   Running MD5 library test unit if $_bashlyk_sArg ($*) contain
+#   substring "--bashlyk-test" and "md5" - command for test using
+#  SOURCE
 udfLibMd5
+#******
