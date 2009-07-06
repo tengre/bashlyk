@@ -20,7 +20,7 @@
 #    Блок инициализации глобальных переменных
 #  SOURCE
 : ${_bashlyk_sArg:=$*}
-: ${_bashlyk_aRequiredCmd_md5:="cut echo md5sum sleep true"}
+: ${_bashlyk_aRequiredCmd_md5:="cut echo md5sum sleep true ["}
 #******
 #****f* bashlyk/libmd5/udfGetMd5
 #  SYNOPSIS

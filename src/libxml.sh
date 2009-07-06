@@ -18,7 +18,7 @@
 #    Global variable for store arguments
 #  SOURCE
 : ${_bashlyk_sArg:=$*}
-: ${_bashlyk_aRequiredCmd_xml:="echo grep"}
+: ${_bashlyk_aRequiredCmd_xml:="echo grep ["}
 #******
 #****f* bashlyk/libxml/udfXML
 #  SYNOPSIS

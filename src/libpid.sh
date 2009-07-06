@@ -34,7 +34,7 @@
 : ${_bashlyk_s0:=$(basename $0)}
 : ${_bashlyk_pathRun:=/tmp}
 : ${_bashlyk_sArg:=$*}
-: ${_bashlyk_aRequiredCmd_pid:="cat date echo grep head mkdir ps rm sed sleep"}
+: ${_bashlyk_aRequiredCmd_pid:="cat date echo grep head mkdir ps rm sed sleep ["}
 #******
 #****f* bashlyk/libpid/udfCheckStarted
 #  SYNOPSIS

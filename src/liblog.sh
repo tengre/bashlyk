@@ -1,17 +1,32 @@
 #
 # $Id$
 #
+#****h* bashlyk/liblog
+#  DESCRIPTION
+#    bashlyk Log library
+#    Функции определения режима вывода, ведения логов
+#    отправки предупреждений, сообщений об ошибках
+#  AUTHOR
+#    Damir Sh. Yakupov <yds@bk.ru>
+#******
+#****d* bashlyk/liblog/Once required
+#  DESCRIPTION
+#    Эта глобальная переменная обеспечивает
+#    защиту от повторного использования данного модуля
+#  SOURCE
 [ -n "$_BASHLYK_LIBLOG" ] && return 0 || _BASHLYK_LIBLOG=1
-#
-# link section
-#
-[ -s "$_bashlyk_pathLib/libmd5.sh" ] && . "${_bashlyk_pathLib}/libmd5.sh"
-#
-# global variables
-#
-_bashlyk_aRequiredCmd_log="basename date echo hostname false printf logger \
- mail mkfifo sleep tee true jobs"
-#
+#******
+#****** bashlyk/liblog/External modules
+#  DESCRIPTION
+#    Using modules section
+#    Здесь указываются модули, код которых используется данной библиотекой
+#  SOURCE
+[ -s "${_bashlyk_pathLib}/libmd5.sh" ] && . "${_bashlyk_pathLib}/libmd5.sh"
+#******
+#****v*  bashlyk/liblog/Init section
+#  DESCRIPTION
+#    Блок инициализации глобальных переменных
+#  SOURCE
 : ${_bashlyk_afnClean:=}
 : ${_bashlyk_apathClean:=}
 : ${_bashlyk_ajobClean:=}
@@ -28,17 +43,52 @@ _bashlyk_aRequiredCmd_log="basename date echo hostname false printf logger \
 : ${_bashlyk_iStartTimeStamp:=$(date "+%s")}
 : ${_bashlyk_emailSubj:="$HOSTNAME::$USER::${_bashlyk_s0}"}
 : ${_bashlyk_fnLog:="${_bashlyk_pathLog}/${_bashlyk_s0}.log"}
-#
-# function section
-#
+: ${_bashlyk_aRequiredCmd_log:="basename date echo hostname false printf logger \
+ mail mkfifo sleep tee true jobs ["}
+#******
+#****f* bashlyk/liblog/udfBaseId
+#  SYNOPSIS
+#    udfBaseId
+#  DESCRIPTION
+#    Alias для команды basename
+#  OUTPUT
+#    Короткое имя запущенного сценария без расширения ".sh"
+#  SOURCE
 udfBaseId() {
  basename $0 .sh
 }
-#
+#******
+#****f* bashlyk/liblog/udfDate
+#  SYNOPSIS
+#    udfDate <args>
+#  DESCRIPTION
+#    Alias для команды date
+#  INPUTS
+#    <args> - суффикс к форматной строке текущей даты
+#  OUTPUT
+#    текущая дата с возможным суффиксом
+#  SOURCE
 udfDate() {
  date "+%b %d %H:%M:%S $*"
 }
-#
+#******
+#****f* bashlyk/liblog/udfLogger
+#  SYNOPSIS
+#    udfLogger args
+#  DESCRIPTION
+#    Селектор вывода строки аргументов в зависимости от режима работы.
+#    В зависимости от
+#  INPUTS
+#    PID     - PID
+#    command - command
+#    args    - arguments
+#  RETURN VALUE
+#    0 - Процесс с PID существует для указанной командной строки (command args)
+#    1 - Процесс с PID для проверяемой командной строки не обнаружен.
+#  EXAMPLE
+#    udfCheckStarted $pid $0 $* \
+#    && eval 'echo "$0 : Already started with pid = $pid"; return 1'
+#  SOURCE
 udfLogger() {
  local envLang=$LANG
  LANG=C
@@ -72,7 +122,8 @@ udfLogger() {
  esac
  LANG=$envLang
 }
-#
+#******
+
 udfLog() {
  if [ "$1" = "-" ]; then
   shift

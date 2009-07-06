@@ -33,7 +33,7 @@
 #  SOURCE
 : ${_bashlyk_sArg:=$*}
 : ${_bashlyk_sWSpaceAlias:=___}
-: ${_bashlyk_aRequiredCmd_opt:="echo getopt grep mktemp tr sed umask"}
+: ${_bashlyk_aRequiredCmd_opt:="echo getopt grep mktemp tr sed umask ["}
 #******
 #****f* bashlyk/libopt/udfQuoteIfNeeded
 #  SYNOPSIS
