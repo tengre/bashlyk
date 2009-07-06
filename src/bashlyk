@@ -2,16 +2,31 @@
 #
 # $Id$
 #
+#****h* bashlyk
+#  DESCRIPTION
+#    bashlyk - сценарий подключения BASHLYK
+#  AUTHOR
+#    Damir Sh. Yakupov <yds@bk.ru>
+#******
+#****v*  bashlyk/Init section
+#  DESCRIPTION
+#    Блок инициализации глобальных переменных
+#  SOURCE
 [ -s /etc/bashlyk/bashlyk.conf ] && . /etc/bashlyk/bashlyk.conf
-#
-# global variables
-#
-   _bashlyk_aLib=${_bashlyk_aLib:="log,cnf,pid,md5,opt,xml"}
-_bashlyk_pathLib=${_bashlyk_pathLib:="/usr/share/bashlyk"}
-   _bashlyk_sArg=$*
-#
-# function section
-#
+: ${_bashlyk_aLib:="log,cnf,pid,md5,opt,xml"}
+: ${_bashlyk_pathLib:="/usr/share/bashlyk"}
+: ${_bashlyk_sArg:=$*}
+#******
+#****f* bashlyk/udfInit
+#  SYNOPSIS
+#    udfInit
+#  DESCRIPTION
+#    Подготовка к запуску сценария, определение условий его работы
+#    (каталоги расположения создаваемых файлов, наличие терминала и т.п.)
+#    Если запуск выполняется от "root", то каталоги располагаются глобально, согласно LBS, 
+#    иначе - в каталоге ~/.bashlyk или во временном каталоге, если не удалось определить
+#    владельца процесса
+#  SOURCE
 udfInit() {
  local pathCnf pathRoot pathRun pathLog sUser sHome 
  _bashlyk_sId=${_bashlyk:-bashlyk}
@@ -43,12 +58,18 @@ udfInit() {
  _bashlyk_pathLog="${pathRoot}/${pathLog}"
  _bashlyk_pathCnf="${pathRoot}/${pathCnf}"
 
- [ -d "$_bashlyk_pathRun" ] || mkdir -p $_bashlyk_pathRun
- [ -d "$_bashlyk_pathLog" ] || mkdir -p $_bashlyk_pathLog
- [ -d "$_bashlyk_pathCnf" ] || mkdir -p $_bashlyk_pathCnf
+ #[ -d "$_bashlyk_pathRun" ] || mkdir -p $_bashlyk_pathRun
+ #[ -d "$_bashlyk_pathLog" ] || mkdir -p $_bashlyk_pathLog
+ #[ -d "$_bashlyk_pathCnf" ] || mkdir -p $_bashlyk_pathCnf
  [ -t "1" ] && _bashlyk_bTerminal=1 || _bashlyk_bTerminal=0
 }
-#
+#******
+#****f* bashlyk/udfMain
+#  SYNOPSIS
+#    udfMain <args>
+#  DESCRIPTION
+#    Вызов udfInit, подключение модулей, установка режима ведения лога
+#  SOURCE
 udfMain() {
  udfInit
  local fn
@@ -59,7 +80,11 @@ udfMain() {
  [ $_bashlyk_bTerminal -eq 0 ] && udfSetLog
  return 0
 }
-#
-# main section
-#
+#******
+#****** bashlyk/Main section
+#  DESCRIPTION
+#    Вызов udfMain - подключение системы BASHLYK к сценарию
+#  SOURCE
 udfMain $*
+#******
+

@@ -60,9 +60,8 @@ _() {
 #    udfLibXml --bashlyk-test xml
 # DESCRIPTION
 #   bashlyk XML library test unit
-#  INPUTS
-#    --bashlyk-test - command for use test unit
-#    xml            - enable test for this library
+#   Запуск проверочных операций модуля выполняется если только аргументы командной строки
+#   cодержат ключевые слова "--bashlyk-test" и "opt"
 #  SOURCE
 udfLibXml() {
  [ -z "$(echo "${_bashlyk_sArg}" \
@@ -84,7 +83,7 @@ $(udfXml variable sTest))"
 #****** bashlyk/libxml/Main section
 # DESCRIPTION
 #   Running XML library test unit if $_bashlyk_sArg ($*) contain
-#   substring "--bashlyk-test xml" - command for test using
+#   substrings "--bashlyk-test" and "xml" - command for test using
 #  SOURCE
 udfLibXml
 #******

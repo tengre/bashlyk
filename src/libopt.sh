@@ -218,9 +218,8 @@ udfExcludePairFromHash() {
 #    udfLibPid --bashlyk-test opt
 # DESCRIPTION
 #   bashlyk PID library test unit
-#  INPUTS
-#    --bashlyk-test - command for use test unit
-#    opt            - enable test for this library
+#   Запуск проверочных операций модуля выполняется если только аргументы командной строки
+#   cодержат ключевые слова "--bashlyk-test" и "opt"
 #  SOURCE
 udfLibOpt() {
  local s sTest1 sTest2 sTest3
@@ -244,7 +243,7 @@ udfLibOpt() {
 #****** bashlyk/libopt/Main section
 # DESCRIPTION
 #   Running OPT library test unit if $_bashlyk_sArg ($*) contain
-#   substring "--bashlyk-test opt" - command for test using
+#   substring "--bashlyk-test" and "opt" - command for test using
 #  SOURCE
 udfLibOpt
 #******

@@ -1,19 +1,55 @@
 #
 # $Id$
 #
+#****h* bashlyk/libcnf
+#  DESCRIPTION
+#    bashlyk CNF library
+#    Чтение/запись файлов конфигураций
+#  AUTHOR
+#    Damir Sh. Yakupov <yds@bk.ru>
+#******
+#****d* bashlyk/libcnf/Required Once
+#  DESCRIPTION
+#    Глобальная переменная $_BASHLYK_LIBCNF обеспечивает
+#    защиту от повторного использования данного модуля
+#  SOURCE
 [ -n "$_BASHLYK_LIBCNF" ] && return 0 || _BASHLYK_LIBCNF=1
-#
-# link section
-#
-[ -s "$_bashlyk_pathLib/liblog.sh" ] && . "${_bashlyk_pathLib}/liblog.sh"
-#
-# global variables
-#
-_bashlyk_aRequiredCmd_cnf="basename cat date dirname echo grep pwd rm sleep"
+#******
+#****** bashlyk/libpid/External Modules
+# DESCRIPTION
+#   Using modules section
+#   Здесь указываются модули, код которых используется данной библиотекой
+# SOURCE
+[ -s "${_bashlyk_pathLib}/liblog.sh" ] && . "${_bashlyk_pathLib}/liblog.sh"
+#******
+#****v*  bashlyk/libcnf/Init section
+#  DESCRIPTION
+#    Блок инициализации глобальных переменных
+#  SOURCE
+: ${_bashlyk_sArg:=$*}
 : ${_bashlyk_pathCnf:=$(pwd)}
-#
-# function section
-#
+: ${_bashlyk_aRequiredCmd_cnf:="basename cat date dirname echo grep pwd rm sleep ["}
+#******
+#****f* bashlyk/libcnf/udfGetConfig
+#  SYNOPSIS
+#    udfGetConfig <file>
+#  DESCRIPTION
+#    Найти и выполнить <file> и предварительно все другие файлы, от которых он зависит.
+#    Такие файлы должны находится в том же каталоге. То есть, если <file> это
+#    "a.b.c.conf", то вначале применяются файлы "conf" "c.conf", "b.c.conf"
+#    если таковые существуют.
+#    Поиск выполняется по следующим критериям:
+#     1. Если имя файла -это неполный путь, то
+#     в начале проверяется текущий каталог, затем каталог конфигураций по умолчанию
+#     2. Если имя файла - полный путь, то каталог в кототром он расположен
+#     3. Последняя попытка - найти файл в каталоге /etc
+#  INPUTS
+#    file     - имя файла конфигурации
+#  RETURN VALUE
+#    -1 - Ошибка: аргумент отсутствует
+#     0 - Выполнено успешно
+#     1 - Ошибка: файл конфигурации не найден
+#  SOURCE
 udfGetConfig() {
  [ -n "$1" ] || return -1
  #
@@ -25,7 +61,7 @@ udfGetConfig() {
  #
  if [ -z "$pathCnf" ]; then
   [ -f "/etc${_bashlyk_pathPrefix}/$1" ] \
-   && pathCnf="/etc${_bashlyk_pathPrefix}" || return -1
+   && pathCnf="/etc${_bashlyk_pathPrefix}" || return 1
  fi
  #
  chIFS=$IFS
@@ -41,13 +77,30 @@ udfGetConfig() {
  done
  return 0
 }
-#
+#******
+#****f* bashlyk/libcnf/udfSetConfig
+#  SYNOPSIS
+#    udfSetConfig <file> <csv;>
+#  DESCRIPTION
+#    Дополнить <file> строками вида "key=value" из аргумента <csv;>
+#    Расположение файла определяется по следующим критериям:
+#     Если имя файла -это неполный путь, то он сохраняется в каталоге по умолчанию,
+#     иначе по полному пути.
+#  INPUTS
+#    <file> - имя файла конфигурации
+#    <csv;> - CSV-строка, разделённая ";", поля которой содержат данные вида "key=value"
+#  RETURN VALUE
+#    -1 - Ошибка: аргумент отсутствует
+#     0 - Выполнено успешно
+#     1 - Ошибка: файл конфигурации не найден
+#  SOURCE
 udfSetConfig() {
  [ -n "$1" -a -n "$2" ] || return -1
  #
  local conf sKeyValue chIFS=$IFS pathCnf=$_bashlyk_pathCnf
  #
  [ "$1" != "$(basename $1)" ] && pathCnf=$(dirname $1)
+ [ -d "$pathCnf" ] || mkdir -p $pathCnf
  conf="${pathCnf}/$(basename $1)"
  IFS=';'
  {
@@ -59,7 +112,15 @@ udfSetConfig() {
  IFS=$chIFS
  return 0
 }
-#
+#******
+#****u* bashlyk/libcnf/udfLibCnf
+#  SYNOPSIS
+#    udfLibCnf
+# DESCRIPTION
+#   bashlyk CNF library test unit
+#   Запуск проверочных операций модуля выполняется если только аргументы командной строки
+#   cодержат ключевые слова "--bashlyk-test" и "cnf"
+#  SOURCE
 udfLibCnf() {
  [ -z "$(echo "${_bashlyk_sArg}" | grep -e "--bashlyk-test" | grep -w "cnf")" ] && return 0
  local s conf="$$.testlib.conf"
@@ -74,7 +135,8 @@ udfLibCnf() {
  echo "see ${_bashlyk_pathCnf}/${conf}:"
  cat "${_bashlyk_pathCnf}/${conf}"
  #
- conf=$(mktemp -t "XXXXXXXX.${conf}") || udfThrow "Error: temporary file $conf do not created..."
+ conf=$(mktemp -t "XXXXXXXX.${conf}")\
+ || udfThrow "Error: temporary file $conf do not created..."
  udfAddFile2Clean $conf
  printf "#\n# Absolute path to config file ($conf))\n#\n"
  for s in udfSetConfig udfGetConfig; do
@@ -87,7 +149,11 @@ udfLibCnf() {
  echo "--- libcnf.sh tests ---  done"
  return 0
 }
-#
-# main section
-#
+#******
+#****** bashlyk/libcnf/Main section
+# DESCRIPTION
+#   Running CNF library test unit if $_bashlyk_sArg ($*) contain
+#   substring "--bashlyk-test" and "md5" - command for test using
+#  SOURCE
 udfLibCnf
+#******

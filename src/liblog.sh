@@ -52,6 +52,8 @@ udfLogger() {
  else
   [ ${_bashlyk_bTerminal} -eq 0 ] && bTermin=0 || bTermin=1
  fi
+ #[ -d "${_bashlyk_pathLog}" ] || mkdir -p "${_bashlyk_pathLog}" \
+ # || udfThrow "Error: do not create path ${_bashlyk_pathLog}"
  case "${bSysLog}${bTermin}" in
   "00")
    echo "$(udfDate "$HOSTNAME $sTagLog: $*")" >> ${_bashlyk_fnLog}

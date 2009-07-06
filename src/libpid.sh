@@ -148,9 +148,8 @@ udfClean() {
 #    udfLibPid --bashlyk-test pid
 # DESCRIPTION
 #   bashlyk PID library test unit
-#  INPUTS
-#    --bashlyk-test - command for use test unit
-#    pid            - enable test for this library
+#   Запуск проверочных операций модуля выполняется если только аргументы командной строки
+#   cодержат ключевые слова "--bashlyk-test" и "opt"
 #  SOURCE
 udfLibPid() {
  [ -z "$(echo "${_bashlyk_sArg}" | grep -e "--bashlyk-test" | grep -w "pid")" ] && return 0
@@ -175,7 +174,7 @@ udfLibPid() {
 #****** bashlyk/libpid/Main section
 # DESCRIPTION
 #   Running PID library test unit if $_bashlyk_sArg ($*) contain
-#   substring "--bashlyk-test pid" - command for test using
+#   substrings "--bashlyk-test" and "pid" - command for test using
 #  SOURCE
 udfLibPid
 #******
