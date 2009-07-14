@@ -77,17 +77,14 @@ udfDate() {
 #    udfLogger args
 #  DESCRIPTION
 #    Селектор вывода строки аргументов в зависимости от режима работы.
-#    В зависимости от
 #  INPUTS
-#    PID     - PID
-#    command - command
-#    args    - arguments
-#  RETURN VALUE
-#    0 - Процесс с PID существует для указанной командной строки (command args)
-#    1 - Процесс с PID для проверяемой командной строки не обнаружен.
-#  EXAMPLE
-#    udfCheckStarted $pid $0 $* \
-#    && eval 'echo "$0 : Already started with pid = $pid"; return 1'
+#    args - строка для вывода
+#  OUTPUT
+#    Возможны четыре варианта:
+#     * Вывод только в файл $_bashlyk_fnLog
+#     * Вывод только на консоль терминала
+#     * Вывод в системный журнал (syslog) и в файл $_bashlyk_fnLog
+#     * Вывод в системный журнал (syslog) и на консоль терминала
 #  SOURCE
 udfLogger() {
  local envLang=$LANG
@@ -123,7 +120,19 @@ udfLogger() {
  LANG=$envLang
 }
 #******
-
+#****f* bashlyk/liblog/udfLog
+#  SYNOPSIS
+#    udfLog [-] args
+#  DESCRIPTION
+#    Передача данных селектору вывода udfLogger
+#  INPUTS
+#    -    - данные читаются из стандартного ввода
+#    args - строка для вывода. Если имеется в качестве первого аргумента
+#           "-", то строка считается префиксом (тэгом) для каждой строки
+#           из стандартного ввода
+#  OUTPUT
+#   Зависит от параметров вывода
+#  SOURCE
 udfLog() {
  if [ "$1" = "-" ]; then
   shift
@@ -131,11 +140,24 @@ udfLog() {
   [ -n "$*" ] && sPrefix="$* " || sPrefix=
   while read s; do [ -n "$s" ] && udfLogger "${sPrefix}${s}"; done
  else
-  [ -n "$*" ] && udfLogger $*
+  [ -n "$*" ] && udfLogger "$*"
  fi
  return 0
 }
-#
+#******
+#****f* bashlyk/liblog/udfEcho
+#  SYNOPSIS
+#    udfEcho [-] args
+#  DESCRIPTION
+#    Сборка сообщения из аргументов и стандартного ввода
+#  INPUTS
+#    -    - данные читаются из стандартного ввода
+#    args - строка для вывода. Если имеется в качестве первого аргумента
+#           "-", то эта строка выводится заголовком для данных
+#           из стандартного ввода
+#  OUTPUT
+#   Зависит от параметров вывода
+#  SOURCE
 udfEcho() {
  if [ "$1" = "-" ]; then
   shift
@@ -145,26 +167,65 @@ udfEcho() {
   [ -n "$1" ] && echo $*
  fi
 }
-#
+#******
+#****f* bashlyk/liblog/udfMail
+#  SYNOPSIS
+#    udfMail [[-] args]
+#  DESCRIPTION
+#    Передача сообщения по почте
+#  INPUTS
+#    -    - данные читаются из стандартного ввода
+#    args - строка для вывода. Если имеется в качестве первого аргумента
+#           "-", то эта строка выводится заголовком для данных
+#           из стандартного ввода
+#  SOURCE
 udfMail() {
  udfEcho $* | mail -e -s "${_bashlyk_emailSubj}" ${_bashlyk_emailRcpt}
 }
-#
+#******
+#****f* bashlyk/liblog/udfWarn
+#  SYNOPSIS
+#    udfWarn [-] args
+#  DESCRIPTION
+#    Вывод предупреждающего сообщения. Если терминал отсутствует, то
+#    сообщение передается по почте.
+#  INPUTS
+#    -    - данные читаются из стандартного ввода
+#    args - строка для вывода. Если имеется в качестве первого аргумента
+#           "-", то строка выводится заголовком для данных
+#           из стандартного ввода
+#  OUTPUT
+#   Зависит от параметров вывода
+#  SOURCE
 udfWarn() {
  [ "${_bashlyk_bTerminal}" = "1" ] && udfEcho $* || udfMail $*
 }
-#
+#******
+#****f* bashlyk/liblog/udfThrow
+#  SYNOPSIS
+#    udfThrow [-] args
+#  DESCRIPTION
+#    Вывод аварийного сообщения с завершением работы. Если терминал отсутствует, то
+#    сообщение передается по почте.
+#  INPUTS
+#    -    - данные читаются из стандартного ввода
+#    args - строка для вывода. Если имеется в качестве первого аргумента
+#           "-", то строка выводится заголовком для данных
+#           из стандартного ввода
+#  OUTPUT
+#   Зависит от параметров вывода
+#  SOURCE
 udfThrow() {
  udfWarn $*
  exit -1
 }
-#
+#******
 udfIsTerm() {
  local fd=1
  case "$1" in
   0|1|2) fd=$1 ;;
  esac
- [ -t "$fd" ] && return 0 || return 1
+ [ -t "$fd" ] && [ -n "$TERM" ] && [ "$TERM" != "dumb" ] && return 0 || return 1
 }
 #
 udfOnTrap() {
