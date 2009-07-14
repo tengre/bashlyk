@@ -16,6 +16,8 @@
 : ${_bashlyk_aLib:="log,cnf,pid,md5,opt,xml"}
 : ${_bashlyk_pathLib:="/usr/share/bashlyk"}
 : ${_bashlyk_sArg:=$*}
+: ${_bashlyk_bInteractive:=1}
+: ${_bashlyk_bTerminal:=1}
 #******
 #****f* bashlyk/udfInit
 #  SYNOPSIS

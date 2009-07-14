@@ -220,12 +220,19 @@ udfThrow() {
  exit -1
 }
 #******
-udfIsTerm() {
+udfIsInteractive() {
  local fd=1
  case "$1" in
   0|1|2) fd=$1 ;;
  esac
- [ -t "$fd" ] && [ -n "$TERM" ] && [ "$TERM" != "dumb" ] && return 0 || return 1
+ [ -t "$fd" ] && [ -n "$TERM" ] && [ "$TERM" != "dumb" ] \
+  && _bashlyk_bInteractive=1 || _bashlyk_bInteractive=0
+ return $_bashlyk_bInteractive
+}
+#
+udfIsTerminal() {
+ tty > /dev/null 2>&1 && _bashlyk_bTerminal=1 || _bashlyk_bTerminal=0
+ return $_bashlyk_bTerminal
 }
 #
 udfOnTrap() {
