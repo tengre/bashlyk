@@ -63,7 +63,9 @@ udfInit() {
  #[ -d "$_bashlyk_pathRun" ] || mkdir -p $_bashlyk_pathRun
  #[ -d "$_bashlyk_pathLog" ] || mkdir -p $_bashlyk_pathLog
  #[ -d "$_bashlyk_pathCnf" ] || mkdir -p $_bashlyk_pathCnf
- [ -t "1" ] && _bashlyk_bTerminal=1 || _bashlyk_bTerminal=0
+
+ [ -t 1 ] && _bashlyk_bInteractive=1 || _bashlyk_bInteractive=0
+ tty > /dev/null 2>&1 && _bashlyk_bTerminal=1 || _bashlyk_bTerminal=0
 }
 #******
 #****f* bashlyk/udfMain
