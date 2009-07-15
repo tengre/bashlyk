@@ -220,21 +220,45 @@ udfThrow() {
  exit -1
 }
 #******
+#****f* bashlyk/liblog/udfIsInteractive
+#  SYNOPSIS
+#    udfIsInteractive
+#  DESCRIPTION
+#    Проверка режима работы устройств стандартного ввода и вывода
+#  RETURN VALUE
+#    0 - "неинтерактивный" режим, имеется перенаправление стандартных ввода и/или вывода
+#    1 - "интерактивный" режим, перенаправление стандартных ввода и/или вывода не обнаружено
+#  SOURCE
 udfIsInteractive() {
- local fd=1
- case "$1" in
-  0|1|2) fd=$1 ;;
- esac
- [ -t "$fd" ] && [ -n "$TERM" ] && [ "$TERM" != "dumb" ] \
+ [ -t 1 -a -t 0 ] && [ -n "$TERM" ] && [ "$TERM" != "dumb" ] \
   && _bashlyk_bInteractive=1 || _bashlyk_bInteractive=0
  return $_bashlyk_bInteractive
 }
-#
+#******
+#****f* bashlyk/liblog/udfIsTerminal
+#  SYNOPSIS
+#    udfIsTerminal
+#  DESCRIPTION
+#    Проверка наличия управляющего терминала
+#  RETURN VALUE
+#    0 - терминал отсутствует
+#    1 - терминал обнаружен
+#  SOURCE
 udfIsTerminal() {
  tty > /dev/null 2>&1 && _bashlyk_bTerminal=1 || _bashlyk_bTerminal=0
  return $_bashlyk_bTerminal
 }
-#
+#******
+#****f* bashlyk/liblog/udfOnTrap
+#  SYNOPSIS
+#    udfOnTrap
+#  DESCRIPTION
+#    Процедура очистки при завершении вызвавшего сценария.
+#    Предназначен только для вызова командой trap.
+#    * Производится удаление файлов и пустых каталогов; заданий и процессов,
+#    указанных в соответствующих глобальных переменных
+#    * Закрывается сокет журнала сценария, если он использовался.
+#  SOURCE
 udfOnTrap() {
  local s
  #
@@ -258,49 +282,116 @@ udfOnTrap() {
   exec >/dev/null 2>&1
   wait ${_bashlyk_pidLogSock}
  }
- return 0
 }
-#
+#******
+#****f* bashlyk/liblog/udfAddFile2Clean
+#  SYNOPSIS
+#    udfAddFile2Clean args
+#  DESCRIPTION
+#    Добавляет имена файлов к списку удаляемых при завершении сценария
+#    Предназначен для удаления временных файлов.
+#  INPUTS
+#    args - имена файлов
+#  SOURCE
 udfAddFile2Clean() {
  [ -n "$1" ] || return 0
  _bashlyk_afnClean+=" $*"
  #echo "clean file ${_bashlyk_afnClean}"
  trap "udfOnTrap" 0 1 2 5 15
 }
-#
+#******
+#****f* bashlyk/liblog/udfAddPath2Clean
+#  SYNOPSIS
+#    udfAddPath2Clean args
+#  DESCRIPTION
+#    Добавляет имена каталогов к списку удаляемых при завершении сценария.
+#    Предназначен для удаления временных каталогов (если они пустые).
+#  INPUTS
+#    args - имена каталогов
+#  SOURCE
 udfAddPath2Clean() {
  [ -n "$1" ] || return 0
  _bashlyk_apathClean+=" $*"
- #echo "clean path ${_bashlyk_apathClean}"
  trap "udfOnTrap" 0 1 2 5 15
 }
-#
+#******
+#****f* bashlyk/liblog/udfAddJob2Clean
+#  SYNOPSIS
+#    udfAddJob2Clean args
+#  DESCRIPTION
+#    Добавляет идентификаторы запущенных заданий к списку удаляемых при завершении сценария.
+#  INPUTS
+#    args - идентификаторы заданий
+#  SOURCE
 udfAddJob2Clean() {
  [ -n "$1" ] || return 0
  _bashlyk_ajobClean+=" $*"
- #echo "clean job ${_bashlyk_ajobClean}"
  trap "udfOnTrap" 0 1 2 5 15
 }
-#
+#******
+#****f* bashlyk/liblog/udfAddPid2Clean
+#  SYNOPSIS
+#    udfAddPid2Clean args
+#  DESCRIPTION
+#    Добавляет идентификаторы запущенных процессов к списку завершаемых при завершении сценария.
+#  INPUTS
+#    args - идентификаторы процессов
+#  SOURCE
 udfAddPid2Clean() {
  [ -n "$1" ] || return 0
  _bashlyk_apidClean+=" $*"
- #echo "clean job ${_bashlyk_apidClean}"
  trap "udfOnTrap" 0 1 2 5 15
 }
-#
+#******
+#****f* bashlyk/liblog/udfCleanQueue
+#  SYNOPSIS
+#    udfCleanQueue args
+#  DESCRIPTION
+#    Псевдоним для udfAddFile2Clean. (Устаревшее)
+#  INPUTS
+#    args - имена файлов
+#  SOURCE
 udfCleanQueue() {
- [ -n "$1" ] || return 0
- _bashlyk_afnClean+=" $*"
- trap "udfOnTrap" 0 1 2 5 15
+ udfAddFile2Clean $*
 }
-#
-udfFinally() {
+#******
+#****f* bashlyk/liblog/udfUptime
+#  SYNOPSIS
+#    udfUptime args
+#  DESCRIPTION
+#    Подсчёт количества секунд, прошедших с момента запуска сценария
+#  INPUTS
+#    args - префикс для выводимого сообщения о прошедших секундах
+#  SOURCE
+udfUptime() {
  local iDiffTime=$(($(date "+%s")-${_bashlyk_iStartTimeStamp}))
  [ -n "$1" ] && echo "$* ($iDiffTime sec)"
  return $iDiffTime
 }
-#
+#******
+#****f* bashlyk/liblog/udfFinally
+#  SYNOPSIS
+#    udfFinally args
+#  DESCRIPTION
+#    Псевдоним для udfUptime (Устаревшее)
+#  INPUTS
+#    args - префикс для выводимого сообщения о прошедших секундах
+#  SOURCE
+udfFinally() {
+ udfUptime $*
+}
+#******
+#****f* bashlyk/liblog/udfSetLogSocket
+#  SYNOPSIS
+#    udfSetLogSocket
+#  DESCRIPTION
+#    Установка механизма ведения лога согласно ранее установленных условий.
+#    Используется специальный сокет для того чтобы отмечать тегами строки журнала.
+#  Return VALUE
+#    -1 - Каталог для сокета не существует и не может быть создан
+#     0 - Выполнено
+#     1 - Сокет не создан, но стандартный вывод перенаправляется в файл лога (без тегирования)
+#  SOURCE
 udfSetLogSocket() {
  local fnSock
  [ -n "$_bashlyk_sArg" ] \
@@ -316,12 +407,22 @@ udfSetLogSocket() {
  else
   udfWarn "Warn: Socket $fnSock not created..."
   exec >>$_bashlyk_fnLog 2>&1
+  return 1
  fi
  _bashlyk_fnLogSock=$fnSock
  udfAddFile2Clean $fnSock
  return 0
 }
-#
+#******
+#****f* bashlyk/liblog/udfSetLog
+#  SYNOPSIS
+#    udfSetLog [arg]
+#  DESCRIPTION
+#    Установка файла лога
+#  RETURN VALUE
+#    -1 - невозможно использовать файл лога, аварийное завершение сценария
+#     0 - Выполнено
+#  SOURCE
 udfSetLog() {
  if [ -n "$1" ]; then
   if [ "$1" = "$(basename $1)" ]; then
@@ -337,7 +438,15 @@ udfSetLog() {
  udfSetLogSocket
  return 0
 }
-#
+#******
+#****u* bashlyk/liblog/udfLibLog
+#  SYNOPSIS
+#    udfLibLog
+# DESCRIPTION
+#   bashlyk LOG library test unit
+#   Запуск проверочных операций модуля выполняется если только аргументы командной строки
+#   cодержат ключевые слова "--bashlyk-test" и "log"
+#  SOURCE
 udfLibLog() {
  [ -z "$(echo "${_bashlyk_sArg}" | grep -e "--bashlyk-test" | grep -w "log")" ] && return 0
  local s pathLog fnLog emailRcpt emailSubj
@@ -345,7 +454,7 @@ udfLibLog() {
  for s in bUseSyslog=$_bashlyk_bUseSyslog pathLog=$_bashlyk_pathLog fnLog=$_bashlyk_fnLog emailRcpt=$_bashlyk_emailRcpt emailSubj=$_bashlyk_emailSubj; do
   echo "$s"
  done
- for s in udfSetLog udfLog udfWarn udfFinally; do
+ for s in udfSetLog udfLog udfWarn udfUptime; do
   sleep 1
   echo "check $s:"
   $s testing liblog $s
@@ -356,7 +465,10 @@ udfLibLog() {
  echo "--- liblog.sh tests ---  done"
  return 0
 }
-#
-# main section
-#
+#******
+#****** bashlyk/liblog/Main section
+# DESCRIPTION
+#   Running LOG library test unit if $_bashlyk_sArg ($*) contain
+#   substring "--bashlyk-test" and "log" - command for test using
+#  SOURCE
 udfLibLog
