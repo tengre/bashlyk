@@ -5,6 +5,7 @@
 /NEWS -text
 /README -text
 /configure.in -text
+doc/Makefile.am -text
 /robodoc.rc -text
 src/Makefile.am -text
 src/bashlyk -text
