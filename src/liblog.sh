@@ -451,15 +451,34 @@ udfLibLog() {
  [ -z "$(echo "${_bashlyk_sArg}" | grep -e "--bashlyk-test" | grep -w "log")" ] && return 0
  local s pathLog fnLog emailRcpt emailSubj
  echo "--- liblog.sh tests --- start"
- for s in bUseSyslog=$_bashlyk_bUseSyslog pathLog=$_bashlyk_pathLog fnLog=$_bashlyk_fnLog emailRcpt=$_bashlyk_emailRcpt emailSubj=$_bashlyk_emailSubj; do
+ for s in bUseSyslog=$_bashlyk_bUseSyslog \
+  pathLog=$_bashlyk_pathLog \
+  fnLog=$_bashlyk_fnLog \
+  emailRcpt=$_bashlyk_emailRcpt \
+  emailSubj=$_bashlyk_emailSubj \
+  bTerminal=$_bashlyk_bTerminal \
+  bInteractive=$_bashlyk_bInteractive; do
   echo "$s"
  done
- for s in udfSetLog udfLog udfWarn udfUptime; do
+ udfSetLog 
+ for s in udfLog udfWarn udfUptime; do
   sleep 1
   echo "check $s:"
   $s testing liblog $s
  done
- for s in pathLog=$_bashlyk_pathLog fnLog=$_bashlyk_fnLog emailRcpt=$_bashlyk_emailRcpt emailSubj=$_bashlyk_emailSubj; do
+ _bashlyk_bTerminal=0
+ for s in udfLog udfWarn udfUptime; do
+  sleep 1
+  echo "check $s:"
+  $s testing liblog $s
+ done
+ _bashlyk_bUseSyslog=1
+ for s in udfLog udfWarn udfUptime; do
+  sleep 1
+  echo "check $s:"
+  $s testing liblog $s
+ done
+ for s in pathLog=$_bashlyk_pathLog fnLog=$_bashlyk_fnLog emailRcpt=$_bashlyk_emailRcpt emailSubj=$_bashlyk_emailSubj bTerminal=$_bashlyk_bTerminal bInteractive=$_bashlyk_bInteractive; do
   echo "$s"
  done
  echo "--- liblog.sh tests ---  done"

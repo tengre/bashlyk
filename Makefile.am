@@ -2,6 +2,6 @@
 ## $Id$
 ##
 
-SUBDIRS = src
+SUBDIRS = src doc
 DESTDIR = 
 
