@@ -41,7 +41,7 @@
 : ${_bashlyk_fnLogSock:=}
 : ${_bashlyk_emailRcpt:=postmaster}
 : ${_bashlyk_iStartTimeStamp:=$(date "+%s")}
-: ${_bashlyk_emailSubj:="$HOSTNAME::$USER::${_bashlyk_s0}"}
+: ${_bashlyk_emailSubj:="$USER@$HOSTNAME..${_bashlyk_s0}"}
 : ${_bashlyk_fnLog:="${_bashlyk_pathLog}/${_bashlyk_s0}.log"}
 : ${_bashlyk_aRequiredCmd_log:="basename date echo hostname false printf logger \
  mail mkfifo sleep tee true jobs ["}
@@ -451,35 +451,52 @@ udfLibLog() {
  [ -z "$(echo "${_bashlyk_sArg}" | grep -e "--bashlyk-test" | grep -w "log")" ] && return 0
  local s pathLog fnLog emailRcpt emailSubj
  echo "--- liblog.sh tests --- start"
- for s in bUseSyslog=$_bashlyk_bUseSyslog \
-  pathLog=$_bashlyk_pathLog \
-  fnLog=$_bashlyk_fnLog \
-  emailRcpt=$_bashlyk_emailRcpt \
-  emailSubj=$_bashlyk_emailSubj \
-  bTerminal=$_bashlyk_bTerminal \
-  bInteractive=$_bashlyk_bInteractive; do
-  echo "$s"
+ for s in                             \
+  bUseSyslog=$_bashlyk_bUseSyslog     \
+  pathLog=$_bashlyk_pathLog           \
+  fnLog=$_bashlyk_fnLog               \
+  emailRcpt=$_bashlyk_emailRcpt       \
+  emailSubj=$_bashlyk_emailSubj       \
+  bTerminal=$_bashlyk_bTerminal       \
+  bInteractive=$_bashlyk_bInteractive
+  do
+   echo "$s"
  done
- udfSetLog 
- for s in udfLog udfWarn udfUptime; do
+ echo "--- test within control terminal: ---"
+ for s in udfLog udfUptime udfFinally udfWarn udfIsTerminal udfIsInteractive; do
   sleep 1
-  echo "check $s:"
-  $s testing liblog $s
+  echo "--- check $s: ---"
+  $s testing liblog $s; echo "return code ... $?"
+ done
+ echo "--- test without control terminal (cat $_bashlyk_fnLog )---"
+ _bashlyk_bTerminal=0
+ udfSetLog && echo "udfSetLog ok" || echo "udfSetLog fail"
+ for s in udfLog udfUptime udfFinally udfWarn udfIsTerminal udfIsInteractive; do
+  sleep 1
+  echo "--- check $s: ---"
+  $s testing liblog $s; echo "return code ... $?"
  done
  _bashlyk_bTerminal=0
- for s in udfLog udfWarn udfUptime; do
-  sleep 1
-  echo "check $s:"
-  $s testing liblog $s
- done
  _bashlyk_bUseSyslog=1
- for s in udfLog udfWarn udfUptime; do
+  echo "--- test without control terminal and syslog using: ---"
+ for s in udfLog udfUptime udfFinally udfWarn udfIsTerminal udfIsInteractive; do
   sleep 1
-  echo "check $s:"
-  $s testing liblog $s
+  echo "--- check $s: ---"
+  $s testing liblog $s; echo "return code ... $?"
  done
- for s in pathLog=$_bashlyk_pathLog fnLog=$_bashlyk_fnLog emailRcpt=$_bashlyk_emailRcpt emailSubj=$_bashlyk_emailSubj bTerminal=$_bashlyk_bTerminal bInteractive=$_bashlyk_bInteractive; do
-  echo "$s"
+ _bashlyk_bTerminal=1
+ #udfOnTrap
+ #exec >&1 2>&1
+ for s in                             \
+  bUseSyslog=$_bashlyk_bUseSyslog     \
+  pathLog=$_bashlyk_pathLog           \
+  fnLog=$_bashlyk_fnLog               \
+  emailRcpt=$_bashlyk_emailRcpt       \
+  emailSubj=$_bashlyk_emailSubj       \
+  bTerminal=$_bashlyk_bTerminal       \
+  bInteractive=$_bashlyk_bInteractive
+  do
+   echo "$s"
  done
  echo "--- liblog.sh tests ---  done"
  return 0
