@@ -16,27 +16,32 @@
 : ${_bashlyk_aLib:="log,cnf,pid,md5,opt,xml"}
 : ${_bashlyk_pathLib:="/usr/share/bashlyk"}
 : ${_bashlyk_sArg:=$*}
-: ${_bashlyk_bInteractive:=1}
+: ${_bashlyk_bInteract:=1}
 : ${_bashlyk_bTerminal:=1}
+: ${_bashlyk_sCond4Log:=noterm}
+: ${_bashlyk_bNotUseLog:=0}
 #******
 #****f* bashlyk/udfInit
 #  SYNOPSIS
 #    udfInit
 #  DESCRIPTION
 #    Подготовка к запуску сценария, определение условий его работы
-#    (каталоги расположения создаваемых файлов, наличие терминала и т.п.)
-#    Если запуск выполняется от "root", то каталоги располагаются глобально, согласно LBS, 
+#    (каталоги расположения создаваемых файлов, наличие терминала, перенаправления и т.п.)
+#    Если запуск выполняется от "root", то каталоги располагаются глобально, согласно LSB, 
 #    иначе - в каталоге ~/.bashlyk или во временном каталоге, если не удалось определить
 #    владельца процесса
 #  SOURCE
 udfInit() {
- local pathCnf pathRoot pathRun pathLog sUser sHome 
+ local pathCnf pathRoot pathRun pathLog pathDat sUser sHome
+ #
  _bashlyk_sId=${_bashlyk:-bashlyk}
  [ -n "$_bashlyk" ] && _bashlyk_pathPrefix="/${_bashlyk}" || _bashlyk_pathPrefix=
  pathCnf="etc${_bashlyk_pathPrefix}"
  pathLog="var/log${_bashlyk_pathPrefix}"
  pathRun="var/run${_bashlyk_pathPrefix}"
+ pathDat="var/lib${_bashlyk_pathPrefix}"
  sUser=$(ps -p $$ -o user=)
+
  case $sUser in
   'root')
    pathRoot=''
@@ -59,12 +64,14 @@ udfInit() {
  _bashlyk_pathRun="${pathRoot}/${pathRun}"
  _bashlyk_pathLog="${pathRoot}/${pathLog}"
  _bashlyk_pathCnf="${pathRoot}/${pathCnf}"
+ _bashlyk_pathDat="${pathRoot}/${pathDat}"
 
  #[ -d "$_bashlyk_pathRun" ] || mkdir -p $_bashlyk_pathRun
  #[ -d "$_bashlyk_pathLog" ] || mkdir -p $_bashlyk_pathLog
  #[ -d "$_bashlyk_pathCnf" ] || mkdir -p $_bashlyk_pathCnf
+ #[ -d "$_bashlyk_pathCnf" ] || mkdir -p $_bashlyk_pathDat
 
- [ -t 1 ] && _bashlyk_bInteractive=1 || _bashlyk_bInteractive=0
+ [ -t 1 ] && _bashlyk_bInteract=1 || _bashlyk_bInteract=0
  tty > /dev/null 2>&1 && _bashlyk_bTerminal=1 || _bashlyk_bTerminal=0
 }
 #******
@@ -72,16 +79,26 @@ udfInit() {
 #  SYNOPSIS
 #    udfMain <args>
 #  DESCRIPTION
-#    Вызов udfInit, подключение модулей, установка режима ведения лога
+#    Инициализация, подключение модулей, запуск процесса протоколирования
+#    в случае наличия перенаправления стандартных устройств или потери терминала
+#    в зависимости от значения $_bashlyk_sCond4Log ("noterm" по умолчанию).
 #  SOURCE
 udfMain() {
+ local fn fnLib
+ #
  udfInit
- local fn
+ #
  for fn in $(echo ${_bashlyk_aLib} | tr ',' ' '); do
-  local fnLib="${_bashlyk_pathLib}/lib${fn}.sh"
+  fnLib="${_bashlyk_pathLib}/lib${fn}.sh"
   [ -s $fnLib ] && . $fnLib || eval 'echo "error with $fnLib using"; exit -1'
  done
- [ $_bashlyk_bTerminal -eq 0 ] && udfSetLog
+ case ${_bashlyk_sCond4Log} in
+  redirect)
+           _bashlyk_bNotUseLog=$_bashlyk_bInteract
+    noterm)
+           _bashlyk_bNotUseLog=$_bashlyk_bTerminal
+ esac
+ [ $_bashlyk_bNotUseLog -ne 0 ] || udfSetLog
  return 0
 }
 #******
@@ -91,4 +108,3 @@ udfMain() {
 #  SOURCE
 udfMain $*
 #******
-

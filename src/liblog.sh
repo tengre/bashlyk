@@ -33,6 +33,7 @@
 : ${_bashlyk_apidClean:=}
 : ${HOSTNAME:=$(hostname)}
 : ${_bashlyk_bUseSyslog:=0}
+: ${_bashlyk_bNotUseLog:=}
 : ${_bashlyk_pathLog:=/tmp}
 : ${_bashlyk_s0:=$(basename $0)}
 : ${_bashlyk_sId:=$(basename $0 .sh)}
@@ -81,39 +82,39 @@ udfDate() {
 #    args - строка для вывода
 #  OUTPUT
 #    Возможны четыре варианта:
-#     * Вывод только в файл $_bashlyk_fnLog
 #     * Вывод только на консоль терминала
-#     * Вывод в системный журнал (syslog) и в файл $_bashlyk_fnLog
+#     * Вывод только в файл $_bashlyk_fnLog
 #     * Вывод в системный журнал (syslog) и на консоль терминала
+#     * Вывод в системный журнал (syslog) и в файл $_bashlyk_fnLog
 #  SOURCE
 udfLogger() {
  local envLang=$LANG
  LANG=C
  local bSysLog=0
- local bTermin=0
+ local bUseLog=0
  local sTagLog="${_bashlyk_s0}[$(printf "%05d" $$)]"
  [ -z "$_bashlyk_bUseSyslog" -o ${_bashlyk_bUseSyslog} -eq 0 ] \
   && bSysLog=0 || bSysLog=1
- if [ -z "$_bashlyk_bTerminal" ]; then
-  udfIsTerm && bTermin=1 || bTermin=0
+ if [ -z "$_bashlyk_bNotUseLog" ]; then
+  udfCheck4LogUse && bUseLog=1 || bUseLog=0
  else
-  [ ${_bashlyk_bTerminal} -eq 0 ] && bTermin=0 || bTermin=1
+  [ ${_bashlyk_bNotUseLog} -ne 0 ] && bUseLog=0 || bUseLog=1
  fi
  #[ -d "${_bashlyk_pathLog}" ] || mkdir -p "${_bashlyk_pathLog}" \
  # || udfThrow "Error: do not create path ${_bashlyk_pathLog}"
- case "${bSysLog}${bTermin}" in
+ case "${bSysLog}${bUseLog}" in
   "00")
-   echo "$(udfDate "$HOSTNAME $sTagLog: $*")" >> ${_bashlyk_fnLog}
-  ;;
-  "01")
    echo "$*"
   ;;
-  "10")
+  "01")
    echo "$(udfDate "$HOSTNAME $sTagLog: $*")" >> ${_bashlyk_fnLog}
+  ;;
+  "10")
+   echo "$*"
    logger -s -t "$sTagLog" "$*" 2>/dev/null
   ;;
   "11")
-   echo "$*"
+   echo "$(udfDate "$HOSTNAME $sTagLog: $*")" >> ${_bashlyk_fnLog}
    logger -s -t "$sTagLog" "$*" 2>/dev/null
   ;;
  esac
@@ -198,7 +199,7 @@ udfMail() {
 #   Зависит от параметров вывода
 #  SOURCE
 udfWarn() {
- [ "${_bashlyk_bTerminal}" = "1" ] && udfEcho $* || udfMail $*
+ [ $_bashlyk_bNotUseLog -ne 0 ] && udfEcho $* || udfMail $*
 }
 #******
 #****f* bashlyk/liblog/udfThrow
@@ -220,19 +221,19 @@ udfThrow() {
  exit -1
 }
 #******
-#****f* bashlyk/liblog/udfIsInteractive
+#****f* bashlyk/liblog/udfIsInteract
 #  SYNOPSIS
-#    udfIsInteractive
+#    udfIsInteract
 #  DESCRIPTION
 #    Проверка режима работы устройств стандартного ввода и вывода
 #  RETURN VALUE
 #    0 - "неинтерактивный" режим, имеется перенаправление стандартных ввода и/или вывода
 #    1 - "интерактивный" режим, перенаправление стандартных ввода и/или вывода не обнаружено
 #  SOURCE
-udfIsInteractive() {
+udfIsInteract() {
  [ -t 1 -a -t 0 ] && [ -n "$TERM" ] && [ "$TERM" != "dumb" ] \
-  && _bashlyk_bInteractive=1 || _bashlyk_bInteractive=0
- return $_bashlyk_bInteractive
+  && _bashlyk_bInteract=1 || _bashlyk_bInteract=0
+ return $_bashlyk_bInteract
 }
 #******
 #****f* bashlyk/liblog/udfIsTerminal
@@ -247,6 +248,30 @@ udfIsInteractive() {
 udfIsTerminal() {
  tty > /dev/null 2>&1 && _bashlyk_bTerminal=1 || _bashlyk_bTerminal=0
  return $_bashlyk_bTerminal
+}
+#******
+#****f* bashlyk/liblog/udfCheck4LogUse
+#  SYNOPSIS
+#    udfCheck4LogUse
+#  DESCRIPTION
+#    Проверка условий использования лог-файла
+#  RETURN VALUE
+#    0 - не требуется
+#    1 - вести запись лог-файла
+#  SOURCE
+udfCheck4LogUse() {
+ udfIsTerminal
+ udfIsInteract
+ #
+ case ${_bashlyk_sCond4Log} in
+  redirect)
+           _bashlyk_bNotUseLog=$_bashlyk_bInteract ;;
+    noterm)
+           _bashlyk_bNotUseLog=$_bashlyk_bTerminal ;;
+         *)
+           _bashlyk_bNotUseLog=$_bashlyk_bInteract ;;
+ esac
+ return $_bashlyk_bNotUseLog
 }
 #******
 #****f* bashlyk/liblog/udfOnTrap
@@ -458,12 +483,12 @@ udfLibLog() {
   emailRcpt=$_bashlyk_emailRcpt       \
   emailSubj=$_bashlyk_emailSubj       \
   bTerminal=$_bashlyk_bTerminal       \
-  bInteractive=$_bashlyk_bInteractive
+  bInteract=$_bashlyk_bInteract
   do
    echo "$s"
  done
  echo "--- test within control terminal: ---"
- for s in udfLog udfUptime udfFinally udfWarn udfIsTerminal udfIsInteractive; do
+ for s in udfLog udfUptime udfFinally udfWarn udfIsTerminal udfIsInteract; do
   sleep 1
   echo "--- check $s: ---"
   $s testing liblog $s; echo "return code ... $?"
@@ -471,7 +496,7 @@ udfLibLog() {
  echo "--- test without control terminal (cat $_bashlyk_fnLog )---"
  _bashlyk_bTerminal=0
  udfSetLog && echo "udfSetLog ok" || echo "udfSetLog fail"
- for s in udfLog udfUptime udfFinally udfWarn udfIsTerminal udfIsInteractive; do
+ for s in udfLog udfUptime udfFinally udfWarn udfIsTerminal udfIsInteract; do
   sleep 1
   echo "--- check $s: ---"
   $s testing liblog $s; echo "return code ... $?"
@@ -479,7 +504,7 @@ udfLibLog() {
  _bashlyk_bTerminal=0
  _bashlyk_bUseSyslog=1
   echo "--- test without control terminal and syslog using: ---"
- for s in udfLog udfUptime udfFinally udfWarn udfIsTerminal udfIsInteractive; do
+ for s in udfLog udfUptime udfFinally udfWarn udfIsTerminal udfIsInteract; do
   sleep 1
   echo "--- check $s: ---"
   $s testing liblog $s; echo "return code ... $?"
@@ -494,7 +519,7 @@ udfLibLog() {
   emailRcpt=$_bashlyk_emailRcpt       \
   emailSubj=$_bashlyk_emailSubj       \
   bTerminal=$_bashlyk_bTerminal       \
-  bInteractive=$_bashlyk_bInteractive
+  bInteract=$_bashlyk_bInteract
   do
    echo "$s"
  done
