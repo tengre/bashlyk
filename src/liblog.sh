@@ -482,7 +482,7 @@ udfSetLog() {
 #    присваивает значение вида "temp.<имя сценария>.<????????>" переменной $fnTemp
 #  SOURCE
 udfMakeTemp() {
- local fn=$(mktemp -t "${1}.${_bashlyk_$s0}.XXXXXXXX") || \
+ local fn=$(mktemp -t "${1}.${_bashlyk_s0}.XXXXXXXX") || \
   udfThrow "Error: temporary file $fn do not created..."
  [ -n "$2" ] && chmod $2 $fn
  [ -n "$3" ] && chown $3 $fn
