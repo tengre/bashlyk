@@ -1,3 +1,15 @@
+Fri, 05 Feb 2010 14:48:02 +0400
+	New upstream release
+	Version 1.43
+ - Введен выбор условия автоматического использования лог-файла по редиректу или потери основного терминала
+ - Введены новые функции в библиотеку liblog.sh: udfMakeTemp, udfThrowOnEmptyVariable, udfShowVariable
+
+Thu, 16 Iul 2009 12:59:57 +0500
+	New upstream release
+	Version 1.42
+ - Добавлена генерация документации на движке robodoc
+ - Вместо udfIsTerm добавлены функции udfInteractive (проверка редиректа) udfIsTerminal (проверка терминала)
+
 Mon, 27 Apr 2009 14:31:57 +0500
 	New upstream release
 	Version 1.41
@@ -14,7 +26,6 @@ Sun, 11 Jan 2009 16:52:34 +0400
  - Введена функция формирования xml контента ('udfXml' или '_' ) в libxml.sh.
  - Добавлены новые функции для очистки временных ресурсов в библиотеку liblog.sh: udfOnTrap, udfAdd{Job,File,Path,Pid}2Clean
  - Изменена логика поиска файла конфигурации - при отсутствии по пути $_bashlyk_pathCnf, выполняется поиск в каталоге /etc
-
 
 Wed, 10 Dec 2008 11:59:04 +0400
 

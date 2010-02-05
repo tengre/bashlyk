@@ -94,9 +94,11 @@ udfMain() {
  done
  case ${_bashlyk_sCond4Log} in
   redirect)
-           _bashlyk_bNotUseLog=$_bashlyk_bInteract
+           _bashlyk_bNotUseLog=$_bashlyk_bInteract ;;
     noterm)
-           _bashlyk_bNotUseLog=$_bashlyk_bTerminal
+           _bashlyk_bNotUseLog=$_bashlyk_bTerminal ;;
+         *)
+           _bashlyk_bNotUseLog=$_bashlyk_bInteract ;;
  esac
  [ $_bashlyk_bNotUseLog -ne 0 ] || udfSetLog
  return 0

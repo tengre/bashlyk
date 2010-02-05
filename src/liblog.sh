@@ -38,6 +38,7 @@
 : ${_bashlyk_s0:=$(basename $0)}
 : ${_bashlyk_sId:=$(basename $0 .sh)}
 : ${_bashlyk_pathRun:=/tmp}
+: ${_bashlyk_pathDat:=/tmp}
 : ${_bashlyk_pidLogSock:=}
 : ${_bashlyk_fnLogSock:=}
 : ${_bashlyk_emailRcpt:=postmaster}
@@ -464,6 +465,127 @@ udfSetLog() {
  return 0
 }
 #******
+#****f* bashlyk/liblog/udfMakeTemp
+#  SYNOPSIS
+#    udfMakeTemp prefix [perm] [owner[.group]]
+#  DESCRIPTION
+#    Создание временного файла
+#  INPUTS
+#    prefix - префикс имени временного файла
+#    perm   - права на файл
+#    owner  - владелец файла
+#    group  - группа файла
+#  OUTPUT
+#    имя файла в виде [prefix].${_bashlyk_s0}.<????????>
+#  EXAMPLE
+#    fnTemp=$(udfMakeTemp temp)
+#    присваивает значение вида "temp.<имя сценария>.<????????>" переменной $fnTemp
+#  SOURCE
+udfMakeTemp() {
+ local fn=$(mktemp -t "${1}.${_bashlyk_$s0}.XXXXXXXX") || \
+  udfThrow "Error: temporary file $fn do not created..."
+ [ -n "$2" ] && chmod $2 $fn
+ [ -n "$3" ] && chown $3 $fn
+ echo $fn
+}
+#******
+#****f* bashlyk/liblog/_ARGUMENTS
+#  SYNOPSIS
+#    _ARGUMENTS
+#  DESCRIPTION
+#    Получить значение переменной $_bashlyk_sArg, которая должна содержать командную строку сценария
+#  OUTPUT
+#    Вывод значения переменной $_bashlyk_sArg
+#  EXAMPLE
+#    for arg in $(_ARGUMENTS); do ... done
+#    Обработка аргументов командной строки
+#  SOURCE
+_ARGUMENTS() {
+ echo ${_bashlyk_sArg}
+}
+#******
+#****f* bashlyk/liblog/_fnLog
+#  SYNOPSIS
+#    _fnLog
+#  DESCRIPTION
+#    Получить значение переменной $_bashlyk_fnLog, которая должна содержать полное имя лог-файла
+#  OUTPUT
+#    Вывод значения переменной $_bashlyk_fnLog
+#  EXAMPLE
+#    stat $(_ARGUMENTS)
+#    Вывести информацию о лог-файле
+#  SOURCE
+_fnLog() {
+ echo ${_bashlyk_fnLog}
+}
+#******
+#****f* bashlyk/liblog/_pathDat
+#  SYNOPSIS
+#    _pathDat
+#  DESCRIPTION
+#    Получить значение переменной $_bashlyk_pathDat, которая должна содержать полное имя каталога данных сценария
+#  OUTPUT
+#    Вывод значения переменной $_bashlyk_pathDat
+#  EXAMPLE
+#    stat $(_ARGUMENTS)
+#    Вывести информацию о каталоге данных сценария
+#  SOURCE
+_pathDat() {
+ echo ${_bashlyk_pathRun}
+}
+#******
+#****f* bashlyk/liblog/udfThrowOnEmptyVariable
+#  SYNOPSIS
+#    udfThrowOnEmptyVariable args
+#  DESCRIPTION
+#    Вызывает останов сценария, если аргументы, как имена переменных, содержат пустые значения
+#  INPUTS
+#    args - имена переменных
+#  OUTPUT
+#    Сообщение об ошибке с перечислением имен переменных, которые содержат пустые значения
+#  RETURN VALUE
+#    0 - переменные не содержат пучтые значения
+#   -1 - останов сценария, есть не инициализированные переменные
+#  SOURCE
+udfThrowOnEmptyVariable() {
+ local s fnTmp a
+ fnTmp=$(udfMakeTemp checkvar 0700)
+ udfAddFile2Clean $fnTmp
+ for s in $*; do
+  printf '_bashlyk_Temp4CheckVariable="${%s}"\n' "$s" > $fnTmp
+   . $fnTmp
+  [ -n "$_bashlyk_Temp4CheckVariable" ] && continue || a+=" $s"
+ done
+ [ -n "$a" ] && { 
+  udfThrow "Error: Variable(s) or option(s) ($a ) is empty..."
+  return 1
+ }
+ return 0
+}
+#******
+#****f* bashlyk/liblog/udfShowVariable
+#  SYNOPSIS
+#    udfShowVariable args
+#  DESCRIPTION
+#    Выводит имена и значения аргументов, как имен переменных
+#  INPUTS
+#    args - имена переменных
+#  OUTPUT
+#    Имя переменной и значение в виде <Имя>=<Значение>
+#  SOURCE
+udfShowVariable() {
+ local s fnTmp a
+ fnTmp=$(udfMakeTemp showvar 0700)
+ udfAddFile2Clean $fnTmp
+ for s in $*; do
+  printf '_bashlyk_Temp4CheckVariable="${%s}"\n' "$s" > $fnTmp
+   . $fnTmp
+  a+="\t$s=${_bashlyk_Temp4CheckVariable}\n"
+ done
+ printf "Variable dump:\n$a"
+ return 0
+}
+#******
 #****u* bashlyk/liblog/udfLibLog
 #  SYNOPSIS
 #    udfLibLog
@@ -473,6 +595,9 @@ udfSetLog() {
 #   cодержат ключевые слова "--bashlyk-test" и "log"
 #  SOURCE
 udfLibLog() {
+ mkdir -p ${_bashlyk_pathDat}
+ udfAddPath2Clean ${_bashlyk_pathDat}
+ #
  [ -z "$(echo "${_bashlyk_sArg}" | grep -e "--bashlyk-test" | grep -w "log")" ] && return 0
  local s pathLog fnLog emailRcpt emailSubj
  echo "--- liblog.sh tests --- start"
