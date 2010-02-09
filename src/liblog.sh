@@ -482,18 +482,26 @@ udfSetLog() {
 #    присваивает значение вида "temp.<имя сценария>.<????????>" переменной $fnTemp
 #  SOURCE
 udfMakeTemp() {
- local fn=$(mktemp -t "${1}.${_bashlyk_s0}.XXXXXXXX") || \
+ local fn sMask
+ [ -n "$2" ] && {
+  sMask=$(umask)
+  umask $2 >/dev/null 2>&1
+ }
+ fn=$(mktemp -t "${1}.${_bashlyk_s0}.XXXXXXXX") || \
   udfThrow "Error: temporary file $fn do not created..."
- [ -n "$2" ] && chmod $2 $fn
- [ -n "$3" ] && chown $3 $fn
+ umask $sMask
+ [ -n "$3" ] && chown $3 $fn >/dev/null 2>&1
  echo $fn
 }
 #******
 #****f* bashlyk/liblog/_ARGUMENTS
 #  SYNOPSIS
-#    _ARGUMENTS
+#    _ARGUMENTS [args]
 #  DESCRIPTION
-#    Получить значение переменной $_bashlyk_sArg, которая должна содержать командную строку сценария
+#    Получить или установить значение переменной $_bashlyk_sArg -
+#    командная строка сценария
+#  INPUTS
+#    args - новая командная строка
 #  OUTPUT
 #    Вывод значения переменной $_bashlyk_sArg
 #  EXAMPLE
@@ -501,14 +509,31 @@ udfMakeTemp() {
 #    Обработка аргументов командной строки
 #  SOURCE
 _ARGUMENTS() {
- echo ${_bashlyk_sArg}
+ [ -n "$1" ] && _bashlyk_sArg="$*" || echo ${_bashlyk_sArg}
+}
+#******
+#****f* bashlyk/liblog/_s0
+#  SYNOPSIS
+#    _s0
+#  DESCRIPTION
+#    Получить или установить значение переменной $_bashlyk_s0 -
+#    короткое имя сценария
+#  OUTPUT
+#    Вывод значения переменной $_bashlyk_s0
+#  EXAMPLE
+#    echo "Usage: $(_s0) ..."
+#    Вставить в вывод короткое имя сценария
+#  SOURCE
+_s0() {
+ [ -n "$1" ] && _bashlyk_s0="$*" || echo ${_bashlyk_s0}
 }
 #******
 #****f* bashlyk/liblog/_fnLog
 #  SYNOPSIS
 #    _fnLog
 #  DESCRIPTION
-#    Получить значение переменной $_bashlyk_fnLog, которая должна содержать полное имя лог-файла
+#    Получить или установить значение переменной $_bashlyk_fnLog -
+#    полное имя лог-файла
 #  OUTPUT
 #    Вывод значения переменной $_bashlyk_fnLog
 #  EXAMPLE
@@ -516,22 +541,23 @@ _ARGUMENTS() {
 #    Вывести информацию о лог-файле
 #  SOURCE
 _fnLog() {
- echo ${_bashlyk_fnLog}
+ [ -n "$1" ] && _bashlyk_fnLog=$1 || echo ${_bashlyk_fnLog}
 }
 #******
 #****f* bashlyk/liblog/_pathDat
 #  SYNOPSIS
 #    _pathDat
 #  DESCRIPTION
-#    Получить значение переменной $_bashlyk_pathDat, которая должна содержать полное имя каталога данных сценария
+#    Получить или установить значение переменной $_bashlyk_pathDat - 
+#    полное имя каталога данных сценария
 #  OUTPUT
 #    Вывод значения переменной $_bashlyk_pathDat
 #  EXAMPLE
-#    stat $(_ARGUMENTS)
+#    stat $(_pathDat)
 #    Вывести информацию о каталоге данных сценария
 #  SOURCE
 _pathDat() {
- echo ${_bashlyk_pathRun}
+ [ -n "$1" ] && _bashlyk_pathDat="$*" || echo ${_bashlyk_pathDat}
 }
 #******
 #****f* bashlyk/liblog/udfThrowOnEmptyVariable
@@ -658,3 +684,4 @@ udfLibLog() {
 #   substring "--bashlyk-test" and "log" - command for test using
 #  SOURCE
 udfLibLog
+#******

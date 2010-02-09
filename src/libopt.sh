@@ -109,8 +109,7 @@ udfGetOptHash() {
  local k v csvKeys csvHash=';' sOpt bFound
  csvKeys=$1
  shift
- sOpt="$(getopt -l $csvKeys -n $0 -- $0 $@)"
- #[ $? != 0 ] && return 2
+ sOpt="$(getopt -l $csvKeys -n $0 -- $0 $@)" || return 1
  eval set -- "$sOpt"
  while true; do
   [ -n "$1" ] || break
@@ -152,17 +151,14 @@ udfGetOptHash() {
 #  SOURCE
 udfSetOptHash() {
  [ -n "$*" ] || return -1
- local sMask confTmp iRC
- sMask=$(umask)
- umask 0077
- confTmp=$(mktemp -t "${_bashlyk_s0}.XXXXXXXX") && {
+ local confTmp iRC
+ confTmp=$(udfMakeTemp setopt 0077) && {
   udfAddFile2Clean $confTmp
   udfSetConfig $confTmp "$*"
   udfGetConfig $confTmp
   rm -f $confTmp >/dev/null 2>&1
   iRC=0
  } || iRC=1
- umask $sMask
  return $iRC
 }
 #******
