@@ -575,7 +575,7 @@ _pathDat() {
 #  SOURCE
 udfThrowOnEmptyVariable() {
  local s fnTmp a
- fnTmp=$(udfMakeTemp checkvar 0700)
+ fnTmp=$(udfMakeTemp checkvar 0077)
  udfAddFile2Clean $fnTmp
  for s in $*; do
   printf '_bashlyk_Temp4CheckVariable="${%s}"\n' "$s" > $fnTmp
@@ -601,7 +601,7 @@ udfThrowOnEmptyVariable() {
 #  SOURCE
 udfShowVariable() {
  local s fnTmp a
- fnTmp=$(udfMakeTemp showvar 0700)
+ fnTmp=$(udfMakeTemp showvar 0077)
  udfAddFile2Clean $fnTmp
  for s in $*; do
   printf '_bashlyk_Temp4CheckVariable="${%s}"\n' "$s" > $fnTmp
