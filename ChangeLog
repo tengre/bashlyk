@@ -1,3 +1,8 @@
+Fri, 26 Feb 2010 10:03:00 +0400
+	Fix bugs
+	Version 1.44.2
+ - Правильная обработка umask по умолчанию для udfMakeTemp
+
 Wed, 10 Feb 2010 10:51:47 +0400
 	Fix bugs
 	Version 1.44.1

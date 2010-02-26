@@ -488,9 +488,11 @@ udfMakeTemp() {
   umask $2 >/dev/null 2>&1
  }
  fn=$(mktemp -t "${1}.${_bashlyk_s0}.XXXXXXXX") || \
-  udfThrow "Error: temporary file $fn do not created..."
- umask $sMask
- [ -n "$3" ] && chown $3 $fn >/dev/null 2>&1
+   udfThrow "Error: temporary file $fn do not created..."
+ {
+  [ -n "$sMask" ] && umask $sMask
+  [ -n "$3" ] && chown $3 $fn
+ } >/dev/null 2>&1
  echo $fn
 }
 #******
@@ -604,11 +606,11 @@ udfShowVariable() {
  fnTmp=$(udfMakeTemp showvar 0077)
  udfAddFile2Clean $fnTmp
  for s in $*; do
-  printf '_bashlyk_Temp4CheckVariable="${%s}"\n' "$s" > $fnTmp
-   . $fnTmp
+  echo "_bashlyk_Temp4CheckVariable=\$${s}" > $fnTmp
+  . $fnTmp
   a+="\t$s=${_bashlyk_Temp4CheckVariable}\n"
  done
- printf "Variable dump:\n$a"
+ echo -e "Variable dump:\n$a"
  return 0
 }
 #******
