@@ -496,6 +496,32 @@ udfMakeTemp() {
  echo $fn
 }
 #******
+#****f* bashlyk/liblog/udfShellExec
+#  SYNOPSIS
+#    udfShellExec args
+#  DESCRIPTION
+#    Выполнение командной строки во внешнем временном файле
+#    в текущей среде интерпретатора оболочки
+#  INPUTS
+#    args - командная строка
+#  RETURN VALUE
+#    -1 - аргумент не задан
+#    в остальных случаях код возврата командной строки с учетом доступа к временному файлу
+#  EXAMPLE
+#    [ -n "$preExec" ] && udfShellExec $preExec
+#    Если переменная $preExec не пуста, то записать его значение во временный файл
+#    и выполнить его
+#  SOURCE
+udfShellExec() {
+ [ -n "$*" ] || return -1
+ local fn
+ fn=$(udfMakeTemp .shellexec 0077)
+ udfAddFile2Clean $fn
+ echo $* > $fn
+ . $fn
+ return $?
+}
+#******
 #****f* bashlyk/liblog/_ARGUMENTS
 #  SYNOPSIS
 #    _ARGUMENTS [args]
