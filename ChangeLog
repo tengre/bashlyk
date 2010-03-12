@@ -1,3 +1,8 @@
+Fri, 12 Mar 2010 10:19:01 +0400
+	Fix bugs
+	Version 1.44.3
+ - Добавлена переменная $_bashlyk_sUser и скорректирована $_bashlyk_emailSubj
+
 Fri, 26 Feb 2010 10:03:00 +0400
 	Fix bugs
 	Version 1.44.2

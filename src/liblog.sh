@@ -43,7 +43,8 @@
 : ${_bashlyk_fnLogSock:=}
 : ${_bashlyk_emailRcpt:=postmaster}
 : ${_bashlyk_iStartTimeStamp:=$(date "+%s")}
-: ${_bashlyk_emailSubj:="$USER@$HOSTNAME..${_bashlyk_s0}"}
+: ${_bashlyk_sUser:=$USER}
+: ${_bashlyk_emailSubj:="${_bashlyk_sUser}@${HOSTNAME}::${_bashlyk_s0}"}
 : ${_bashlyk_fnLog:="${_bashlyk_pathLog}/${_bashlyk_s0}.log"}
 : ${_bashlyk_aRequiredCmd_log:="basename date echo hostname false printf logger \
  mail mkfifo sleep tee true jobs ["}

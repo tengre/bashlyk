@@ -32,7 +32,7 @@
 #    владельца процесса
 #  SOURCE
 udfInit() {
- local pathCnf pathRoot pathRun pathLog pathDat sUser sHome
+ local pathCnf pathRoot pathRun pathLog pathDat sHome
  #
  _bashlyk_sId=${_bashlyk:-bashlyk}
  [ -n "$_bashlyk" ] && _bashlyk_pathPrefix="/${_bashlyk}" || _bashlyk_pathPrefix=
@@ -40,21 +40,21 @@ udfInit() {
  pathLog="var/log${_bashlyk_pathPrefix}"
  pathRun="var/run${_bashlyk_pathPrefix}"
  pathDat="var/lib${_bashlyk_pathPrefix}"
- sUser=$(ps -p $$ -o user=)
+ _bashlyk_sUser=$(ps -p $$ -o user=)
 
- case $sUser in
+ case $_bashlyk_sUser in
   'root')
    pathRoot=''
   ;;
   '')
-   pathRoot="/tmp/$$_$USER/.bashlyk"
+   pathRoot="/tmp/${$}_${USER}/.bashlyk"
   ;;
   *)
    if [ -z "$HOME" -o ! -O "$HOME" ]; then
-    sHome=$(getent passwd ${sUser} | cut -d ":" -f 6)
+    sHome=$(getent passwd $_bashlyk_sUser | cut -d ":" -f 6)
     [ -n "$sHome" -a -d "$sHome" -a -O "$sHome" ] \
      && pathRoot="${sHome}/.bashlyk" \
-     || pathRoot="/tmp/$$_$sUser/.bashlyk"
+     || pathRoot="/tmp/${$}_${_bashlyk_sUser}/.bashlyk"
    else
     pathRoot="${HOME}/.bashlyk"
    fi
