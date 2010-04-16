@@ -4,7 +4,8 @@
 /Makefile.am -text
 /NEWS -text
 /README -text
-/configure.in -text
+/automake.sh -text
+/build.sh -text
 doc/Makefile.am -text
 /robodoc.rc -text
 src/Makefile.am -text

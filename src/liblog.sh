@@ -611,7 +611,8 @@ udfThrowOnEmptyVariable() {
    . $fnTmp
   [ -n "$_bashlyk_Temp4CheckVariable" ] && continue || a+=" $s"
  done
- [ -n "$a" ] && { 
+ rm -f $fnTmp
+ [ -n "$a" ] && {
   udfThrow "Error: Variable(s) or option(s) ($a ) is empty..."
   return 1
  }
@@ -637,6 +638,7 @@ udfShowVariable() {
   . $fnTmp
   a+="\t$s=${_bashlyk_Temp4CheckVariable}\n"
  done
+ rm -f $fnTmp
  echo -e "Variable dump:\n$a"
  return 0
 }
