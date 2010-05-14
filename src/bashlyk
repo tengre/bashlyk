@@ -41,6 +41,7 @@ udfInit() {
  pathRun="var/run${_bashlyk_pathPrefix}"
  pathDat="var/lib${_bashlyk_pathPrefix}"
  _bashlyk_sUser=$(ps -p $$ -o user=)
+ _bashlyk_sGroup=$(ps -p $$ -o group=)
 
  case $_bashlyk_sUser in
   'root')

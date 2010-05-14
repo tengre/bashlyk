@@ -603,15 +603,10 @@ _pathDat() {
 #   -1 - останов сценария, есть не инициализированные переменные
 #  SOURCE
 udfThrowOnEmptyVariable() {
- local s fnTmp a
- fnTmp=$(udfMakeTemp checkvar 0077)
- udfAddFile2Clean $fnTmp
+ local s a
  for s in $*; do
-  printf '_bashlyk_Temp4CheckVariable="${%s}"\n' "$s" > $fnTmp
-   . $fnTmp
-  [ -n "$_bashlyk_Temp4CheckVariable" ] && continue || a+=" $s"
+  [ -n "${!s}" ] && continue || a+=" $s"
  done
- rm -f $fnTmp
  [ -n "$a" ] && {
   udfThrow "Error: Variable(s) or option(s) ($a ) is empty..."
   return 1
@@ -631,15 +626,10 @@ udfThrowOnEmptyVariable() {
 #  SOURCE
 udfShowVariable() {
  local s fnTmp a
- fnTmp=$(udfMakeTemp showvar 0077)
- udfAddFile2Clean $fnTmp
  for s in $*; do
-  echo "_bashlyk_Temp4CheckVariable=\$${s}" > $fnTmp
-  . $fnTmp
-  a+="\t$s=${_bashlyk_Temp4CheckVariable}\n"
+  a+="\t$s=${!s}\n"
  done
- rm -f $fnTmp
- echo -e "Variable dump:\n$a"
+ echo -e "Variable listing:\n$a"
  return 0
 }
 #******
