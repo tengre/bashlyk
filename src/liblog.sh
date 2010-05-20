@@ -287,14 +287,19 @@ udfCheck4LogUse() {
 #    * Закрывается сокет журнала сценария, если он использовался.
 #  SOURCE
 udfOnTrap() {
- local s
+ local i s
  #
  for s in ${_bashlyk_ajobClean}; do
   kill $s 2>/dev/null
  done
  #
  for s in ${_bashlyk_apidClean}; do
-  kill $s 2>/dev/null
+  for i in 15 9; do
+   [ -n "$(ps -o pid= --ppid $$ | xargs | grep -w $s)" ] && {
+    kill -${i} $s 2>/dev/null
+    sleep 0.2
+   }
+  done
  done
  #
  for s in ${_bashlyk_afnClean}; do
@@ -603,12 +608,13 @@ _pathDat() {
 #   -1 - останов сценария, есть не инициализированные переменные
 #  SOURCE
 udfThrowOnEmptyVariable() {
- local s a
- for s in $*; do
-  [ -n "${!s}" ] && continue || a+=" $s"
+ local bashlyk_EysrBRwAuGMRNQoG_a bashlyk_tfAFyKrLgSeOatp2_s
+ for bashlyk_tfAFyKrLgSeOatp2_s in $*; do
+  [ -z "${!bashlyk_tfAFyKrLgSeOatp2_s}" ] \
+   && bashlyk_EysrBRwAuGMRNQoG_a+=" $bashlyk_tfAFyKrLgSeOatp2_s"
  done
- [ -n "$a" ] && {
-  udfThrow "Error: Variable(s) or option(s) ($a ) is empty..."
+ [ -n "$bashlyk_EysrBRwAuGMRNQoG_a" ] && {
+  udfThrow "Error: Variable(s) or option(s) ($bashlyk_EysrBRwAuGMRNQoG_a ) is empty..."
   return 1
  }
  return 0
@@ -625,11 +631,11 @@ udfThrowOnEmptyVariable() {
 #    Имя переменной и значение в виде <Имя>=<Значение>
 #  SOURCE
 udfShowVariable() {
- local s fnTmp a
- for s in $*; do
-  a+="\t$s=${!s}\n"
+ local bashlyk_aSE10yGYS4AwxLJA_a bashlyk_G9WOnrBkEFSt9oKw_s
+ for bashlyk_G9WOnrBkEFSt9oKw_s in $*; do
+  bashlyk_aSE10yGYS4AwxLJA_a+="\t${bashlyk_G9WOnrBkEFSt9oKw_s}=${!bashlyk_G9WOnrBkEFSt9oKw_s}\n"
  done
- echo -e "Variable listing:\n$a"
+ echo -e "Variable listing:\n${bashlyk_aSE10yGYS4AwxLJA_a}"
  return 0
 }
 #******
