@@ -27,11 +27,12 @@
 #  DESCRIPTION
 #    Блок инициализации глобальных переменных
 #  SOURCE
+: ${HOSTNAME:=$(hostname)}
+: ${DEBUGLEVEL:=0}
 : ${_bashlyk_afnClean:=}
 : ${_bashlyk_apathClean:=}
 : ${_bashlyk_ajobClean:=}
 : ${_bashlyk_apidClean:=}
-: ${HOSTNAME:=$(hostname)}
 : ${_bashlyk_bUseSyslog:=0}
 : ${_bashlyk_bNotUseLog:=}
 : ${_bashlyk_pathLog:=/tmp}
@@ -604,7 +605,7 @@ _pathDat() {
 #  OUTPUT
 #    Сообщение об ошибке с перечислением имен переменных, которые содержат пустые значения
 #  RETURN VALUE
-#    0 - переменные не содержат пучтые значения
+#    0 - переменные не содержат пустые значения
 #   -1 - останов сценария, есть не инициализированные переменные
 #  SOURCE
 udfThrowOnEmptyVariable() {
@@ -624,7 +625,7 @@ udfThrowOnEmptyVariable() {
 #  SYNOPSIS
 #    udfShowVariable args
 #  DESCRIPTION
-#    Выводит имена и значения аргументов, как имен переменных
+#    Выводит значения аргументов, если они являются переменными
 #  INPUTS
 #    args - имена переменных
 #  OUTPUT
@@ -636,6 +637,34 @@ udfShowVariable() {
   bashlyk_aSE10yGYS4AwxLJA_a+="\t${bashlyk_G9WOnrBkEFSt9oKw_s}=${!bashlyk_G9WOnrBkEFSt9oKw_s}\n"
  done
  echo -e "Variable listing:\n${bashlyk_aSE10yGYS4AwxLJA_a}"
+ return 0
+}
+#******
+#****f* bashlyk/liblog/udfDebug
+#  SYNOPSIS
+#    udfDebug level message
+#  DESCRIPTION
+#    Позволяет выводить сообщение, если его уровень не больше значения 
+#    глобальной переменной DEBUGLEVEL
+#  INPUTS
+#    level   - уровень отладочных сообщений, десятичное число, если неправильно 
+#    задан, то принимается значение 0
+#    message - текст отладочного сообщения
+#  OUTPUT
+#    Текст отладочного сообщения (аргумент "message"), если его уровень 
+#    (аргумент "level") не больше заданного для сценария переменной DEBUGLEVEL
+#  RETURN VALUE
+#    0 - уровень "level" не больше значению глобальной переменной DEBUGLEVEL
+#    1 - уровень "level" больше значения глобальной переменной DEBUGLEVEL
+#    2 - аргументы отсутствуют
+#  SOURCE
+udfDebug() {
+ local i re='^[0-9]+$'
+ [ -n "$*" ] && i=$1 || return 2
+ shift
+ [ -n "$(echo $i | grep -E $re)" ] || i=0
+ [ $DEBUGLEVEL -ge $i ] || return 1
+ echo "$*"
  return 0
 }
 #******
