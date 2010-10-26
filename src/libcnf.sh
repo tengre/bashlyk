@@ -53,7 +53,7 @@
 udfGetConfig() {
  [ -n "$1" ] || return -1
  #
- local aconf chIFS conf fn i=0 pathCnf=$_bashlyk_pathCnf
+ local aconf chIFS conf fn i pathCnf=$_bashlyk_pathCnf
  #
  [ "$1"  = "$(basename $1)" -a -f ${pathCnf}/$1 ] || pathCnf=
  [ "$1"  = "$(basename $1)" -a -f $1 ] && pathCnf=$(pwd)
@@ -66,13 +66,15 @@ udfGetConfig() {
  #
  chIFS=$IFS
  IFS='.'
+ i=0
  for fn in $(basename "$1"); do
   aconf[++i]=$fn
  done
  IFS=$chIFS
  conf=
- for ((i=$((${#aconf[*]}-1)); $i; --i)); do
-  [ -n "$conf" ] && conf="${aconf[$i]}.${conf}" || conf=${aconf[$i]}
+ for ((i=$((${#aconf[*]})); $i; i--)); do
+  [ -n "${aconf[i]}" ] || continue
+  [ -n "$conf" ] && conf="${aconf[$i]}.${conf}" || conf=${aconf[i]}
   [ -s "${pathCnf}/${conf}" ] && . "${pathCnf}/${conf}"
  done
  return 0
@@ -122,19 +124,24 @@ udfSetConfig() {
 #   cодержат ключевые слова "--bashlyk-test" и "cnf"
 #  SOURCE
 udfLibCnf() {
- [ -z "$(echo "${_bashlyk_sArg}" | grep -e "--bashlyk-test" | grep -w "cnf")" ] && return 0
- local s conf="$$.testlib.conf"
+ [ -z "$(echo "${_bashlyk_sArg}" | grep -e "--bashlyk-test=*cnf")" ] && return 0
+ local s conf="$$.testlib.conf" a b
  echo "--- libcnf.sh tests --- start"
  printf "#\n# Relative path to config config file (${_bashlyk_pathCnf}/${conf})\n#\n"
  udfAddFile2Clean "${_bashlyk_pathCnf}/${conf}"
  for s in udfSetConfig udfGetConfig; do
   echo "check $s:"
-  $s $conf "a=b;sDate=\"$(date)\""
-  sleep 1
+  $s $conf "a=b;b=\"$(date -R)\""
+  sleep 0.1
  done
- echo "see ${_bashlyk_pathCnf}/${conf}:"
+ echo "file ${_bashlyk_pathCnf}/${conf} contains:"
  cat "${_bashlyk_pathCnf}/${conf}"
+ echo "Variable contains:"
+ echo "a=$a"
+ echo "b=$b"
  #
+ a=
+ b=
  conf=$(mktemp -t "XXXXXXXX.${conf}")\
  || udfThrow "Error: temporary file $conf do not created..."
  udfAddFile2Clean $conf
@@ -142,10 +149,13 @@ udfLibCnf() {
  for s in udfSetConfig udfGetConfig; do
   sleep 1
   echo "check $s:"
-  $s $conf "a=b;sDate=\"$(date)\""
+  $s $conf "a=b;b=\"$(date -R)\""
  done
- echo "see ${conf}:"
+ echo "file ${conf} contains:"
  cat "${conf}"
+ echo "Variable contains:"
+ echo "a=$a"
+ echo "b=$b"
  echo "--- libcnf.sh tests ---  done"
  return 0
 }
@@ -153,7 +163,7 @@ udfLibCnf() {
 #****** bashlyk/libcnf/Main section
 # DESCRIPTION
 #   Running CNF library test unit if $_bashlyk_sArg ($*) contain
-#   substring "--bashlyk-test" and "md5" - command for test using
+#   substring "--bashlyk-test=" and "cnf" - command for test using
 #  SOURCE
 udfLibCnf
 #******
