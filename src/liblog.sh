@@ -185,6 +185,7 @@ udfEcho() {
 #  SOURCE
 udfMail() {
  udfEcho $* | mail -e -s "${_bashlyk_emailSubj}" ${_bashlyk_emailRcpt}
+ udfEcho $*
 }
 #******
 #****f* bashlyk/liblog/udfWarn
