@@ -67,11 +67,6 @@ udfInit() {
  _bashlyk_pathCnf="${pathRoot}/${pathCnf}"
  _bashlyk_pathDat="${pathRoot}/${pathDat}"
 
- #[ -d "$_bashlyk_pathRun" ] || mkdir -p $_bashlyk_pathRun
- #[ -d "$_bashlyk_pathLog" ] || mkdir -p $_bashlyk_pathLog
- #[ -d "$_bashlyk_pathCnf" ] || mkdir -p $_bashlyk_pathCnf
- #[ -d "$_bashlyk_pathCnf" ] || mkdir -p $_bashlyk_pathDat
-
  [ -t 1 ] && _bashlyk_bInteract=1 || _bashlyk_bInteract=0
  tty > /dev/null 2>&1 && _bashlyk_bTerminal=1 || _bashlyk_bTerminal=0
 }

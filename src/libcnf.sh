@@ -120,50 +120,57 @@ udfSetConfig() {
 #    udfLibCnf
 # DESCRIPTION
 #   bashlyk CNF library test unit
-#   Запуск проверочных операций модуля выполняется если только аргументы командной строки
-#   cодержат ключевые слова "--bashlyk-test" и "cnf"
+#   Запуск проверочных операций модуля выполняется если только аргументы 
+#   командной строки cодержат строку вида "--bashlyk-test=[*,]cnf[,*]", где * -
+#   ярлыки на другие тестируемые библиотеки
 #  SOURCE
 udfLibCnf() {
  [ -z "$(echo "${_bashlyk_sArg}" | grep -e "--bashlyk-test=*cnf")" ] && return 0
  local s conf="$$.testlib.conf" a b
- echo "--- libcnf.sh tests --- start"
- printf "#\n# Relative path to config config file (${_bashlyk_pathCnf}/${conf})\n#\n"
- udfAddFile2Clean "${_bashlyk_pathCnf}/${conf}"
- for s in udfSetConfig udfGetConfig; do
-  echo "check $s:"
-  $s $conf "a=b;b=\"$(date -R)\""
-  sleep 0.1
- done
- echo "file ${_bashlyk_pathCnf}/${conf} contains:"
- cat "${_bashlyk_pathCnf}/${conf}"
- echo "Variable contains:"
- echo "a=$a"
- echo "b=$b"
- #
+ printf "\n--- libcnf.sh tests --- start\n"
+ printf "#\n# Relative path to config file [${_bashlyk_pathCnf}/]${conf}\n#\n"
+ echo -n "check udfSetConfig: "
+ udfSetConfig $conf "a=\"$BASH_VERSION\";b=\"$(uname -a)\"" >/dev/null 2>&1
+ echo -n .
+ . $conf >/dev/null 2>&1
+ echo -n .
+ [ "$a" = "$BASH_VERSION" -a "$b" = "$(uname -a)" ] && echo ok. || echo fail.
  a=
  b=
+ echo -n "check udfGetConfig: "
+ echo -n .
+ udfGetConfig $conf
+ echo -n .
+ [ "$a" = "$BASH_VERSION" -a "$b" = "$(uname -a)" ] && echo ok. || echo fail.
+ rm -f "${_bashlyk_pathCnf}/${conf}"
+ a=;b=
+ #
  conf=$(mktemp -t "XXXXXXXX.${conf}")\
  || udfThrow "Error: temporary file $conf do not created..."
- udfAddFile2Clean $conf
- printf "#\n# Absolute path to config file ($conf))\n#\n"
- for s in udfSetConfig udfGetConfig; do
-  sleep 1
-  echo "check $s:"
-  $s $conf "a=b;b=\"$(date -R)\""
- done
- echo "file ${conf} contains:"
- cat "${conf}"
- echo "Variable contains:"
- echo "a=$a"
- echo "b=$b"
- echo "--- libcnf.sh tests ---  done"
+ printf "#\n# Absolute path to config file $conf\n#\n"
+ echo -n "check udfSetConfig: "
+ udfSetConfig $conf "a=\"$BASH_VERSION\";b=\"$(uname -a)\"" >/dev/null 2>&1
+ echo -n .
+ . $conf >/dev/null 2>&1
+ echo -n .
+ [ "$a" = "$BASH_VERSION" -a "$b" = "$(uname -a)" ] && echo ok. || echo fail.
+ a=;b=
+ echo -n "check udfGetConfig: "
+ echo -n .
+ udfGetConfig $conf
+ echo -n .
+ [ "$a" = "$BASH_VERSION" -a "$b" = "$(uname -a)" ] && echo ok. || echo fail.
+ rm -f $conf
+ a=;b=
+ rm -f $conf
+ printf "\n--- libcnf.sh tests ---  done\n"
  return 0
 }
 #******
 #****** bashlyk/libcnf/Main section
 # DESCRIPTION
-#   Running CNF library test unit if $_bashlyk_sArg ($*) contain
-#   substring "--bashlyk-test=" and "cnf" - command for test using
+#   Running CNF library test unit if $_bashlyk_sArg ($*) contains
+#   substrings "--bashlyk-test=" and "cnf" - command for test using
 #  SOURCE
 udfLibCnf
 #******

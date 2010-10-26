@@ -673,10 +673,12 @@ udfDebug() {
 #    udfLibLog
 # DESCRIPTION
 #   bashlyk LOG library test unit
-#   Запуск проверочных операций модуля выполняется если только аргументы командной строки
-#   cодержат ключевые слова "--bashlyk-test" и "log"
+#   Запуск проверочных операций модуля выполняется если только аргументы 
+#   командной строки cодержат строку вида "--bashlyk-test=[*,]log[,*]", где * -
+#   ярлыки на другие тестируемые библиотеки
 #  SOURCE
 udfLibLog() {
+ [ -z "$(echo "${_bashlyk_sArg}" | grep -e "--bashlyk-test=*log")" ] && return 0
  mkdir -p ${_bashlyk_pathDat}
  udfAddPath2Clean ${_bashlyk_pathDat}
  #
@@ -736,8 +738,8 @@ udfLibLog() {
 #******
 #****** bashlyk/liblog/Main section
 # DESCRIPTION
-#   Running LOG library test unit if $_bashlyk_sArg ($*) contain
-#   substring "--bashlyk-test" and "log" - command for test using
+#   Running LOG library test unit if $_bashlyk_sArg ($*) contains
+#   substrings "--bashlyk-test=" and "log" - command for test using
 #  SOURCE
 udfLibLog
 #******

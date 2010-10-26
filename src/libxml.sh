@@ -57,16 +57,15 @@ _() {
 }
 #****u* bashlyk/libxml/udfLibXml
 #  SYNOPSIS
-#    udfLibXml --bashlyk-test xml
+#    udfLibXml
 # DESCRIPTION
 #   bashlyk XML library test unit
-#   Запуск проверочных операций модуля выполняется если только аргументы командной строки
-#   cодержат ключевые слова "--bashlyk-test" и "opt"
+#   Запуск проверочных операций модуля выполняется если только аргументы 
+#   командной строки cодержат строку вида "--bashlyk-test=[*,]xml[,*]", где * -
+#   ярлыки на другие тестируемые библиотеки
 #  SOURCE
 udfLibXml() {
- [ -z "$(echo "${_bashlyk_sArg}" \
-  | grep -e "--bashlyk-test" | grep -w "xml")" ] \
-  && return 0
+ [ -z "$(echo "${_bashlyk_sArg}" | grep -e "--bashlyk-test=*xml")" ] && return 0
  echo "--- libxml.sh tests --- start"
  echo "Check udfXml for XML code generating generating:"
  echo 'Code:   $(udfXml entry $(udfXml input echo test)'\
