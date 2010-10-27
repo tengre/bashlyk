@@ -126,17 +126,19 @@ udfSetConfig() {
 #  SOURCE
 udfLibCnf() {
  [ -z "$(echo "${_bashlyk_sArg}" | grep -e "--bashlyk-test=*cnf")" ] && return 0
- local s conf="$$.testlib.conf" a b
+ local a b conf="$$.testlib.conf" fn s
  printf "\n--- libcnf.sh tests --- start\n"
+#
+# Проверка файла конфигурации без полного пути
+#
  printf "#\n# Relative path to config file [${_bashlyk_pathCnf}/]${conf}\n#\n"
  echo -n "check udfSetConfig: "
  udfSetConfig $conf "a=\"$BASH_VERSION\";b=\"$(uname -a)\"" >/dev/null 2>&1
  echo -n .
- . $conf >/dev/null 2>&1
+ . ${_bashlyk_pathCnf}/${conf} >/dev/null 2>&1
  echo -n .
  [ "$a" = "$BASH_VERSION" -a "$b" = "$(uname -a)" ] && echo ok. || echo fail.
- a=
- b=
+ a=;b=
  echo -n "check udfGetConfig: "
  echo -n .
  udfGetConfig $conf
@@ -144,9 +146,10 @@ udfLibCnf() {
  [ "$a" = "$BASH_VERSION" -a "$b" = "$(uname -a)" ] && echo ok. || echo fail.
  rm -f "${_bashlyk_pathCnf}/${conf}"
  a=;b=
- #
- conf=$(mktemp -t "XXXXXXXX.${conf}")\
- || udfThrow "Error: temporary file $conf do not created..."
+#
+# Проверка файла конфигурации с полным путем
+#
+ fn=$(mktemp -t "XXXXXXXX.${conf}" 2>/dev/null) && conf=$fn || conf=~/${conf}
  printf "#\n# Absolute path to config file $conf\n#\n"
  echo -n "check udfSetConfig: "
  udfSetConfig $conf "a=\"$BASH_VERSION\";b=\"$(uname -a)\"" >/dev/null 2>&1
@@ -160,7 +163,6 @@ udfLibCnf() {
  udfGetConfig $conf
  echo -n .
  [ "$a" = "$BASH_VERSION" -a "$b" = "$(uname -a)" ] && echo ok. || echo fail.
- rm -f $conf
  a=;b=
  rm -f $conf
  printf "\n--- libcnf.sh tests ---  done\n"
