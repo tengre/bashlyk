@@ -103,8 +103,9 @@ udfLogger() {
  else
   [ ${_bashlyk_bNotUseLog} -ne 0 ] && bUseLog=0 || bUseLog=1
  fi
- #[ -d "${_bashlyk_pathLog}" ] || mkdir -p "${_bashlyk_pathLog}" \
- # || udfThrow "Error: do not create path ${_bashlyk_pathLog}"
+ [ -d "${_bashlyk_pathLog}" ] || mkdir -p "${_bashlyk_pathLog}" \
+  || udfThrow "Error: do not create path ${_bashlyk_pathLog}"
+ udfAddPath2Clean ${_bashlyk_pathLog}
  case "${bSysLog}${bUseLog}" in
   "00")
    echo "$*"
