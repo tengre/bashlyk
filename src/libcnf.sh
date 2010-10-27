@@ -121,11 +121,11 @@ udfSetConfig() {
 # DESCRIPTION
 #   bashlyk CNF library test unit
 #   Запуск проверочных операций модуля выполняется если только аргументы 
-#   командной строки cодержат строку вида "--bashlyk-test=[*,]cnf[,*]", где * -
+#   командной строки cодержат строку вида "--bashlyk-test=[.*,]cnf[,.*]", где * -
 #   ярлыки на другие тестируемые библиотеки
 #  SOURCE
 udfLibCnf() {
- [ -z "$(echo "${_bashlyk_sArg}" | grep -e "--bashlyk-test=*cnf")" ] && return 0
+ [ -z "$(echo "${_bashlyk_sArg}" | grep -E -e "--bashlyk-test=.*cnf")" ] && return 0
  local a b conf="$$.testlib.conf" fn s
  printf "\n--- libcnf.sh tests --- start\n"
 #

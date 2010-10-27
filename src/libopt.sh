@@ -215,12 +215,12 @@ udfExcludePairFromHash() {
 # DESCRIPTION
 #   bashlyk OPT library test unit
 #   Запуск проверочных операций модуля выполняется если только аргументы 
-#   командной строки cодержат строку вида "--bashlyk-test=[*,]opt[,*]", где * -
+#   командной строки cодержат строку вида "--bashlyk-test=[.*,]opt[,.*]", где * -
 #   ярлыки на другие тестируемые библиотеки
 #  SOURCE
 udfLibOpt() {
  local s sTest1 sTest2 sTest3
- [ -z "$(echo "${_bashlyk_sArg}" | grep -e "--bashlyk-test=*opt")" ] && return 0
+ [ -z "$(echo "${_bashlyk_sArg}" | grep -E -e "--bashlyk-test=.*opt")" ] && return 0
  echo "--- libopt.sh tests --- start"
  for s in udfGetOpt; do
   echo "check $s with options --sTest1 $(uname) --sTest2\

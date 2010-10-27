@@ -675,16 +675,14 @@ udfDebug() {
 # DESCRIPTION
 #   bashlyk LOG library test unit
 #   Запуск проверочных операций модуля выполняется если только аргументы 
-#   командной строки cодержат строку вида "--bashlyk-test=[*,]log[,*]", где * -
+#   командной строки cодержат строку вида "--bashlyk-test=[.*,]log[,.*]", где * -
 #   ярлыки на другие тестируемые библиотеки
 #  SOURCE
 udfLibLog() {
- [ -z "$(echo "${_bashlyk_sArg}" | grep -e "--bashlyk-test=*log")" ] && return 0
+ [ -z "$(echo "${_bashlyk_sArg}" | grep -E -e "--bashlyk-test=.*log")" ] && return 0
+ local s pathLog fnLog emailRcpt emailSubj
  mkdir -p ${_bashlyk_pathDat}
  udfAddPath2Clean ${_bashlyk_pathDat}
- #
- [ -z "$(echo "${_bashlyk_sArg}" | grep -e "--bashlyk-test" | grep -w "log")" ] && return 0
- local s pathLog fnLog emailRcpt emailSubj
  echo "--- liblog.sh tests --- start"
  for s in                             \
   bUseSyslog=$_bashlyk_bUseSyslog     \

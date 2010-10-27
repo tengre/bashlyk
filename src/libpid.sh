@@ -149,11 +149,11 @@ udfClean() {
 # DESCRIPTION
 #   bashlyk PID library test unit
 #   Запуск проверочных операций модуля выполняется если только аргументы 
-#   командной строки cодержат строку вида "--bashlyk-test=[*,]pid[,*]", где * -
+#   командной строки cодержат строку вида "--bashlyk-test=[.*,]pid[,.*]", где * -
 #   ярлыки на другие тестируемые библиотеки
 #  SOURCE
 udfLibPid() {
- [ -z "$(echo "${_bashlyk_sArg}" | grep -e "--bashlyk-test=*pid")" ] && return 0
+ [ -z "$(echo "${_bashlyk_sArg}" | grep -E -e "--bashlyk-test=.*pid")" ] && return 0
  local sArg="${_bashlyk_sArg}"
  echo "--- libpid.sh tests --- start"
  echo "Check udfExitIfAlreadyStarted for full command line:"

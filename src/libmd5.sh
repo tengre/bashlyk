@@ -89,11 +89,11 @@ udfGetPathMd5() {
 # DESCRIPTION
 #   bashlyk MD5 library test unit
 #   Запуск проверочных операций модуля выполняется если только аргументы 
-#   командной строки cодержат строку вида "--bashlyk-test=[*,]md5[,*]", где * -
+#   командной строки cодержат строку вида "--bashlyk-test=[.*,]md5[,.*]", где * -
 #   ярлыки на другие тестируемые библиотеки
 #  SOURCE
 udfLibMd5() {
- [ -z "$(echo "${_bashlyk_sArg}" | grep -e "--bashlyk-test=*md5")" ] && return 0
+ [ -z "$(echo "${_bashlyk_sArg}" | grep -E -e "--bashlyk-test=.*md5")" ] && return 0
  echo "--- libmd5.sh tests --- start"
  echo "Check udfGetMd5 with string $(uname -a):"
  echo -n "from argument: " && udfGetMd5 $(uname -a)

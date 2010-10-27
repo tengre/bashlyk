@@ -61,11 +61,11 @@ _() {
 # DESCRIPTION
 #   bashlyk XML library test unit
 #   Запуск проверочных операций модуля выполняется если только аргументы 
-#   командной строки cодержат строку вида "--bashlyk-test=[*,]xml[,*]", где * -
+#   командной строки cодержат строку вида "--bashlyk-test=[.*,]xml[,.*]", где * -
 #   ярлыки на другие тестируемые библиотеки
 #  SOURCE
 udfLibXml() {
- [ -z "$(echo "${_bashlyk_sArg}" | grep -e "--bashlyk-test=*xml")" ] && return 0
+ [ -z "$(echo "${_bashlyk_sArg}" | grep -E -e "--bashlyk-test=.*xml")" ] && return 0
  echo "--- libxml.sh tests --- start"
  echo "Check udfXml for XML code generating generating:"
  echo 'Code:   $(udfXml entry $(udfXml input echo test)'\
