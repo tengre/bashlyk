@@ -20,6 +20,7 @@
 #    Блок инициализации глобальных переменных
 #  SOURCE
 : ${_bashlyk_sArg:=$*}
+: ${_bashlyk_pathLib:=/usr/share/bashlyk}
 : ${_bashlyk_aRequiredCmd_md5:="cut echo md5sum sleep true ["}
 #******
 #****f* bashlyk/libmd5/udfGetMd5
@@ -89,24 +90,28 @@ udfGetPathMd5() {
 # DESCRIPTION
 #   bashlyk MD5 library test unit
 #   Запуск проверочных операций модуля выполняется если только аргументы 
-#   командной строки cодержат строку вида "--bashlyk-test=[.*,]md5[,.*]", где * -
-#   ярлыки на другие тестируемые библиотеки
+#   командной строки cодержат строку вида "--bashlyk-test=[.*,]md5[,.*]",
+#   где * - ярлыки на другие тестируемые библиотеки
 #  SOURCE
 udfLibMd5() {
- [ -z "$(echo "${_bashlyk_sArg}" | grep -E -e "--bashlyk-test=.*md5")" ] && return 0
- echo "--- libmd5.sh tests --- start"
- echo "Check udfGetMd5 with string $(uname -a):"
- echo -n "from argument: " && udfGetMd5 $(uname -a)
- sleep 1
- echo -n "from stdin   : " && echo $(uname -a) | udfGetMd5 -
- sleep 1
- echo $(uname -a) > /tmp/$1.$$.tmp
- echo -n "from file    : " && udfGetMd5 --file /tmp/$1.$$.tmp
- rm -f /tmp/$1.$$.tmp
- sleep 1
- echo "Check udfGetPathMd5 with path .:"
- udfGetPathMd5 .
- echo "--- libmd5.sh tests ---  done"
+ [ -z "$(echo "${_bashlyk_sArg}" | grep -E -e "--bashlyk-test=.*md5")" ] \
+  && return 0
+ local fn s b=1
+ printf "\n- libmd5.sh tests:\n\n"
+ echo -n "Check MD5 functions: "
+ s=$(udfGetMd5 $(uname -a) 2>/dev/null) 
+ echo -n '.'
+ [ "$s" = "$(echo $(uname -a) | udfGetMd5 - 2>/dev/null)" ] \
+  && echo -n '.' || { echo -n '?'; b=0; } 
+ fn=$(mktemp -t "XXXXXXXX.${conf}" 2>/dev/null) || fn=/tmp/$$.tmp.md5
+ echo -n '.'
+ echo $(uname -a) > $fn
+ [ "$s" = "$(udfGetMd5 --file $fn 2>/dev/null)" ] \
+  && echo -n '.' || { echo -n '?'; b=0; } 
+ rm -f $fn
+ udfGetPathMd5 . >/dev/null 2>&1 && echo -n '.' || { echo -n '?'; b=0; } 
+ [ $b -eq 1 ] && echo 'ok.' || echo 'fail.'
+ printf "\n--\n\n"
  return 0
 }
 #******

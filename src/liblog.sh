@@ -16,13 +16,6 @@
 #  SOURCE
 [ -n "$_BASHLYK_LIBLOG" ] && return 0 || _BASHLYK_LIBLOG=1
 #******
-#****** bashlyk/liblog/External modules
-#  DESCRIPTION
-#    Using modules section
-#    Здесь указываются модули, код которых используется данной библиотекой
-#  SOURCE
-[ -s "${_bashlyk_pathLib}/libmd5.sh" ] && . "${_bashlyk_pathLib}/libmd5.sh"
-#******
 #****v*  bashlyk/liblog/Init section
 #  DESCRIPTION
 #    Блок инициализации глобальных переменных
@@ -47,8 +40,16 @@
 : ${_bashlyk_sUser:=$USER}
 : ${_bashlyk_emailSubj:="${_bashlyk_sUser}@${HOSTNAME}::${_bashlyk_s0}"}
 : ${_bashlyk_fnLog:="${_bashlyk_pathLog}/${_bashlyk_s0}.log"}
+: ${_bashlyk_pathLib:=/usr/share/bashlyk}
 : ${_bashlyk_aRequiredCmd_log:="basename date echo hostname false printf logger \
  mail mkfifo sleep tee true jobs ["}
+#******
+#****** bashlyk/liblog/External modules
+#  DESCRIPTION
+#    Using modules section
+#    Здесь указываются модули, код которых используется данной библиотекой
+#  SOURCE
+[ -s "${_bashlyk_pathLib}/libmd5.sh" ] && . "${_bashlyk_pathLib}/libmd5.sh"
 #******
 #****f* bashlyk/liblog/udfBaseId
 #  SYNOPSIS
@@ -147,7 +148,6 @@ udfLog() {
  else
   [ -n "$*" ] && udfLogger "$*"
  fi
- return 0
 }
 #******
 #****f* bashlyk/liblog/udfEcho
@@ -185,8 +185,8 @@ udfEcho() {
 #           из стандартного ввода
 #  SOURCE
 udfMail() {
- udfEcho $* | mail -e -s "${_bashlyk_emailSubj}" ${_bashlyk_emailRcpt}
  udfEcho $*
+ udfEcho $* | mail -e -s "${_bashlyk_emailSubj}" ${_bashlyk_emailRcpt}
 }
 #******
 #****f* bashlyk/liblog/udfWarn
@@ -400,8 +400,7 @@ udfCleanQueue() {
 #  SOURCE
 udfUptime() {
  local iDiffTime=$(($(date "+%s")-${_bashlyk_iStartTimeStamp}))
- [ -n "$1" ] && echo "$* ($iDiffTime sec)"
- return $iDiffTime
+ [ -n "$1" ] && echo "$* ($iDiffTime sec)" || echo $iDiffTime
 }
 #******
 #****f* bashlyk/liblog/udfFinally
@@ -676,45 +675,55 @@ udfDebug() {
 # DESCRIPTION
 #   bashlyk LOG library test unit
 #   Запуск проверочных операций модуля выполняется если только аргументы 
-#   командной строки cодержат строку вида "--bashlyk-test=[.*,]log[,.*]", где * -
-#   ярлыки на другие тестируемые библиотеки
+#   командной строки cодержат строку вида "--bashlyk-test=[.*,]log[,.*]",
+#   где * - ярлыки на другие тестируемые библиотеки
 #  SOURCE
 udfLibLog() {
- [ -z "$(echo "${_bashlyk_sArg}" | grep -E -e "--bashlyk-test=.*log")" ] && return 0
- local s pathLog fnLog emailRcpt emailSubj
- mkdir -p ${_bashlyk_pathDat}
- udfAddPath2Clean ${_bashlyk_pathDat}
- echo "--- liblog.sh tests --- start"
- for s in                             \
-  bUseSyslog=$_bashlyk_bUseSyslog     \
-  pathLog=$_bashlyk_pathLog           \
-  fnLog=$_bashlyk_fnLog               \
-  emailRcpt=$_bashlyk_emailRcpt       \
-  emailSubj=$_bashlyk_emailSubj       \
-  bTerminal=$_bashlyk_bTerminal       \
-  bInteract=$_bashlyk_bInteract
+ [ -z "$(echo "${_bashlyk_sArg}" | grep -E -e "--bashlyk-test=.*log")" ] \
+  && return 0
+ local s pathLog fnLog emailRcpt emailSubj b=1 sS
+ printf "\n- liblog.sh tests:\n\n"
+ : ${_bashlyk_bInteract:=1}
+ : ${_bashlyk_bTerminal:=1}
+ : ${_bashlyk_bNotUseLog:=1}
+ echo -n "Global variable testing: "
+ for s in                \
+  "$_bashlyk_bUseSyslog" \
+  "$_bashlyk_pathLog"    \
+  "$_bashlyk_fnLog"      \
+  "$_bashlyk_emailRcpt"  \
+  "$_bashlyk_emailSubj"  \
+  "$_bashlyk_bTerminal"  \
+  "$_bashlyk_pathDat"    \
+  "$_bashlyk_bInteract"
   do
-   echo "$s"
+   [ -n "$s" ] && echo -n '.' || { echo -n '?'; b=0; }
  done
- echo "--- test within control terminal: ---"
- for s in udfLog udfUptime udfFinally udfWarn udfIsTerminal udfIsInteract; do
-  sleep 1
-  echo "--- check $s: ---"
-  $s testing liblog $s; echo "return code ... $?"
+ [ $b -eq 1 ] && echo 'ok.' || echo 'fail.'
+ b=1
+ mkdir -p ${_bashlyk_pathDat}
+ udfAddPath2Clean ${_bashlyk_pathDat} 2>/dev/null
+ echo -n "function testing on control terminal: "
+ for s in udfLog udfUptime udfFinally udfWarn; do
+  sS=$($s testing liblog $s)
+  [ -n "$(echo "$sS" | grep "testing liblog $s")" ] && echo -n '.' || { echo -n '?'; b=0; }
  done
- echo "--- test without control terminal (cat $_bashlyk_fnLog )---"
+ [ $b -eq 1 ] && echo 'ok.' || echo 'fail.'
+ b=1
+ echo "test without control terminal (cat $_bashlyk_fnLog ): "
  _bashlyk_bTerminal=0
- udfSetLog && echo "udfSetLog ok" || echo "udfSetLog fail"
- for s in udfLog udfUptime udfFinally udfWarn udfIsTerminal udfIsInteract; do
-  sleep 1
-  echo "--- check $s: ---"
+ _bashlyk_bNotUseLog=0
+ udfSetLog 2>/dev/null && echo -n '.' || { echo -n '?'; b=0; }
+ [ $b -eq 1 ] && {
+  echo 'ok.'
+  for s in udfLog udfUptime udfFinally udfWarn; do
   $s testing liblog $s; echo "return code ... $?"
  done
+ } || echo 'fail.'
  _bashlyk_bTerminal=0
  _bashlyk_bUseSyslog=1
   echo "--- test without control terminal and syslog using: ---"
  for s in udfLog udfUptime udfFinally udfWarn udfIsTerminal udfIsInteract; do
-  sleep 1
   echo "--- check $s: ---"
   $s testing liblog $s; echo "return code ... $?"
  done
@@ -732,7 +741,7 @@ udfLibLog() {
   do
    echo "$s"
  done
- echo "--- liblog.sh tests ---  done"
+ printf "\n--\n\n"
  return 0
 }
 #******

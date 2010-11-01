@@ -61,21 +61,22 @@ _() {
 # DESCRIPTION
 #   bashlyk XML library test unit
 #   Запуск проверочных операций модуля выполняется если только аргументы 
-#   командной строки cодержат строку вида "--bashlyk-test=[.*,]xml[,.*]", где * -
-#   ярлыки на другие тестируемые библиотеки
+#   командной строки cодержат строку вида "--bashlyk-test=[.*,]xml[,.*]",
+#   где * - ярлыки на другие тестируемые библиотеки
 #  SOURCE
 udfLibXml() {
- [ -z "$(echo "${_bashlyk_sArg}" | grep -E -e "--bashlyk-test=.*xml")" ] && return 0
- echo "--- libxml.sh tests --- start"
- echo "Check udfXml for XML code generating generating:"
- echo 'Code:   $(udfXml entry $(udfXml input echo test)'\
-'$(udfXml variable sTest))'
- echo "Result: $(udfXml entry $(udfXml input echo test)\
-$(udfXml variable sTest))"
- echo "Check _ for XML code generating generating:"
- echo 'Code:   $(_ entry $(_ input echo test)$(_ variable sTest))'
- echo "Result: $(_ entry $(_ input echo test)$(_ variable sTest))"
- echo "--- libxml.sh tests ---  done"
+ [ -z "$(echo "${_bashlyk_sArg}" | grep -E -e "--bashlyk-test=.*xml")" ] \
+  && return 0
+ local s='<entry><input>echo test</input><variable>sTest</variable></entry>' 
+ local b=1
+ printf "\n- libxml.sh tests:\n\n"
+ printf "\nCheck function udfXml and his alias '_' for XML code generating: "
+ [ "$s" = "$(udfXml entry $(udfXml input echo test)$(udfXml variable sTest))" ] \
+  && echo -n '.' || { echo -n 'fail.'; b=0; }
+ [ "$s" = "$(_ entry $(_ input echo test)$(_ variable sTest))" ] \
+  && echo -n '.' || { echo -n 'fail.'; b=0; }
+ [ $b -eq 1 ] && echo 'ok.' || echo 'fail.'
+ printf "\n--\n\n"
  return 0
 }
 #******

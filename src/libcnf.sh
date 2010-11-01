@@ -15,20 +15,21 @@
 #  SOURCE
 [ -n "$_BASHLYK_LIBCNF" ] && return 0 || _BASHLYK_LIBCNF=1
 #******
-#****** bashlyk/libpid/External Modules
-# DESCRIPTION
-#   Using modules section
-#   Здесь указываются модули, код которых используется данной библиотекой
-# SOURCE
-[ -s "${_bashlyk_pathLib}/liblog.sh" ] && . "${_bashlyk_pathLib}/liblog.sh"
-#******
 #****v*  bashlyk/libcnf/Init section
 #  DESCRIPTION
 #    Блок инициализации глобальных переменных
 #  SOURCE
 : ${_bashlyk_sArg:=$*}
 : ${_bashlyk_pathCnf:=$(pwd)}
+: ${_bashlyk_pathLib:=/usr/share/bashlyk}
 : ${_bashlyk_aRequiredCmd_cnf:="basename cat date dirname echo grep pwd rm sleep ["}
+#******
+#****** bashlyk/libpid/External Modules
+# DESCRIPTION
+#   Using modules section
+#   Здесь указываются модули, код которых используется данной библиотекой
+# SOURCE
+[ -s "${_bashlyk_pathLib}/liblog.sh" ] && . "${_bashlyk_pathLib}/liblog.sh"
 #******
 #****f* bashlyk/libcnf/udfGetConfig
 #  SYNOPSIS
@@ -121,51 +122,52 @@ udfSetConfig() {
 # DESCRIPTION
 #   bashlyk CNF library test unit
 #   Запуск проверочных операций модуля выполняется если только аргументы 
-#   командной строки cодержат строку вида "--bashlyk-test=[.*,]cnf[,.*]", где * -
-#   ярлыки на другие тестируемые библиотеки
+#   командной строки cодержат строку вида "--bashlyk-test=[.*,]cnf[,.*]",
+#   где * - ярлыки на другие тестируемые библиотеки
 #  SOURCE
 udfLibCnf() {
- [ -z "$(echo "${_bashlyk_sArg}" | grep -E -e "--bashlyk-test=.*cnf")" ] && return 0
- local a b conf="$$.testlib.conf" fn s
- printf "\n--- libcnf.sh tests --- start\n"
+ [ -z "$(echo "${_bashlyk_sArg}" | grep -E -e "--bashlyk-test=.*cnf")" ] \
+  && return 0
+ local a b=1 c conf="$$.testlib.conf" fn s
+ printf "\n- libcnf.sh tests:\n\n"
 #
 # Проверка файла конфигурации без полного пути
 #
- printf "#\n# Relative path to config file [${_bashlyk_pathCnf}/]${conf}\n#\n"
- echo -n "check udfSetConfig: "
- udfSetConfig $conf "a=\"$BASH_VERSION\";b=\"$(uname -a)\"" >/dev/null 2>&1
- echo -n .
+ echo -n "check set\get configuration: "
+ udfSetConfig $conf "a=\"$BASH_VERSION\";c=\"$(uname -a)\"" >/dev/null 2>&1
+ echo -n '.'
  . ${_bashlyk_pathCnf}/${conf} >/dev/null 2>&1
- echo -n .
- [ "$a" = "$BASH_VERSION" -a "$b" = "$(uname -a)" ] && echo ok. || echo fail.
- a=;b=
- echo -n "check udfGetConfig: "
- echo -n .
- udfGetConfig $conf
- echo -n .
- [ "$a" = "$BASH_VERSION" -a "$b" = "$(uname -a)" ] && echo ok. || echo fail.
+ echo -n '.'
+ [ "$a" = "$BASH_VERSION" -a "$c" = "$(uname -a)" ] \
+  && echo -n  '.' || { echo -n '?'; b=0; }
+ a=;c=
+ echo -n '.'
+ udfGetConfig $conf 2>/dev/null
+ echo -n '.'
+ [ "$a" = "$BASH_VERSION" -a "$c" = "$(uname -a)" ] \
+  && echo -n '.' || { echo -n '?'; b=0; }
  rm -f "${_bashlyk_pathCnf}/${conf}"
- a=;b=
+ a=;c=
 #
 # Проверка файла конфигурации с полным путем
 #
  fn=$(mktemp -t "XXXXXXXX.${conf}" 2>/dev/null) && conf=$fn || conf=~/${conf}
- printf "#\n# Absolute path to config file $conf\n#\n"
- echo -n "check udfSetConfig: "
- udfSetConfig $conf "a=\"$BASH_VERSION\";b=\"$(uname -a)\"" >/dev/null 2>&1
- echo -n .
+ udfSetConfig $conf "a=\"$BASH_VERSION\";c=\"$(uname -a)\"" >/dev/null 2>&1
+ echo -n '.'
  . $conf >/dev/null 2>&1
- echo -n .
- [ "$a" = "$BASH_VERSION" -a "$b" = "$(uname -a)" ] && echo ok. || echo fail.
- a=;b=
- echo -n "check udfGetConfig: "
- echo -n .
- udfGetConfig $conf
- echo -n .
- [ "$a" = "$BASH_VERSION" -a "$b" = "$(uname -a)" ] && echo ok. || echo fail.
- a=;b=
+ echo -n '.'
+ [ "$a" = "$BASH_VERSION" -a "$c" = "$(uname -a)" ] \
+  && echo -n '.' || { echo -n '?'; b=0; }
+ a=;c=
+ echo -n '.'
+ udfGetConfig $conf 2>/dev/null
+ echo -n '.'
+ [ "$a" = "$BASH_VERSION" -a "$c" = "$(uname -a)" ] \
+  && echo -n '.' || { echo -n '?'; b=0; }
+ a=;c=
  rm -f $conf
- printf "\n--- libcnf.sh tests ---  done\n"
+ [ $b -eq 1 ] && echo 'ok.' || echo 'fail.'
+ printf "\n--\n\n"
  return 0
 }
 #******

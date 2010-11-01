@@ -15,14 +15,6 @@
 #  SOURCE
 [ -n "$_BASHLYK_LIBPID" ] && return 0 || _BASHLYK_LIBPID=1
 #******
-#****** bashlyk/libpid/External Modules
-# DESCRIPTION
-#   Using modules section
-#   Здесь указываются модули, код которых используется данной библиотекой
-# SOURCE
-[ -s "${_bashlyk_pathLib}/liblog.sh" ] && . "${_bashlyk_pathLib}/liblog.sh"
-[ -s "${_bashlyk_pathLib}/libmd5.sh" ] && . "${_bashlyk_pathLib}/libmd5.sh"
-#******
 #****v*  bashlyk/libpid/Init section
 #  DESCRIPTION
 #    Блок инициализации глобальных переменных
@@ -34,7 +26,16 @@
 : ${_bashlyk_s0:=$(basename $0)}
 : ${_bashlyk_pathRun:=/tmp}
 : ${_bashlyk_sArg:=$*}
+: ${_bashlyk_pathLib:=/usr/share/bashlyk}
 : ${_bashlyk_aRequiredCmd_pid:="cat date echo grep head mkdir ps rm sed sleep ["}
+#******
+#****** bashlyk/libpid/External Modules
+# DESCRIPTION
+#   Using modules section
+#   Здесь указываются модули, код которых используется данной библиотекой
+# SOURCE
+[ -s "${_bashlyk_pathLib}/liblog.sh" ] && . "${_bashlyk_pathLib}/liblog.sh"
+[ -s "${_bashlyk_pathLib}/libmd5.sh" ] && . "${_bashlyk_pathLib}/libmd5.sh"
 #******
 #****f* bashlyk/libpid/udfCheckStarted
 #  SYNOPSIS
@@ -149,26 +150,29 @@ udfClean() {
 # DESCRIPTION
 #   bashlyk PID library test unit
 #   Запуск проверочных операций модуля выполняется если только аргументы 
-#   командной строки cодержат строку вида "--bashlyk-test=[.*,]pid[,.*]", где * -
-#   ярлыки на другие тестируемые библиотеки
+#   командной строки cодержат строку вида "--bashlyk-test=[.*,]pid[,.*]",
+#   где * - ярлыки на другие тестируемые библиотеки
 #  SOURCE
 udfLibPid() {
- [ -z "$(echo "${_bashlyk_sArg}" | grep -E -e "--bashlyk-test=.*pid")" ] && return 0
- local sArg="${_bashlyk_sArg}"
- echo "--- libpid.sh tests --- start"
- echo "Check udfExitIfAlreadyStarted for full command line:"
+ [ -z "$(echo "${_bashlyk_sArg}" | grep -E -e "--bashlyk-test=.*pid")" ] \
+  && return 0
+ local sArg="${_bashlyk_sArg}" b=1
+ printf "\n- libpid.sh tests:\n\n"
+ echo -n "Check udfExitIfAlreadyStarted: "
  udfExitIfAlreadyStarted
- echo "${_bashlyk_fnPid} contain:"
- cat ${_bashlyk_fnPid}
- sleep 1
- echo "Check udfExitIfAlreadyStarted:"
+ echo -n '.'
+ [ "$$" -eq "$(head -n 1 ${_bashlyk_fnPid})" ] \
+  && echo -n "." || { echo -n '?'; b=0; } 
+ #printf "Pid file: ${_bashlyk_fnPid}\n\n"
  _bashlyk_sArg=
  udfExitIfAlreadyStarted
  _bashlyk_sArg="$sArg"
- echo "${_bashlyk_fnPid} contain:"
- cat ${_bashlyk_fnPid}
- sleep 1
- echo "--- libpid.sh tests ---  done"
+ echo -n '.'
+ [ "$$" -eq "$(head -n 1 ${_bashlyk_fnPid})" ] \
+  && echo -n "." || { echo -n '?'; b=0; } 
+ #printf "Pid file: ${_bashlyk_fnPid}\n"
+ [ $b -eq 1 ] && echo 'ok.' || echo 'fail.'
+ printf "\n--\n\n"
  return 0
 }
 #******

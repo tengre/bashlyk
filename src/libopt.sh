@@ -17,13 +17,6 @@
 #  SOURCE
 [ -n "$_BASHLYK_LIBOPT" ] && return 0 || _BASHLYK_LIBOPT=1
 #******
-#****** bashlyk/libopt/External modules
-#  DESCRIPTION
-#    Using modules section
-#    Здесь указываются модули, код которых используется данной библиотекой
-#  SOURCE
-[ -s "${_bashlyk_pathLib}/libcnf.sh" ] && . "${_bashlyk_pathLib}/libcnf.sh"
-#******
 #****v*  bashlyk/libopt/Init section
 #  DESCRIPTION
 #    Блок инициализации глобальных переменных
@@ -33,7 +26,15 @@
 #  SOURCE
 : ${_bashlyk_sArg:=$*}
 : ${_bashlyk_sWSpaceAlias:=___}
+: ${_bashlyk_pathLib:=/usr/share/bashlyk}
 : ${_bashlyk_aRequiredCmd_opt:="echo getopt grep mktemp tr sed umask ["}
+#******
+#****** bashlyk/libopt/External modules
+#  DESCRIPTION
+#    Using modules section
+#    Здесь указываются модули, код которых используется данной библиотекой
+#  SOURCE
+[ -s "${_bashlyk_pathLib}/libcnf.sh" ] && . "${_bashlyk_pathLib}/libcnf.sh"
 #******
 #****f* bashlyk/libopt/udfQuoteIfNeeded
 #  SYNOPSIS
@@ -215,24 +216,22 @@ udfExcludePairFromHash() {
 # DESCRIPTION
 #   bashlyk OPT library test unit
 #   Запуск проверочных операций модуля выполняется если только аргументы 
-#   командной строки cодержат строку вида "--bashlyk-test=[.*,]opt[,.*]", где * -
-#   ярлыки на другие тестируемые библиотеки
+#   командной строки cодержат строку вида "--bashlyk-test=[.*,]opt[,.*]",
+#   где * -ярлыки на другие тестируемые библиотеки
 #  SOURCE
 udfLibOpt() {
- local s sTest1 sTest2 sTest3
- [ -z "$(echo "${_bashlyk_sArg}" | grep -E -e "--bashlyk-test=.*opt")" ] && return 0
- echo "--- libopt.sh tests --- start"
- for s in udfGetOpt; do
-  echo "check $s with options --sTest1 $(uname) --sTest2\
- --sTest3 $(udfWSpace2Alias $(date)) :"
-  $s "sTest1:,sTest2,sTest3:" --sTest1 $(uname) --sTest2\
- --sTest3 $(udfWSpace2Alias $(date))
-  echo "see variables:"
-  echo " sTest1=\"${sTest1}\""
-  echo " sTest2=\"${sTest2}\""
-  echo " sTest3=\"${sTest3}\""
- done
- echo "--- libopt.sh tests ---  done"
+ local optTest1 optTest2 optTest3 s=$(date -R) b=1
+ [ -z "$(echo "${_bashlyk_sArg}" | grep -E -e "--bashlyk-test=.*opt")" ] \
+ && return 0
+ printf "\n- libopt.sh tests:\n\n"
+ echo -n "Check udfGetOpt: "
+ udfGetOpt "optTest1:,optTest2,optTest3:" --optTest1 $(uname) --optTest2\
+ --optTest3 $(udfWSpace2Alias $s) 2>/dev/null
+ [ "$optTest1" = "$(uname)" ] && echo -n '.' || { echo -n '?'; b=0; } 
+ [ "$optTest2" = "1"        ] && echo -n '.' || { echo -n '?'; b=0; } 
+ [ "$optTest3" = "$s"       ] && echo -n '.' || { echo -n '?'; b=0; } 
+ [ $b -eq 1 ] && echo 'ok.' || echo 'fail.'
+ printf "\n--\n\n"
  return 0
 }
 #******
