@@ -16,6 +16,14 @@
 #  SOURCE
 [ -n "$_BASHLYK_LIBLOG" ] && return 0 || _BASHLYK_LIBLOG=1
 #******
+#****** bashlyk/liblog/External modules
+#  DESCRIPTION
+#    Using modules section
+#    Здесь указываются модули, код которых используется данной библиотекой
+#  SOURCE
+: ${_bashlyk_pathLib:=/usr/share/bashlyk}
+[ -s "${_bashlyk_pathLib}/libmd5.sh" ] && . "${_bashlyk_pathLib}/libmd5.sh"
+#******
 #****v*  bashlyk/liblog/Init section
 #  DESCRIPTION
 #    Блок инициализации глобальных переменных
@@ -40,16 +48,8 @@
 : ${_bashlyk_sUser:=$USER}
 : ${_bashlyk_emailSubj:="${_bashlyk_sUser}@${HOSTNAME}::${_bashlyk_s0}"}
 : ${_bashlyk_fnLog:="${_bashlyk_pathLog}/${_bashlyk_s0}.log"}
-: ${_bashlyk_pathLib:=/usr/share/bashlyk}
 : ${_bashlyk_aRequiredCmd_log:="basename date echo hostname false printf logger \
  mail mkfifo sleep tee true jobs ["}
-#******
-#****** bashlyk/liblog/External modules
-#  DESCRIPTION
-#    Using modules section
-#    Здесь указываются модули, код которых используется данной библиотекой
-#  SOURCE
-[ -s "${_bashlyk_pathLib}/libmd5.sh" ] && . "${_bashlyk_pathLib}/libmd5.sh"
 #******
 #****f* bashlyk/liblog/udfBaseId
 #  SYNOPSIS

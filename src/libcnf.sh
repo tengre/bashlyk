@@ -15,21 +15,21 @@
 #  SOURCE
 [ -n "$_BASHLYK_LIBCNF" ] && return 0 || _BASHLYK_LIBCNF=1
 #******
+#****** bashlyk/libpid/External Modules
+# DESCRIPTION
+#   Using modules section
+#   Здесь указываются модули, код которых используется данной библиотекой
+# SOURCE
+: ${_bashlyk_pathLib:=/usr/share/bashlyk}
+[ -s "${_bashlyk_pathLib}/liblog.sh" ] && . "${_bashlyk_pathLib}/liblog.sh"
+#******
 #****v*  bashlyk/libcnf/Init section
 #  DESCRIPTION
 #    Блок инициализации глобальных переменных
 #  SOURCE
 : ${_bashlyk_sArg:=$*}
 : ${_bashlyk_pathCnf:=$(pwd)}
-: ${_bashlyk_pathLib:=/usr/share/bashlyk}
 : ${_bashlyk_aRequiredCmd_cnf:="basename cat date dirname echo grep pwd rm sleep ["}
-#******
-#****** bashlyk/libpid/External Modules
-# DESCRIPTION
-#   Using modules section
-#   Здесь указываются модули, код которых используется данной библиотекой
-# SOURCE
-[ -s "${_bashlyk_pathLib}/liblog.sh" ] && . "${_bashlyk_pathLib}/liblog.sh"
 #******
 #****f* bashlyk/libcnf/udfGetConfig
 #  SYNOPSIS

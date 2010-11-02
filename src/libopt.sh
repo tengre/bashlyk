@@ -17,6 +17,14 @@
 #  SOURCE
 [ -n "$_BASHLYK_LIBOPT" ] && return 0 || _BASHLYK_LIBOPT=1
 #******
+#****** bashlyk/libopt/External modules
+#  DESCRIPTION
+#    Using modules section
+#    Здесь указываются модули, код которых используется данной библиотекой
+#  SOURCE
+: ${_bashlyk_pathLib:=/usr/share/bashlyk}
+[ -s "${_bashlyk_pathLib}/libcnf.sh" ] && . "${_bashlyk_pathLib}/libcnf.sh"
+#******
 #****v*  bashlyk/libopt/Init section
 #  DESCRIPTION
 #    Блок инициализации глобальных переменных
@@ -26,15 +34,7 @@
 #  SOURCE
 : ${_bashlyk_sArg:=$*}
 : ${_bashlyk_sWSpaceAlias:=___}
-: ${_bashlyk_pathLib:=/usr/share/bashlyk}
 : ${_bashlyk_aRequiredCmd_opt:="echo getopt grep mktemp tr sed umask ["}
-#******
-#****** bashlyk/libopt/External modules
-#  DESCRIPTION
-#    Using modules section
-#    Здесь указываются модули, код которых используется данной библиотекой
-#  SOURCE
-[ -s "${_bashlyk_pathLib}/libcnf.sh" ] && . "${_bashlyk_pathLib}/libcnf.sh"
 #******
 #****f* bashlyk/libopt/udfQuoteIfNeeded
 #  SYNOPSIS
