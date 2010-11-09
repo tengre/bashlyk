@@ -522,12 +522,14 @@ udfMakeTemp() {
 #  SOURCE
 udfShellExec() {
  [ -n "$*" ] || return -1
- local fn
+ local fn rc
  fn=$(udfMakeTemp .shellexec 0077)
  udfAddFile2Clean $fn
  echo $* > $fn
  . $fn
- return $?
+ rc=$?
+ rm -f $fn
+ return $rc
 }
 #******
 #****f* bashlyk/liblog/_ARGUMENTS
