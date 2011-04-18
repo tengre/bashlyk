@@ -1,3 +1,4 @@
+#!/bin/bash
 #
 # $Id$
 #
@@ -55,7 +56,7 @@
 #    && eval 'echo "$0 : Already started with pid = $pid"; return 1'
 #  SOURCE
 udfCheckStarted() {
- [ -n "$*" ] || return -1
+ [ -n "$*" ] || return 255
  local pid=$1
  local cmd=${2:-}
  shift 2
@@ -71,9 +72,9 @@ udfCheckStarted() {
 #    Причём, если скрипт имеет аргументы, то этот файл создаётся в отдельном подкаталоге
 #    с именем файла в виде md5-хеша командной строки, иначе pid файл создается в самом #    #    каталоге для PID-файлов с именем, производным от имени скрипта.
 #  RETURN VALUE
-#    0 - PID file for command line successfully created
-#    1 - PID file exist and command line process already started
-#   -1 - PID file don't created. Error status
+#    0   - PID file for command line successfully created
+#    1   - PID file exist and command line process already started
+#    255 - PID file don't created. Error status
 #  EXAMPLE
 #    udfSetPid
 #  SOURCE
@@ -83,14 +84,14 @@ udfSetPid() {
   && fnPid="${_bashlyk_pathRun}/$(udfGetMd5 ${_bashlyk_s0} ${_bashlyk_sArg}).pid" \
   || fnPid="${_bashlyk_pathRun}/${_bashlyk_s0}.pid"
  mkdir -p ${_bashlyk_pathRun} \
-  || eval 'udfWarn "Warn: path for PIDs ${_bashlyk_pathRun} not created..."; return -1'
+  || eval 'udfWarn "Warn: path for PIDs ${_bashlyk_pathRun} not created..."; return 255'
  [ -f "$fnPid" ] && pid=$(head -n 1 ${fnPid})
  if [ -n "$pid" ]; then
   udfCheckStarted $pid ${_bashlyk_s0} ${_bashlyk_sArg} \
    && eval 'echo "$0 : Already started with pid = $pid"; return 1'
  fi
  echo $$ > ${fnPid} \
- || eval 'udfWarn "Warn: pid file $fnPid not created..."; return -1'
+ || eval 'udfWarn "Warn: pid file $fnPid not created..."; return 255'
  echo "$0 ${_bashlyk_sArg}" >> $fnPid
  _bashlyk_fnPid=$fnPid
  udfAddFile2Clean $fnPid
@@ -106,19 +107,19 @@ udfSetPid() {
 #    this current process with identical command line stopped
 #    else created pid file and current process don`t stopped.
 #  RETURN VALUE
-#    0 - PID file for command line successfully created
-#    1 - PID file exist and command line process already started,
-#        current process stopped
-#   -1 - PID file don't created. Error status - current process stopped
+#    0   - PID file for command line successfully created
+#    1   - PID file exist and command line process already started,
+#          current process stopped
+#    255 - PID file don't created. Error status - current process stopped
 #  EXAMPLE
 #    udfExitIfAlreadyStarted
 #  SOURCE
 udfExitIfAlreadyStarted() {
  udfSetPid $*
  case $? in
-  -1) exit  -1 ;;
-   0) return 0 ;;
-   1) exit   0 ;;
+   255) exit 255 ;;
+     0) return 0 ;;
+     1) exit   0 ;;
  esac
 }
 #******

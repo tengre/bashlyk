@@ -1,3 +1,4 @@
+#!/bin/bash
 #
 # $Id$
 #
@@ -15,7 +16,7 @@
 #  SOURCE
 [ -n "$_BASHLYK_LIBCNF" ] && return 0 || _BASHLYK_LIBCNF=1
 #******
-#****** bashlyk/libpid/External Modules
+#****** bashlyk/libcnf/External Modules
 # DESCRIPTION
 #   Using modules section
 #   Здесь указываются модули, код которых используется данной библиотекой
@@ -47,12 +48,12 @@
 #  INPUTS
 #    file     - имя файла конфигурации
 #  RETURN VALUE
-#    -1 - Ошибка: аргумент отсутствует
-#     0 - Выполнено успешно
-#     1 - Ошибка: файл конфигурации не найден
+#     0  - Выполнено успешно
+#     1  - Ошибка: файл конфигурации не найден
+#    255 - Ошибка: аргумент отсутствует
 #  SOURCE
 udfGetConfig() {
- [ -n "$1" ] || return -1
+ [ -n "$1" ] || return 255
  #
  local aconf chIFS conf fn i pathCnf=$_bashlyk_pathCnf
  #
@@ -93,12 +94,12 @@ udfGetConfig() {
 #    <file> - имя файла конфигурации
 #    <csv;> - CSV-строка, разделённая ";", поля которой содержат данные вида "key=value"
 #  RETURN VALUE
-#    -1 - Ошибка: аргумент отсутствует
-#     0 - Выполнено успешно
-#     1 - Ошибка: файл конфигурации не найден
+#    255 - Ошибка: аргумент отсутствует
+#     0  - Выполнено успешно
+#     1  - Ошибка: файл конфигурации не найден
 #  SOURCE
 udfSetConfig() {
- [ -n "$1" -a -n "$2" ] || return -1
+ [ -n "$1" -a -n "$2" ] || return 255
  #
  local conf sKeyValue chIFS=$IFS pathCnf=$_bashlyk_pathCnf
  #

@@ -1,3 +1,4 @@
+#!/bin/bash
 #
 # $Id$
 #
@@ -223,7 +224,7 @@ udfWarn() {
 #  SOURCE
 udfThrow() {
  udfWarn $*
- exit -1
+ exit 255
 }
 #******
 #****f* bashlyk/liblog/udfIsInteract
@@ -422,9 +423,9 @@ udfFinally() {
 #    Установка механизма ведения лога согласно ранее установленных условий.
 #    Используется специальный сокет для того чтобы отмечать тегами строки журнала.
 #  Return VALUE
-#    -1 - Каталог для сокета не существует и не может быть создан
-#     0 - Выполнено
-#     1 - Сокет не создан, но стандартный вывод перенаправляется в файл лога (без тегирования)
+#     0   - Выполнено
+#     1   - Сокет не создан, но стандартный вывод перенаправляется в файл лога (без тегирования)
+#     255 - Каталог для сокета не существует и не может быть создан
 #  SOURCE
 udfSetLogSocket() {
  local fnSock
@@ -432,7 +433,7 @@ udfSetLogSocket() {
   && fnSock="${_bashlyk_pathRun}/$(udfGetMd5 ${_bashlyk_s0} ${_bashlyk_sArg}).${$}.socket" \
   || fnSock="${_bashlyk_pathRun}/${_bashlyk_s0}.${$}.socket"
  mkdir -p ${_bashlyk_pathRun} \
-  || eval 'udfWarn "Warn: path for Sockets ${_bashlyk_pathRun} not created..."; return -1'
+  || eval 'udfWarn "Warn: path for Sockets ${_bashlyk_pathRun} not created..."; return 255'
  [ -a $fnSock ] && rm -f $fnSock
  if mkfifo -m 0600 $fnSock >/dev/null 2>&1; then
   ( udfLog - < $fnSock )&
@@ -454,8 +455,8 @@ udfSetLogSocket() {
 #  DESCRIPTION
 #    Установка файла лога
 #  RETURN VALUE
-#    -1 - невозможно использовать файл лога, аварийное завершение сценария
-#     0 - Выполнено
+#     0   - Выполнено
+#     255 - невозможно использовать файл лога, аварийное завершение сценария
 #  SOURCE
 udfSetLog() {
  if [ -n "$1" ]; then
@@ -513,7 +514,7 @@ udfMakeTemp() {
 #  INPUTS
 #    args - командная строка
 #  RETURN VALUE
-#    -1 - аргумент не задан
+#    255 - аргумент не задан
 #    в остальных случаях код возврата командной строки с учетом доступа к временному файлу
 #  EXAMPLE
 #    [ -n "$preExec" ] && udfShellExec $preExec
@@ -521,7 +522,7 @@ udfMakeTemp() {
 #    и выполнить его
 #  SOURCE
 udfShellExec() {
- [ -n "$*" ] || return -1
+ [ -n "$*" ] || return 255
  local fn rc
  fn=$(udfMakeTemp .shellexec 0077)
  udfAddFile2Clean $fn
@@ -608,8 +609,8 @@ _pathDat() {
 #  OUTPUT
 #    Сообщение об ошибке с перечислением имен переменных, которые содержат пустые значения
 #  RETURN VALUE
-#    0 - переменные не содержат пустые значения
-#   -1 - останов сценария, есть не инициализированные переменные
+#    0   - переменные не содержат пустые значения
+#    255 - останов сценария, есть не инициализированные переменные
 #  SOURCE
 udfThrowOnEmptyVariable() {
  local bashlyk_EysrBRwAuGMRNQoG_a bashlyk_tfAFyKrLgSeOatp2_s
@@ -619,7 +620,7 @@ udfThrowOnEmptyVariable() {
  done
  [ -n "$bashlyk_EysrBRwAuGMRNQoG_a" ] && {
   udfThrow "Error: Variable(s) or option(s) ($bashlyk_EysrBRwAuGMRNQoG_a ) is empty..."
-  return 1
+  return 255
  }
  return 0
 }
@@ -702,19 +703,21 @@ udfLibLog() {
    [ -n "$s" ] && echo -n '.' || { echo -n '?'; b=0; }
  done
  [ $b -eq 1 ] && echo 'ok.' || echo 'fail.'
- b=1
  mkdir -p ${_bashlyk_pathDat}
  udfAddPath2Clean ${_bashlyk_pathDat} 2>/dev/null
  echo -n "function testing on control terminal: "
+ _bashlyk_bTerminal=1
+ _bashlyk_bNotUseLog=1
+ b=1
  for s in udfLog udfUptime udfFinally udfWarn; do
   sS=$($s testing liblog $s)
   [ -n "$(echo "$sS" | grep "testing liblog $s")" ] && echo -n '.' || { echo -n '?'; b=0; }
  done
  [ $b -eq 1 ] && echo 'ok.' || echo 'fail.'
- b=1
  echo "test without control terminal (cat $_bashlyk_fnLog ): "
  _bashlyk_bTerminal=0
  _bashlyk_bNotUseLog=0
+ b=1
  udfSetLog 2>/dev/null && echo -n '.' || { echo -n '?'; b=0; }
  [ $b -eq 1 ] && {
   echo 'ok.'

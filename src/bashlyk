@@ -86,7 +86,7 @@ udfMain() {
  #
  for fn in $(echo ${_bashlyk_aLib} | tr ',' ' '); do
   fnLib="${_bashlyk_pathLib}/lib${fn}.sh"
-  [ -s $fnLib ] && . $fnLib || eval 'echo "error with $fnLib using"; exit -1'
+  [ -s $fnLib ] && . $fnLib || eval 'echo "error with $fnLib using"; exit 255'
  done
  case ${_bashlyk_sCond4Log} in
   redirect)

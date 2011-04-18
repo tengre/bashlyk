@@ -1,3 +1,4 @@
+#!/bin/bash
 #
 # $Id$
 #
@@ -64,13 +65,13 @@ udfGetMd5() {
 #  OUTPUT
 #    Список MD5-сумм и имён нескрытых файлов в каталоге <path> рекурсивно
 #  RETURN VALUE
-#    -1 - аргумент не указан или это не каталог
-#     0 - выполнено
+#    255 - аргумент не указан или это не каталог
+#     0  - выполнено
 #  EXAMPLE
 #    udfGetPathMd5 ~
 #  SOURCE
 udfGetPathMd5() {
- [ -n "$1" -a -d "$1" ] || return -1
+ [ -n "$1" -a -d "$1" ] || return 255
  local pathSrc=$(pwd)
  cd $1 2>/dev/null
  local pathDst=$(pwd)

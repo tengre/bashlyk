@@ -1,3 +1,4 @@
+#!/bin/bash
 #
 # $Id$
 #
@@ -143,15 +144,15 @@ udfGetOptHash() {
 #  INPUTS
 #    arg - CSV строка
 #  RETURN VALUE
-#    0 - Переменные сформированы
-#    1 - Ошибка, переменные не сформированы
-#   -1 - Ошибка, отсутствует аргумент
+#    0  - Переменные сформированы
+#    1  - Ошибка, переменные не сформированы
+#   255 - Ошибка, отсутствует аргумент
 #  EXAMPLE
 #    udfSetOptHash "uname=Linux;force=1;"
 #    Устанавливаются переменные $uname ("Linux") и $force (1)
 #  SOURCE
 udfSetOptHash() {
- [ -n "$*" ] || return -1
+ [ -n "$*" ] || return 255
  local confTmp iRC
  confTmp=$(udfMakeTemp setopt 0077) && {
   udfAddFile2Clean $confTmp
@@ -176,7 +177,7 @@ udfSetOptHash() {
 #  RETURN VALUE
 #    0 - Переменные сформированы
 #    1 - Ошибка, переменные не сформированы
-#   -1 - Ошибка, отсутствует аргумент
+#   255 - Ошибка, отсутствует аргумент
 #  EXAMPLE
 #    udfGetOpt uname:,force --uname $(uname) --force
 #    устанавливает переменные $uname ("Linux") и $force (1)
