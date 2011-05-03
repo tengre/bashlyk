@@ -644,6 +644,26 @@ udfShowVariable() {
  return 0
 }
 #******
+#****f* bashlyk/liblog/udfIsNumber
+#  SYNOPSIS
+#    udfIsNumber <arg>
+#  DESCRIPTION
+#    Проверка аргумента на то, что он является натуральным числом
+#  INPUTS
+#    arg - проверяемое значение
+#  RETURN VALUE
+#    0 - аргумент является натуральным числом
+#    1 - аргумент не является натуральным числом
+#    2 - аргумент не задан
+#  SOURCE
+udfIsNumber() {
+ [ -n "$1" ] || return 2
+ case "$(echo "$1" | grep -E '^[[:digit:]]+$')" in
+  '') return 1;;
+   *) return 0;;
+ esac
+}
+#******
 #****f* bashlyk/liblog/udfDebug
 #  SYNOPSIS
 #    udfDebug level message
@@ -713,6 +733,9 @@ udfLibLog() {
   sS=$($s testing liblog $s)
   [ -n "$(echo "$sS" | grep "testing liblog $s")" ] && echo -n '.' || { echo -n '?'; b=0; }
  done
+ udfIsNumber $(date +%S) && echo -n '.' || { echo -n '?'; b=0; }
+ udfIsNumber $(date +%b) && { echo -n '?'; b=0; } || echo -n '.'
+
  [ $b -eq 1 ] && echo 'ok.' || echo 'fail.'
  echo "test without control terminal (cat $_bashlyk_fnLog ): "
  _bashlyk_bTerminal=0
