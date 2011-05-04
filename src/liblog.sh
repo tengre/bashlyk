@@ -52,32 +52,6 @@
 : ${_bashlyk_aRequiredCmd_log:="basename date echo hostname false printf logger \
  mail mkfifo sleep tee true jobs ["}
 #******
-#****f* bashlyk/liblog/udfBaseId
-#  SYNOPSIS
-#    udfBaseId
-#  DESCRIPTION
-#    Alias для команды basename
-#  OUTPUT
-#    Короткое имя запущенного сценария без расширения ".sh"
-#  SOURCE
-udfBaseId() {
- basename $0 .sh
-}
-#******
-#****f* bashlyk/liblog/udfDate
-#  SYNOPSIS
-#    udfDate <args>
-#  DESCRIPTION
-#    Alias для команды date
-#  INPUTS
-#    <args> - суффикс к форматной строке текущей даты
-#  OUTPUT
-#    текущая дата с возможным суффиксом
-#  SOURCE
-udfDate() {
- date "+%b %d %H:%M:%S $*"
-}
-#******
 #****f* bashlyk/liblog/udfLogger
 #  SYNOPSIS
 #    udfLogger args
