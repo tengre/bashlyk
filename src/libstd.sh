@@ -42,3 +42,68 @@ udfDate() {
  date "+%b %d %H:%M:%S $*"
 }
 #******
+#****f* bashlyk/liblog/udfThrowOnEmptyVariable
+#  SYNOPSIS
+#    udfThrowOnEmptyVariable args
+#  DESCRIPTION
+#    Вызывает останов сценария, если аргументы, как имена переменных, содержат пустые значения
+#  INPUTS
+#    args - имена переменных
+#  OUTPUT
+#    Сообщение об ошибке с перечислением имен переменных, которые содержат пустые значения
+#  RETURN VALUE
+#    0   - переменные не содержат пустые значения
+#    255 - останов сценария, есть не инициализированные переменные
+#  SOURCE
+udfThrowOnEmptyVariable() {
+ local bashlyk_EysrBRwAuGMRNQoG_a bashlyk_tfAFyKrLgSeOatp2_s
+ for bashlyk_tfAFyKrLgSeOatp2_s in $*; do
+  [ -z "${!bashlyk_tfAFyKrLgSeOatp2_s}" ] \
+   && bashlyk_EysrBRwAuGMRNQoG_a+=" $bashlyk_tfAFyKrLgSeOatp2_s"
+ done
+ [ -n "$bashlyk_EysrBRwAuGMRNQoG_a" ] && {
+  udfThrow "Error: Variable(s) or option(s) ($bashlyk_EysrBRwAuGMRNQoG_a ) is empty..."
+  return 255
+ }
+ return 0
+}
+#******
+#****f* bashlyk/liblog/udfShowVariable
+#  SYNOPSIS
+#    udfShowVariable args
+#  DESCRIPTION
+#    Выводит значения аргументов, если они являются переменными
+#  INPUTS
+#    args - имена переменных
+#  OUTPUT
+#    Имя переменной и значение в виде <Имя>=<Значение>
+#  SOURCE
+udfShowVariable() {
+ local bashlyk_aSE10yGYS4AwxLJA_a bashlyk_G9WOnrBkEFSt9oKw_s
+ for bashlyk_G9WOnrBkEFSt9oKw_s in $*; do
+  bashlyk_aSE10yGYS4AwxLJA_a+="\t${bashlyk_G9WOnrBkEFSt9oKw_s}=${!bashlyk_G9WOnrBkEFSt9oKw_s}\n"
+ done
+ echo -e "Variable listing:\n${bashlyk_aSE10yGYS4AwxLJA_a}"
+ return 0
+}
+#******
+#****f* bashlyk/liblog/udfIsNumber
+#  SYNOPSIS
+#    udfIsNumber <arg>
+#  DESCRIPTION
+#    Проверка аргумента на то, что он является натуральным числом
+#  INPUTS
+#    arg - проверяемое значение
+#  RETURN VALUE
+#    0 - аргумент является натуральным числом
+#    1 - аргумент не является натуральным числом
+#    2 - аргумент не задан
+#  SOURCE
+udfIsNumber() {
+ [ -n "$1" ] || return 2
+ case "$(echo "$1" | grep -E '^[[:digit:]]+$')" in
+  '') return 1;;
+   *) return 0;;
+ esac
+}
+#******

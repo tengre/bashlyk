@@ -13,7 +13,7 @@
 #    Блок инициализации глобальных переменных
 #  SOURCE
 [ -s /etc/bashlyk/bashlyk.conf ] && . /etc/bashlyk/bashlyk.conf
-: ${_bashlyk_aLib:="log,cnf,pid,md5,opt,xml"}
+: ${_bashlyk_aLib:="std,log,cnf,pid,md5,opt,xml"}
 : ${_bashlyk_pathLib:="/usr/share/bashlyk"}
 : ${_bashlyk_sArg:=$*}
 : ${_bashlyk_bInteract:=1}
