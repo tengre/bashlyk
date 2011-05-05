@@ -42,7 +42,7 @@ udfDate() {
  date "+%b %d %H:%M:%S $*"
 }
 #******
-#****f* bashlyk/liblog/udfThrowOnEmptyVariable
+#****f* bashlyk/libstd/udfThrowOnEmptyVariable
 #  SYNOPSIS
 #    udfThrowOnEmptyVariable args
 #  DESCRIPTION
@@ -68,7 +68,7 @@ udfThrowOnEmptyVariable() {
  return 0
 }
 #******
-#****f* bashlyk/liblog/udfShowVariable
+#****f* bashlyk/libstd/udfShowVariable
 #  SYNOPSIS
 #    udfShowVariable args
 #  DESCRIPTION
@@ -87,7 +87,7 @@ udfShowVariable() {
  return 0
 }
 #******
-#****f* bashlyk/liblog/udfIsNumber
+#****f* bashlyk/libstd/udfIsNumber
 #  SYNOPSIS
 #    udfIsNumber <arg>
 #  DESCRIPTION
