@@ -89,19 +89,26 @@ udfShowVariable() {
 #******
 #****f* bashlyk/libstd/udfIsNumber
 #  SYNOPSIS
-#    udfIsNumber <arg>
+#    udfIsNumber <number> [<tag>]
 #  DESCRIPTION
 #    Проверка аргумента на то, что он является натуральным числом
+#    Аргумент считается числом, если он содержит
 #  INPUTS
-#    arg - проверяемое значение
+#    number - проверяемое значение
+#    tag    - набор символов, один из которых можно применить
+#             после цифр для указания признака числа, например, 
+#             порядка
 #  RETURN VALUE
 #    0 - аргумент является натуральным числом
 #    1 - аргумент не является натуральным числом
 #    2 - аргумент не задан
+#  EXAMPLE
+#    udfIsNumber $iSize kMG
+#    Возвращает 0 если $iSize содержит число вида 12,34k,67M или 89G
 #  SOURCE
 udfIsNumber() {
  [ -n "$1" ] || return 2
- case "$(echo "$1" | grep -E '^[[:digit:]]+$')" in
+ case "$(echo "$1" | grep -E "^[[:digit:]]+[$2]?$")" in
   '') return 1;;
    *) return 0;;
  esac
