@@ -454,12 +454,12 @@ udfSetLog() {
 #******
 #****f* bashlyk/liblog/udfMakeTemp
 #  SYNOPSIS
-#    udfMakeTemp prefix [perm] [owner[.group]]
+#    udfMakeTemp <prefix> [<mask>] [<owner[.group]>] hold
 #  DESCRIPTION
 #    Создание временного файла
 #  INPUTS
 #    prefix - префикс имени временного файла
-#    perm   - права на файл
+#    mask   - маска прав на файл
 #    owner  - владелец файла
 #    group  - группа файла
 #  OUTPUT
@@ -475,10 +475,11 @@ udfMakeTemp() {
   umask $2 >/dev/null 2>&1
  }
  fn=$(mktemp -t "${1}.${_bashlyk_s0}.XXXXXXXX") || \
-   udfThrow "Error: temporary file $fn do not created..."
+  udfThrow "Error: temporary file $fn do not created..."
  {
   [ -n "$sMask" ] && umask $sMask
   [ -n "$3" ] && chown $3 $fn
+  [ -n "$(echo "$4" | grep -w 'hold')" ] || udfAddFile2Clean $fnTmp
  } >/dev/null 2>&1
  echo $fn
 }
