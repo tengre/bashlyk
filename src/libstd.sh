@@ -15,6 +15,7 @@
 #    защиту от повторного использования данного модуля
 #  SOURCE
 [ -n "$_BASHLYK_LIBSTD" ] && return 0 || _BASHLYK_LIBSTD=1
+: ${_bashlyk_sArg:=$*}
 #******
 #****f* bashlyk/libstd/udfBaseId
 #  SYNOPSIS
@@ -108,9 +109,43 @@ udfShowVariable() {
 #  SOURCE
 udfIsNumber() {
  [ -n "$1" ] || return 2
- case "$(echo "$1" | grep -E "^[[:digit:]]+[$2]?$")" in
+ local s=''
+ [ -n "$2" ] && s="[$2]?"
+ case "$(echo "$1" | grep -E "^[[:digit:]]+${s}$")" in
   '') return 1;;
    *) return 0;;
  esac
 }
 #******
+#****u* bashlyk/libstd/udfLibStd
+#  SYNOPSIS
+#    udfLibStd
+# DESCRIPTION
+#   bashlyk STD library test unit
+#   Запуск проверочных операций модуля выполняется если только аргументы 
+#   командной строки cодержат строку вида "--bashlyk-test=[.*,]std[,.*]",
+#   где * - ярлыки на другие тестируемые библиотеки
+#  SOURCE
+udfLibStd() {
+ [ -z "$(echo "${_bashlyk_sArg}" | grep -E -e "--bashlyk-test=.*std")" ] \
+  && return 0
+ local s b=1
+ printf "\n- libstd.sh tests: "
+ udfIsNumber "$(date +%S)"      && echo -n '.' || { echo -n '?'; b=0; }
+ udfIsNumber "$(date +%S)k" kMG && echo -n '.' || { echo -n '?'; b=0; }
+ udfIsNumber "$(date +%S)M"     && { echo -n '?'; b=0; } || echo -n '.'
+ udfIsNumber "$(date +%b)G" kMG && { echo -n '?'; b=0; } || echo -n '.'
+ udfIsNumber "$(date +%b)"      && { echo -n '?'; b=0; } || echo -n '.'
+ [ $b -eq 1 ] && echo 'ok.' || echo 'fail.'
+ printf "\n--\n\n"
+ return 0
+}
+#******
+#****** bashlyk/libstd/Main section
+# DESCRIPTION
+#   Running LOG library test unit if $_bashlyk_sArg ($*) contains
+#   substrings "--bashlyk-test=" and "std" - command for test using
+#  SOURCE
+udfLibStd
+#******
+

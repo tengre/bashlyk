@@ -23,6 +23,7 @@
 #    Здесь указываются модули, код которых используется данной библиотекой
 #  SOURCE
 : ${_bashlyk_pathLib:=/usr/share/bashlyk}
+[ -s "${_bashlyk_pathLib}/libstd.sh" ] && . "${_bashlyk_pathLib}/libstd.sh"
 [ -s "${_bashlyk_pathLib}/libmd5.sh" ] && . "${_bashlyk_pathLib}/libmd5.sh"
 #******
 #****v*  bashlyk/liblog/Init section
@@ -160,8 +161,11 @@ udfEcho() {
 #           из стандартного ввода
 #  SOURCE
 udfMail() {
- udfEcho $*
- udfEcho $* | mail -e -s "${_bashlyk_emailSubj}" ${_bashlyk_emailRcpt}
+ local fnTmp=$(udfMakeTemp)
+ udfAddFile2Clean $fnTmp
+ udfEcho $* | tee -a $fnTmp
+ cat $fnTmp | mail -e -s "${_bashlyk_emailSubj}" ${_bashlyk_emailRcpt}
+ rm -f $fnTmp
 }
 #******
 #****f* bashlyk/liblog/udfWarn
@@ -642,8 +646,6 @@ udfLibLog() {
   sS=$($s testing liblog $s)
   [ -n "$(echo "$sS" | grep "testing liblog $s")" ] && echo -n '.' || { echo -n '?'; b=0; }
  done
- udfIsNumber $(date +%S) && echo -n '.' || { echo -n '?'; b=0; }
- udfIsNumber $(date +%b) && { echo -n '?'; b=0; } || echo -n '.'
 
  [ $b -eq 1 ] && echo 'ok.' || echo 'fail.'
  echo "test without control terminal (cat $_bashlyk_fnLog ): "
