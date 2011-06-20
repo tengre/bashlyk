@@ -454,7 +454,7 @@ udfSetLog() {
 #******
 #****f* bashlyk/liblog/udfMakeTemp
 #  SYNOPSIS
-#    udfMakeTemp <prefix> [<mask>] [<owner[.group]>] hold
+#    udfMakeTemp [<prefix>] [<mask>] [<owner[.group]>]
 #  DESCRIPTION
 #    Создание временного файла
 #  INPUTS
@@ -474,14 +474,43 @@ udfMakeTemp() {
   sMask=$(umask)
   umask $2 >/dev/null 2>&1
  }
- fn=$(mktemp -t "${1}.${_bashlyk_s0}.XXXXXXXX") || \
+ fn=$(mktemp -q -t "${1}.${_bashlyk_s0}.XXXXXXXX") || \
   udfThrow "Error: temporary file $fn do not created..."
  {
   [ -n "$sMask" ] && umask $sMask
   [ -n "$3" ] && chown $3 $fn
-  [ -n "$(echo "$4" | grep -w 'hold')" ] || udfAddFile2Clean $fnTmp
  } >/dev/null 2>&1
  echo $fn
+}
+#******
+#****f* bashlyk/liblog/udfMakeTempO
+#  SYNOPSIS
+#    udfMakeTempO [dir] 
+#  DESCRIPTION
+#    Создание временного файла или каталога с автоматическим удалением
+#    по завершению сценария
+#  INPUTS
+#    dir - создавать каталог
+#  OUTPUT
+#    имя файла в виде <????????>
+#  EXAMPLE
+#    fnTemp=$(udfMakeTempO dir)
+#    присваивает значение вида "<????????>" переменной $fnTemp и создаёт 
+#    временный каталог
+#  SOURCE
+udfMakeTempO() {
+ local fo sDir=''
+ case "$1" in 
+  'dir') sDir='-d';;
+  ''   ) sDir=''  ;;
+ esac
+ fo=$(mktemp $sDir -q -t "XXXXXXXX") || \
+  udfThrow "Error: temporary file object $fo do not created..."
+ case "$1" in 
+  'dir') udfAddPath2Clean $fo;;
+  ''   ) udfAddFile2Clean $fo;;
+ esac
+ echo $fo
 }
 #******
 #****f* bashlyk/liblog/udfShellExec
