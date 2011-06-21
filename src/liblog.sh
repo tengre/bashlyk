@@ -506,9 +506,11 @@ udfMakeTempO() {
  esac
  fo=$(mktemp $sDir -q -t "XXXXXXXX") || \
   udfThrow "Error: temporary file object $fo do not created..."
- case "$1" in 
+ case "$*" in 
   'dir') udfAddPath2Clean $fo;;
   ''   ) udfAddFile2Clean $fo;;
+  '*'  ) ;;
+
  esac
  echo $fo
 }
