@@ -485,12 +485,15 @@ udfMakeTemp() {
 #******
 #****f* bashlyk/liblog/udfMakeTempO
 #  SYNOPSIS
-#    udfMakeTempO [dir] 
+#    udfMakeTempO [file|dir|persist|persistfile|persistdir] [<prefix>]
 #  DESCRIPTION
 #    Создание временного файла или каталога с автоматическим удалением
 #    по завершению сценария
 #  INPUTS
-#    dir - создавать каталог
+#    file     - создавать файл (по умолчанию)
+#    dir      - создавать каталог
+#    persist* - не включать автоматическое удаление
+#    prefix   - префикс имени временного файла
 #  OUTPUT
 #    имя файла в виде <????????>
 #  EXAMPLE
@@ -499,19 +502,21 @@ udfMakeTemp() {
 #    временный каталог
 #  SOURCE
 udfMakeTempO() {
- local fo sDir=''
+ local fo sDir='' bPersist=0
+ [ -n "$2" ] && sPrefix="$2"
  case "$1" in 
-  'dir') sDir='-d';;
-  ''   ) sDir=''  ;;
+  'dir'        ) sDir='-d' ;;
+  'persist'    ) bPersist=1;;
+  'persistfile') bPersist=1;;
+  'persistdir' ) bPersist=1; sDir="-d";;
+  '*'          ) sPrefix="$1"
  esac
- fo=$(mktemp $sDir -q -t "XXXXXXXX") || \
+ fo=$(mktemp $sDir -q -t "${sPrefix}XXXXXXXX") || \
   udfThrow "Error: temporary file object $fo do not created..."
- case "$*" in 
-  'dir') udfAddPath2Clean $fo;;
-  ''   ) udfAddFile2Clean $fo;;
-  '*'  ) ;;
-
- esac
+ if [ $bPersist -eq 0 ]; then
+  [ -f $fo ] && udfAddFile2Clean $fo
+  [ -d $fo ] && udfAddPath2Clean $fo
+ fi
  echo $fo
 }
 #******
