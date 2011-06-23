@@ -463,10 +463,11 @@ udfSetLog() {
 #    owner  - владелец файла
 #    group  - группа файла
 #  OUTPUT
-#    имя файла в виде [prefix].${_bashlyk_s0}.<????????>
+#    имя файла в виде [prefix].${_bashlyk_s0}.<8 символов>
 #  EXAMPLE
 #    fnTemp=$(udfMakeTemp temp)
-#    присваивает значение вида "temp.<имя сценария>.<????????>" переменной $fnTemp
+#    присваивает значение вида "temp.<имя сценария>.<8 символов>" переменной $fnTemp
+#    и создаёт соответствующий файл
 #  SOURCE
 udfMakeTemp() {
  local fn sMask
@@ -495,11 +496,11 @@ udfMakeTemp() {
 #    persist* - не включать автоматическое удаление
 #    prefix   - префикс имени временного файла
 #  OUTPUT
-#    имя файла в виде <????????>
+#    случайное слово в 8 символов
 #  EXAMPLE
-#    fnTemp=$(udfMakeTempO dir)
-#    присваивает значение вида "<????????>" переменной $fnTemp и создаёт 
-#    временный каталог
+#    fnTemp=$(udfMakeTempO dir temp)
+#    присваивает значение вида "temp<8 симолов>" переменной $fnTemp и создаёт 
+#    соответствующий временный каталог
 #  SOURCE
 udfMakeTempO() {
  local fo sDir='' bPersist=0
@@ -539,7 +540,7 @@ udfMakeTempO() {
 udfShellExec() {
  [ -n "$*" ] || return 255
  local fn rc
- fn=$(udfMakeTemp .shellexec 0077)
+ fn=$(udfMakeTemp .shellexec)
  udfAddFile2Clean $fn
  echo $* > $fn
  . $fn

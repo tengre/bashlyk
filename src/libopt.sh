@@ -55,39 +55,49 @@ udfQuoteIfNeeded() {
 #******
 #****f* bashlyk/libopt/udfWSpace2Alias
 #  SYNOPSIS
-#    udfWSpace2Alias <arg>
+#    udfWSpace2Alias -|<arg>
 #  DESCRIPTION
 #   Пробел в аргументе заменяется "магической" последовательностью символов,
 #   определённых в глобальной переменной $_bashlyk_sWSpaceAlias
 #  INPUTS
 #    arg - argument
+#    "-" - ожидается ввод в конвейере 
 #  OUTPUT
 #   Аргумент с заменой пробелов на специальную последовательность символов
 #  EXAMPLE
-#    udfWSpace2Alias a b  cd
-#    show a___b______cd
+#    выполнение: udfWSpace2Alias a b  cd
+#         вывод: a___b______cd
 #  SOURCE
 udfWSpace2Alias() {
- echo "$*" | sed -e "s/ /$_bashlyk_sWSpaceAlias/g"
+ case "$1" in
+ '-') sed -e "s/ /$_bashlyk_sWSpaceAlias/g";;
+ '*') echo "$*" | sed -e "s/ /$_bashlyk_sWSpaceAlias/g";;
+ esac
 }
 #******
 #****f* bashlyk/libopt/udfAlias2WSpace
 #  SYNOPSIS
-#    udfAlias2WSpace <arg>
+#    udfAlias2WSpace -|<arg>
 #  DESCRIPTION
-#   Последовательность символов, определённых в глобальной переменной
-#   $_bashlyk_sWSpaceAlias заменяется на пробел в заданном аргументе.
-#   Причём, если появляются пробелы, то результат обрамляется кавычками.
+#    Последовательность символов, определённых в глобальной переменной
+#    $_bashlyk_sWSpaceAlias заменяется на пробел в заданном аргументе.
+#    Причём, если появляются пробелы, то вывод обрамляется кавычками.
+#    В случае ввода в конвейере вывод не обрамляется кавычками
 #  INPUTS
 #    arg - argument
 #  OUTPUT
-#   Аргумент с заменой специальной последовательности символов на пробел
+#    Аргумент с заменой специальной последовательности символов на пробел
 #  EXAMPLE
-#    udfWSpace2Alias a___b______cd
-#    show "a b  cd"
+#    выполнение: udfWSpace2Alias a___b______cd
+#         вывод: "a b  cd"
+#    выполнение: echo a___b______cd | udfWSpace2Alias -
+#         вывод: a b  cd
 #  SOURCE
 udfAlias2WSpace() {
- udfQuoteIfNeeded $(echo "$*" | sed -e "s/$_bashlyk_sWSpaceAlias/ /g")
+ case "$1" in
+ '-') sed -e "s/$_bashlyk_sWSpaceAlias/ /g";;
+ '*') udfQuoteIfNeeded $(echo "$*" | sed -e "s/$_bashlyk_sWSpaceAlias/ /g");;
+ esac 
 }
 #******
 #****f* bashlyk/libopt/udfGetOptHash
@@ -154,7 +164,7 @@ udfGetOptHash() {
 udfSetOptHash() {
  [ -n "$*" ] || return 255
  local confTmp iRC
- confTmp=$(udfMakeTemp setopt 0077) && {
+ confTmp=$(udfMakeTemp setopt) && {
   udfAddFile2Clean $confTmp
   udfSetConfig $confTmp "$*"
   udfGetConfig $confTmp

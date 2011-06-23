@@ -1,3 +1,12 @@
+Thu, 23 Jun 2011 14:41:42 +0400
+	New upstream release
+	Version 1.51
+ - liblog.sh: добавлена функция udfMakeTempO - будущая, более гибкая замена
+   udfMakeTemp, которая по умолчанию включает временный файл на удаление и 
+   позволяет создавать временный каталог
+ - libopt.sh: расширена функциональность функций udfWSpace2Alias и 
+   udfAlias2WSpace - теперь возможно их использование в конвейере
+
 Wed, 15 Jun 2011 13:49:56 +0400
 	New upstream release
 	Version 1.50
