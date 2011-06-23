@@ -84,17 +84,17 @@ udfLogger() {
   || udfThrow "Error: do not create path ${_bashlyk_pathLog}"
  udfAddPath2Clean ${_bashlyk_pathLog}
  case "${bSysLog}${bUseLog}" in
-  "00")
+  00)
    echo "$*"
   ;;
-  "01")
+  01)
    echo "$(udfDate "$HOSTNAME $sTagLog: $*")" >> ${_bashlyk_fnLog}
   ;;
-  "10")
+  10)
    echo "$*"
    logger -s -t "$sTagLog" "$*" 2>/dev/null
   ;;
-  "11")
+  11)
    echo "$(udfDate "$HOSTNAME $sTagLog: $*")" >> ${_bashlyk_fnLog}
    logger -s -t "$sTagLog" "$*" 2>/dev/null
   ;;
@@ -506,11 +506,11 @@ udfMakeTempO() {
  local fo sDir='' bPersist=0
  [ -n "$2" ] && sPrefix="$2"
  case "$1" in 
-  'dir'        ) sDir='-d' ;;
-  'persist'    ) bPersist=1;;
-  'persistfile') bPersist=1;;
-  'persistdir' ) bPersist=1; sDir="-d";;
-  '*'          ) sPrefix="$1"
+          dir) sDir='-d' ;;
+      persist) bPersist=1;;
+  persistfile) bPersist=1;;
+   persistdir) bPersist=1; sDir="-d";;
+            *) sPrefix="$1"
  esac
  fo=$(mktemp $sDir -q -t "${sPrefix}XXXXXXXX") || \
   udfThrow "Error: temporary file object $fo do not created..."

@@ -70,8 +70,8 @@ udfQuoteIfNeeded() {
 #  SOURCE
 udfWSpace2Alias() {
  case "$1" in
- '-') sed -e "s/ /$_bashlyk_sWSpaceAlias/g";;
- '*') echo "$*" | sed -e "s/ /$_bashlyk_sWSpaceAlias/g";;
+ -) sed -e "s/ /$_bashlyk_sWSpaceAlias/g";;
+ *) echo "$*" | sed -e "s/ /$_bashlyk_sWSpaceAlias/g";;
  esac
 }
 #******
@@ -95,8 +95,8 @@ udfWSpace2Alias() {
 #  SOURCE
 udfAlias2WSpace() {
  case "$1" in
- '-') sed -e "s/$_bashlyk_sWSpaceAlias/ /g";;
- '*') udfQuoteIfNeeded $(echo "$*" | sed -e "s/$_bashlyk_sWSpaceAlias/ /g");;
+ -) sed -e "s/$_bashlyk_sWSpaceAlias/ /g";;
+ *) udfQuoteIfNeeded $(echo "$*" | sed -e "s/$_bashlyk_sWSpaceAlias/ /g");;
  esac 
 }
 #******
