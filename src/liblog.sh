@@ -50,6 +50,7 @@
 : ${_bashlyk_emailRcpt:=postmaster}
 : ${_bashlyk_emailSubj:="${_bashlyk_sUser}@${HOSTNAME}::${_bashlyk_s0}"}
 : ${_bashlyk_fnLog:="${_bashlyk_pathLog}/${_bashlyk_s0}.log"}
+: ${_bashlyk_bNotUseLog:=1}
 : ${_bashlyk_aRequiredCmd_log:="basename date echo hostname false printf logger \
  mail mkfifo sleep tee true jobs ["}
 #******
@@ -484,41 +485,51 @@ udfMakeTemp() {
  echo $fn
 }
 #******
-#****f* bashlyk/liblog/udfMakeTempO
+#****f* bashlyk/liblog/udfMakeTempV
 #  SYNOPSIS
-#    udfMakeTempO [file|dir|persist|persistfile|persistdir] [<prefix>]
+#    udfMakeTempV <var> [file|dir|keep|keepf[ile*]|keepd[ir]] [<prefix>]
 #  DESCRIPTION
 #    Создание временного файла или каталога с автоматическим удалением
 #    по завершению сценария
 #  INPUTS
-#    file     - создавать файл (по умолчанию)
-#    dir      - создавать каталог
-#    persist* - не включать автоматическое удаление
-#    prefix   - префикс имени временного файла
-#  OUTPUT
-#    случайное слово в 8 символов
+#    var        - переменная (без $) для имени временного объекта
+#    file       - создавать файл (по умолчанию)
+#    dir        - создавать каталог
+#    keep[file] - не включать автоматическое удаление временного файла
+#    keepdir    - не включать автоматическое удаление временного каталога
+#    prefix     - префикс имени временного файла
+#  RETURN VALUE
+#    255 - аргумент не задан
+#      1 - ошибка идентификатора для временного объекта
+#      0 - Выполнено успешно
 #  EXAMPLE
-#    fnTemp=$(udfMakeTempO dir temp)
-#    присваивает значение вида "temp<8 симолов>" переменной $fnTemp и создаёт 
-#    соответствующий временный каталог
+#    udfMakeTempV pathTmp keepdir temp
+#    присваивает значение вида "temp<8 симолов>" переменной $pathTmp и создаёт 
+#    соответствующий временный каталог, который не будет удаляться по завершении
+#    сценария автоматически
+#    udfMakeTempV fnTmp $(date +%s)-
+#    присваивает значение вида "<секунды эпохи>-<8 симолов>" переменной $fnTmp и
+#    создаёт соответствующий временный файл, который может быть удалён по 
+#    завершении сценария автоматически
 #  SOURCE
-udfMakeTempO() {
- local fo sDir='' bPersist=0
- [ -n "$2" ] && sPrefix="$2"
- case "$1" in 
+udfMakeTempV() {
+ [ -n "$1" ] || return 255
+ local bashlyk_s2jyV6IRNTtdBaql_fo sDir='' bKeep=0
+ [ -n "$3" ] && sPrefix="$3"
+ case "$2" in 
           dir) sDir='-d' ;;
-      persist) bPersist=1;;
-  persistfile) bPersist=1;;
-   persistdir) bPersist=1; sDir="-d";;
-            *) sPrefix="$1"
+  keep|keepf*) bKeep=1;;
+       keepd*) bKeep=1; sDir="-d";;
+            *) sPrefix="$2";;
  esac
- fo=$(mktemp $sDir -q -t "${sPrefix}XXXXXXXX") || \
-  udfThrow "Error: temporary file object $fo do not created..."
- if [ $bPersist -eq 0 ]; then
-  [ -f $fo ] && udfAddFile2Clean $fo
-  [ -d $fo ] && udfAddPath2Clean $fo
+ bashlyk_s2jyV6IRNTtdBaql_fo=$(mktemp $sDir -q -t "${sPrefix}XXXXXXXX") || \
+  udfThrow "Error: temporary file object $bashlyk_s2jyV6IRNTtdBaql_fo do not created..."
+ if [ $bKeep -eq 0 ]; then
+  [ -f $bashlyk_s2jyV6IRNTtdBaql_fo ] && udfAddFile2Clean $bashlyk_s2jyV6IRNTtdBaql_fo
+  [ -d $bashlyk_s2jyV6IRNTtdBaql_fo ] && udfAddPath2Clean $bashlyk_s2jyV6IRNTtdBaql_fo
  fi
- echo $fo
+ eval 'export ${1}=${bashlyk_s2jyV6IRNTtdBaql_fo}' 2>/dev/null
+ return $?
 }
 #******
 #****f* bashlyk/liblog/udfShellExec
