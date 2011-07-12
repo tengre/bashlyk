@@ -311,7 +311,6 @@ udfOnTrap() {
 udfAddFile2Clean() {
  [ -n "$1" ] || return 0
  _bashlyk_afnClean+=" $*"
- #echo "clean file ${_bashlyk_afnClean}"
  trap "udfOnTrap" 0 1 2 5 15
 }
 #******
@@ -716,8 +715,6 @@ udfLibLog() {
   $s testing liblog $s; echo "return code ... $?"
  done
  _bashlyk_bTerminal=1
- #udfOnTrap
- #exec >&1 2>&1
  for s in                             \
   bUseSyslog=$_bashlyk_bUseSyslog     \
   pathLog=$_bashlyk_pathLog           \
