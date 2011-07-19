@@ -69,11 +69,12 @@
 #     * Вывод в системный журнал (syslog) и в файл $_bashlyk_fnLog
 #  SOURCE
 udfLogger() {
- local envLang=$LANG
+ local envLang bSysLog bUseLog sTagLog
+ envLang=$LANG
  LANG=C
- local bSysLog=0
- local bUseLog=0
- local sTagLog="${_bashlyk_s0}[$(printf "%05d" $$)]"
+ bSysLog=0
+ bUseLog=0
+ sTagLog="${_bashlyk_s0}[$(printf "%05d" $$)]"
  [ -z "$_bashlyk_bUseSyslog" -o ${_bashlyk_bUseSyslog} -eq 0 ] \
   && bSysLog=0 || bSysLog=1
  if [ -z "$_bashlyk_bNotUseLog" ]; then
@@ -503,7 +504,7 @@ udfMakeTemp() {
 #      0 - Выполнено успешно
 #  EXAMPLE
 #    udfMakeTempV pathTmp keepdir temp
-#    присваивает значение вида "temp<8 симолов>" переменной $pathTmp и создаёт 
+#    присваивает значение вида "temp<8 символов>" переменной $pathTmp и создаёт 
 #    соответствующий временный каталог, который не будет удаляться по завершении
 #    сценария автоматически
 #    udfMakeTempV fnTmp $(date +%s)-
