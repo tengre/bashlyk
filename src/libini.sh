@@ -87,8 +87,8 @@ udfGetIni() {
 #******
 udfReadIni() {
  [ -n "$1" -a -f "$1" ] || return 255
- [ -n "$2" ] && 
- local ini=$1 a s b sSection='void'
+ #[ -n "$2" ] && 
+ local ini=$1 a s b sSection='void' k v
  unset _bashlyk_aIni
  declare -A _bashlyk_aIni
  while read s; do
@@ -96,11 +96,18 @@ udfReadIni() {
   b=$(echo $s | grep -oE '\[.*\]' | tr -d '[]')
   if [ -n "$b" ]; then
    sSection=$b
+   _bashlyk_aIni[$sSection]+="; ;"
   else
-   _bashlyk_aIni[$sSection]+="$s;"
+   k="$(echo ${s%%=*}|xargs)"
+   v="$(echo ${s#*=}|xargs)"
+   if [ "$k" = "$v" ]; then
+    _bashlyk_aIni[$sSection]+=";;;"
+   else
+    k="$k=$v"
+   fi
+   _bashlyk_aIni[$sSection]+="$k;"
   fi
  done < $ini
-
 }
 #****f* bashlyk/libcnf/udfSetConfig
 #  SYNOPSIS
