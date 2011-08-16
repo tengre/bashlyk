@@ -103,7 +103,7 @@ udfReadIni() {
    if [ "$k" = "$v" ]; then
     _bashlyk_aIni[$sSection]+=";;;"
    else
-    k="$k=$v"
+    [ -z "$(echo "$k" | grep '.*[[:space:]+].*')" ] && k="$k=$v"
    fi
    _bashlyk_aIni[$sSection]+="$k;"
   fi
