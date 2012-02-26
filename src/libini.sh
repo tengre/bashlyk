@@ -92,12 +92,14 @@ udfReadIni() {
  unset _bashlyk_aIni
  declare -A _bashlyk_aIni
  while read s; do
+  echo "dbg $s"
   ( echo $s | grep "^#\|^$" )>/dev/null && continue
   b=$(echo $s | grep -oE '\[.*\]' | tr -d '[]')
   if [ -n "$b" ]; then
    sSection=$b
    _bashlyk_aIni[$sSection]+="; ;"
   else
+   s=$(echo $s | tr -d "'")
    k="$(echo ${s%%=*}|xargs)"
    v="$(echo ${s#*=}|xargs)"
    if [ "$k" = "$v" ]; then
@@ -106,6 +108,7 @@ udfReadIni() {
     [ -z "$(echo "$k" | grep '.*[[:space:]+].*')" ] && k="$k=$v"
    fi
    _bashlyk_aIni[$sSection]+="$k;"
+   echo "dbg a $sSection: ${_bashlyk_aIni[$sSection]}"
   fi
  done < $ini
 }
@@ -144,3 +147,5 @@ udfSetConfig() {
  return 0
 }
 #******
+udfReadIni test.ini
+echo ${_bashlyk_aIni[*]}
