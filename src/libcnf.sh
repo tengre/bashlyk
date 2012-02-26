@@ -30,7 +30,7 @@
 #  SOURCE
 : ${_bashlyk_sArg:=$*}
 : ${_bashlyk_pathCnf:=$(pwd)}
-: ${_bashlyk_aRequiredCmd_cnf:="basename cat date dirname echo grep pwd rm sleep ["}
+: ${_bashlyk_aRequiredCmd_cnf:="awk basename cat date dirname echo grep pwd rm sleep ["}
 #******
 #****f* bashlyk/libcnf/udfGetConfig
 #  SYNOPSIS
@@ -55,28 +55,22 @@
 udfGetConfig() {
  [ -n "$1" ] || return 255
  #
- local aconf chIFS conf fn i pathCnf=$_bashlyk_pathCnf
+ local aconf conf s pathCnf="$_bashlyk_pathCnf"
  #
- [ "$1"  = "$(basename $1)" -a -f ${pathCnf}/$1 ] || pathCnf=
- [ "$1"  = "$(basename $1)" -a -f $1 ] && pathCnf=$(pwd)
- [ "$1" != "$(basename $1)" -a -f $1 ] && pathCnf=$(dirname $1)
+ [ "$1"  = "${1##*/}" -a -f ${pathCnf}/$1 ] || pathCnf=
+ [ "$1"  = "${1##*/}" -a -f $1 ] && pathCnf=$(pwd)
+ [ "$1" != "${1##*/}" -a -f $1 ] && pathCnf=$(dirname $1)
  #
  if [ -z "$pathCnf" ]; then
   [ -f "/etc${_bashlyk_pathPrefix}/$1" ] \
    && pathCnf="/etc${_bashlyk_pathPrefix}" || return 1
  fi
  #
- chIFS=$IFS
- IFS='.'
- i=0
- for fn in $(basename "$1"); do
-  aconf[++i]=$fn
- done
- IFS=$chIFS
  conf=
- for ((i=$((${#aconf[*]})); $i; i--)); do
-  [ -n "${aconf[i]}" ] || continue
-  [ -n "$conf" ] && conf="${aconf[$i]}.${conf}" || conf=${aconf[i]}
+ aconf=$(echo "${1##*/}" | awk 'BEGIN{FS="."} {for (i=NF;i>=1;i--) printf $i" "}')
+ for s in $aconf; do
+  [ -n "$s" ] || continue
+  [ -n "$conf" ] && conf="${s}.${conf}" || conf="$s"
   [ -s "${pathCnf}/${conf}" ] && . "${pathCnf}/${conf}"
  done
  return 0
@@ -101,11 +95,11 @@ udfGetConfig() {
 udfSetConfig() {
  [ -n "$1" -a -n "$2" ] || return 255
  #
- local conf sKeyValue chIFS=$IFS pathCnf=$_bashlyk_pathCnf
+ local conf sKeyValue chIFS="$IFS" pathCnf="$_bashlyk_pathCnf"
  #
- [ "$1" != "$(basename $1)" ] && pathCnf=$(dirname $1)
- [ -d "$pathCnf" ] || mkdir -p $pathCnf
- conf="${pathCnf}/$(basename $1)"
+ [ "$1" != "${1##*/}" ] && pathCnf="$(dirname $1)"
+ [ -d "$pathCnf" ] || mkdir -p "$pathCnf"
+ conf="${pathCnf}/${1##*/}"
  IFS=';'
  {
   LANG=C date "+#Created %c by $USER $0 ($$)"
@@ -113,7 +107,7 @@ udfSetConfig() {
    [ -n "${sKeyValue}" ] && echo "${sKeyValue}"
   done
  } >> $conf 2>/dev/null
- IFS=$chIFS
+ IFS="$chIFS"
  return 0
 }
 #******
@@ -135,17 +129,17 @@ udfLibCnf() {
 # Проверка файла конфигурации без полного пути
 #
  echo -n "check set\get configuration: "
- udfSetConfig $conf "a=\"$BASH_VERSION\";c=\"$(uname -a)\"" >/dev/null 2>&1
+ udfSetConfig $conf "a=\"$0\";c=\"$(uname -a)\"" >/dev/null 2>&1
  echo -n '.'
  . ${_bashlyk_pathCnf}/${conf} >/dev/null 2>&1
  echo -n '.'
- [ "$a" = "$BASH_VERSION" -a "$c" = "$(uname -a)" ] \
+ [ "$a" = "$0" -a "$c" = "$(uname -a)" ] \
   && echo -n  '.' || { echo -n '?'; b=0; }
  a=;c=
  echo -n '.'
  udfGetConfig $conf 2>/dev/null
  echo -n '.'
- [ "$a" = "$BASH_VERSION" -a "$c" = "$(uname -a)" ] \
+ [ "$a" = "$0" -a "$c" = "$(uname -a)" ] \
   && echo -n '.' || { echo -n '?'; b=0; }
  rm -f "${_bashlyk_pathCnf}/${conf}"
  a=;c=
@@ -153,17 +147,17 @@ udfLibCnf() {
 # Проверка файла конфигурации с полным путем
 #
  fn=$(mktemp -t "XXXXXXXX.${conf}" 2>/dev/null) && conf=$fn || conf=~/${conf}
- udfSetConfig $conf "a=\"$BASH_VERSION\";c=\"$(uname -a)\"" >/dev/null 2>&1
+ udfSetConfig $conf "a=\"$0\";c=\"$(uname -a)\"" >/dev/null 2>&1
  echo -n '.'
  . $conf >/dev/null 2>&1
  echo -n '.'
- [ "$a" = "$BASH_VERSION" -a "$c" = "$(uname -a)" ] \
+ [ "$a" = "$0" -a "$c" = "$(uname -a)" ] \
   && echo -n '.' || { echo -n '?'; b=0; }
  a=;c=
  echo -n '.'
  udfGetConfig $conf 2>/dev/null
  echo -n '.'
- [ "$a" = "$BASH_VERSION" -a "$c" = "$(uname -a)" ] \
+ [ "$a" = "$0" -a "$c" = "$(uname -a)" ] \
   && echo -n '.' || { echo -n '?'; b=0; }
  a=;c=
  rm -f $conf

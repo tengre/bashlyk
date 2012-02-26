@@ -38,7 +38,7 @@
 #  SOURCE
 udfXml() {
  [ -n "$1" ] || return 1
- local s=($1)
+ local s="($1)"
  shift
  echo "<${s[*]}>${*}</${s[0]}>"
 }
@@ -52,7 +52,7 @@ udfXml() {
 #******
 _() {
  [ -n "$1" ] || return 1
- local s=($1)
+ local s="($1)"
  shift
  echo "<${s[*]}>${*}</${s[0]}>"
 }

@@ -57,8 +57,8 @@
 #  SOURCE
 udfCheckStarted() {
  [ -n "$*" ] || return 255
- local pid=$1
- local cmd=${2:-}
+ local pid="$1"
+ local cmd="${2:-}"
  shift 2
  [ -n "$(ps -p $pid -o pid= -o args= | grep -vw $$ | grep -w -e "$cmd" | grep -e "$*" | head -n 1)" ] && return 0 || return 1
 }

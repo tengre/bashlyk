@@ -119,7 +119,7 @@ udfAlias2WSpace() {
 udfGetOptHash() {
  [ -n "$*" ] || return -1
  local k v csvKeys csvHash=';' sOpt bFound
- csvKeys=$1
+ csvKeys="$1"
  shift
  sOpt="$(getopt -l $csvKeys -n $0 -- $0 $@)" || return 1
  eval set -- "$sOpt"
@@ -214,7 +214,7 @@ udfGetOpt() {
 #  SOURCE
 udfExcludePairFromHash() {
  [ -n "$*" ] || return 1
- local s=$1
+ local s="$1"
  shift
  local csv="$*"
  echo "$csv" | sed -e "s/;$s;//g"
@@ -231,7 +231,7 @@ udfExcludePairFromHash() {
 #   где * -ярлыки на другие тестируемые библиотеки
 #  SOURCE
 udfLibOpt() {
- local optTest1 optTest2 optTest3 s=$(date -R) b=1
+ local optTest1 optTest2 optTest3 s="$(date -R)" b=1
  [ -z "$(echo "${_bashlyk_sArg}" | grep -E -e "--bashlyk-test=.*opt")" ] \
  && return 0
  printf "\n- libopt.sh tests:\n\n"

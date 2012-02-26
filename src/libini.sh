@@ -58,24 +58,24 @@ declare -A _bashlyk_aIni
 udfGetIni() {
  [ -n "$1" ] || return 255
  #
- local aini chIFS ini fn i pathIni=$_bashlyk_pathIni
+ local aini chIFS ini fn i pathIni="$_bashlyk_pathIni"
  #
- [ "$1"  = "$(basename $1)" -a -f ${pathIni}/$1 ] || pathIni=
- [ "$1"  = "$(basename $1)" -a -f $1 ] && pathIni=$(pwd)
- [ "$1" != "$(basename $1)" -a -f $1 ] && pathIni=$(dirname $1)
+ [ "$1"  = "${1##*/}" -a -f ${pathIni}/$1 ] || pathIni=
+ [ "$1"  = "${1##*/}" -a -f $1 ] && pathIni=$(pwd)
+ [ "$1" != "${1##*/}" -a -f $1 ] && pathIni=$(dirname $1)
  #
  if [ -z "$pathIni" ]; then
   [ -f "/etc${_bashlyk_pathPrefix}/$1" ] \
    && pathIni="/etc${_bashlyk_pathPrefix}" || return 1
  fi
  #
- chIFS=$IFS
+ chIFS="$IFS"
  IFS='.'
  i=0
  for fn in $(basename "$1"); do
   aini[++i]=$fn
  done
- IFS=$chIFS
+ IFS="$chIFS"
  conf=
  for ((i=$((${#aini[*]})); $i; i--)); do
   [ -n "${aini[i]}" ] || continue
@@ -88,7 +88,7 @@ udfGetIni() {
 udfReadIni() {
  [ -n "$1" -a -f "$1" ] || return 255
  #[ -n "$2" ] && 
- local ini=$1 a s b sSection='void' k v
+ local ini="$1" a s b sSection='void' k v
  unset _bashlyk_aIni
  declare -A _bashlyk_aIni
  while read s; do
@@ -131,11 +131,11 @@ udfReadIni() {
 udfSetConfig() {
  [ -n "$1" -a -n "$2" ] || return 255
  #
- local conf sKeyValue chIFS=$IFS pathCnf=$_bashlyk_pathCnf
+ local conf sKeyValue chIFS="$IFS" pathCnf="$_bashlyk_pathCnf"
  #
- [ "$1" != "$(basename $1)" ] && pathCnf=$(dirname $1)
- [ -d "$pathCnf" ] || mkdir -p $pathCnf
- conf="${pathCnf}/$(basename $1)"
+ [ "$1" != "${1##*/}" ] && pathCnf="$(dirname $1)"
+ [ -d "$pathCnf" ] || mkdir -p "$pathCnf"
+ conf="${pathCnf}/${1##*/}"
  IFS=';'
  {
   LANG=C date "+#Created %c by $USER $0 ($$)"
@@ -143,7 +143,7 @@ udfSetConfig() {
    [ -n "${sKeyValue}" ] && echo "${sKeyValue}"
   done
  } >> $conf 2>/dev/null
- IFS=$chIFS
+ IFS="$chIFS"
  return 0
 }
 #******

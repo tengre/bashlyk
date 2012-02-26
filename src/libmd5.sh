@@ -72,10 +72,10 @@ udfGetMd5() {
 #  SOURCE
 udfGetPathMd5() {
  [ -n "$1" -a -d "$1" ] || return 255
- local pathSrc=$(pwd)
+ local pathSrc="$(pwd)"
  cd $1 2>/dev/null
- local pathDst=$(pwd)
- local       a=$(ls)
+ local pathDst="$(pwd)"
+ local a=$(ls)
  for s in $a
  do
   [ -d "$s" ] && udfGetPathMd5 $s

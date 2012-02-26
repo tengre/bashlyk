@@ -51,8 +51,7 @@
 : ${_bashlyk_emailSubj:="${_bashlyk_sUser}@${HOSTNAME}::${_bashlyk_s0}"}
 : ${_bashlyk_fnLog:="${_bashlyk_pathLog}/${_bashlyk_s0}.log"}
 : ${_bashlyk_bNotUseLog:=1}
-: ${_bashlyk_aRequiredCmd_log:="basename date echo hostname false printf logger \
- mail mkfifo sleep tee true jobs ["}
+: ${_bashlyk_aRequiredCmd_log:="basename date echo hostname false printf logger mail mkfifo sleep tee true jobs ["}
 #******
 #****f* bashlyk/liblog/udfLogger
 #  SYNOPSIS
@@ -439,7 +438,7 @@ udfSetLogSocket() {
 #  SOURCE
 udfSetLog() {
  if [ -n "$1" ]; then
-  if [ "$1" = "$(basename $1)" ]; then
+  if [ "$1" = "${1##*/}" ]; then
    _bashlyk_fnLog="${_bashlyk_pathLog}/$1"
   else
    _bashlyk_fnLog="$1"
