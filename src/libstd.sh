@@ -43,6 +43,42 @@ udfDate() {
  date "+%b %d %H:%M:%S $*"
 }
 #******
+#****f* bashlyk/libstd/udfOnEmptyVariable
+#  SYNOPSIS
+#    udfOnEmptyVariable [Warn | Throw ] args
+#  DESCRIPTION
+#    Вызывает останов или выдает предупреждение, если аргументы - имена 
+#    переменных - содержат пустые значения
+#  INPUTS
+#    Warn  - вывод предупреждения
+#    Throw - останов сценария (по умолчанию)
+#    args  - имена переменных
+#  OUTPUT
+#    Сообщение об ошибке с перечислением имен переменных, 
+#    которые содержат пустые значения
+#  RETURN VALUE
+#    0   - переменные не содержат пустые значения
+#    255 - есть не инициализированные переменные
+#  SOURCE
+udfOnEmptyVariable() {
+ local bashlyk_EysrBRwAuGMRNQoG_a bashlyk_tfAFyKrLgSeOatp2_s s='Throw'
+ case "$1" in
+  "Warn")
+   s='Warn'; shift;;
+  "Throw")
+   s='Throw'; shift;;
+ esac
+ for bashlyk_tfAFyKrLgSeOatp2_s in $*; do
+  [ -z "${!bashlyk_tfAFyKrLgSeOatp2_s}" ] \
+   && bashlyk_EysrBRwAuGMRNQoG_a+=" $bashlyk_tfAFyKrLgSeOatp2_s"
+ done
+ [ -n "$bashlyk_EysrBRwAuGMRNQoG_a" ] && {
+  udf${s} "Error: Variable(s) or option(s) ($bashlyk_EysrBRwAuGMRNQoG_a ) is empty..."
+  return 255
+ }
+ return 0
+}
+#******
 #****f* bashlyk/libstd/udfThrowOnEmptyVariable
 #  SYNOPSIS
 #    udfThrowOnEmptyVariable args
@@ -51,22 +87,33 @@ udfDate() {
 #  INPUTS
 #    args - имена переменных
 #  OUTPUT
-#    Сообщение об ошибке с перечислением имен переменных, которые содержат пустые значения
+#    Сообщение об ошибке с перечислением имен переменных, которые содержат
+#    пустые значения
 #  RETURN VALUE
 #    0   - переменные не содержат пустые значения
-#    255 - останов сценария, есть не инициализированные переменные
+#    255 - есть не инициализированные переменные
 #  SOURCE
 udfThrowOnEmptyVariable() {
- local bashlyk_EysrBRwAuGMRNQoG_a bashlyk_tfAFyKrLgSeOatp2_s
- for bashlyk_tfAFyKrLgSeOatp2_s in $*; do
-  [ -z "${!bashlyk_tfAFyKrLgSeOatp2_s}" ] \
-   && bashlyk_EysrBRwAuGMRNQoG_a+=" $bashlyk_tfAFyKrLgSeOatp2_s"
- done
- [ -n "$bashlyk_EysrBRwAuGMRNQoG_a" ] && {
-  udfThrow "Error: Variable(s) or option(s) ($bashlyk_EysrBRwAuGMRNQoG_a ) is empty..."
-  return 255
- }
- return 0
+ udfOnEmptyVariable Throw $*
+}
+#******
+#****f* bashlyk/libstd/udfWarnOnEmptyVariable
+#  SYNOPSIS
+#    udfWarnOnEmptyVariable args
+#  DESCRIPTION
+#    Выдаёт предупреждение, если аргументы - имена переменных - содержат пустые
+#    значения
+#  INPUTS
+#    args - имена переменных
+#  OUTPUT
+#    Сообщение об ошибке с перечислением имен переменных, которые содержат
+#    пустые значения
+#  RETURN VALUE
+#    0   - переменные не содержат пустые значения
+#    255 - есть не инициализированные переменные
+#  SOURCE
+udfWarnOnEmptyVariable() {
+ udfOnEmptyVariable Warn $*
 }
 #******
 #****f* bashlyk/libstd/udfShowVariable
