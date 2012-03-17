@@ -176,13 +176,20 @@ udfIsNumber() {
 udfLibStd() {
  [ -z "$(echo "${_bashlyk_sArg}" | grep -E -e "--bashlyk-test=.*std")" ] \
   && return 0
- local s b=1
+ local s b=1 s0='' s1="test"
  printf "\n- libstd.sh tests: "
+
+ {
  udfIsNumber "$(date +%S)"      && echo -n '.' || { echo -n '?'; b=0; }
  udfIsNumber "$(date +%S)k" kMG && echo -n '.' || { echo -n '?'; b=0; }
  udfIsNumber "$(date +%S)M"     && { echo -n '?'; b=0; } || echo -n '.'
  udfIsNumber "$(date +%b)G" kMG && { echo -n '?'; b=0; } || echo -n '.'
  udfIsNumber "$(date +%b)"      && { echo -n '?'; b=0; } || echo -n '.'
+ [ -n "$(udfShowVariable s1 | grep 's1=test')" ] && echo -n '.' || { echo -n '?'; b=0; }
+ udfOnEmptyVariable Warn s0     && { echo -n '?'; b=0; } || echo -n '.' 
+ udfOnEmptyVariable Warn s1     && echo -n '.' || { echo -n '?'; b=0; }
+ } 2>/dev/null
+
  [ $b -eq 1 ] && echo 'ok.' || echo 'fail.'
  printf "\n--\n\n"
  return 0
