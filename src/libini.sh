@@ -85,30 +85,28 @@ udfGetIni() {
  return 0
 }
 #******
-udfReadIni() {
+udfReadIniSection() {
  [ -n "$1" -a -f "$1" ] || return 255
- #[ -n "$2" ] && 
- local ini="$1" a s b sSection='void' k v
- unset _bashlyk_aIni
- declare -A _bashlyk_aIni
+ local ini="$1" a s b sSection='void' k v aSection
+ [ -n "$2" ] && sSection="$2" 
  while read s; do
   echo "dbg $s"
   ( echo $s | grep "^#\|^$" )>/dev/null && continue
   b=$(echo $s | grep -oE '\[.*\]' | tr -d '[]')
   if [ -n "$b" ]; then
-   sSection=$b
-   _bashlyk_aIni[$sSection]+="; ;"
+   [ "$b" = "$sSection" ] && aSection='' || continue
   else
    s=$(echo $s | tr -d "'")
    k="$(echo ${s%%=*}|xargs)"
    v="$(echo ${s#*=}|xargs)"
    if [ "$k" = "$v" ]; then
-    _bashlyk_aIni[$sSection]+=";;;"
+    continue
    else
     [ -z "$(echo "$k" | grep '.*[[:space:]+].*')" ] && k="$k=$v"
    fi
-   _bashlyk_aIni[$sSection]+="$k;"
-   echo "dbg a $sSection: ${_bashlyk_aIni[$sSection]}"
+   $aSection+="$k;"
+   echo "dbg a ${sSection}: $aSection"
+   eval 'export ${3}=${aSection}'
   fi
  done < $ini
 }
