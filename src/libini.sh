@@ -29,10 +29,8 @@
 #    Блок инициализации глобальных переменных
 #  SOURCE
 : ${_bashlyk_sArg:=$*}
-: ${_bashlyk_pathINI:=$(pwd)}
+: ${_bashlyk_pathIni:=$(pwd)}
 : ${_bashlyk_aRequiredCmd_ini:=""}
-: ${_bashlyk_aIni:=""}
-declare -A _bashlyk_aIni
 #******
 #****f* bashlyk/libini/udfGetIni
 #  SYNOPSIS
@@ -87,28 +85,39 @@ udfGetIni() {
 #******
 udfReadIniSection() {
  [ -n "$1" -a -f "$1" ] || return 255
- local ini="$1" a s b sSection='void' k v aSection
- [ -n "$2" ] && sSection="$2" 
+ [ -n "$2" ] || return 254
+ local ini="$1" a b bOpen=true k v s sTag
+ if [ -n "$3" ]; then 
+  sTag="$3" 
+  bOpen=false
+ fi
  while read s; do
-  echo "dbg $s"
   ( echo $s | grep "^#\|^$" )>/dev/null && continue
-  b=$(echo $s | grep -oE '\[.*\]' | tr -d '[]')
+  b=$(echo $s | grep -oE '\[.*\]' | tr -d '[]' | xargs)
   if [ -n "$b" ]; then
-   [ "$b" = "$sSection" ] && aSection='' || continue
+   $bOpen && break
+   if [ "$b" = "$sTag" ]; then
+    a=''
+    bOpen=true
+   else
+    continue
+   fi
   else
+   $bOpen || continue
    s=$(echo $s | tr -d "'")
    k="$(echo ${s%%=*}|xargs)"
    v="$(echo ${s#*=}|xargs)"
    if [ "$k" = "$v" ]; then
     continue
    else
-    [ -z "$(echo "$k" | grep '.*[[:space:]+].*')" ] && k="$k=$v"
+    [ -z "$(echo "$k" | grep '.*[[:space:]+].*')" ] || continue
    fi
-   $aSection+="$k;"
-   echo "dbg a ${sSection}: $aSection"
-   eval 'export ${3}=${aSection}'
+   a+=";$k=$(udfQuoteIfNeeded $v);"
   fi
  done < $ini
+ $bOpen || a=''
+ eval 'export ${2}="${a}"'
+ return 0
 }
 #****f* bashlyk/libcnf/udfSetConfig
 #  SYNOPSIS
@@ -126,24 +135,89 @@ udfReadIniSection() {
 #     0  - Выполнено успешно
 #     1  - Ошибка: файл конфигурации не найден
 #  SOURCE
-udfSetConfig() {
+
+udfWriteSection() {
+ date
  [ -n "$1" -a -n "$2" ] || return 255
- #
- local conf sKeyValue chIFS="$IFS" pathCnf="$_bashlyk_pathCnf"
- #
- [ "$1" != "${1##*/}" ] && pathCnf="$(dirname $1)"
- [ -d "$pathCnf" ] || mkdir -p "$pathCnf"
- conf="${pathCnf}/${1##*/}"
- IFS=';'
+#
+ local ini s cIFS="$IFS" pathIni="$_bashlyk_pathCnf" fnTmp
+#
+ [ "$1" != "${1##*/}" ] && pathIni="$(dirname $1)"
+ [ -d "$pathIni" ] || mkdir -p "$pathIni"
+ ini="${pathIni}/${1##*/}"
+ udfMakeTempV fnTmp
+ ls -l $ini
  {
-  LANG=C date "+#Created %c by $USER $0 ($$)"
-  for sKeyValue in $2; do
-   [ -n "${sKeyValue}" ] && echo "${sKeyValue}"
+ IFS=';'
+  echo
+  LANG=C date "+#Generated %c by $USER $0 ($$)"
+  [ -n "$3" ] && echo "[${3}]"
+  for s in $2; do
+   [ -n "$s" ] && echo "$s" || continue
   done
- } >> $conf 2>/dev/null
- IFS="$chIFS"
+  echo
+ IFS="$cIFS"
+ } >> $fnTmp 2>/dev/null
+ if [ -n "$3" ]; then 
+  cat $fnTmp >> $ini
+ else
+  cat $ini >> $fnTmp
+  mv $fnTmp $ini
+ fi
+ return 0
+}
+
+
+
+
+udfWriteIniSection() {
+ [ -n "$1" ] || return 255
+ [ -n "$2" ] || return 254
+ local ini="$1" a b bEdit=false bOpen=true csv=$2 fnTmp k v s sTag sS
+ [ -f "$ini" ] || touch $ini
+ if [ -n "$3" ]; then 
+  sTag="$3" 
+  bOpen=false
+ fi
+ udfMakeTempV fnTmp
+
+ while read s; do
+  if echo "$s" | grep "^#\|^$" >/dev/null; then
+   echo "$s" >> $fnTmp
+   continue
+  fi
+  b=$(echo "$s" | grep -oE '\[.*\]' | tr -d '[]' 2>/dev/null)
+  if [ -n "$b" ]; then
+   echo "$s" >> $fnTmp
+   [ "$b" = "$sTag" ] && bOpen=true
+   continue
+  fi
+  $bOpen || continue
+  s=$(echo $s | tr -d "'")
+  k="$(echo ${s%%=*}|xargs)"
+  v="$(echo ${s#*=}|xargs)" 
+  if [ -n "$k" ]; then 
+   sS=$(echo $csv | grep -Eo ";${k}=[^;]+;" | tr -d ';' | xargs)  
+  else
+   
+  fi
+  if [ -n "$sS" ]; then
+   bEdit=true
+   echo "$sS" >> $fnTmp
+  else
+   echo "$s" >> $fnTmp
+  fi
+  echo "dbg $sTag : $s : $k : $v : $sS : $bEdit : $bOpen"
+ done < $ini 
+ $bEdit && mv -f $fnTmp $ini || udfWriteSection "$ini" "$csv" "$sTag"
  return 0
 }
 #******
-udfReadIni test.ini
-echo ${_bashlyk_aIni[*]}
+
+udfQuoteIfNeeded() {
+ [ -n "$(echo "$*" | grep -e [[:space:]])" ] && echo "\"$*\"" || echo "$*"
+}
+
+udfReadIniSection test.ini sTest "$1"
+echo $sTest
+udfWriteIniSection /tmp/test2.ini "$sTest" "$2"
