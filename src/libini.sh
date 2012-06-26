@@ -97,7 +97,7 @@ udfReadIniSection() {
   if [ -n "$b" ]; then
    $bOpen && break
    if [ "$b" = "$sTag" ]; then
-    a=''
+    a=';'
     bOpen=true
    else
     continue
@@ -112,7 +112,7 @@ udfReadIniSection() {
    else
     [ -z "$(echo "$k" | grep '.*[[:space:]+].*')" ] || continue
    fi
-   a+=";$k=$(udfQuoteIfNeeded $v);"
+   a+="$k=$(udfQuoteIfNeeded $v);"
   fi
  done < $ini
  $bOpen || a=''
@@ -146,13 +146,13 @@ udfWriteSection() {
  [ -d "$pathIni" ] || mkdir -p "$pathIni"
  ini="${pathIni}/${1##*/}"
  udfMakeTempV fnTmp
- ls -l $ini
  {
  IFS=';'
   echo
   LANG=C date "+#Generated %c by $USER $0 ($$)"
   [ -n "$3" ] && echo "[${3}]"
   for s in $2; do
+   s=$(echo "$s" | tr -d '"')   
    [ -n "$s" ] && echo "$s" || continue
   done
   echo
@@ -173,14 +173,13 @@ udfWriteSection() {
 udfWriteIniSection() {
  [ -n "$1" ] || return 255
  [ -n "$2" ] || return 254
- local ini="$1" a b bEdit=false bOpen=true csv=$2 fnTmp k v s sTag sS
- [ -f "$ini" ] || touch $ini
- if [ -n "$3" ]; then 
-  sTag="$3" 
-  bOpen=false
- fi
+ local ini="$1" a b bEdit=false bOpen=false csv fnTmp k v s sTag sS sNew="$2" cIFS=$IFS
+ [ -n "$3" ] && sTag="$3" || bOpen=true
+ [ -f "$ini" ] && udfReadIniSection $ini csv "$sTag" || touch $ini
+ echo "dbg $csv"
  udfMakeTempV fnTmp
-
+ IFS=';'
+ sNew=$(echo "$sNew" | tr -d '"')
  while read s; do
   if echo "$s" | grep "^#\|^$" >/dev/null; then
    echo "$s" >> $fnTmp
@@ -188,28 +187,44 @@ udfWriteIniSection() {
   fi
   b=$(echo "$s" | grep -oE '\[.*\]' | tr -d '[]' 2>/dev/null)
   if [ -n "$b" ]; then
+   if [ -z "$sTag" -o $bOpen ]; then
+    for sN in $sNew; do
+     echo $sN >> $fnTmp
+    done
+    continue 
+   fi
    echo "$s" >> $fnTmp
    [ "$b" = "$sTag" ] && bOpen=true
    continue
   fi
-  $bOpen || continue
-  s=$(echo $s | tr -d "'")
-  k="$(echo ${s%%=*}|xargs)"
-  v="$(echo ${s#*=}|xargs)" 
-  if [ -n "$k" ]; then 
-   sS=$(echo $csv | grep -Eo ";${k}=[^;]+;" | tr -d ';' | xargs)  
-  else
-   
-  fi
-  if [ -n "$sS" ]; then
-   bEdit=true
-   echo "$sS" >> $fnTmp
+  if [ $bOpen ]; then
+   :
   else
    echo "$s" >> $fnTmp
+   continue
   fi
-  echo "dbg $sTag : $s : $k : $v : $sS : $bEdit : $bOpen"
- done < $ini 
- $bEdit && mv -f $fnTmp $ini || udfWriteSection "$ini" "$csv" "$sTag"
+  for sN in $sNew; do
+   [ -n "$sN" ] || continue
+   s=$(echo "$s" | tr -d '"')
+   k="$(echo ${s%%=*}|xargs)"
+   sS=$(echo $sN | grep -Eo "${k}=.*" | xargs)  
+   if [ -n "$sS" ]; then
+    bEdit=true
+    echo "$sS" >> $fnTmp
+    echo "dbg 0 $sS : $sN : $sNew"
+    IFS=$cIFS
+    sNew=$(echo $sNew | sed -e "s/;$sN;//")
+    cIFS=$IFS
+    IFS=';'    
+    echo "dbg 1 $sS : $sN : $sNew"
+    break
+   fi
+  done 
+   
+  #echo "dbg $sTag : $s : $k : $v : $sS : $bEdit : $bOpen : $sNew"
+ done < $ini
+ IFS=$cIFS
+ $bEdit && mv -f $fnTmp $ini || udfWriteSection "$ini" "$sNew" "$sTag"
  return 0
 }
 #******
@@ -218,6 +233,8 @@ udfQuoteIfNeeded() {
  [ -n "$(echo "$*" | grep -e [[:space:]])" ] && echo "\"$*\"" || echo "$*"
 }
 
-udfReadIniSection test.ini sTest "$1"
+#udfReadIniSection test.ini sTest "$1"
+
+sTest=';a1982="Final cut";a1979="the wall";a=test2;'
 echo $sTest
-udfWriteIniSection /tmp/test2.ini "$sTest" "$2"
+udfWriteIniSection /tmp/test.ini "$sTest" "Pink Floyd"
