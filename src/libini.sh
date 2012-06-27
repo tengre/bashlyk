@@ -97,7 +97,7 @@ udfReadIniSection() {
   if [ -n "$b" ]; then
    $bOpen && break
    if [ "$b" = "$sTag" ]; then
-    a=';'
+    a=''
     bOpen=true
    else
     continue
@@ -136,95 +136,112 @@ udfReadIniSection() {
 #     1  - Ошибка: файл конфигурации не найден
 #  SOURCE
 
-udfWriteSection() {
- date
- [ -n "$1" -a -n "$2" ] || return 255
+
+udfSection() {
+ [ -n "$1" -a -n "$2" -a -n "$3" ] || return 1
+ local fn aKeys csv sTag
+ #
+ fn="$1"
+ aKeys="$2"
+ csv="$3"
+ sTag="$4"
+ #
+ csv=$(echo "$csv" | sed -e "s/[;]\+/;/g" | tr ';' '\n')
+ #
+ cat << _EOF > $fn
+#!/bin/bash
 #
- local ini s cIFS="$IFS" pathIni="$_bashlyk_pathCnf" fnTmp
+. bashlyk
 #
- [ "$1" != "${1##*/}" ] && pathIni="$(dirname $1)"
- [ -d "$pathIni" ] || mkdir -p "$pathIni"
- ini="${pathIni}/${1##*/}"
- udfMakeTempV fnTmp
- {
+udfSetValue() { 
+ local $aKeys 
+ #
+ $csv
+ #
+ #[ -n "$sTag" ] && echo "[${sTag}]"
+ udfShowVariable $aKeys | grep -v Variable
+ return 0 
+}
+#
+#
+#
+udfSetValue
+_EOF
+ chmod +x $fn
+ return $?  
+}
+
+udfCsvKeys() {
+ local cIFS csv a s v
+ #
+ [ -n "$2" ] || return 1
+ #
+ csv="$1"
+ cIFS=$IFS
  IFS=';'
-  echo
-  LANG=C date "+#Generated %c by $USER $0 ($$)"
-  [ -n "$3" ] && echo "[${3}]"
-  for s in $2; do
-   s=$(echo "$s" | tr -d '"')   
-   [ -n "$s" ] && echo "$s" || continue
-  done
-  echo
- IFS="$cIFS"
- } >> $fnTmp 2>/dev/null
- if [ -n "$3" ]; then 
-  cat $fnTmp >> $ini
- else
-  cat $ini >> $fnTmp
-  mv $fnTmp $ini
- fi
+ for s in $csv; do
+  a+="${s%%=*} "
+ done
+ IFS=$cIFS
+ eval 'export ${2}="${a}"' 2>/dev/null
  return 0
 }
 
-
-
+udfSplitWord2Line() {
+ return 0
+}
 
 udfWriteIniSection() {
  [ -n "$1" ] || return 255
  [ -n "$2" ] || return 254
- local ini="$1" a b bEdit=false bOpen=false csv fnTmp k v s sTag sS sNew="$2" cIFS=$IFS
+ local ini="$1" a b bEdit=false bOpen=false sOld fnTmp fnExec $fnConf s sTag sNew="$2" cIFS=$IFS aKeys aKeysOld aKeysNew
  [ -n "$3" ] && sTag="$3" || bOpen=true
- [ -f "$ini" ] && udfReadIniSection $ini csv "$sTag" || touch $ini
- echo "dbg $csv"
+ [ -f "$ini" ] && udfReadIniSection $ini sOld "$sTag" || touch $ini
+ udfMakeTempV fnExec
  udfMakeTempV fnTmp
- IFS=';'
- sNew=$(echo "$sNew" | tr -d '"')
+ udfMakeTempV fnConf
+
+ udfCsvKeys "$sOld" aOldKeys
+ udfCsvKeys "$sNew" aNewKeys
+
+ aKeys="$(echo "${aOldKeys} ${aNewKeys} " | tr ' ' '\n' | sort -u | uniq -u | xargs)"
+ udfSection $fnExec "$aKeys" "${sOld};${sNew};" "$sTag"
+ $fnExec > $fnConf
  while read s; do
-  if echo "$s" | grep "^#\|^$" >/dev/null; then
+ if echo "$s" | grep "^#\|^$" >/dev/null; then
    echo "$s" >> $fnTmp
    continue
   fi
   b=$(echo "$s" | grep -oE '\[.*\]' | tr -d '[]' 2>/dev/null)
   if [ -n "$b" ]; then
-   if [ -z "$sTag" -o $bOpen ]; then
-    for sN in $sNew; do
-     echo $sN >> $fnTmp
-    done
-    continue 
-   fi
    echo "$s" >> $fnTmp
    [ "$b" = "$sTag" ] && bOpen=true
    continue
   fi
-  if [ $bOpen ]; then
-   :
+  if $bOpen; then
+   echo "dbg s $s : edit $bEdit : open $bOpen : b $b : tag $sTag"
   else
    echo "$s" >> $fnTmp
    continue
   fi
-  for sN in $sNew; do
-   [ -n "$sN" ] || continue
-   s=$(echo "$s" | tr -d '"')
-   k="$(echo ${s%%=*}|xargs)"
-   sS=$(echo $sN | grep -Eo "${k}=.*" | xargs)  
-   if [ -n "$sS" ]; then
-    bEdit=true
-    echo "$sS" >> $fnTmp
-    echo "dbg 0 $sS : $sN : $sNew"
-    IFS=$cIFS
-    sNew=$(echo $sNew | sed -e "s/;$sN;//")
-    cIFS=$IFS
-    IFS=';'    
-    echo "dbg 1 $sS : $sN : $sNew"
-    break
-   fi
-  done 
-   
-  #echo "dbg $sTag : $s : $k : $v : $sS : $bEdit : $bOpen : $sNew"
+
+  $bEdit && continue
+  cat $fnConf >> $fnTmp
+  bEdit=true  
+
  done < $ini
- IFS=$cIFS
- $bEdit && mv -f $fnTmp $ini || udfWriteSection "$ini" "$sNew" "$sTag"
+ if $bEdit; then
+  mv -f $fnTmp $ini
+ else
+  [ -n "$sTag" ] && echo "[${sTag}]" >> $fnTmp
+  cat $fnConf >> $fnTmp
+  if [ -n "$sTag" ]; then 
+   cat $fnTmp >> $ini 
+  else
+   cat $ini >> $fnTmp
+   mv -f $fnTmp $ini
+  fi
+ fi
  return 0
 }
 #******
@@ -235,6 +252,7 @@ udfQuoteIfNeeded() {
 
 #udfReadIniSection test.ini sTest "$1"
 
-sTest=';a1982="Final cut";a1979="the wall";a=test2;'
+sTest='a1982="Final cut";a1979="mark";a=test3;wer=ta'
+#sTest='a="2849849 4848 ";ddd="mark";av="test20 2";wert=ta'
 echo $sTest
-udfWriteIniSection /tmp/test.ini "$sTest" "Pink Floyd"
+udfWriteIniSection /tmp/test.ini "$sTest" "laidback"
