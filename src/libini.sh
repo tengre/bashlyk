@@ -5,7 +5,7 @@
 #****h* bashlyk/libini
 #  DESCRIPTION
 #    bashlyk INI library
-#    Чтение/запись файлов пассивных конфигураций
+#    Обработка конфигурационных файлов в стиле INI
 #  AUTHOR
 #    Damir Sh. Yakupov <yds@bk.ru>
 #******
@@ -32,14 +32,14 @@
 : ${_bashlyk_pathIni:=$(pwd)}
 : ${_bashlyk_aRequiredCmd_ini:=""}
 #******
-#****f* bashlyk/libini/udfGetIni
+#****f* bashlyk/libini/udfGetIniSection
 #  SYNOPSIS
-#    udfGetIni <file>
+#    udfGetIniSection <file> [<section>]
 #  DESCRIPTION
-#    Найти и прочитать <file> и предварительно все другие файлы, от которых он 
-#    зависит. Такие файлы должны находится в том же каталоге. То есть, если 
-#    <file> это "a.b.c.conf", то вначале прочитать файлы "conf" "c.conf",
-#    "b.c.conf" если таковые существуют.
+#    Получить секцию конфигурационных данных <section> из <file> и, при наличии,
+#    от родительских к нему файлов. Например, если <file> это "a.b.c.ini", то 
+#    эта функция попытается предварительно считать данные из файлов "ini", 
+#    "c.ini" и "b.c.ini" если таковые существуют.
 #    Поиск выполняется по следующим критериям:
 #     1. Если имя файла содержит неполный путь, то в начале проверяется текущий 
 #     каталог, затем каталог конфигураций по умолчанию
@@ -47,47 +47,46 @@
 #     полный путь
 #     3. Последняя попытка - найти файл в каталоге /etc
 #  INPUTS
-#    file - имя файла конфигурации
+#    file    - имя файла конфигурации
+#    section - название блока конфигурации, при отсутствии этого аргумента 
+#              считываются данные до первого именного блока [<...>] данных или
+#              до конца конфигурационного файла
 #  RETURN VALUE
 #     0  - Выполнено успешно
 #     1  - Ошибка: файл конфигурации не найден
 #    255 - Ошибка: аргумент отсутствует
 #  SOURCE
-udfGetIni() {
+
+udfGetIniSection() {
  [ -n "$1" ] || return 255
  #
- local aini chIFS ini fn i pathIni="$_bashlyk_pathIni"
+ local aini csv ini='' pathIni="$_bashlyk_pathIni" s sTag
  #
  [ "$1"  = "${1##*/}" -a -f ${pathIni}/$1 ] || pathIni=
  [ "$1"  = "${1##*/}" -a -f $1 ] && pathIni=$(pwd)
  [ "$1" != "${1##*/}" -a -f $1 ] && pathIni=$(dirname $1)
+ [ -n "$2" ] && sTag="$2"
  #
  if [ -z "$pathIni" ]; then
   [ -f "/etc${_bashlyk_pathPrefix}/$1" ] \
    && pathIni="/etc${_bashlyk_pathPrefix}" || return 1
  fi
  #
- chIFS="$IFS"
- IFS='.'
- i=0
- for fn in $(basename "$1"); do
-  aini[++i]=$fn
+ aini=$(echo "${1##*/}" | awk 'BEGIN{FS="."} {for (i=NF;i>=1;i--) printf $i" "}')
+ for s in $aini; do
+  [ -n "$s" ] || continue
+  [ -n "$ini" ] && ini="${s}.${ini}" || ini="$s"
+  [ -s "${pathIni}/${ini}" ] && csv=+";$(udfReadIniSection "${pathIni}/${ini}" "$sTag");"
  done
- IFS="$chIFS"
- conf=
- for ((i=$((${#aini[*]})); $i; i--)); do
-  [ -n "${aini[i]}" ] || continue
-  [ -n "$ini" ] && ini="${aini[$i]}.${ini}" || ini=${aini[i]}
-  [ -s "${pathIni}/${ini}" ] && udfReadIni "${pathIni}/${ini}"
- done
+ csv=$(udfIniSectionAssembly "$csv" "$sTag")
+ [ -n "$3" ] && eval 'export ${3}="${csv}"' || echo "$csv"
  return 0
 }
 #******
 udfReadIniSection() {
  [ -n "$1" -a -f "$1" ] || return 255
- [ -n "$2" ] || return 254
  local ini="$1" a b bOpen=false k v s sTag
- [ -n "$3" ] && sTag="$3" || bOpen=true
+ [ -n "$2" ] && sTag="$2" || bOpen=true
  while read s; do
   ( echo $s | grep "^#\|^$" )>/dev/null && continue
   b=$(echo $s | grep -oE '\[.*\]' | tr -d '[]' | xargs)
@@ -113,7 +112,7 @@ udfReadIniSection() {
   fi
  done < $ini
  $bOpen || a=''
- eval 'export ${2}="${a}"'
+ [ -n "$3" ] && eval 'export ${3}="${a}"' || echo "$a"
  return 0
 }
 #****f* bashlyk/libcnf/udfSetConfig
@@ -133,12 +132,12 @@ udfReadIniSection() {
 #     1  - Ошибка: файл конфигурации не найден
 #  SOURCE
 udfIniSectionAssembly() {
- [ -n "$1" -a -n "$2" ] || return 1
+ [ -n "$1" ] || return 1
  local fnExec aKeys csv sTag
  #
- aKeys="$1"
- csv="$2"
- sTag="$3"
+ csv="$1"
+ sTag="$2"
+ aKeys="$(udfCsvKeys "$csv" | tr ' ' '\n' | sort -u | uniq -u | xargs)"
  #
  csv=$(echo "$csv" | tr ';' '\n')
  udfMakeTempV fnExec
@@ -153,7 +152,7 @@ udfAssembly() {
  #
  $csv
  #
- udfShowVariable $aKeys | grep -v Variable | tr '\n' ';'
+ udfShowVariable $aKeys | grep -v Variable | tr -d '\t' | tr '\n' ';'
  return 0 
 }
 #
@@ -186,9 +185,11 @@ udfIniWrite() {
  ini="$1"
  csv="$2"
  #
- echo "$csv" | sed -e "s/[;]\+/;/g" -e "s/\[/;\[/g" -e "s/=/ = /g" | tr ';' '\n' > $ini
+ mv -f "$ini" "${ini}.bak"
+ echo "$csv" | sed -e "s/[;]\+/;/g" -e "s/\[/;\[/g" | tr ';' '\n' | sed -e "s/\(.*\)=/\t\1\t=\t/g" > "$ini"
+ return 0
 }
-
+#
 udfIniChange() {
  [ -n "$1" -a -n "$2" ] || return 1
  #
@@ -202,11 +203,9 @@ udfIniChange() {
  aTag="$(grep -oE '\[.*\]' $ini | tr -d '[]' | xargs)"
  [ -n "$sTag" ] && echo "$aTag" | grep "$sTag" >/dev/null || aTag+=" $sTag"
  for s in "" $aTag; do
-  udfReadIniSection $ini csv "$s"
+  udfReadIniSection $ini "$s" csv
   if [ "$s" = "$sTag" ]; then
-   csv+=";${csvNew};"
-   aKeys="$(udfCsvKeys "$csv" | tr ' ' '\n' | sort -u | uniq -u | xargs)"
-   csv=$(udfIniSectionAssembly "$aKeys" "$csv" "$sTag")
+   csv=$(udfIniSectionAssembly "${csv};${csvNew}" "$sTag")
   fi 
   a+=";[${s}];$csv;"
  done
@@ -220,8 +219,7 @@ udfQuoteIfNeeded() {
 }
 
 #udfReadIniSection test.ini sTest "$1"
-
 sTest='a1982="Final cut";a1979="mark";a=test3;wer=ta'
 sTest='a="2849849 4848 ";ddd="mark";av="test20 2";wert=ta'
 echo $sTest
-udfIniChange /tmp/test.ini "$sTest" "laid-back"
+udfIniChange /tmp/test.ini "$sTest" 
