@@ -290,6 +290,7 @@ udfIniChange() {
  #
  [ -f "$ini" ] || touch $ini
  aTag="$(grep -oE '\[.*\]' $ini | tr -d '[]' | xargs)"
+ # TODO ошибка фильтрации имени секции echo "$aTag" | grep "$sTag
  [ -n "$sTag" ] && echo "$aTag" | grep "$sTag" >/dev/null || aTag+=" $sTag"
  for s in "" $aTag; do
   udfReadIniSection $ini "$s" csv
@@ -309,6 +310,6 @@ udfQuoteIfNeeded() {
 
 #udfReadIniSection test.ini sTest "$1"
 sTest='a1982="Final cut";a1979="mark";a=test3;wer=ta'
-#sTest='a="2849849 4848 ";ddd="mark";av="test20 2";wert=ta'
+sTest='a="2849849 4848 ";ddd="mark";av="test20 2";wert=ta'
 echo $sTest
-udfIniChange /tmp/test.ini "$sTest" marta
+udfIniChange /tmp/test.ini "$sTest" last
