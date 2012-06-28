@@ -256,7 +256,7 @@ udfIniWrite() {
  csv="$2"
  #
  [ -s "$ini" ] && mv -f "$ini" "${ini}.bak"
- echo "$csv" | sed -e "s/[;]\+/;/g" -e "s/\[/;\[/g" | tr ';' '\n' | sed -e "s/\(.*\)=/\t\1\t=\t/g" > "$ini"
+ echo "$csv" | sed -e "s/[;]\+/;/g" -e "s/\[/;\[/g" | tr ';' '\n' | sed -e "s/\(.*\)=/\t\1\t=\t/g" | tr -d '"' > "$ini"
  return 0
 }
 #******
@@ -289,9 +289,9 @@ udfIniChange() {
  [ -n "$3" ] && sTag="$3"
  #
  [ -f "$ini" ] || touch $ini
- aTag="$(grep -oE '\[.*\]' $ini | tr -d '[]' | xargs)"
+ aTag="$(grep -oE '\[.*\]' $ini | tr -d '[]' | sort -u | uniq -u | xargs)"
  # TODO ошибка фильтрации имени секции echo "$aTag" | grep "$sTag
- [ -n "$sTag" ] && echo "$aTag" | grep "$sTag" >/dev/null || aTag+=" $sTag"
+ [ -n "$sTag" ] && echo "$aTag" | grep -w "$sTag" >/dev/null || aTag+=" $sTag"
  for s in "" $aTag; do
   udfReadIniSection $ini "$s" csv
   if [ "$s" = "$sTag" ]; then
@@ -310,6 +310,6 @@ udfQuoteIfNeeded() {
 
 #udfReadIniSection test.ini sTest "$1"
 sTest='a1982="Final cut";a1979="mark";a=test3;wer=ta'
-sTest='a="2849849 4848 ";ddd="mark";av="test20 2";wert=ta'
+#sTest='a="2849849 4848 ";ddd="mark";av="test20 2";wert=ta'
 echo $sTest
-udfIniChange /tmp/test.ini "$sTest" last
+udfIniChange /tmp/test.ini "$sTest" "last"
