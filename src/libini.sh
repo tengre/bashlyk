@@ -66,7 +66,7 @@
 udfGetIniSection() {
  [ -n "$1" ] || return 255
  #
- local aini csv ini='' pathIni="$_bashlyk_pathIni" s sTag
+ local aini csv csv1LXAboOd ini='' pathIni="$_bashlyk_pathIni" s sTag
  #
  [ "$1"  = "${1##*/}" -a -f ${pathIni}/$1 ] || pathIni=
  [ "$1"  = "${1##*/}" -a -f $1 ] && pathIni=$(pwd)
@@ -82,10 +82,10 @@ udfGetIniSection() {
  for s in $aini; do
   [ -n "$s" ] || continue
   [ -n "$ini" ] && ini="${s}.${ini}" || ini="$s"
-  [ -s "${pathIni}/${ini}" ] && csv=+";$(udfReadIniSection "${pathIni}/${ini}" "$sTag");"
+  [ -s "${pathIni}/${ini}" ] && csv+=";$(udfReadIniSection "${pathIni}/${ini}" "$sTag");"
  done
- csv=$(udfCsvOrder "$csv")
- [ -n "$3" ] && eval 'export ${3}="${csv}"' || echo "$csv"
+ udfCsvOrder "$csv" csv1LXAboOd
+ [ -n "$3" ] && eval 'export ${3}="${csv1LXAboOd}"' || echo "$csv1LXAboOd"
  return 0
 }
 #******
@@ -111,7 +111,7 @@ udfGetIniSection() {
 #  SOURCE
 udfReadIniSection() {
  [ -n "$1" -a -f "$1" ] || return 255
- local ini="$1" a b bOpen=false k v s sTag
+ local ini="$1" csv9AT0Vgyp b bOpen=false k v s sTag
  [ -n "$2" ] && sTag="$2" || bOpen=true
  while read s; do
   ( echo $s | grep "^#\|^$" )>/dev/null && continue
@@ -119,7 +119,7 @@ udfReadIniSection() {
   if [ -n "$b" ]; then
    $bOpen && break
    if [ "$b" = "$sTag" ]; then
-    a=''
+    csv9AT0Vgyp=''
     bOpen=true
    else
     continue
@@ -134,11 +134,11 @@ udfReadIniSection() {
    else
     [ -z "$(echo "$k" | grep '.*[[:space:]+].*')" ] || continue
    fi
-   a+="$k=$(udfQuoteIfNeeded $v);"
+   csv9AT0Vgyp+="$k=$(udfQuoteIfNeeded $v);"
   fi
  done < $ini
- $bOpen || a=''
- [ -n "$3" ] && eval 'export ${3}="${a}"' || echo "$a"
+ $bOpen || csv9AT0Vgyp=''
+ [ -n "$3" ] && eval 'export ${3}="${csv9AT0Vgyp}"' || echo "$csv9AT0Vgyp"
  return 0
 }
 #******
@@ -168,7 +168,7 @@ udfReadIniSection() {
 #  SOURCE
 udfCsvOrder() {
  [ -n "$1" ] || return 255
- local fnExec aKeys csv
+ local fnExec aKeys csv csvjzUfQLA9
  #
  csv="$1"
  aKeys="$(udfCsvKeys "$csv" | tr ' ' '\n' | sort -u | uniq -u | xargs)"
@@ -186,14 +186,15 @@ udfAssembly() {
  #
  $csv
  #
- udfShowVariable $aKeys | grep -v Variable | tr -d '\t' | tr '\n' ';'
+ udfShowVariable $aKeys | grep -v Variable | tr -d '\t' | sed -e "s/=\(.*[[:space:]]\+.*\)/=\"\1\"/" | tr '\n' ';' 
+
  return 0 
 }
 #
 udfAssembly
 _EOF
- csv=$(. $fnExec 2>/dev/null)
- [ -n "$2" ] && eval 'export ${3}="${csv}"' || echo "$csv"
+ csvjzUfQLA9=$(. $fnExec 2>/dev/null)
+ [ -n "$2" ] && eval 'export ${2}="${csvjzUfQLA9}"' || echo "$csvjzUfQLA9"
  return 0
 }
 #******
@@ -217,16 +218,16 @@ _EOF
 #  SOURCE
 udfCsvKeys() {
  [ -n "$1" ] || return 255
- local cIFS csv a s
+ local cIFS csv csv8LayYbbT  s
  #
  csv="$1"
  cIFS=$IFS
  IFS=';'
  for s in $csv; do
-  a+="${s%%=*} "
+  csv8LayYbbT+="${s%%=*} "
  done
  IFS=$cIFS
- [ -n "$2" ] && eval 'export ${2}="${a}"' || echo "$a"
+ [ -n "$2" ] && eval 'export ${2}="${csv8LayYbbT}"' || echo "$csv8LayYbbT"
  return 0
 }
 #******
@@ -290,7 +291,6 @@ udfIniChange() {
  #
  [ -f "$ini" ] || touch $ini
  aTag="$(grep -oE '\[.*\]' $ini | tr -d '[]' | sort -u | uniq -u | xargs)"
- # TODO ошибка фильтрации имени секции echo "$aTag" | grep "$sTag
  [ -n "$sTag" ] && echo "$aTag" | grep -w "$sTag" >/dev/null || aTag+=" $sTag"
  for s in "" $aTag; do
   udfReadIniSection $ini "$s" csv
@@ -309,7 +309,14 @@ udfQuoteIfNeeded() {
 }
 
 #udfReadIniSection test.ini sTest "$1"
-sTest='a1982="Final cut";a1979="mark";a=test3;wer=ta'
-#sTest='a="2849849 4848 ";ddd="mark";av="test20 2";wert=ta'
-echo $sTest
-udfIniChange /tmp/test.ini "$sTest" "last"
+#sTest='a1982="Final cut";a1979="mark";a=test3;wer=ta'
+#sTest='a="2849849 4848 ";ddd="mark";av="test20 2";wert=tak;djeidjei;deiei eie=e'
+sTest='array="a b c d";iY=2345.34;iX=123.45;bState=false;glory="sic mundi"'
+udfIniChange /tmp/test.ini "$sTest" "settings"
+sTest='array="a b c d e";iX=124.45;bState=true;'
+udfIniChange /tmp/a.test.ini "$sTest" "settings"
+
+udfGetIniSection /tmp/a.test.ini settings csvResult
+echo "b $csvResult"
+udfIniChange /tmp/b.test.ini "$csvResult" "settings"
+
