@@ -307,6 +307,68 @@ udfIniChange() {
 udfQuoteIfNeeded() {
  [ -n "$(echo "$*" | grep -e [[:space:]])" ] && echo "\"$*\"" || echo "$*"
 }
+#****u* bashlyk/libcnf/udfLibIni
+#  SYNOPSIS
+#    udfLibIni
+# DESCRIPTION
+#   bashlyk CNF library test unit
+#   Запуск проверочных операций модуля выполняется если только аргументы 
+#   командной строки cодержат строку вида "--bashlyk-test=[.*,]cnf[,.*]",
+#   где * - ярлыки на другие тестируемые библиотеки
+#  SOURCE
+udfLibIni() {
+ [ -z "$(echo "${_bashlyk_sArg}" | grep -E -e "--bashlyk-test=.*cnf")" ] \
+  && return 0
+ local a b=1 c ini="$$.testlib.ini" fn s
+ printf "\n- libcnf.sh tests:\n\n"
+#
+# Проверка файла конфигурации без полного пути
+#
+ echo -n "check set\get configuration: "
+ udfSetConfig $ini "a=\"$0\";c=\"$(uname -a)\"" >/dev/null 2>&1
+ echo -n '.'
+ . ${_bashlyk_pathini}/${ini} >/dev/null 2>&1
+ echo -n '.'
+ [ "$a" = "$0" -a "$c" = "$(uname -a)" ] \
+  && echo -n  '.' || { echo -n '?'; b=0; }
+ a=;c=
+ echo -n '.'
+ udfGetConfig $ini 2>/dev/null
+ echo -n '.'
+ [ "$a" = "$0" -a "$c" = "$(uname -a)" ] \
+  && echo -n '.' || { echo -n '?'; b=0; }
+ rm -f "${_bashlyk_pathini}/${ini}"
+ a=;c=
+#
+# Проверка файла конфигурации с полным путем
+#
+ fn=$(mktemp -t "XXXXXXXX.${ini}" 2>/dev/null) && ini=$fn || ini=~/${ini}
+ udfSetConfig $ini "a=\"$0\";c=\"$(uname -a)\"" >/dev/null 2>&1
+ echo -n '.'
+ . $ini >/dev/null 2>&1
+ echo -n '.'
+ [ "$a" = "$0" -a "$c" = "$(uname -a)" ] \
+  && echo -n '.' || { echo -n '?'; b=0; }
+ a=;c=
+ echo -n '.'
+ udfGetConfig $ini 2>/dev/null
+ echo -n '.'
+ [ "$a" = "$0" -a "$c" = "$(uname -a)" ] \
+  && echo -n '.' || { echo -n '?'; b=0; }
+ a=;c=
+ rm -f $ini
+ [ $b -eq 1 ] && echo 'ok.' || echo 'fail.'
+ printf "\n--\n\n"
+ return 0
+}
+#******
+#****** bashlyk/libcnf/Main section
+# DESCRIPTION
+#   Running CNF library test unit if $_bashlyk_sArg ($*) contains
+#   substrings "--bashlyk-test=" and "cnf" - command for test using
+#  SOURCE
+udfLibIni
+#******
 
 #udfReadIniSection test.ini sTest "$1"
 #sTest='a1982="Final cut";a1979="mark";a=test3;wer=ta'
