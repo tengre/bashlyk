@@ -32,6 +32,7 @@
 : ${_bashlyk_pathIni:=$(pwd)}
 : ${_bashlyk_aRequiredCmd_ini:=""}
 #******
+#udfGetIni $csv
 #****f* bashlyk/libini/udfGetIniSection
 #  SYNOPSIS
 #    udfGetIniSection <file> [<section>] [<varname>]
@@ -179,15 +180,16 @@ udfCsvOrder() {
  cat << _EOF > $fnExec
 #!/bin/bash
 #
-_bashlyk=libini . bashlyk
+. bashlyk
 #
-udfAssembly() {
- local $aKeys
+udfAssembly() { 
+ local $aKeys 
  #
  $csv
  #
- udfShowVariable $aKeys | grep -v Variable | tr -d '\t' | sed -e "s/=\(.*[[:space:]]\+.*\)/=\"\1\"/" | tr '\n' ';'
- return 0
+ udfShowVariable $aKeys | grep -v Variable | tr -d '\t' | sed -e "s/=\(.*[[:space:]]\+.*\)/=\"\1\"/" | tr '\n' ';' 
+ #
+ return 0 
 }
 #
 udfAssembly
@@ -324,10 +326,10 @@ udfLibIni() {
 # Проверка файла конфигурации без полного пути
 #
  echo "check set\get configuration: "
- csv='array="a b c d";iY=2345.34;iX=123.45;bState=false;glory="sic mundi"'
+ csv='array="a,b,c,d";bResult=false;iX=1920;iY=1080;sText="foo bar"'
  echo "00 $csv"
  udfIniChange $ini "$csv" "settings"
- csv='array="a b c d e";iX=124.45;bState=true;'
+ csv='array=a,b,c,d,e;iX=1921;bResult=true;'
  echo "a< $csv"
  udfIniChange a.${ini} "$csv" "settings"
  udfGetIniSection a.${ini} "settings" csvResult
@@ -348,3 +350,15 @@ udfLibIni() {
 #  SOURCE
 udfLibIni
 #******
+
+#udfReadIniSection test.ini sTest "$1"
+#sTest='a1982="Final cut";a1979="mark";a=test3;wer=ta'
+#sTest='a="2849849 4848 ";ddd="mark";av="test20 2";wert=tak;djeidjei;deiei eie=e'
+#sTest='array="a b c d";iY=2345.34;iX=123.45;bState=false;glory="sic mundi"'
+#udfIniChange /tmp/test.ini "$sTest" "settings"
+#sTest='array="a b c d e";iX=124.45;bState=true;'
+#udfIniChange /tmp/a.test.ini "$sTest" "settings"
+#udfGetIniSection /tmp/a.test.ini settings csvResult
+#echo "b $csvResult"
+#udfIniChange /tmp/b.test.ini "$csvResult" "settings"
+
