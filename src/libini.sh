@@ -181,14 +181,13 @@ udfCsvOrder() {
 #
 _bashlyk=libini . bashlyk
 #
-udfAssembly() { 
- local $aKeys 
+udfAssembly() {
+ local $aKeys
  #
  $csv
  #
- udfShowVariable $aKeys | grep -v Variable | tr -d '\t' | sed -e "s/=\(.*[[:space:]]\+.*\)/=\"\1\"/" | tr '\n' ';' 
-
- return 0 
+ udfShowVariable $aKeys | grep -v Variable | tr -d '\t' | sed -e "s/=\(.*[[:space:]]\+.*\)/=\"\1\"/" | tr '\n' ';'
+ return 0
 }
 #
 udfAssembly
@@ -317,47 +316,27 @@ udfQuoteIfNeeded() {
 #   где * - ярлыки на другие тестируемые библиотеки
 #  SOURCE
 udfLibIni() {
- [ -z "$(echo "${_bashlyk_sArg}" | grep -E -e "--bashlyk-test=.*cnf")" ] \
+ [ -z "$(echo "${_bashlyk_sArg}" | grep -E -e "--bashlyk-test=.*ini")" ] \
   && return 0
- local a b=1 c ini="$$.testlib.ini" fn s
- printf "\n- libcnf.sh tests:\n\n"
+ local a b=1 c ini="${$}.testlib.ini" fn s csv csvResult
+ printf "\n- libini.sh tests:\n\n"
 #
 # Проверка файла конфигурации без полного пути
 #
- echo -n "check set\get configuration: "
- udfSetConfig $ini "a=\"$0\";c=\"$(uname -a)\"" >/dev/null 2>&1
- echo -n '.'
- . ${_bashlyk_pathini}/${ini} >/dev/null 2>&1
- echo -n '.'
- [ "$a" = "$0" -a "$c" = "$(uname -a)" ] \
-  && echo -n  '.' || { echo -n '?'; b=0; }
- a=;c=
- echo -n '.'
- udfGetConfig $ini 2>/dev/null
- echo -n '.'
- [ "$a" = "$0" -a "$c" = "$(uname -a)" ] \
-  && echo -n '.' || { echo -n '?'; b=0; }
- rm -f "${_bashlyk_pathini}/${ini}"
- a=;c=
+ echo "check set\get configuration: "
+ csv='array="a b c d";iY=2345.34;iX=123.45;bState=false;glory="sic mundi"'
+ echo "00 $csv"
+ udfIniChange $ini "$csv" "settings"
+ csv='array="a b c d e";iX=124.45;bState=true;'
+ echo "a< $csv"
+ udfIniChange a.${ini} "$csv" "settings"
+ udfGetIniSection a.${ini} "settings" csvResult
+ echo "a> $csvResult"
+ udfIniChange b.${ini} "$csvResult" "settings"
 #
 # Проверка файла конфигурации с полным путем
 #
  fn=$(mktemp -t "XXXXXXXX.${ini}" 2>/dev/null) && ini=$fn || ini=~/${ini}
- udfSetConfig $ini "a=\"$0\";c=\"$(uname -a)\"" >/dev/null 2>&1
- echo -n '.'
- . $ini >/dev/null 2>&1
- echo -n '.'
- [ "$a" = "$0" -a "$c" = "$(uname -a)" ] \
-  && echo -n '.' || { echo -n '?'; b=0; }
- a=;c=
- echo -n '.'
- udfGetConfig $ini 2>/dev/null
- echo -n '.'
- [ "$a" = "$0" -a "$c" = "$(uname -a)" ] \
-  && echo -n '.' || { echo -n '?'; b=0; }
- a=;c=
- rm -f $ini
- [ $b -eq 1 ] && echo 'ok.' || echo 'fail.'
  printf "\n--\n\n"
  return 0
 }
@@ -369,16 +348,3 @@ udfLibIni() {
 #  SOURCE
 udfLibIni
 #******
-
-#udfReadIniSection test.ini sTest "$1"
-#sTest='a1982="Final cut";a1979="mark";a=test3;wer=ta'
-#sTest='a="2849849 4848 ";ddd="mark";av="test20 2";wert=tak;djeidjei;deiei eie=e'
-sTest='array="a b c d";iY=2345.34;iX=123.45;bState=false;glory="sic mundi"'
-udfIniChange /tmp/test.ini "$sTest" "settings"
-sTest='array="a b c d e";iX=124.45;bState=true;'
-udfIniChange /tmp/a.test.ini "$sTest" "settings"
-
-udfGetIniSection /tmp/a.test.ini settings csvResult
-echo "b $csvResult"
-udfIniChange /tmp/b.test.ini "$csvResult" "settings"
-
