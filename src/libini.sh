@@ -160,10 +160,6 @@ udfReadIniSection() {
 #              разделенный символом ";" строка, в полях которого содержатся 
 #              данные в формате "<key>=<value>;..."
 #  RETURN VALUE
-#     0  - Выполнено успешно
-#    255 - Ошибка: аргумент отсутствует или файл конфигурации не найден
-#  SOURCE
-#  RETURN VALUE
 #    255 - Ошибка: аргумент отсутствует
 #     0  - Выполнено успешно
 #  SOURCE
@@ -195,6 +191,65 @@ udfAssembly() {
 udfAssembly
 _EOF
  csvjzUfQLA9=$(. $fnExec 2>/dev/null)
+ rm -f $fnExec
+ [ -n "$2" ] && eval 'export ${2}="${csvjzUfQLA9}"' || echo "$csvjzUfQLA9"
+ return 0
+}
+#******
+#****f* bashlyk/libcnf/udfGetVarFromCsv
+#  SYNOPSIS
+#    udfGetVarFromCsv <csv;> <keys> ...
+#  DESCRIPTION
+#    Инициализировать переменнные <keys> значениями соответствующих ключей пар
+#    "key=value" из CSV-строки <csv;>#    
+#  INPUTS
+#    csv; - CSV-строка, разделённая ";", поля которой содержат данные вида 
+#          "key=value"
+#    keys - идентификаторы переменных (без "$ "). При их наличии будет 
+#           произведена инициализация в соответствующие переменные значений 
+#           совпадающb[ ключей CSV-строки
+#  OUTPUT
+#           разделенный символом ";" строка, в полях которого содержатся 
+#           данные в формате "<key>=<value>;..."
+#  RETURN VALUE
+#     0  - Выполнено успешно
+#    255 - Ошибка: аргумент отсутствует или файл конфигурации не найден
+#  SOURCE
+#  RETURN VALUE
+#    255 - Ошибка: аргумент(ы) отсутствуют
+#     0  - Выполнено успешно
+#  SOURCE
+udfGetVarFromCsv() {
+ [ -n "$1" ] || return 255
+ local fnExec aKeys csv csvjzUfQLA9
+ #
+ csv="$1"
+ shift
+ aKeys="$(echo $* | tr ' ' '\n' | sed -e "s/\(.*\)/\1= /" | tr '\n' ' ') "
+ aKeys+="$(udfCsvKeys "$csv" | tr ' ' '\n' | sort -u | uniq -u | xargs)"
+ #
+ csv=$(echo "$csv" | tr ';' '\n')
+ udfMakeTempV fnExec
+ #
+ cat << _EOF > $fnExec
+#!/bin/bash
+#
+. bashlyk
+#
+udfAssembly() { 
+ local $aKeys 
+ #
+ $csv
+ #
+ udfShowVariable $aKeys | grep -v Variable | tr -d '\t' | sed -e "s/=\(.*[[:space:]]\+.*\)/=\"\1\"/" | tr '\n' ';' 
+ #
+ return 0 
+}
+#
+udfAssembly
+_EOF
+ csvjzUfQLA9=$(. $fnExec 2>/dev/null)
+ rm -f $fnExec
  [ -n "$2" ] && eval 'export ${2}="${csvjzUfQLA9}"' || echo "$csvjzUfQLA9"
  return 0
 }
@@ -219,7 +274,7 @@ _EOF
 #  SOURCE
 udfCsvKeys() {
  [ -n "$1" ] || return 255
- local cIFS csv csv8LayYbbT  s
+ local cIFS csv csv8LayYbbT s
  #
  csv="$1"
  cIFS=$IFS
