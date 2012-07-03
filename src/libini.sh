@@ -196,9 +196,9 @@ _EOF
  return 0
 }
 #******
-#****f* bashlyk/libcnf/udfGetVarFromCsv
+#****f* bashlyk/libcnf/udfSetVarFromCsv
 #  SYNOPSIS
-#    udfGetVarFromCsv <csv;> <keys> ...
+#    udfSetVarFromCsv <csv;> <keys> ...
 #  DESCRIPTION
 #    Инициализировать переменнные <keys> значениями соответствующих ключей пар
 #    "key=value" из CSV-строки <csv;>#    
@@ -207,59 +207,53 @@ _EOF
 #          "key=value"
 #    keys - идентификаторы переменных (без "$ "). При их наличии будет 
 #           произведена инициализация в соответствующие переменные значений 
-#           совпадающb[ ключей CSV-строки
-#  OUTPUT
-#           разделенный символом ";" строка, в полях которого содержатся 
-#           данные в формате "<key>=<value>;..."
-#  RETURN VALUE
-#     0  - Выполнено успешно
-#    255 - Ошибка: аргумент отсутствует или файл конфигурации не найден
-#  SOURCE
+#           совпадающих ключей CSV-строки
 #  RETURN VALUE
 #    255 - Ошибка: аргумент(ы) отсутствуют
 #     0  - Выполнено успешно
 #  SOURCE
-udfGetVarFromCsv() {
+udfSetVarFromCsv() {
  [ -n "$1" ] || return 255
- local aKeys csv s
+ local aKeys csv k s
  #
- csv="$1"
+ csv=";$(udfCsvOrder "$1");"
  shift
- aKeys=$(udfCsvOrder $csv)
- for s in $aKeys; do
-  grep -Eo ";$s=.*;"
-  k="$(echo ${s%%=*}|xargs)"
-  
-  v="$(echo ${s#*=}|xargs)"
+ for k in $*; do
+  s=$(echo $csv | grep -Po ";$k=.*?;" | tr -d ';')
+  [ -n "$s" ] && eval "$s" 2>/dev/null
  done
- 
- 
- aKeys="$(echo $* | tr ' ' '\n' | sed -e "s/\(.*\)/\1= /" | tr '\n' ' ') "
- aKeys+="$(udfCsvKeys "$csv" | tr ' ' '\n' | sort -u | uniq -u | xargs)"
- #
- csv=$(echo "$csv" | tr ';' '\n')
- udfMakeTempV fnExec
- #
- cat << _EOF > $fnExec
-#!/bin/bash
-#
-. bashlyk
-#
-udfAssembly() { 
- local $aKeys 
- #
- $csv
- #
- udfShowVariable $aKeys | grep -v Variable | tr -d '\t' | sed -e "s/=\(.*[[:space:]]\+.*\)/=\"\1\"/" | tr '\n' ';' 
- #
- return 0 
+ return 0
 }
-#
-udfAssembly
-_EOF
- csvjzUfQLA9=$(. $fnExec 2>/dev/null)
- rm -f $fnExec
- [ -n "$2" ] && eval 'export ${2}="${csvjzUfQLA9}"' || echo "$csvjzUfQLA9"
+#******
+#****f* bashlyk/libcnf/udfSetVarFromIni
+#  SYNOPSIS
+#    udfSetVarFromIni <file> <section> <keys> ...
+#  DESCRIPTION
+#    Инициализировать переменнные <keys> значениями соответствующих ключей пар
+#    "key=value" секции <section> ini файла <file> (и всех его родительских
+#    ini-файлов, см. описание udfGetIniSection)
+#  INPUTS
+#    file    - имя файла конфигурации
+#    section - название секции конфигурации, при отсутствии этого аргумента 
+#              считываются данные до первого заголовка секции [<...>] данных или
+#              до конца конфигурационного файла, если секций нет
+#    keys    - идентификаторы переменных (без "$ "). При их наличии будет 
+#              произведена инициализация в соответствующие переменные значений 
+#              совпадающих ключей CSV-строки
+#  RETURN VALUE
+#    255 - Ошибка: аргумент(ы) отсутствуют
+#     0  - Выполнено успешно
+#  SOURCE
+udfSetVarFromIni() {
+ [ -n "$1" -a -f "$1" -a -n "$3" ] || return 255
+ #
+ local ini aTag
+ #
+ ini="$1"
+ [ -n "$2" ] && aTag="$2"
+ shift 2
+ #
+ udfSetVarFromCsv ";$(udfGetIniSection $ini "$aTag");" $* 
  return 0
 }
 #******
@@ -384,21 +378,27 @@ udfQuoteIfNeeded() {
 udfLibIni() {
  [ -z "$(echo "${_bashlyk_sArg}" | grep -E -e "--bashlyk-test=.*ini")" ] \
   && return 0
- local a b=1 c ini="${$}.testlib.ini" fn s csv csvResult
+ local a b=true c ini="${$}.testlib.ini" fn s csv csv0000 csv2
+ local aLetter0=a,b,c,d,e bResult0=true iX0=1921 iY0=1080 sText0="foo bar"
+ csv0="aLetter=${aLetter0};bResult=${bResult0};iX=${iX0};iY=${iY0};sText=\"${sText0}\";;"
+ csv1='aLetter="a,b,c,d";bResult=false;iX=1920;iY=1080;sText="foo bar"'
  printf "\n- libini.sh tests:\n\n"
 #
 # Проверка файла конфигурации без полного пути
 #
- echo "check set\get configuration: "
- csv='array="a,b,c,d";bResult=false;iX=1920;iY=1080;sText="foo bar"'
- echo "00 $csv"
- udfIniChange $ini "$csv" "settings"
- csv='array=a,b,c,d,e;iX=1921;bResult=true;'
- echo "a< $csv"
- udfIniChange a.${ini} "$csv" "settings"
- udfGetIniSection a.${ini} "settings" csvResult
- echo "a> $csvResult"
- udfIniChange b.${ini} "$csvResult" "settings"
+ echo -n "check set\get configuration: "
+ udfIniChange $ini "$csv0" "settings" && echo -n "." || { b=false; echo -n "?"; }
+ csv='aLetter=a,b,c,d,e;iX=1921;bResult=true;'
+ udfIniChange a.${ini} "$csv" "settings" && echo -n "." || { b=false; echo -n "?"; }
+ udfGetIniSection a.${ini} "settings" csv2 && echo -n "." || { b=false; echo -n "?"; }
+ [ "$csv0" = "$csv2" ] && echo -n "." || { b=false; echo -n "?"; }
+ udfSetVarFromIni "a.$ini" "settings" aLetter bResult iX iY sText
+ [ "$aLetter" = "$aLetter0" ] && echo -n "." || { b=false; echo -n "?"; }
+ [ "$bResult" = "$bResult0" ] && echo -n "." || { b=false; echo -n "?"; }
+ [ "$iX"      = "$iX0"      ] && echo -n "." || { b=false; echo -n "?"; }
+ [ "$iY"      = "$iY0"      ] && echo -n "." || { b=false; echo -n "?"; }
+ [ "$sText"   = "$sText0"   ] && echo -n "." || { b=false; echo -n "?"; }
+ $b && echo "ok" || echo "fail"
 #
 # Проверка файла конфигурации с полным путем
 #
@@ -414,15 +414,4 @@ udfLibIni() {
 #  SOURCE
 udfLibIni
 #******
-
-#udfReadIniSection test.ini sTest "$1"
-#sTest='a1982="Final cut";a1979="mark";a=test3;wer=ta'
-#sTest='a="2849849 4848 ";ddd="mark";av="test20 2";wert=tak;djeidjei;deiei eie=e'
-#sTest='array="a b c d";iY=2345.34;iX=123.45;bState=false;glory="sic mundi"'
-#udfIniChange /tmp/test.ini "$sTest" "settings"
-#sTest='array="a b c d e";iX=124.45;bState=true;'
-#udfIniChange /tmp/a.test.ini "$sTest" "settings"
-#udfGetIniSection /tmp/a.test.ini settings csvResult
-#echo "b $csvResult"
-#udfIniChange /tmp/b.test.ini "$csvResult" "settings"
 
