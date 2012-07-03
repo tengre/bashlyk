@@ -221,10 +221,19 @@ _EOF
 #  SOURCE
 udfGetVarFromCsv() {
  [ -n "$1" ] || return 255
- local fnExec aKeys csv csvjzUfQLA9
+ local aKeys csv s
  #
  csv="$1"
  shift
+ aKeys=$(udfCsvOrder $csv)
+ for s in $aKeys; do
+  grep -Eo ";$s=.*;"
+  k="$(echo ${s%%=*}|xargs)"
+  
+  v="$(echo ${s#*=}|xargs)"
+ done
+ 
+ 
  aKeys="$(echo $* | tr ' ' '\n' | sed -e "s/\(.*\)/\1= /" | tr '\n' ' ') "
  aKeys+="$(udfCsvKeys "$csv" | tr ' ' '\n' | sort -u | uniq -u | xargs)"
  #
