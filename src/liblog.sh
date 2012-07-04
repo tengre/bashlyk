@@ -649,7 +649,7 @@ udfDebug() {
  shift
  [ -n "$(echo $i | grep -E $re)" ] || i=0
  [ $DEBUGLEVEL -ge $i ] || return 1
- echo "$*"
+ [ -n "$*" ] && echo "$*"
  return 0
 }
 #******

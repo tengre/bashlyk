@@ -378,31 +378,33 @@ udfQuoteIfNeeded() {
 udfLibIni() {
  [ -z "$(echo "${_bashlyk_sArg}" | grep -E -e "--bashlyk-test=.*ini")" ] \
   && return 0
- local a b=true c ini="${$}.testlib.ini" fn s csv csv0000 csv2
+ local b=true c ini=$$.testlib.ini fn s csv csv0000 csv2 path
  local aLetter0=a,b,c,d,e bResult0=true iX0=1921 iY0=1080 sText0="foo bar"
+ fn=$(mktemp -t "XXXXXXXX.${ini}" 2>/dev/null) && ini=$fn || ini=~/${ini}
+ path=$(dirname ${ini})
+ ini=$(basename ${ini})
  csv0="aLetter=${aLetter0};bResult=${bResult0};iX=${iX0};iY=${iY0};sText=\"${sText0}\";;"
  csv1='aLetter="a,b,c,d";bResult=false;iX=1920;iY=1080;sText="foo bar"'
  printf "\n- libini.sh tests:\n\n"
 #
-# Проверка файла конфигурации без полного пути
-#
  echo -n "check set\get configuration: "
- udfIniChange $ini "$csv0" "settings" && echo -n "." || { b=false; echo -n "?"; }
+ udfIniChange ${path}/${ini} "$csv0" "settings" && echo -n "." || { b=false; echo -n "?"; }
  csv='aLetter=a,b,c,d,e;iX=1921;bResult=true;'
- udfIniChange a.${ini} "$csv" "settings" && echo -n "." || { b=false; echo -n "?"; }
- udfGetIniSection a.${ini} "settings" csv2 && echo -n "." || { b=false; echo -n "?"; }
+ udfIniChange ${path}/a.${ini} "$csv" "settings" && echo -n "." || { b=false; echo -n "?"; }
+ udfGetIniSection ${path}/a.${ini} "settings" csv2 && echo -n "." || { b=false; echo -n "?"; }
  [ "$csv0" = "$csv2" ] && echo -n "." || { b=false; echo -n "?"; }
- udfSetVarFromIni "a.$ini" "settings" aLetter bResult iX iY sText
+ udfSetVarFromIni ${path}/a.${ini} "settings" aLetter bResult iX iY sText
  [ "$aLetter" = "$aLetter0" ] && echo -n "." || { b=false; echo -n "?"; }
  [ "$bResult" = "$bResult0" ] && echo -n "." || { b=false; echo -n "?"; }
  [ "$iX"      = "$iX0"      ] && echo -n "." || { b=false; echo -n "?"; }
  [ "$iY"      = "$iY0"      ] && echo -n "." || { b=false; echo -n "?"; }
  [ "$sText"   = "$sText0"   ] && echo -n "." || { b=false; echo -n "?"; }
  $b && echo "ok" || echo "fail"
+ rm -f ${path}/a.${ini}
+ rm -f ${path}/${ini}
 #
 # Проверка файла конфигурации с полным путем
 #
- fn=$(mktemp -t "XXXXXXXX.${ini}" 2>/dev/null) && ini=$fn || ini=~/${ini}
  printf "\n--\n\n"
  return 0
 }
