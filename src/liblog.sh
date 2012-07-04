@@ -164,7 +164,7 @@ udfEcho() {
 udfMail() {
  local fnTmp
  udfMakeTempV $fnTmp
- udfEcho $* | tee -a $fnTmp
+ udfEcho "$*" | tee -a $fnTmp
  cat $fnTmp | mail -e -s "${_bashlyk_emailSubj}" ${_bashlyk_emailRcpt}
  rm -f $fnTmp
 }
@@ -704,8 +704,8 @@ udfLibLog() {
  [ $b -eq 1 ] && {
   echo 'ok.'
   for s in udfLog udfUptime udfFinally udfWarn; do
-  $s testing liblog $s; echo "return code ... $?"
- done
+   $s testing liblog $s; echo "return code ... $?"
+  done
  } || echo 'fail.'
  _bashlyk_bTerminal=0
  _bashlyk_bUseSyslog=1
