@@ -1,6 +1,6 @@
 Thu, 05 Jul 2012 11:58:55 +0400
 	Fix bugs
-	Version 1.56
+	Version 1.57
  - bashlyk: установлена защита от рекурсивного вызова (/usr/bin/bashlyk)
  - libopt.sh: функции udfAlias2WSpace udfWSpace2Alias udfQuoteIfNeeded 
    перенесены в libstd.sh
