@@ -15,7 +15,17 @@
 #    защиту от повторного использования данного модуля
 #  SOURCE
 [ -n "$_BASHLYK_LIBSTD" ] && return 0 || _BASHLYK_LIBSTD=1
+#******
+#****v*  bashlyk/libopt/Init section
+#  DESCRIPTION
+#    Блок инициализации глобальных переменных
+#    * $_bashlyk_sArg - аргументы командной строки вызова сценария
+#    * $_bashlyk_sWSpaceAlias - заменяющая пробел последовательность символов
+#    * $_bashlyk_aRequiredCmd_opt - список используемых в данном модуле внешних утилит
+#  SOURCE
 : ${_bashlyk_sArg:=$*}
+: ${_bashlyk_sWSpaceAlias:=___}
+: ${_bashlyk_aRequiredCmd_opt:="echo getopt grep mktemp tr sed umask ["}
 #******
 #****f* bashlyk/libstd/udfBaseId
 #  SYNOPSIS
@@ -164,6 +174,69 @@ udfIsNumber() {
  esac
 }
 #******
+#****f* bashlyk/libopt/udfQuoteIfNeeded
+#  SYNOPSIS
+#    udfQuoteIfNeeded <arg>
+#  DESCRIPTION
+#   Аргумент, содержащий пробел(ы) отмечается кавычками
+#  INPUTS
+#    arg - argument
+#  OUTPUT
+#    аргумент с кавычками, если есть пробелы
+#  EXAMPLE
+#    udfQuoteIfNeeded $(date)
+#  SOURCE
+udfQuoteIfNeeded() {
+ [ -n "$(echo "$*" | grep -e [[:space:]])" ] && echo "\"$*\"" || echo "$*"
+}
+#******
+#****f* bashlyk/libopt/udfWSpace2Alias
+#  SYNOPSIS
+#    udfWSpace2Alias -|<arg>
+#  DESCRIPTION
+#   Пробел в аргументе заменяется "магической" последовательностью символов,
+#   определённых в глобальной переменной $_bashlyk_sWSpaceAlias
+#  INPUTS
+#    arg - argument
+#    "-" - ожидается ввод в конвейере 
+#  OUTPUT
+#   Аргумент с заменой пробелов на специальную последовательность символов
+#  EXAMPLE
+#    выполнение: udfWSpace2Alias a b  cd
+#         вывод: a___b______cd
+#  SOURCE
+udfWSpace2Alias() {
+ case "$1" in
+ -) sed -e "s/ /$_bashlyk_sWSpaceAlias/g";;
+ *) echo "$*" | sed -e "s/ /$_bashlyk_sWSpaceAlias/g";;
+ esac
+}
+#******
+#****f* bashlyk/libopt/udfAlias2WSpace
+#  SYNOPSIS
+#    udfAlias2WSpace -|<arg>
+#  DESCRIPTION
+#    Последовательность символов, определённых в глобальной переменной
+#    $_bashlyk_sWSpaceAlias заменяется на пробел в заданном аргументе.
+#    Причём, если появляются пробелы, то вывод обрамляется кавычками.
+#    В случае ввода в конвейере вывод не обрамляется кавычками
+#  INPUTS
+#    arg - argument
+#  OUTPUT
+#    Аргумент с заменой специальной последовательности символов на пробел
+#  EXAMPLE
+#    выполнение: udfWSpace2Alias a___b______cd
+#         вывод: "a b  cd"
+#    выполнение: echo a___b______cd | udfWSpace2Alias -
+#         вывод: a b  cd
+#  SOURCE
+udfAlias2WSpace() {
+ case "$1" in
+ -) sed -e "s/$_bashlyk_sWSpaceAlias/ /g";;
+ *) udfQuoteIfNeeded $(echo "$*" | sed -e "s/$_bashlyk_sWSpaceAlias/ /g");;
+ esac 
+}
+#******
 #****u* bashlyk/libstd/udfLibStd
 #  SYNOPSIS
 #    udfLibStd
@@ -190,7 +263,7 @@ udfLibStd() {
   udfOnEmptyVariable Warn s1     && echo -n '.' || { echo -n '?'; b=0; }
  } 2>/dev/null
  [ $b -eq 1 ] && echo 'ok.' || echo 'fail.'
- printf "\n--\n\n"
+ echo "--"
  return 0
 }
 #******

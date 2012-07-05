@@ -22,7 +22,6 @@
 #   Здесь указываются модули, код которых используется данной библиотекой
 # SOURCE
 : ${_bashlyk_pathLib:=/usr/share/bashlyk}
-[ -s "${_bashlyk_pathLib}/liblog.sh" ] && . "${_bashlyk_pathLib}/liblog.sh"
 #******
 #****v*  bashlyk/libcnf/Init section
 #  DESCRIPTION
@@ -124,11 +123,10 @@ udfLibCnf() {
  [ -z "$(echo "${_bashlyk_sArg}" | grep -E -e "--bashlyk-test=.*cnf")" ] \
   && return 0
  local a b=1 c conf="$$.testlib.conf" fn s
- printf "\n- libcnf.sh tests:\n\n"
+ printf "\n- libcnf.sh tests: "
 #
 # Проверка файла конфигурации без полного пути
 #
- echo -n "check set\get configuration: "
  udfSetConfig $conf "a=\"$0\";c=\"$(uname -a)\"" >/dev/null 2>&1
  echo -n '.'
  . ${_bashlyk_pathCnf}/${conf} >/dev/null 2>&1
@@ -162,7 +160,7 @@ udfLibCnf() {
  a=;c=
  rm -f $conf
  [ $b -eq 1 ] && echo 'ok.' || echo 'fail.'
- printf "\n--\n\n"
+ echo "--"
  return 0
 }
 #******

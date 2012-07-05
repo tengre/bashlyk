@@ -1,3 +1,12 @@
+Thu, 05 Jul 2012 11:58:55 +0400
+	Fix bugs
+	Version 1.56
+ - bashlyk: установлена защита от рекурсивного вызова (/usr/bin/bashlyk)
+ - libopt.sh: функции udfAlias2WSpace udfWSpace2Alias udfQuoteIfNeeded 
+   перенесены в libstd.sh
+ - более компактный вывод диагностики тестовых модулей
+ - убраны лишние библиотечные зависимости
+
 Wed, 04 Jul 2012 18:19:07 +0400
 	New upstream release
 	Version 1.56

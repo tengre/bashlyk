@@ -690,7 +690,7 @@ udfLibLog() {
  _bashlyk_bTerminal=1
  _bashlyk_bNotUseLog=1
  b=1
- for s in udfLog udfUptime udfFinally udfWarn; do
+ for s in udfLog udfUptime udfFinally; do
   sS=$($s testing liblog $s)
   [ -n "$(echo "$sS" | grep "testing liblog $s")" ] && echo -n '.' || { echo -n '?'; b=0; }
  done
@@ -703,14 +703,14 @@ udfLibLog() {
  udfSetLog 2>/dev/null && echo -n '.' || { echo -n '?'; b=0; }
  [ $b -eq 1 ] && {
   echo 'ok.'
-  for s in udfLog udfUptime udfFinally udfWarn; do
+  for s in udfLog udfUptime udfFinally; do
    $s testing liblog $s; echo "return code ... $?"
   done
  } || echo 'fail.'
  _bashlyk_bTerminal=0
  _bashlyk_bUseSyslog=1
   echo "--- test without control terminal and syslog using: ---"
- for s in udfLog udfUptime udfFinally udfWarn udfIsTerminal udfIsInteract; do
+ for s in udfLog udfUptime udfFinally udfIsTerminal udfIsInteract; do
   echo "--- check $s: ---"
   $s testing liblog $s; echo "return code ... $?"
  done
@@ -726,7 +726,7 @@ udfLibLog() {
   do
    echo "$s"
  done
- printf "\n--\n\n"
+ echo "--"
  return 0
 }
 #******

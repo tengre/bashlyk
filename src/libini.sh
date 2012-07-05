@@ -22,7 +22,7 @@
 #   Здесь указываются модули, код которых используется данной библиотекой
 # SOURCE
 : ${_bashlyk_pathLib:=/usr/share/bashlyk}
-[ -s "${_bashlyk_pathLib}/liblog.sh" ] && . "${_bashlyk_pathLib}/liblog.sh"
+[ -s "${_bashlyk_pathLib}/libstd.sh" ] && . "${_bashlyk_pathLib}/libstd.sh"
 #******
 #****v*  bashlyk/libini/Init section
 #  DESCRIPTION
@@ -167,16 +167,15 @@ udfCsvOrder() {
  [ -n "$1" ] || return 255
  local fnExec aKeys csv csvjzUfQLA9
  #
- csv="$1"
- aKeys="$(udfCsvKeys "$csv" | tr ' ' '\n' | sort -u | uniq -u | xargs)"
+ aKeys="$(udfCsvKeys "$1" | tr ' ' '\n' | sort -u | uniq -u | xargs)"
+ csv=$(echo "$1" | tr ';' '\n')
  #
- csv=$(echo "$csv" | tr ';' '\n')
  udfMakeTempV fnExec
  #
- cat << _EOF > $fnExec
+ cat << _CsvOrder_EOF > $fnExec
 #!/bin/bash
 #
-. bashlyk
+# . bashlyk
 #
 udfAssembly() { 
  local $aKeys 
@@ -189,7 +188,8 @@ udfAssembly() {
 }
 #
 udfAssembly
-_EOF
+_CsvOrder_EOF
+
  csvjzUfQLA9=$(. $fnExec 2>/dev/null)
  rm -f $fnExec
  [ -n "$2" ] && eval 'export ${2}="${csvjzUfQLA9}"' || echo "$csvjzUfQLA9"
@@ -363,9 +363,6 @@ udfIniChange() {
  return 0
 }
 #******
-udfQuoteIfNeeded() {
- [ -n "$(echo "$*" | grep -e [[:space:]])" ] && echo "\"$*\"" || echo "$*"
-}
 #****u* bashlyk/libcnf/udfLibIni
 #  SYNOPSIS
 #    udfLibIni
@@ -385,9 +382,8 @@ udfLibIni() {
  ini=$(basename ${ini})
  csv0="aLetter=${aLetter0};bResult=${bResult0};iX=${iX0};iY=${iY0};sText=\"${sText0}\";;"
  csv1='aLetter="a,b,c,d";bResult=false;iX=1920;iY=1080;sText="foo bar"'
- printf "\n- libini.sh tests:\n\n"
+ printf "\n- libini.sh tests: "
 #
- echo -n "check set\get configuration: "
  udfIniChange ${path}/${ini} "$csv0" "settings" && echo -n "." || { b=false; echo -n "?"; }
  csv='aLetter=a,b,c,d,e;iX=1921;bResult=true;'
  udfIniChange ${path}/a.${ini} "$csv" "settings" && echo -n "." || { b=false; echo -n "?"; }
@@ -405,7 +401,7 @@ udfLibIni() {
 #
 # Проверка файла конфигурации с полным путем
 #
- printf "\n--\n\n"
+ echo "--"
  return 0
 }
 #******

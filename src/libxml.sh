@@ -70,14 +70,13 @@ udfLibXml() {
   && return 0
  local s='<entry><input>echo test</input><variable>sTest</variable></entry>' 
  local b=1
- printf "\n- libxml.sh tests:\n\n"
- printf "\nCheck function udfXml and his alias '_' for XML code generating: "
+ printf "\n- libxml.sh tests: "
  [ "$s" = "$(udfXml entry $(udfXml input echo test)$(udfXml variable sTest))" ] \
   && echo -n '.' || { echo -n 'fail.'; b=0; }
  [ "$s" = "$(_ entry $(_ input echo test)$(_ variable sTest))" ] \
   && echo -n '.' || { echo -n 'fail.'; b=0; }
  [ $b -eq 1 ] && echo 'ok.' || echo 'fail.'
- printf "\n--\n\n"
+ echo "--"
  return 0
 }
 #******

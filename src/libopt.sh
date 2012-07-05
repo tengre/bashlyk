@@ -24,6 +24,7 @@
 #    Здесь указываются модули, код которых используется данной библиотекой
 #  SOURCE
 : ${_bashlyk_pathLib:=/usr/share/bashlyk}
+[ -s "${_bashlyk_pathLib}/libstd.sh" ] && . "${_bashlyk_pathLib}/libstd.sh"
 [ -s "${_bashlyk_pathLib}/libcnf.sh" ] && . "${_bashlyk_pathLib}/libcnf.sh"
 #******
 #****v*  bashlyk/libopt/Init section
@@ -31,74 +32,10 @@
 #    Блок инициализации глобальных переменных
 #    * $_bashlyk_sArg - аргументы командной строки вызова сценария
 #    * $_bashlyk_sWSpaceAlias - заменяющая пробел последовательность символов
-#    * $_bashlyk_aRequiredCmd_opt - список используемых в данном модуле внешних утилит
+#    * $_bashlyk_aRequiredCmd_std - список используемых в данном модуле внешних утилит
 #  SOURCE
 : ${_bashlyk_sArg:=$*}
-: ${_bashlyk_sWSpaceAlias:=___}
-: ${_bashlyk_aRequiredCmd_opt:="echo getopt grep mktemp tr sed umask ["}
-#******
-#****f* bashlyk/libopt/udfQuoteIfNeeded
-#  SYNOPSIS
-#    udfQuoteIfNeeded <arg>
-#  DESCRIPTION
-#   Аргумент, содержащий пробел(ы) отмечается кавычками
-#  INPUTS
-#    arg - argument
-#  OUTPUT
-#    аргумент с кавычками, если есть пробелы
-#  EXAMPLE
-#    udfQuoteIfNeeded $(date)
-#  SOURCE
-udfQuoteIfNeeded() {
- [ -n "$(echo "$*" | grep -e [[:space:]])" ] && echo "\"$*\"" || echo "$*"
-}
-#******
-#****f* bashlyk/libopt/udfWSpace2Alias
-#  SYNOPSIS
-#    udfWSpace2Alias -|<arg>
-#  DESCRIPTION
-#   Пробел в аргументе заменяется "магической" последовательностью символов,
-#   определённых в глобальной переменной $_bashlyk_sWSpaceAlias
-#  INPUTS
-#    arg - argument
-#    "-" - ожидается ввод в конвейере 
-#  OUTPUT
-#   Аргумент с заменой пробелов на специальную последовательность символов
-#  EXAMPLE
-#    выполнение: udfWSpace2Alias a b  cd
-#         вывод: a___b______cd
-#  SOURCE
-udfWSpace2Alias() {
- case "$1" in
- -) sed -e "s/ /$_bashlyk_sWSpaceAlias/g";;
- *) echo "$*" | sed -e "s/ /$_bashlyk_sWSpaceAlias/g";;
- esac
-}
-#******
-#****f* bashlyk/libopt/udfAlias2WSpace
-#  SYNOPSIS
-#    udfAlias2WSpace -|<arg>
-#  DESCRIPTION
-#    Последовательность символов, определённых в глобальной переменной
-#    $_bashlyk_sWSpaceAlias заменяется на пробел в заданном аргументе.
-#    Причём, если появляются пробелы, то вывод обрамляется кавычками.
-#    В случае ввода в конвейере вывод не обрамляется кавычками
-#  INPUTS
-#    arg - argument
-#  OUTPUT
-#    Аргумент с заменой специальной последовательности символов на пробел
-#  EXAMPLE
-#    выполнение: udfWSpace2Alias a___b______cd
-#         вывод: "a b  cd"
-#    выполнение: echo a___b______cd | udfWSpace2Alias -
-#         вывод: a b  cd
-#  SOURCE
-udfAlias2WSpace() {
- case "$1" in
- -) sed -e "s/$_bashlyk_sWSpaceAlias/ /g";;
- *) udfQuoteIfNeeded $(echo "$*" | sed -e "s/$_bashlyk_sWSpaceAlias/ /g");;
- esac 
-}
+: ${_bashlyk_aRequiredCmd_std:="echo grep tr sed ["}
 #******
 #****f* bashlyk/libopt/udfGetOptHash
 #  SYNOPSIS
@@ -234,15 +171,14 @@ udfLibOpt() {
  local optTest1 optTest2 optTest3 s="$(date -R)" b=1
  [ -z "$(echo "${_bashlyk_sArg}" | grep -E -e "--bashlyk-test=.*opt")" ] \
  && return 0
- printf "\n- libopt.sh tests:\n\n"
- echo -n "Check udfGetOpt: "
+ printf "\n- libopt.sh tests: "
  udfGetOpt "optTest1:,optTest2,optTest3:" --optTest1 $(uname) --optTest2\
  --optTest3 $(udfWSpace2Alias $s) 2>/dev/null
  [ "$optTest1" = "$(uname)" ] && echo -n '.' || { echo -n '?'; b=0; } 
  [ "$optTest2" = "1"        ] && echo -n '.' || { echo -n '?'; b=0; } 
  [ "$optTest3" = "$s"       ] && echo -n '.' || { echo -n '?'; b=0; } 
  [ $b -eq 1 ] && echo 'ok.' || echo 'fail.'
- printf "\n--\n\n"
+ echo "--"
  return 0
 }
 #******

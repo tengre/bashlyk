@@ -158,8 +158,7 @@ udfLibPid() {
  [ -z "$(echo "${_bashlyk_sArg}" | grep -E -e "--bashlyk-test=.*pid")" ] \
   && return 0
  local sArg="${_bashlyk_sArg}" b=1
- printf "\n- libpid.sh tests:\n\n"
- echo -n "Check udfExitIfAlreadyStarted: "
+ printf "\n- libpid.sh tests: "
  udfExitIfAlreadyStarted
  echo -n '.'
  [ "$$" -eq "$(head -n 1 ${_bashlyk_fnPid})" ] \
@@ -173,7 +172,7 @@ udfLibPid() {
   && echo -n "." || { echo -n '?'; b=0; } 
  #printf "Pid file: ${_bashlyk_fnPid}\n"
  [ $b -eq 1 ] && echo 'ok.' || echo 'fail.'
- printf "\n--\n\n"
+ echo "--"
  return 0
 }
 #******

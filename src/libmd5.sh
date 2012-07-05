@@ -98,8 +98,7 @@ udfLibMd5() {
  [ -z "$(echo "${_bashlyk_sArg}" | grep -E -e "--bashlyk-test=.*md5")" ] \
   && return 0
  local fn s b=1
- printf "\n- libmd5.sh tests:\n\n"
- echo -n "Check MD5 functions: "
+ printf "\n- libmd5.sh tests: "
  s=$(udfGetMd5 $(uname -a) 2>/dev/null) 
  echo -n '.'
  [ "$s" = "$(echo $(uname -a) | udfGetMd5 - 2>/dev/null)" ] \
@@ -112,7 +111,7 @@ udfLibMd5() {
  rm -f $fn
  udfGetPathMd5 . >/dev/null 2>&1 && echo -n '.' || { echo -n '?'; b=0; } 
  [ $b -eq 1 ] && echo 'ok.' || echo 'fail.'
- printf "\n--\n\n"
+ echo "--"
  return 0
 }
 #******
