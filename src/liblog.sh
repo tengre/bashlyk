@@ -163,7 +163,7 @@ udfEcho() {
 #  SOURCE
 udfMail() {
  local fnTmp
- udfMakeTempV $fnTmp
+ udfMakeTempV fnTmp
  udfEcho "$*" | tee -a $fnTmp
  cat $fnTmp | mail -e -s "${_bashlyk_emailSubj}" ${_bashlyk_emailRcpt}
  rm -f $fnTmp
