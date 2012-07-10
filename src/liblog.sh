@@ -513,7 +513,7 @@ udfMakeTemp() {
 #  SOURCE
 udfMakeTempV() {
  [ -n "$1" ] || return 255
- local bashlyk_s2jyV6IRNTtdBaql_fo sDir='' bKeep=0
+ local bashlyk_s2jyV6IRNTtdBaql_fo sDir='' bKeep=0 pathTmp
  [ -n "$3" ] && sPrefix="$3"
  case "$2" in 
           dir) sDir='-d' ;;
@@ -521,8 +521,14 @@ udfMakeTempV() {
        keepd*) bKeep=1; sDir="-d";;
             *) sPrefix="$2";;
  esac
+ if [ -d "$sPrefix" ]; then
+  TMPDIR=$sPrefix
+  sPrefix=$(basename $sPrefix)
+  pathTmp=TMPDIR
+ fi
  bashlyk_s2jyV6IRNTtdBaql_fo=$(mktemp $sDir -q -t "${sPrefix}XXXXXXXX") || \
   udfThrow "Error: temporary file object $bashlyk_s2jyV6IRNTtdBaql_fo do not created..."
+ TMPDIR=pathTmp
  if [ $bKeep -eq 0 ]; then
   [ -f $bashlyk_s2jyV6IRNTtdBaql_fo ] && udfAddFile2Clean $bashlyk_s2jyV6IRNTtdBaql_fo
   [ -d $bashlyk_s2jyV6IRNTtdBaql_fo ] && udfAddPath2Clean $bashlyk_s2jyV6IRNTtdBaql_fo
