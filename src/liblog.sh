@@ -458,6 +458,7 @@ udfSetLog() {
 #  DESCRIPTION
 #    Создание временного файла или каталога
 #  INPUTS
+#    varname         - 
 #    path=<path>     -
 #    prefix=<prefix> - префикс имени временного файла
 #    suffix=<suffix> - суффикс имени временного файла
@@ -506,7 +507,7 @@ udfMakeTemp() {
 
  case "$sCreateMode" in
     direct)
-   [ -n "$path"    ] && s="${path}/" || path="/tmp/"
+   [ -n "$path"    ] && s="${path}/" || s="/tmp/"
    s+="${sPrefix}${$}${sSuffix}"
    [ -n "$optDir"  ] && mkdir -p $s || touch $s
    [ -s "$octMode" ] && chmod $octMode $s
@@ -514,16 +515,15 @@ udfMakeTemp() {
     mktemp)
    [ -n "$path"    ] && path="-p $path"
    s=$(mktemp $path $optDir -t "${sPrefix}XXXXXXXX${sSuffix}")
-   #echo "dbg 1 mktemp $path $optDir -t ${sPrefix}XXXXXXXX${sSuffix}"
    [ -s "$octMode" ] && chmod $octMode $s
   ;;
   tempfile)
-   [ -n "$sPrefix" ] && sPrefix="-p "$sPrefix"
-   [ -n "$sSuffix" ] && sSuffix="-s "$sSuffix"
+   [ -n "$sPrefix" ] && sPrefix="-p $sPrefix"
+   [ -n "$sSuffix" ] && sSuffix="-s $sSuffix"
    s=$(tempfile "$optDir" "$sPrefix" "$sSuffix") 
   ;;
   *)
-   udfThrow "$0: Cannot create temporary file"                                                                                 
+   udfThrow "$0: Cannot create temporary file object.."                                                                                 
   ;;                                                                                                                      
   esac                                                                                                                        
  [ -s "$sUser"  ] && chown $sUser   $s
