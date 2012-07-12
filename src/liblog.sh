@@ -458,22 +458,28 @@ udfSetLog() {
 #  DESCRIPTION
 #    Создание временного файла или каталога
 #  INPUTS
-#    varname         - 
-#    path=<path>     -
-#    prefix=<prefix> - префикс имени временного файла
-#    suffix=<suffix> - суффикс имени временного файла
-#    mode=<mode>     - маска прав на файл
-#    user=<user>     - владелец файла
-#    group=<group>   - группа файла
-#    type=dir|file   - тип объекта
-#    keep=true|false - сохранять или не сохранять
+#    varname=[<varid>] - идентификатор переменной для возврата результата, если
+#                        аргумент не именной, то должен быть всегда первый 
+#    path=<path>       - каталог, в котором будут создаваться временные объекты
+#    prefix=<prefix>   - префикс имени временного объекта
+#    suffix=<suffix>   - суффикс имени временного объекта
+#    mode=<mode>       - права на временный объект
+#    owner=<owner>     - владелец временного объекта
+#    group=<group>     - группа временного объекта
+#    type=file|dir     - тип объекта: файл или каталог
+#    keep=true|false   - удалять/не удалять временные объекты после завершения 
+#                        сценария (удалять по умолчанию)
 #  OUTPUT
 #
 #  EXAMPLE
-#    fnTemp=$(udfMakeTemp temp)
+#   udfMakeTemp fnTemp prefix=temp mode=0644 keep=true path=$HOME
+#
+#   pathTemp=$(udfMakeTemp path=/var/tmp/$USER)
+#   udfAddPath2Clean $pathTemp
+#
 #  SOURCE
 udfMakeTemp() {
- local bashlyk_s2jyV6IRNTtdBaql_fo sDir='' bNoKeep=true s sVar sCreateMode=direct
+ local bashlyk_s2jyV6IRNTtdBaql_fo optDir bNoKeep=true s sVar sCreateMode=direct
  #
  for s in $*; do
   case "$s" in 
@@ -487,22 +493,23 @@ udfMakeTemp() {
     group=*) sGroup=${s#*=};;
     keep=t*) bNokeep=false;;
     keep=f*) bNoKeep=true;;
+  varname=*) sVar=${s#*=};;
           *) 
-            if [ -z "$3" -a -n "$2" -a udfIsNumber "$2" ];then 
+            if [ -z "$3" -a -n "$2" -a udfIsNumber "$2" ]; then 
              # oldstyle
              octMode="$2"
-             sVar="$1"
-            else
-             sVar="$s"
             fi
+            sVar="$1"
           ;;
   esac
  done
+
+ [ -n "$sVar" ] || bNoKeep=false
  
  if [ -f "$(which mktemp)" ]; then
   sCreateMode=mktemp
  elif [ -f "$(which tempfile)" ]; then
-  [ -n "$optDir" ] && sCreateMode=tempfile || sCreateMode=direct
+  [ -z "$optDir" ] && sCreateMode=tempfile || sCreateMode=direct
  fi
 
  case "$sCreateMode" in
@@ -526,18 +533,18 @@ udfMakeTemp() {
    udfThrow "$0: Cannot create temporary file object.."                                                                                 
   ;;                                                                                                                      
   esac                                                                                                                        
- [ -s "$sUser"  ] && chown $sUser   $s
- [ -s "$sGroup" ] && chgrp $sGroup  $s
- bashlyk_s2jyV6IRNTtdBaql_fo=$s
+ [ -s "$sUser"  ] && chown $sUser  $s
+ [ -s "$sGroup" ] && chgrp $sGroup $s
 
- if   [ -f $bashlyk_s2jyV6IRNTtdBaql_fo ]; then 
-  $bNoKeep && udfAddFile2Clean $bashlyk_s2jyV6IRNTtdBaql_fo
- elif [ -d $bashlyk_s2jyV6IRNTtdBaql_fo ]; then
-  $bNoKeep && udfAddPath2Clean $bashlyk_s2jyV6IRNTtdBaql_fo
+ if   [ -f $s ]; then 
+  $bNoKeep && udfAddFile2Clean $s
+ elif [ -d $s ]; then
+  $bNoKeep && udfAddPath2Clean $s
  else
-  udfThrow "Error: temporary file object $bashlyk_s2jyV6IRNTtdBaql_fo cannot created..."
+  udfThrow "Error: temporary file object $s cannot created..."
  fi
 
+ bashlyk_s2jyV6IRNTtdBaql_fo=$s
  if [ -n "$sVar" ]; then
   eval 'export ${sVar}=${bashlyk_s2jyV6IRNTtdBaql_fo}' 2>/dev/null
  else
