@@ -25,6 +25,8 @@
 #  SOURCE
 : ${_bashlyk_sArg:=$*}
 : ${_bashlyk_sWSpaceAlias:=___}
+: ${_bashlyk_s0:=$(basename $0)}
+: ${_bashlyk_sId:=$(basename $0 .sh)}
 : ${_bashlyk_aRequiredCmd_opt:="echo getopt grep mktemp tr sed umask ["}
 #******
 #****f* bashlyk/libstd/udfBaseId
@@ -237,7 +239,7 @@ udfAlias2WSpace() {
  esac 
 }
 #******
-#****f* bashlyk/liblog/udfMakeTemp
+#****f* bashlyk/libstd/udfMakeTemp
 #  SYNOPSIS
 #    udfMakeTemp [varname ] options...
 #  DESCRIPTION
@@ -341,7 +343,7 @@ udfMakeTemp() {
  return $?
 }
 #******
-#****f* bashlyk/liblog/udfMakeTempV
+#****f* bashlyk/libstd/udfMakeTempV
 #  SYNOPSIS
 #    udfMakeTempV <var> [file|dir|keep|keepf[ile*]|keepd[ir]] [<prefix>]
 #  DESCRIPTION
@@ -392,6 +394,67 @@ udfMakeTempV() {
  fi
  eval 'export ${1}=${bashlyk_s2jyV6IRNTtdBaql_fo}' 2>/dev/null
  return $?
+}
+#******
+#****f* bashlyk/liblog/udfShellExec
+#  SYNOPSIS
+#    udfShellExec args
+#  DESCRIPTION
+#    Выполнение командной строки во внешнем временном файле
+#    в текущей среде интерпретатора оболочки
+#  INPUTS
+#    args - командная строка
+#  RETURN VALUE
+#    255 - аргумент не задан
+#    в остальных случаях код возврата командной строки с учетом доступа к временному файлу
+#  EXAMPLE
+#    [ -n "$preExec" ] && udfShellExec $preExec
+#    Если переменная $preExec не пуста, то записать его значение во временный файл
+#    и выполнить его
+#  SOURCE
+udfShellExec() {
+ [ -n "$*" ] || return 255
+ local fn rc
+ udfMakeTemp fn
+ echo $* > $fn
+ . $fn
+ rc=$?
+ rm -f $fn
+ return $rc
+}
+#******
+#****f* bashlyk/liblog/_ARGUMENTS
+#  SYNOPSIS
+#    _ARGUMENTS [args]
+#  DESCRIPTION
+#    Получить или установить значение переменной $_bashlyk_sArg -
+#    командная строка сценария
+#  INPUTS
+#    args - новая командная строка
+#  OUTPUT
+#    Вывод значения переменной $_bashlyk_sArg
+#  EXAMPLE
+#    for arg in $(_ARGUMENTS); do ... done
+#    Обработка аргументов командной строки
+#  SOURCE
+_ARGUMENTS() {
+ [ -n "$1" ] && _bashlyk_sArg="$*" || echo ${_bashlyk_sArg}
+}
+#******
+#****f* bashlyk/liblog/_s0
+#  SYNOPSIS
+#    _s0
+#  DESCRIPTION
+#    Получить или установить значение переменной $_bashlyk_s0 -
+#    короткое имя сценария
+#  OUTPUT
+#    Вывод значения переменной $_bashlyk_s0
+#  EXAMPLE
+#    echo "Usage: $(_s0) ..."
+#    Вставить в вывод короткое имя сценария
+#  SOURCE
+_s0() {
+ [ -n "$1" ] && _bashlyk_s0="$*" || echo ${_bashlyk_s0}
 }
 #******
 #****u* bashlyk/libstd/udfLibStd
