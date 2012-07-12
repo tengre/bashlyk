@@ -237,6 +237,163 @@ udfAlias2WSpace() {
  esac 
 }
 #******
+#****f* bashlyk/liblog/udfMakeTemp
+#  SYNOPSIS
+#    udfMakeTemp [varname ] options...
+#  DESCRIPTION
+#    Создание временного файла или каталога
+#  INPUTS
+#    varname=[<varid>] - идентификатор переменной для возврата результата, если
+#                        аргумент не именной, то должен быть всегда первый 
+#    path=<path>       - каталог, в котором будут создаваться временные объекты
+#    prefix=<prefix>   - префикс имени временного объекта
+#    suffix=<suffix>   - суффикс имени временного объекта
+#    mode=<mode>       - права на временный объект
+#    owner=<owner>     - владелец временного объекта
+#    group=<group>     - группа временного объекта
+#    type=file|dir     - тип объекта: файл или каталог
+#    keep=true|false   - удалять/не удалять временные объекты после завершения 
+#                        сценария (удалять по умолчанию)
+#  OUTPUT
+#
+#  EXAMPLE
+#   udfMakeTemp fnTemp prefix=temp mode=0644 keep=true path=$HOME
+#
+#   pathTemp=$(udfMakeTemp path=/var/tmp/$USER)
+#   udfAddPath2Clean $pathTemp
+#
+#  SOURCE
+udfMakeTemp() {
+ local bashlyk_s2jyV6IRNTtdBaql_fo optDir bNoKeep=true s sVar sCreateMode=direct
+ #
+ for s in $*; do
+  case "$s" in 
+     path=*) path=${s#*=};;
+   prefix=*) sPrefix=${s#*=};;
+   suffix=*) sSuffix=${s#*=};;
+     mode=*) octMode=${s#*=};;
+    type=d*) optDir='-d';;
+    type=f*) optDir='';;
+     user=*) sUser=${s#*=};;
+    group=*) sGroup=${s#*=};;
+    keep=t*) bNoKeep=false;;
+    keep=f*) bNoKeep=true;;
+  varname=*) sVar=${s#*=};;
+          *) 
+            local rc
+            udfIsNumber "$2"
+            rc=$?
+            if [ -z "$3" -a -n "$2" -a $rc -eq 0 ]; then 
+             # oldstyle
+             octMode="$2"
+            fi
+            sVar="$1"
+          ;;
+  esac
+ done
+
+ [ -n "$sVar" ] || bNoKeep=false
+ 
+ if [ -f "$(which mktemp)" ]; then
+  sCreateMode=mktemp
+ elif [ -f "$(which tempfile)" ]; then
+  [ -z "$optDir" ] && sCreateMode=tempfile || sCreateMode=direct
+ fi
+ 
+ case "$sCreateMode" in
+    direct)
+   [ -n "$path"    ] && s="${path}/" || s="/tmp/"
+   s+="${sPrefix}${$}${sSuffix}"
+   [ -n "$optDir"  ] && mkdir -p $s || touch $s
+   [ -s "$octMode" ] && chmod $octMode $s
+  ;;
+    mktemp)
+   [ -n "$path"    ] && path="-p $path"
+   s=$(mktemp $path $optDir -t "${sPrefix}XXXXXXXX${sSuffix}")
+   [ -s "$octMode" ] && chmod $octMode $s
+  ;;
+  tempfile)
+   [ -n "$sPrefix" ] && sPrefix="-p $sPrefix"
+   [ -n "$sSuffix" ] && sSuffix="-s $sSuffix"
+   s=$(tempfile $optDir $sPrefix $sSuffix) 
+  ;;
+  *)
+   udfThrow "$0: Cannot create temporary file object.."                                                                                 
+  ;;                                                                                                                      
+ esac                                                                                                                        
+ [ -s "$sUser"  ] && chown $sUser  $s
+ [ -s "$sGroup" ] && chgrp $sGroup $s
+
+ if   [ -f $s ]; then 
+  $bNoKeep && udfAddFile2Clean $s
+ elif [ -d $s ]; then
+  $bNoKeep && udfAddPath2Clean $s
+ else
+  udfThrow "Error: temporary file object $s cannot created..."
+ fi
+
+ bashlyk_s2jyV6IRNTtdBaql_fo=$s
+ if [ -n "$sVar" ]; then
+  eval 'export ${sVar}=${bashlyk_s2jyV6IRNTtdBaql_fo}' 2>/dev/null
+ else
+  echo ${bashlyk_s2jyV6IRNTtdBaql_fo}
+ fi
+ return $?
+}
+#******
+#****f* bashlyk/liblog/udfMakeTempV
+#  SYNOPSIS
+#    udfMakeTempV <var> [file|dir|keep|keepf[ile*]|keepd[ir]] [<prefix>]
+#  DESCRIPTION
+#    Создание временного файла или каталога с автоматическим удалением
+#    по завершению сценария
+#  INPUTS
+#    var        - переменная (без $) для имени временного объекта
+#    file       - создавать файл (по умолчанию)
+#    dir        - создавать каталог
+#    keep[file] - не включать автоматическое удаление временного файла
+#    keepdir    - не включать автоматическое удаление временного каталога
+#    prefix     - префикс имени временного файла
+#  RETURN VALUE
+#    255 - аргумент не задан
+#      1 - ошибка идентификатора для временного объекта
+#      0 - Выполнено успешно
+#  EXAMPLE
+#    udfMakeTempV pathTmp keepdir temp
+#    присваивает значение вида "temp<8 символов>" переменной $pathTmp и создаёт 
+#    соответствующий временный каталог, который не будет удаляться по завершении
+#    сценария автоматически
+#    udfMakeTempV fnTmp $(date +%s)-
+#    присваивает значение вида "<секунды эпохи>-<8 симолов>" переменной $fnTmp и
+#    создаёт соответствующий временный файл, который может быть удалён по 
+#    завершении сценария автоматически
+#  SOURCE
+udfMakeTempV() {
+ [ -n "$1" ] || return 255
+ local bashlyk_s2jyV6IRNTtdBaql_fo sDir='' bKeep=0 pathTmp
+ [ -n "$3" ] && sPrefix="$3"
+ case "$2" in 
+          dir) sDir='-d' ;;
+  keep|keepf*) bKeep=1;;
+       keepd*) bKeep=1; sDir="-d";;
+            *) sPrefix="$2";;
+ esac
+ if [ -d "$sPrefix" ]; then
+  TMPDIR=$sPrefix
+  sPrefix=$(basename $sPrefix)
+  pathTmp=TMPDIR
+ fi
+ bashlyk_s2jyV6IRNTtdBaql_fo=$(mktemp $sDir -q -t "${sPrefix}XXXXXXXX") || \
+  udfThrow "Error: temporary file object $bashlyk_s2jyV6IRNTtdBaql_fo do not created..."
+ TMPDIR=pathTmp
+ if [ $bKeep -eq 0 ]; then
+  [ -f $bashlyk_s2jyV6IRNTtdBaql_fo ] && udfAddFile2Clean $bashlyk_s2jyV6IRNTtdBaql_fo
+  [ -d $bashlyk_s2jyV6IRNTtdBaql_fo ] && udfAddPath2Clean $bashlyk_s2jyV6IRNTtdBaql_fo
+ fi
+ eval 'export ${1}=${bashlyk_s2jyV6IRNTtdBaql_fo}' 2>/dev/null
+ return $?
+}
+#******
 #****u* bashlyk/libstd/udfLibStd
 #  SYNOPSIS
 #    udfLibStd

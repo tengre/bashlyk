@@ -100,15 +100,14 @@ udfGetOptHash() {
 #  SOURCE
 udfSetOptHash() {
  [ -n "$*" ] || return 255
- local confTmp iRC
- confTmp=$(udfMakeTemp setopt) && {
-  udfAddFile2Clean $confTmp
+ local confTmp rc
+ udfMakeTemp confTmp && {
   udfSetConfig $confTmp "$*"
   udfGetConfig $confTmp
-  rm -f $confTmp >/dev/null 2>&1
-  iRC=0
- } || iRC=1
- return $iRC
+  rm -f $confTmp
+  rc=0
+ } || rc=1
+ return $rc
 }
 #******
 #****f* bashlyk/libopt/udfGetOpt
