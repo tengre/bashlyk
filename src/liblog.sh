@@ -491,11 +491,14 @@ udfMakeTemp() {
     type=f*) optDir='';;
      user=*) sUser=${s#*=};;
     group=*) sGroup=${s#*=};;
-    keep=t*) bNokeep=false;;
+    keep=t*) bNoKeep=false;;
     keep=f*) bNoKeep=true;;
   varname=*) sVar=${s#*=};;
           *) 
-            if [ -z "$3" -a -n "$2" -a udfIsNumber "$2" ]; then 
+            local rc
+            udfIsNumber "$2"
+            rc=$?
+            if [ -z "$3" -a -n "$2" -a $rc -eq 0 ]; then 
              # oldstyle
              octMode="$2"
             fi
@@ -511,7 +514,7 @@ udfMakeTemp() {
  elif [ -f "$(which tempfile)" ]; then
   [ -z "$optDir" ] && sCreateMode=tempfile || sCreateMode=direct
  fi
-
+ 
  case "$sCreateMode" in
     direct)
    [ -n "$path"    ] && s="${path}/" || s="/tmp/"
@@ -527,12 +530,12 @@ udfMakeTemp() {
   tempfile)
    [ -n "$sPrefix" ] && sPrefix="-p $sPrefix"
    [ -n "$sSuffix" ] && sSuffix="-s $sSuffix"
-   s=$(tempfile "$optDir" "$sPrefix" "$sSuffix") 
+   s=$(tempfile $optDir $sPrefix $sSuffix) 
   ;;
   *)
    udfThrow "$0: Cannot create temporary file object.."                                                                                 
   ;;                                                                                                                      
-  esac                                                                                                                        
+ esac                                                                                                                        
  [ -s "$sUser"  ] && chown $sUser  $s
  [ -s "$sGroup" ] && chgrp $sGroup $s
 
