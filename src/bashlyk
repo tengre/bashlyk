@@ -8,7 +8,7 @@
 #  AUTHOR
 #    Damir Sh. Yakupov <yds@bk.ru>
 #******
-#****d* bashlyk/libcnf/Required Once
+#****d* bashlyk/Required Once
 #  DESCRIPTION
 #    Глобальная переменная $_BASHLYK обеспечивает
 #    защиту от повторного использования данного модуля

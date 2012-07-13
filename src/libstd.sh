@@ -16,7 +16,7 @@
 #  SOURCE
 [ -n "$_BASHLYK_LIBSTD" ] && return 0 || _BASHLYK_LIBSTD=1
 #******
-#****v*  bashlyk/libopt/Init section
+#****v*  bashlyk/libstd/Init section
 #  DESCRIPTION
 #    Блок инициализации глобальных переменных
 #    * $_bashlyk_sArg - аргументы командной строки вызова сценария
@@ -181,7 +181,7 @@ udfIsNumber() {
  esac
 }
 #******
-#****f* bashlyk/libopt/udfQuoteIfNeeded
+#****f* bashlyk/libstd/udfQuoteIfNeeded
 #  SYNOPSIS
 #    udfQuoteIfNeeded <arg>
 #  DESCRIPTION
@@ -197,7 +197,7 @@ udfQuoteIfNeeded() {
  [ -n "$(echo "$*" | grep -e [[:space:]])" ] && echo "\"$*\"" || echo "$*"
 }
 #******
-#****f* bashlyk/libopt/udfWSpace2Alias
+#****f* bashlyk/libstd/udfWSpace2Alias
 #  SYNOPSIS
 #    udfWSpace2Alias -|<arg>
 #  DESCRIPTION
@@ -219,7 +219,7 @@ udfWSpace2Alias() {
  esac
 }
 #******
-#****f* bashlyk/libopt/udfAlias2WSpace
+#****f* bashlyk/libstd/udfAlias2WSpace
 #  SYNOPSIS
 #    udfAlias2WSpace -|<arg>
 #  DESCRIPTION
@@ -403,7 +403,7 @@ udfMakeTempV() {
  return $?
 }
 #******
-#****f* bashlyk/liblog/udfShellExec
+#****f* bashlyk/libstd/udfShellExec
 #  SYNOPSIS
 #    udfShellExec args
 #  DESCRIPTION
@@ -430,7 +430,7 @@ udfShellExec() {
  return $rc
 }
 #******
-#****f* bashlyk/liblog/udfAddFile2Clean
+#****f* bashlyk/libstd/udfAddFile2Clean
 #  SYNOPSIS
 #    udfAddFile2Clean args
 #  DESCRIPTION
@@ -445,7 +445,7 @@ udfAddFile2Clean() {
  trap "udfOnTrap" 0 1 2 5 15
 }
 #******
-#****f* bashlyk/liblog/udfAddPath2Clean
+#****f* bashlyk/libstd/udfAddPath2Clean
 #  SYNOPSIS
 #    udfAddPath2Clean args
 #  DESCRIPTION
@@ -460,7 +460,7 @@ udfAddPath2Clean() {
  trap "udfOnTrap" 0 1 2 5 15
 }
 #******
-#****f* bashlyk/liblog/udfAddJob2Clean
+#****f* bashlyk/libstd/udfAddJob2Clean
 #  SYNOPSIS
 #    udfAddJob2Clean args
 #  DESCRIPTION
@@ -474,7 +474,7 @@ udfAddJob2Clean() {
  trap "udfOnTrap" 0 1 2 5 15
 }
 #******
-#****f* bashlyk/liblog/udfAddPid2Clean
+#****f* bashlyk/libstd/udfAddPid2Clean
 #  SYNOPSIS
 #    udfAddPid2Clean args
 #  DESCRIPTION
@@ -488,7 +488,7 @@ udfAddPid2Clean() {
  trap "udfOnTrap" 0 1 2 5 15
 }
 #******
-#****f* bashlyk/liblog/udfCleanQueue
+#****f* bashlyk/libstd/udfCleanQueue
 #  SYNOPSIS
 #    udfCleanQueue args
 #  DESCRIPTION
@@ -500,7 +500,7 @@ udfCleanQueue() {
  udfAddFile2Clean $*
 }
 #******
-#****f* bashlyk/liblog/udfOnTrap
+#****f* bashlyk/libstd/udfOnTrap
 #  SYNOPSIS
 #    udfOnTrap
 #  DESCRIPTION
@@ -540,7 +540,7 @@ udfOnTrap() {
  }
 }
 #******
-#****f* bashlyk/liblog/_ARGUMENTS
+#****f* bashlyk/libstd/_ARGUMENTS
 #  SYNOPSIS
 #    _ARGUMENTS [args]
 #  DESCRIPTION
@@ -558,7 +558,7 @@ _ARGUMENTS() {
  [ -n "$1" ] && _bashlyk_sArg="$*" || echo ${_bashlyk_sArg}
 }
 #******
-#****f* bashlyk/liblog/_s0
+#****f* bashlyk/libstd/_s0
 #  SYNOPSIS
 #    _s0
 #  DESCRIPTION

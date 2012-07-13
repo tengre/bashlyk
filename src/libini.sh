@@ -143,7 +143,7 @@ udfReadIniSection() {
  return 0
 }
 #******
-#****f* bashlyk/libcnf/udfCsvOrder
+#****f* bashlyk/libini/udfCsvOrder
 #  SYNOPSIS
 #    udfCsvOrder <csv;> [<varname>]
 #  DESCRIPTION
@@ -196,7 +196,7 @@ _CsvOrder_EOF
  return 0
 }
 #******
-#****f* bashlyk/libcnf/udfSetVarFromCsv
+#****f* bashlyk/libini/udfSetVarFromCsv
 #  SYNOPSIS
 #    udfSetVarFromCsv <csv;> <keys> ...
 #  DESCRIPTION
@@ -225,7 +225,7 @@ udfSetVarFromCsv() {
  return 0
 }
 #******
-#****f* bashlyk/libcnf/udfSetVarFromIni
+#****f* bashlyk/libini/udfSetVarFromIni
 #  SYNOPSIS
 #    udfSetVarFromIni <file> <section> <keys> ...
 #  DESCRIPTION
@@ -257,7 +257,7 @@ udfSetVarFromIni() {
  return 0
 }
 #******
-#****f* bashlyk/libcnf/udfCsvKeys
+#****f* bashlyk/libini/udfCsvKeys
 #  SYNOPSIS
 #    udfCsvKeys <csv;> [<varname>]
 #  DESCRIPTION
@@ -290,7 +290,7 @@ udfCsvKeys() {
  return 0
 }
 #******
-#****f* bashlyk/libcnf/udfIniWrite
+#****f* bashlyk/libini/udfIniWrite
 #  SYNOPSIS
 #    udfIniWrite <file> <csv;>
 #  DESCRIPTION
@@ -320,7 +320,7 @@ udfIniWrite() {
  return 0
 }
 #******
-#****f* bashlyk/libcnf/udfIniChange
+#****f* bashlyk/libini/udfIniChange
 #  SYNOPSIS
 #    udfIniChange <file> <csv;> [<section>]
 #  DESCRIPTION
@@ -363,7 +363,7 @@ udfIniChange() {
  return 0
 }
 #******
-#****u* bashlyk/libcnf/udfLibIni
+#****u* bashlyk/libini/udfLibIni
 #  SYNOPSIS
 #    udfLibIni
 # DESCRIPTION
@@ -405,7 +405,7 @@ udfLibIni() {
  return 0
 }
 #******
-#****** bashlyk/libcnf/Main section
+#****** bashlyk/libini/Main section
 # DESCRIPTION
 #   Running CNF library test unit if $_bashlyk_sArg ($*) contains
 #   substrings "--bashlyk-test=" and "cnf" - command for test using
