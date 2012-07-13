@@ -32,10 +32,6 @@
 #  SOURCE
 : ${HOSTNAME:=$(hostname)}
 : ${DEBUGLEVEL:=0}
-: ${_bashlyk_afnClean:=}
-: ${_bashlyk_apathClean:=}
-: ${_bashlyk_ajobClean:=}
-: ${_bashlyk_apidClean:=}
 : ${_bashlyk_bUseSyslog:=0}
 : ${_bashlyk_bNotUseLog:=}
 : ${_bashlyk_pathLog:=/tmp}
@@ -257,116 +253,6 @@ udfCheck4LogUse() {
            _bashlyk_bNotUseLog=$_bashlyk_bInteract ;;
  esac
  return $_bashlyk_bNotUseLog
-}
-#******
-#****f* bashlyk/liblog/udfOnTrap
-#  SYNOPSIS
-#    udfOnTrap
-#  DESCRIPTION
-#    Процедура очистки при завершении вызвавшего сценария.
-#    Предназначен только для вызова командой trap.
-#    * Производится удаление файлов и пустых каталогов; заданий и процессов,
-#    указанных в соответствующих глобальных переменных
-#    * Закрывается сокет журнала сценария, если он использовался.
-#  SOURCE
-udfOnTrap() {
- local i s
- #
- for s in ${_bashlyk_ajobClean}; do
-  kill $s 2>/dev/null
- done
- #
- for s in ${_bashlyk_apidClean}; do
-  for i in 15 9; do
-   [ -n "$(ps -o pid= --ppid $$ | xargs | grep -w $s)" ] && {
-    kill -${i} $s 2>/dev/null
-    sleep 0.2
-   }
-  done
- done
- #
- for s in ${_bashlyk_afnClean}; do
-  rm -f $s
- done
- #
- for s in ${_bashlyk_apathClean}; do
-  rmdir $s 2>/dev/null
- done
- #
- [ -n "${_bashlyk_pidLogSock}" ] && {
-  exec >/dev/null 2>&1
-  wait ${_bashlyk_pidLogSock}
- }
-}
-#******
-#****f* bashlyk/liblog/udfAddFile2Clean
-#  SYNOPSIS
-#    udfAddFile2Clean args
-#  DESCRIPTION
-#    Добавляет имена файлов к списку удаляемых при завершении сценария
-#    Предназначен для удаления временных файлов.
-#  INPUTS
-#    args - имена файлов
-#  SOURCE
-udfAddFile2Clean() {
- [ -n "$1" ] || return 0
- _bashlyk_afnClean+=" $*"
- trap "udfOnTrap" 0 1 2 5 15
-}
-#******
-#****f* bashlyk/liblog/udfAddPath2Clean
-#  SYNOPSIS
-#    udfAddPath2Clean args
-#  DESCRIPTION
-#    Добавляет имена каталогов к списку удаляемых при завершении сценария.
-#    Предназначен для удаления временных каталогов (если они пустые).
-#  INPUTS
-#    args - имена каталогов
-#  SOURCE
-udfAddPath2Clean() {
- [ -n "$1" ] || return 0
- _bashlyk_apathClean+=" $*"
- trap "udfOnTrap" 0 1 2 5 15
-}
-#******
-#****f* bashlyk/liblog/udfAddJob2Clean
-#  SYNOPSIS
-#    udfAddJob2Clean args
-#  DESCRIPTION
-#    Добавляет идентификаторы запущенных заданий к списку удаляемых при завершении сценария.
-#  INPUTS
-#    args - идентификаторы заданий
-#  SOURCE
-udfAddJob2Clean() {
- [ -n "$1" ] || return 0
- _bashlyk_ajobClean+=" $*"
- trap "udfOnTrap" 0 1 2 5 15
-}
-#******
-#****f* bashlyk/liblog/udfAddPid2Clean
-#  SYNOPSIS
-#    udfAddPid2Clean args
-#  DESCRIPTION
-#    Добавляет идентификаторы запущенных процессов к списку завершаемых при завершении сценария.
-#  INPUTS
-#    args - идентификаторы процессов
-#  SOURCE
-udfAddPid2Clean() {
- [ -n "$1" ] || return 0
- _bashlyk_apidClean+=" $*"
- trap "udfOnTrap" 0 1 2 5 15
-}
-#******
-#****f* bashlyk/liblog/udfCleanQueue
-#  SYNOPSIS
-#    udfCleanQueue args
-#  DESCRIPTION
-#    Псевдоним для udfAddFile2Clean. (Устаревшее)
-#  INPUTS
-#    args - имена файлов
-#  SOURCE
-udfCleanQueue() {
- udfAddFile2Clean $*
 }
 #******
 #****f* bashlyk/liblog/udfUptime
