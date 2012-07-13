@@ -22,7 +22,7 @@
 #   Здесь указываются модули, код которых используется данной библиотекой
 # SOURCE
 : ${_bashlyk_pathLib:=/usr/share/bashlyk}
-[ -s "${_bashlyk_pathLib}/liblog.sh" ] && . "${_bashlyk_pathLib}/liblog.sh"
+[ -s "${_bashlyk_pathLib}/libstd.sh" ] && . "${_bashlyk_pathLib}/libstd.sh"
 [ -s "${_bashlyk_pathLib}/libmd5.sh" ] && . "${_bashlyk_pathLib}/libmd5.sh"
 #******
 #****v*  bashlyk/libpid/Init section
@@ -123,6 +123,7 @@ udfExitIfAlreadyStarted() {
  esac
 }
 #******
+# TODO проверить на используемость
 #****f* bashlyk/libpid/udfClean
 #  SYNOPSIS
 #    udfClean
