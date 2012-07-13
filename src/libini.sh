@@ -369,13 +369,13 @@ udfIniChange() {
 # DESCRIPTION
 #   bashlyk CNF library test unit
 #   Запуск проверочных операций модуля выполняется если только аргументы 
-#   командной строки cодержат строку вида "--bashlyk-test=[.*,]cnf[,.*]",
+#   командной строки cодержат строку вида "--bashlyk-test=[.*,]ini[,.*]",
 #   где * - ярлыки на другие тестируемые библиотеки
 #  SOURCE
 udfLibIni() {
  [ -z "$(echo "${_bashlyk_sArg}" | grep -E -e "--bashlyk-test=.*ini")" ] \
   && return 0
- local b=true c ini=$$.testlib.ini fn s csv csv0000 csv2 path
+ local b=true c ini=$$.testlib.ini fn s csv csv0 csv1 csv2 path
  local aLetter0=a,b,c,d,e bResult0=true iX0=1921 iY0=1080 sText0="foo bar"
  fn=$(mktemp -t "XXXXXXXX.${ini}" 2>/dev/null) && ini=$fn || ini=~/${ini}
  path=$(dirname ${ini})

@@ -271,7 +271,8 @@ udfAlias2WSpace() {
 #
 #  SOURCE
 udfMakeTemp() {
- local bashlyk_s2jyV6IRNTtdBaql_fo optDir bNoKeep=true s sVar sCreateMode=direct
+ local bashlyk_s2jyV6IRNTtdBaql_fo optDir bNoKeep=true s sVar sCreateMode=direct 
+ local path sPrefix sSuffix octMode sUser sGroup
  #
  for s in $*; do
   case "$s" in 
