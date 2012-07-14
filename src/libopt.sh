@@ -32,7 +32,8 @@
 #    Блок инициализации глобальных переменных
 #    * $_bashlyk_sArg - аргументы командной строки вызова сценария
 #    * $_bashlyk_sWSpaceAlias - заменяющая пробел последовательность символов
-#    * $_bashlyk_aRequiredCmd_std - список используемых в данном модуле внешних утилит
+#    * $_bashlyk_aRequiredCmd_std - список используемых в данном модуле внешних
+#    утилит
 #  SOURCE
 : ${_bashlyk_sArg:=$*}
 : ${_bashlyk_aRequiredCmd_std:="echo grep tr sed ["}
