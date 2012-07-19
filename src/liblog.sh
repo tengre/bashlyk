@@ -324,19 +324,19 @@ udfSetLogSocket() {
 #    Установка файла лога
 #  RETURN VALUE
 #     0   - Выполнено
-#     255 - невозможно использовать файл лога, аварийное завершение сценария
+#     1   - невозможно использовать файл лога, аварийное завершение сценария
+#     255 - аргумент не задан
 #  SOURCE
 udfSetLog() {
- if [ -n "$1" ]; then
-  if [ "$1" = "${1##*/}" ]; then
-   _bashlyk_fnLog="${_bashlyk_pathLog}/$1"
-  else
-   _bashlyk_fnLog="$1"
-   _bashlyk_pathLog=$(dirname ${_bashlyk_fnLog})
-  fi
+ [ -n "$1" ] || return 255
+ if [ "$1" = "${1##*/}" ]; then
+  _bashlyk_fnLog="${_bashlyk_pathLog}/$1"
+ else
+  _bashlyk_fnLog="$1"
+  _bashlyk_pathLog=$(dirname ${_bashlyk_fnLog})
  fi
  [ -d "${_bashlyk_pathLog}" ] || mkdir -p "${_bashlyk_pathLog}" \
-  || udfThrow "Error: do not create path ${_bashlyk_pathLog}"
+  || udfThrow "Error: cannot create path ${_bashlyk_pathLog}"
  touch "${_bashlyk_fnLog}" || udfThrow "Error: ${_bashlyk_fnLog} not usable for logging"
  udfSetLogSocket
  return 0
@@ -351,11 +351,15 @@ udfSetLog() {
 #  OUTPUT
 #    Вывод значения переменной $_bashlyk_fnLog
 #  EXAMPLE
-#    stat $(_ARGUMENTS)
+#    stat $(_fnLog)
 #    Вывести информацию о лог-файле
 #  SOURCE
 _fnLog() {
- [ -n "$1" ] && _bashlyk_fnLog=$1 || echo ${_bashlyk_fnLog}
+ if [ -n "$1" ]; then 
+  udfSetLog "$1"
+ else
+  echo ${_bashlyk_fnLog}
+ fi
 }
 #******
 #****f* bashlyk/liblog/_pathDat
@@ -388,7 +392,7 @@ _pathDat() {
 #    Текст отладочного сообщения (аргумент "message"), если его уровень 
 #    (аргумент "level") не больше заданного для сценария переменной DEBUGLEVEL
 #  RETURN VALUE
-#    0 - уровень "level" не больше значению глобальной переменной DEBUGLEVEL
+#    0 - уровень "level" не больше значения глобальной переменной DEBUGLEVEL
 #    1 - уровень "level" больше значения глобальной переменной DEBUGLEVEL
 #    2 - аргументы отсутствуют
 #  SOURCE

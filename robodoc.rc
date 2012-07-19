@@ -1,6 +1,6 @@
 options:
     --src ./src
-    --doc ./doc
+    --doc ./doc/html
     --html
     --multidoc
     --sections
