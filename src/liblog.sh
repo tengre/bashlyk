@@ -324,17 +324,17 @@ udfSetLogSocket() {
 #    Установка файла лога
 #  RETURN VALUE
 #     0   - Выполнено
-#     1   - невозможно использовать файл лога, аварийное завершение сценария
-#     255 - аргумент не задан
+#     255   - невозможно использовать файл лога, аварийное завершение сценария
 #  SOURCE
 udfSetLog() {
- [ -n "$1" ] || return 255
- if [ "$1" = "${1##*/}" ]; then
-  _bashlyk_fnLog="${_bashlyk_pathLog}/$1"
- else
-  _bashlyk_fnLog="$1"
-  _bashlyk_pathLog=$(dirname ${_bashlyk_fnLog})
- fi
+ case "$1" in
+        '') ;;
+  ${1##*/}) _bashlyk_fnLog="${_bashlyk_pathLog}/$1";;
+         *)
+            _bashlyk_fnLog="$1"
+            _bashlyk_pathLog=$(dirname ${_bashlyk_fnLog})
+         ;;
+ esac
  [ -d "${_bashlyk_pathLog}" ] || mkdir -p "${_bashlyk_pathLog}" \
   || udfThrow "Error: cannot create path ${_bashlyk_pathLog}"
  touch "${_bashlyk_fnLog}" || udfThrow "Error: ${_bashlyk_fnLog} not usable for logging"
