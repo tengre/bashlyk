@@ -66,6 +66,7 @@
 #  SOURCE
 udfGetIniSection() {
  [ -n "$1" ] || return 255
+ unset csv1LXAboOd
  #
  local aini csv csv1LXAboOd ini='' pathIni="$_bashlyk_pathIni" s sTag
  #
@@ -112,6 +113,7 @@ udfGetIniSection() {
 #  SOURCE
 udfReadIniSection() {
  [ -n "$1" -a -f "$1" ] || return 255
+ unset csv9AT0Vgyp
  local ini="$1" csv9AT0Vgyp b bOpen=false k v s sTag
  [ -n "$2" ] && sTag="$2" || bOpen=true
  while read s; do
@@ -165,6 +167,7 @@ udfReadIniSection() {
 #  SOURCE
 udfCsvOrder() {
  [ -n "$1" ] || return 255
+ unset csvjzUfQLA9
  local fnExec aKeys csv csvjzUfQLA9
  #
  aKeys="$(udfCsvKeys "$1" | tr ' ' '\n' | sort -u | uniq -u | xargs)"
@@ -277,6 +280,7 @@ udfSetVarFromIni() {
 #  SOURCE
 udfCsvKeys() {
  [ -n "$1" ] || return 255
+ unset csv8LayYbbT
  local cIFS csv csv8LayYbbT s
  #
  csv="$1"
