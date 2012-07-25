@@ -66,7 +66,7 @@ udfGetOptHash() {
   bFound=
   for k in $(echo $csvKeys | tr ',' ' '); do
    v=$(echo $k | tr -d ':')
-   [ "--$v" == "$1" ] && bFound=1 || continue
+   [ "--$v" = "$1" ] && bFound=1 || continue
    if [ -n "$(echo $k | grep ':$')" ]; then
     csvHash+="$v=$(udfAlias2WSpace $2);"
     shift 2

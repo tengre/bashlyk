@@ -217,13 +217,14 @@ _CsvOrder_EOF
 #  SOURCE
 udfSetVarFromCsv() {
  [ -n "$1" ] || return 255
- local aKeys csv k s
+ unset s1LXAboOd7DyIwoBI
+ local aKeys csv k s1LXAboOd7DyIwoBI
  #
  csv=";$(udfCsvOrder "$1");"
  shift
  for k in $*; do
-  s=$(echo $csv | grep -Po ";$k=.*?;" | tr -d ';')
-  [ -n "$s" ] && eval "$s" 2>/dev/null
+  s1LXAboOd7DyIwoBI=$(echo $csv | grep -Po ";$k=.*?;" | tr -d ';')
+  [ -n "$s1LXAboOd7DyIwoBI" ] && eval "$s1LXAboOd7DyIwoBI" 2>/dev/null
  done
  return 0
 }

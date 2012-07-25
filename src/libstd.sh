@@ -273,7 +273,8 @@ udfAlias2WSpace() {
 #
 #  SOURCE
 udfMakeTemp() {
- local bashlyk_s2jyV6IRNTtdBaql_fo optDir bNoKeep=true s sVar sCreateMode=direct 
+ unset bashlyk_JtiMe1FiQYcdjOf1_fo
+ local bashlyk_JtiMe1FiQYcdjOf1_fo optDir bNoKeep=true s sVar sCreateMode=direct 
  local path sPrefix sSuffix octMode sUser sGroup
  #
  for s in $*; do
@@ -344,11 +345,11 @@ udfMakeTemp() {
   udfThrow "Error: temporary file object $s cannot created..."
  fi
 
- bashlyk_s2jyV6IRNTtdBaql_fo=$s
+ bashlyk_JtiMe1FiQYcdjOf1_fo=$s
  if [ -n "$sVar" ]; then
-  eval 'export ${sVar}=${bashlyk_s2jyV6IRNTtdBaql_fo}' 2>/dev/null
+  eval 'export ${sVar}=${bashlyk_JtiMe1FiQYcdjOf1_fo}' 2>/dev/null
  else
-  echo ${bashlyk_s2jyV6IRNTtdBaql_fo}
+  echo ${bashlyk_JtiMe1FiQYcdjOf1_fo}
  fi
  return $?
 }
@@ -382,6 +383,7 @@ udfMakeTemp() {
 #  SOURCE
 udfMakeTempV() {
  [ -n "$1" ] || return 255
+ unset bashlyk_s2jyV6IRNTtdBaql_fo
  local bashlyk_s2jyV6IRNTtdBaql_fo sDir='' bKeep=0 pathTmp
  [ -n "$3" ] && sPrefix="$3"
  case "$2" in 
