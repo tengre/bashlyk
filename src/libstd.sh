@@ -318,12 +318,13 @@ udfMakeTemp() {
    [ -n "$path"    ] && s="${path}/" || s="/tmp/"
    s+="${sPrefix}${$}${sSuffix}"
    [ -n "$optDir"  ] && mkdir -p $s || touch $s
-   [ -s "$octMode" ] && chmod $octMode $s
+   [ -n "$octMode" ] && chmod $octMode $s
   ;;
     mktemp)
    [ -n "$path"    ] && path="-p $path"
-   s=$(mktemp $path $optDir -t "${sPrefix}XXXXXXXX${sSuffix}")
-   [ -s "$octMode" ] && chmod $octMode $s
+   #s=$(mktemp $path $optDir -t "${sPrefix}XXXXXXXX${sSuffix}")
+   s=$(mktemp $path $optDir -t "${sPrefix}${sSuffix}XXXXXXXX")
+   [ -n "$octMode" ] && chmod $octMode $s
   ;;
   tempfile)
    [ -n "$sPrefix" ] && sPrefix="-p $sPrefix"
@@ -334,8 +335,8 @@ udfMakeTemp() {
    udfThrow "$0: Cannot create temporary file object.."                                                                                 
   ;;                                                                                                                      
  esac                                                                                                                        
- [ -s "$sUser"  ] && chown $sUser  $s
- [ -s "$sGroup" ] && chgrp $sGroup $s
+ [ -n "$sUser"  ] && chown $sUser  $s
+ [ -n "$sGroup" ] && chgrp $sGroup $s
 
  if   [ -f "$s" ]; then 
   $bNoKeep && udfAddFile2Clean $s
