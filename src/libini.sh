@@ -138,12 +138,9 @@ udfReadIniSection() {
    k="$(echo ${s%%=*}|xargs)"
    v="$(echo ${s#*=}|xargs)"
    if [ "$k" = "$v" ]; then
-    #if [ "$type" = "line" ]; then
-     k=_${sTag}_${i}
+     #k=_${sTag}_${i}
+     k=_zzz_bashlyk_ini_line_${i}
      i=$((i+1))
-    #else
-     #continue
-    #fi
    else
     [ -z "$(echo "$k" | grep '.*[[:space:]+].*')" ] || continue
    fi
@@ -180,8 +177,9 @@ udfCsvOrder() {
  unset csvjzUfQLA9
  local fnExec aKeys csv csvjzUfQLA9
  #
- aKeys="$(udfCsvKeys "$1" | tr ' ' '\n' | sort -u | uniq -u | xargs)"
- csv=$(echo "$1" | tr ';' '\n')
+ csv="$(udfCheckCsv "$1")"
+ aKeys="$(udfCsvKeys "$csv" | tr ' ' '\n' | sort -u | uniq -u | xargs)"
+ csv=$(echo "$csv" | tr ';' '\n')
  #
  udfMakeTemp fnExec
  #
@@ -305,6 +303,34 @@ udfCsvKeys() {
  return 0
 }
 #******
+udfCheckCsv() {
+ [ -n "$1" ] || return 255
+ unset csvixwIVbZN
+ local s csv cIFS k v i csvixwIVbZN
+ #
+ csv="$1"
+ cIFS=$IFS
+ IFS=';'
+ i=0
+ csvixwIVbZN=''
+ #
+ for s in $csv; do
+  s=$(echo $s | tr -d "'")
+  k="$(echo ${s%%=*}|xargs)"
+  v="$(echo ${s#*=}|xargs)"
+  [ -n "$k" ] || continue
+  if [ "$k" = "$v" ]; then
+   k=_zzz_bashlyk_ini_line_${i}
+   i=$((i+1))
+  else
+    [ -z "$(echo "$k" | grep '.*[[:space:]+].*')" ] || continue
+   fi
+  csvixwIVbZN+="$k=$(udfQuoteIfNeeded $v);"
+ done
+ IFS=$cIFS
+ [ -n "$2" ] && eval 'export ${2}="${csvixwIVbZN}"' || echo "$csvixwIVbZN"
+ return 0 
+}
 #****f* bashlyk/libini/udfIniWrite
 #  SYNOPSIS
 #    udfIniWrite <file> <csv;>
@@ -331,7 +357,8 @@ udfIniWrite() {
  csv="$2"
  #
  [ -s "$ini" ] && mv -f "$ini" "${ini}.bak"
- echo "$csv" | sed -e "s/[;]\+/;/g" -e "s/\[/;\[/g" | tr ';' '\n' | sed -e "s/\(.*\)=/\t\1\t=\t/g" | tr -d '"' > "$ini"
+ echo "$csv" | sed -e "s/[;]\+/;/g" -e "s/\[/;\[/g" | tr ';' '\n' | sed -e "s/\(.*\)=/\t\1\t=\t/g" -e "s/_zzz_bashlyk_ini_line_.*\t=\t//g" | tr -d '"' > "$ini"
+ #
  return 0
 }
 #******
@@ -382,7 +409,7 @@ udfIniChange() {
 #  SYNOPSIS
 #    udfLibIni
 # DESCRIPTION
-#   bashlyk CNF library test unit
+#   bashlyk INI library test unit
 #   Запуск проверочных операций модуля выполняется если только аргументы 
 #   командной строки cодержат строку вида "--bashlyk-test=[.*,]ini[,.*]",
 #   где * - ярлыки на другие тестируемые библиотеки
@@ -395,15 +422,14 @@ udfLibIni() {
  fn=$(mktemp -t "XXXXXXXX.${ini}" 2>/dev/null) && ini=$fn || ini=~/${ini}
  path=$(dirname ${ini})
  ini=$(basename ${ini})
- csv0="aLetter=${aLetter0};bResult=${bResult0};iX=${iX0};iY=${iY0};sText=\"${sText0}\";;"
- csv1='aLetter="a,b,c,d";bResult=false;iX=1920;iY=1080;sText="foo bar"'
+ csv0=$(udfCheckCsv "aLetter=${aLetter0},f;bResult=false;iX=1920;iY=${iY0};sText=\"${sText0}\";$(uname -a);a,b,c,d")
+ csvQ=$(udfCheckCsv "aLetter=${aLetter0};bResult=${bResult0};iX=${iX0};iY=${iY0};sText=\"${sText0}\";$(uname -a);a,b,c,d")
  printf "\n- libini.sh tests: "
-#
  udfIniChange ${path}/${ini} "$csv0" "settings" && echo -n "." || { b=false; echo -n "?"; }
- csv='aLetter=a,b,c,d,e;iX=1921;bResult=true;'
+ csv='aLetter=a,b,c,d,e;iX=1921;bResult=true;$(uname -a)'
  udfIniChange ${path}/a.${ini} "$csv" "settings" && echo -n "." || { b=false; echo -n "?"; }
  udfGetIniSection ${path}/a.${ini} "settings" csv2 && echo -n "." || { b=false; echo -n "?"; }
- [ "$csv0" = "$csv2" ] && echo -n "." || { b=false; echo -n "?"; }
+ [ "$csvQ" = "$(udfCheckCsv "$csv2")" ] && echo -n "." || { b=false; echo -n "?"; }
  udfSetVarFromIni ${path}/a.${ini} "settings" aLetter bResult iX iY sText
  [ "$aLetter" = "$aLetter0" ] && echo -n "." || { b=false; echo -n "?"; }
  [ "$bResult" = "$bResult0" ] && echo -n "." || { b=false; echo -n "?"; }
@@ -427,4 +453,3 @@ udfLibIni() {
 #  SOURCE
 udfLibIni
 #******
-
