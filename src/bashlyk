@@ -32,17 +32,18 @@
 #  SYNOPSIS
 #    udfInit
 #  DESCRIPTION
-#    Подготовка к запуску сценария, определение условий его работы
-#    (каталоги расположения создаваемых файлов, наличие терминала, перенаправления и т.п.)
-#    Если запуск выполняется от "root", то каталоги располагаются глобально, согласно LSB, 
-#    иначе - в каталоге ~/.bashlyk или во временном каталоге, если не удалось определить
-#    владельца процесса
+#    Подготовка к запуску сценария, определение условий его работы (каталоги 
+#    расположения создаваемых файлов, наличие терминала, перенаправления и т.п.)
+#    Если запуск выполняется от "root", то каталоги располагаются глобально,
+#    согласно LSB, иначе - в каталоге ~/.bashlyk или во временном каталоге, если
+#    не удалось определить владельца процесса
 #  SOURCE
 udfInit() {
  local pathCnf pathRoot pathRun pathLog pathDat sHome
  #
  _bashlyk_sId=${_bashlyk:-bashlyk}
- [ -n "$_bashlyk" ] && _bashlyk_pathPrefix="/${_bashlyk}" || _bashlyk_pathPrefix=
+ [ -n "$_bashlyk" ] && _bashlyk_pathPrefix="/${_bashlyk}" \
+  || _bashlyk_pathPrefix=
  pathCnf="etc${_bashlyk_pathPrefix}"
  pathLog="var/log${_bashlyk_pathPrefix}"
  pathRun="var/run${_bashlyk_pathPrefix}"
@@ -87,14 +88,25 @@ udfInit() {
 #    в зависимости от значения $_bashlyk_sCond4Log ("noterm" по умолчанию).
 #  SOURCE
 udfMain() {
- local fn fnLib
+ local aIncinpj8Ive fn s sModeYs8vfIqM='lib'
  #
  udfInit
  #
- for fn in $(echo ${_bashlyk_aLib} | tr ',' ' '); do
-  fnLib="${_bashlyk_pathLib}/lib${fn}.sh"
-  [ -s $fnLib ] && . $fnLib || eval 'echo "error with $fnLib using"; exit 255'
+ aIncinpj8Ive="$(echo "${_bashlyk_sArg#*--bashlyk-test=}" | cut -f1 -d' ' | tr ',' ' ')"
+
+ if [ -n "$aIncinpj8Ive" ]; then
+  sModeYs8vfIqM='test'
+ else
+  aIncinpj8Ive="$(echo ${_bashlyk_aLib} | tr ',' ' ')"
+ fi
+
+ for s in $aIncinpj8Ive; do
+  fn=${_bashlyk_pathLib}/${sModeYs8vfIqM}${s}.sh
+  [ -s $fn ] && . $fn || eval 'echo "Error: $fn not found..."; exit 255'
  done
+
+ [ "$sModeYs8vfIqM" = "test" ] && exit 0
+
  case ${_bashlyk_sCond4Log} in
   redirect)
            _bashlyk_bNotUseLog=$_bashlyk_bInteract ;;

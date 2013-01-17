@@ -21,3 +21,5 @@ src/libpid.sh -text
 src/libppp.sh -text
 src/libstd.sh -text
 src/libxml.sh -text
+src/testini.sh -text
+src/teststd.sh -text

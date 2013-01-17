@@ -66,9 +66,11 @@
 #  SOURCE
 udfGetIniSection() {
  [ -n "$1" ] || return 255
- unset csv1LXAboOd
  #
- local aini csv csv1LXAboOd ini='' pathIni="$_bashlyk_pathIni" s sTag
+ local aini csvIni csvResultm41dp3EM ini pathIni s sTag
+ #
+ ini=''
+ pathIni="$_bashlyk_pathIni"
  #
  [ "$1"  = "${1##*/}" -a -f ${pathIni}/$1 ] || pathIni=
  [ "$1"  = "${1##*/}" -a -f $1 ] && pathIni=$(pwd)
@@ -84,10 +86,13 @@ udfGetIniSection() {
  for s in $aini; do
   [ -n "$s" ] || continue
   [ -n "$ini" ] && ini="${s}.${ini}" || ini="$s"
-  [ -s "${pathIni}/${ini}" ] && csv+=";$(udfReadIniSection "${pathIni}/${ini}" "$sTag");"
+  [ -s "${pathIni}/${ini}" ] \
+   && csvIni+=";$(udfReadIniSection "${pathIni}/${ini}" "$sTag");"
  done
- udfCsvOrder "$csv" csv1LXAboOd
- [ -n "$3" ] && eval 'export ${3}="${csv1LXAboOd}"' || echo "$csv1LXAboOd"
+ udfCsvOrder "$csvIni" csvResultm41dp3EM
+ [ -n "$3" ] \
+  && eval 'export ${3}="${csvResultm41dp3EM}"' \
+  || echo "$csvResultm41dp3EM"
  return 0
 }
 #******
@@ -95,23 +100,23 @@ udfGetIniSection() {
 #  SYNOPSIS
 #    udfReadIniSection <file> [<section>] [<varname>]
 #  DESCRIPTION
-#    Получить секцию конфигурационных данных <section> из <file>
-#    и выдать в виде строки полей, разделенных ';'.
-#    Каждое поле содержит данные в формате "<key>=<value>" согласно
-#    данных строки секции. Если строка не содержит знака "=", то
-#    оно записывается в виде "_<имя секции>_<инкремент>=<данные строки>"
+#    Получить секцию конфигурационных данных <section> из файла <file> и выдать
+#    результат в виде строки CSV, разделенных ';', каждое поле которой содержит
+#    данные в формате "<ключ>=<значение>" согласно данных строки секции.
+#    В случае если исходная строка не содержит ключ или ключ содержит пробел, то
+#    ключом становится выражение _zzz_bashlyk_line_<инкремент>, а всё содержимое
+#    строки - значением.
 #  INPUTS
 #    file    - имя файла конфигурации
 #    section - название секции конфигурации, при отсутствии этого аргумента 
 #              считываются данные до первого заголовка секции [<...>] данных 
 #              или до конца конфигурационного файла, если секций нет
-#    varname - идентификатор переменной (без "$ "). При его наличии результат в
-#              в виде разделенной символом ";" строки будет в него помещен.
-#              Поля этой строки содержат конфигурационные данные в формате 
-#              "<key>=<value>;..."
+#    varname - идентификатор переменной (без "$ "). При его наличии результат
+#              будет помещен в соответствующую переменную. При отсутствии такого
+#              идентификатора результат будет выдан на стандартный вывод
 #  OUTPUT
 #              При отсутствии аргумента <varname> результат будет выдан на
-#              стандартный вывод              
+#              стандартный вывод
 #  RETURN VALUE
 #     0  - Выполнено успешно
 #    255 - Ошибка: аргумент отсутствует или файл конфигурации не найден
@@ -137,12 +142,11 @@ udfReadIniSection() {
    s=$(echo $s | tr -d "'")
    k="$(echo ${s%%=*}|xargs)"
    v="$(echo ${s#*=}|xargs)"
-   if [ "$k" = "$v" ]; then
-     #k=_${sTag}_${i}
+   if [ "$k" = "$v" -o -n "$(echo "$k" | grep '.*[[:space:]+].*')" ]; then
      k=_zzz_bashlyk_ini_line_${i}
      i=$((i+1))
-   else
-    [ -z "$(echo "$k" | grep '.*[[:space:]+].*')" ] || continue
+#   else
+#    [ -z "$(echo "$k" | grep '.*[[:space:]+].*')" ] || continue
    fi
    csv9AT0Vgyp+="$k=$(udfQuoteIfNeeded $v);"
   fi
@@ -188,14 +192,15 @@ udfCsvOrder() {
 #
 # . bashlyk
 #
-udfAssembly() { 
- local $aKeys 
+udfAssembly() {
+ local $aKeys
  #
  $csv
  #
- udfShowVariable $aKeys | grep -v Variable | tr -d '\t' | sed -e "s/=\(.*[[:space:]]\+.*\)/=\"\1\"/" | tr '\n' ';' 
+ udfShowVariable $aKeys | grep -v Variable | tr -d '\t' \
+  | sed -e "s/=\(.*[[:space:]]\+.*\)/=\"\1\"/" | tr '\n' ';' | sed -e "s/;;/;/"
  #
- return 0 
+ return 0
 }
 #
 udfAssembly
@@ -211,8 +216,8 @@ _CsvOrder_EOF
 #  SYNOPSIS
 #    udfSetVarFromCsv <csv;> <keys> ...
 #  DESCRIPTION
-#    Инициализировать переменнные <keys> значениями соответствующих ключей пар
-#    "key=value" из CSV-строки <csv;>#    
+#    Инициализировать переменные <keys> значениями соответствующих ключей пар
+#    "key=value" из CSV-строки <csv;>
 #  INPUTS
 #    csv; - CSV-строка, разделённая ";", поля которой содержат данные вида 
 #          "key=value"
@@ -231,7 +236,8 @@ udfSetVarFromCsv() {
  csv=";$(udfCsvOrder "$1");"
  shift
  for k in $*; do
-  s1LXAboOd7DyIwoBI=$(echo $csv | grep -Po ";$k=.*?;" | tr -d ';')
+  #s1LXAboOd7DyIwoBI=$(echo $csv | grep -Po ";$k=.*?;" | tr -d ';')
+  s1LXAboOd7DyIwoBI=$(echo "$k=${csv#*;$k=}" | cut -f1 -d';')
   [ -n "$s1LXAboOd7DyIwoBI" ] && eval "$s1LXAboOd7DyIwoBI" 2>/dev/null
  done
  return 0
@@ -303,34 +309,53 @@ udfCsvKeys() {
  return 0
 }
 #******
+#****f* bashlyk/libini/udfCheckCsv
+#  SYNOPSIS
+#    udfCheckCsv <csv;> [<varname>]
+#  DESCRIPTION
+#    Нормализация CSV-строки <csv;>. Приведение к виду "ключ=значение" полей.
+#    В случае если поле не содержит ключа или ключ содержит пробел, то к полю 
+#    добавляется ключ вида _zzz_bashlyk_line_<инкремент>, всё содержимое поля
+#    становится значением.
+#    Результат выводится в стандартный вывод или в переменную, если имеется
+#    второй аргумент функции <varname>
+#  INPUTS
+#    csv;    - CSV-строка, разделённая ";"
+#    varname - идентификатор переменной (без "$ "). При его наличии результат 
+#              будет помещен в соответствующую переменную. При отсутствии такого
+#              идентификатора результат будет выдан на стандартный вывод
+#  OUTPUT
+#              разделенный символом ";" строка, в полях которого содержатся 
+#              данные в формате "<key>=<value>;..."
+#  RETURN VALUE
+#     0  - Выполнено успешно
+#    255 - Ошибка: аргумент отсутствует
+#  SOURCE
 udfCheckCsv() {
  [ -n "$1" ] || return 255
- unset csvixwIVbZN
- local s csv cIFS k v i csvixwIVbZN
+ local swRhg7E54 c0AsEJm98 kynnxDV76 vYYu45sZw iEOJ1F48r csvuKwhY5ay
  #
- csv="$1"
- cIFS=$IFS
+ c0AsEJm98=$IFS
  IFS=';'
- i=0
- csvixwIVbZN=''
+ iEOJ1F48r=0
+ csvuKwhY5ay=''
  #
- for s in $csv; do
-  s=$(echo $s | tr -d "'")
-  k="$(echo ${s%%=*}|xargs)"
-  v="$(echo ${s#*=}|xargs)"
-  [ -n "$k" ] || continue
-  if [ "$k" = "$v" ]; then
-   k=_zzz_bashlyk_ini_line_${i}
-   i=$((i+1))
-  else
-    [ -z "$(echo "$k" | grep '.*[[:space:]+].*')" ] || continue
-   fi
-  csvixwIVbZN+="$k=$(udfQuoteIfNeeded $v);"
+ for swRhg7E54 in $1; do
+  swRhg7E54=$(echo $swRhg7E54 | tr -d "'" | tr -d '"')
+  kynnxDV76="$(echo ${swRhg7E54%%=*}|xargs)"
+  vYYu45sZw="$(echo ${swRhg7E54#*=}|xargs)"
+  [ -n "$kynnxDV76" ] || continue
+  if [ "$kynnxDV76" = "$vYYu45sZw" -o -n "$(echo "$kynnxDV76" | grep '.*[[:space:]+].*')" ]; then
+   kynnxDV76=_zzz_bashlyk_ini_line_${iEOJ1F48r}
+   iEOJ1F48r=$((iEOJ1F48r+1))
+  fi
+  csvuKwhY5ay+="$kynnxDV76=$(udfQuoteIfNeeded $vYYu45sZw);"
  done
- IFS=$cIFS
- [ -n "$2" ] && eval 'export ${2}="${csvixwIVbZN}"' || echo "$csvixwIVbZN"
- return 0 
+ IFS=$c0AsEJm98
+ [ -n "$2" ] && eval 'export ${2}="${csvuKwhY5ay}"' || echo "$csvuKwhY5ay"
+ return 0
 }
+#******
 #****f* bashlyk/libini/udfIniWrite
 #  SYNOPSIS
 #    udfIniWrite <file> <csv;>
@@ -405,51 +430,4 @@ udfIniChange() {
  return 0
 }
 #******
-#****u* bashlyk/libini/udfLibIni
-#  SYNOPSIS
-#    udfLibIni
-# DESCRIPTION
-#   bashlyk INI library test unit
-#   Запуск проверочных операций модуля выполняется если только аргументы 
-#   командной строки cодержат строку вида "--bashlyk-test=[.*,]ini[,.*]",
-#   где * - ярлыки на другие тестируемые библиотеки
-#  SOURCE
-udfLibIni() {
- [ -z "$(echo "${_bashlyk_sArg}" | grep -E -e "--bashlyk-test=.*ini")" ] \
-  && return 0
- local b=true c ini=$$.testlib.ini fn s csv csv0 csv1 csv2 path
- local aLetter0=a,b,c,d,e bResult0=true iX0=1921 iY0=1080 sText0="foo bar"
- fn=$(mktemp -t "XXXXXXXX.${ini}" 2>/dev/null) && ini=$fn || ini=~/${ini}
- path=$(dirname ${ini})
- ini=$(basename ${ini})
- csv0=$(udfCheckCsv "aLetter=${aLetter0},f;bResult=false;iX=1920;iY=${iY0};sText=\"${sText0}\";$(uname -a);a,b,c,d")
- csvQ=$(udfCheckCsv "aLetter=${aLetter0};bResult=${bResult0};iX=${iX0};iY=${iY0};sText=\"${sText0}\";$(uname -a);a,b,c,d")
- printf "\n- libini.sh tests: "
- udfIniChange ${path}/${ini} "$csv0" "settings" && echo -n "." || { b=false; echo -n "?"; }
- csv='aLetter=a,b,c,d,e;iX=1921;bResult=true;$(uname -a)'
- udfIniChange ${path}/a.${ini} "$csv" "settings" && echo -n "." || { b=false; echo -n "?"; }
- udfGetIniSection ${path}/a.${ini} "settings" csv2 && echo -n "." || { b=false; echo -n "?"; }
- [ "$csvQ" = "$(udfCheckCsv "$csv2")" ] && echo -n "." || { b=false; echo -n "?"; }
- udfSetVarFromIni ${path}/a.${ini} "settings" aLetter bResult iX iY sText
- [ "$aLetter" = "$aLetter0" ] && echo -n "." || { b=false; echo -n "?"; }
- [ "$bResult" = "$bResult0" ] && echo -n "." || { b=false; echo -n "?"; }
- [ "$iX"      = "$iX0"      ] && echo -n "." || { b=false; echo -n "?"; }
- [ "$iY"      = "$iY0"      ] && echo -n "." || { b=false; echo -n "?"; }
- [ "$sText"   = "$sText0"   ] && echo -n "." || { b=false; echo -n "?"; }
- $b && echo "ok" || echo "fail"
- rm -f ${path}/a.${ini}
- rm -f ${path}/${ini}
-#
-# Проверка файла конфигурации с полным путем
-#
- echo "--"
- return 0
-}
-#******
-#****** bashlyk/libini/Main section
-# DESCRIPTION
-#   Running CNF library test unit if $_bashlyk_sArg ($*) contains
-#   substrings "--bashlyk-test=" and "cnf" - command for test using
-#  SOURCE
-udfLibIni
-#******
+

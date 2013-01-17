@@ -159,12 +159,13 @@ udfShowVariable() {
 #    udfIsNumber <number> [<tag>]
 #  DESCRIPTION
 #    Проверка аргумента на то, что он является натуральным числом
-#    Аргумент считается числом, если он содержит
+#    Аргумент считается числом, если он содержит цифры и может иметь в конце
+#    символ - признак порядка, например, k M G (kilo-, Mega-, Giga-)
 #  INPUTS
 #    number - проверяемое значение
 #    tag    - набор символов, один из которых можно применить
 #             после цифр для указания признака числа, например, 
-#             порядка
+#             порядка.
 #  RETURN VALUE
 #    0 - аргумент является натуральным числом
 #    1 - аргумент не является натуральным числом
@@ -178,6 +179,27 @@ udfIsNumber() {
  local s=''
  [ -n "$2" ] && s="[$2]?"
  case "$(echo "$1" | grep -E "^[[:digit:]]+${s}$")" in
+  '') return 1;;
+   *) return 0;;
+ esac
+}
+#******
+#****f* bashlyk/libstd/udfIsValidVariable
+#  SYNOPSIS
+#    udfIsVariable <arg>
+#  DESCRIPTION
+#    Проверка аргумента на то, что он может быть валидным идентификатором
+#    переменной 
+#  INPUTS
+#    arg - проверяемое значение
+#  RETURN VALUE
+#    0 - аргумент является валидным идентификатором
+#    1 - аргумент не является валидным идентификатором
+#    2 - аргумент не задан
+#  SOURCE
+udfIsValidVariable() {
+ [ -n "$1" ] || return 2
+ case "$(echo "$1" | grep -E '^[_a-zA-Z]+[_a-zA-Z0-9]+$')" in
   '') return 1;;
    *) return 0;;
  esac
@@ -332,9 +354,9 @@ udfMakeTemp() {
    s=$(tempfile $optDir $sPrefix $sSuffix) 
   ;;
   *)
-   udfThrow "$0: Cannot create temporary file object.."                                                                                 
-  ;;                                                                                                                      
- esac                                                                                                                        
+   udfThrow "$0: Cannot create temporary file object.."
+  ;;
+ esac
  [ -n "$sUser"  ] && chown $sUser  $s
  [ -n "$sGroup" ] && chgrp $sGroup $s
 
@@ -581,42 +603,5 @@ _ARGUMENTS() {
 _s0() {
  [ -n "$1" ] && _bashlyk_s0="$*" || echo ${_bashlyk_s0}
 }
-#******
-#****u* bashlyk/libstd/udfLibStd
-#  SYNOPSIS
-#    udfLibStd
-# DESCRIPTION
-#   bashlyk STD library test unit
-#   Запуск проверочных операций модуля выполняется если только аргументы 
-#   командной строки cодержат строку вида "--bashlyk-test=[.*,]std[,.*]",
-#   где * - ярлыки на другие тестируемые библиотеки
-#  SOURCE
-udfLibStd() {
- [ -z "$(echo "${_bashlyk_sArg}" | grep -E -e "--bashlyk-test=.*std")" ] \
-  && return 0
- local s b=1 s0='' s1="test" fnTmp
- printf "\n- libstd.sh tests: "
- fnTmp=/tmp/$$.$(date +%s).tmp
- {
-  udfIsNumber "$(date +%S)"      && echo -n '.' || { echo -n '?'; b=0; }
-  udfIsNumber "$(date +%S)k" kMG && echo -n '.' || { echo -n '?'; b=0; }
-  udfIsNumber "$(date +%S)M"     && { echo -n '?'; b=0; } || echo -n '.'
-  udfIsNumber "$(date +%b)G" kMG && { echo -n '?'; b=0; } || echo -n '.'
-  udfIsNumber "$(date +%b)"      && { echo -n '?'; b=0; } || echo -n '.'
- [ -n "$(udfShowVariable s1 | grep 's1=test')" ] && echo -n '.' || { echo -n '?'; b=0; }
-  udfOnEmptyVariable Warn s0     && { echo -n '?'; b=0; } || echo -n '.' 
-  udfOnEmptyVariable Warn s1     && echo -n '.' || { echo -n '?'; b=0; }
- } 2>/dev/null
- [ $b -eq 1 ] && echo 'ok.' || echo 'fail.'
- echo "--"
- return 0
-}
-#******
-#****** bashlyk/libstd/Main section
-# DESCRIPTION
-#   Running LOG library test unit if $_bashlyk_sArg ($*) contains
-#   substrings "--bashlyk-test=" and "std" - command for test using
-#  SOURCE
-udfLibStd
 #******
 
