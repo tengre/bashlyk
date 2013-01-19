@@ -32,8 +32,6 @@
 #  SOURCE
 : ${HOSTNAME:=$(hostname)}
 : ${DEBUGLEVEL:=0}
-: ${_bashlyk_bUseSyslog:=0}
-: ${_bashlyk_bNotUseLog:=}
 : ${_bashlyk_pathLog:=/tmp}
 : ${_bashlyk_s0:=$(basename $0)}
 : ${_bashlyk_sId:=$(basename $0 .sh)}
@@ -46,6 +44,7 @@
 : ${_bashlyk_emailRcpt:=postmaster}
 : ${_bashlyk_emailSubj:="${_bashlyk_sUser}@${HOSTNAME}::${_bashlyk_s0}"}
 : ${_bashlyk_fnLog:="${_bashlyk_pathLog}/${_bashlyk_s0}.log"}
+: ${_bashlyk_bUseSyslog:=0}
 : ${_bashlyk_bNotUseLog:=1}
 : ${_bashlyk_aRequiredCmd_log:="basename date echo hostname false printf logger mail mkfifo sleep tee true jobs ["}
 #******
@@ -121,85 +120,6 @@ udfLog() {
  else
   [ -n "$*" ] && udfLogger "$*"
  fi
-}
-#******
-#****f* bashlyk/liblog/udfEcho
-#  SYNOPSIS
-#    udfEcho [-] args
-#  DESCRIPTION
-#    Сборка сообщения из аргументов и стандартного ввода
-#  INPUTS
-#    -    - данные читаются из стандартного ввода
-#    args - строка для вывода. Если имеется в качестве первого аргумента
-#           "-", то эта строка выводится заголовком для данных
-#           из стандартного ввода
-#  OUTPUT
-#   Зависит от параметров вывода
-#  SOURCE
-udfEcho() {
- if [ "$1" = "-" ]; then
-  shift
-  [ -n "$1" ] && printf "%s\n----\n" "$*"
-  cat
- else
-  [ -n "$1" ] && echo $*
- fi
-}
-#******
-#****f* bashlyk/liblog/udfMail
-#  SYNOPSIS
-#    udfMail [[-] args]
-#  DESCRIPTION
-#    Передача сообщения по почте
-#  INPUTS
-#    -    - данные читаются из стандартного ввода
-#    args - строка для вывода. Если имеется в качестве первого аргумента
-#           "-", то эта строка выводится заголовком для данных
-#           из стандартного ввода
-#  SOURCE
-udfMail() {
- local fnTmp
- udfMakeTemp fnTmp
- udfEcho "$*" | tee -a $fnTmp
- cat $fnTmp | mail -e -s "${_bashlyk_emailSubj}" ${_bashlyk_emailRcpt}
- rm -f $fnTmp
-}
-#******
-#****f* bashlyk/liblog/udfWarn
-#  SYNOPSIS
-#    udfWarn [-] args
-#  DESCRIPTION
-#    Вывод предупреждающего сообщения. Если терминал отсутствует, то
-#    сообщение передается по почте.
-#  INPUTS
-#    -    - данные читаются из стандартного ввода
-#    args - строка для вывода. Если имеется в качестве первого аргумента
-#           "-", то строка выводится заголовком для данных
-#           из стандартного ввода
-#  OUTPUT
-#   Зависит от параметров вывода
-#  SOURCE
-udfWarn() {
- [ $_bashlyk_bNotUseLog -ne 0 ] && udfEcho $* || udfMail $*
-}
-#******
-#****f* bashlyk/liblog/udfThrow
-#  SYNOPSIS
-#    udfThrow [-] args
-#  DESCRIPTION
-#    Вывод аварийного сообщения с завершением работы. Если терминал отсутствует,
-#    то сообщение передается по почте.
-#  INPUTS
-#    -    - данные читаются из стандартного ввода
-#    args - строка для вывода. Если имеется в качестве первого аргумента
-#           "-", то строка выводится заголовком для данных
-#           из стандартного ввода
-#  OUTPUT
-#   Зависит от параметров вывода
-#  SOURCE
-udfThrow() {
- udfWarn $*
- exit 255
 }
 #******
 #****f* bashlyk/liblog/udfIsInteract
@@ -405,88 +325,4 @@ udfDebug() {
  [ -n "$*" ] && echo "$*"
  return 0
 }
-#******
-#****u* bashlyk/liblog/udfLibLog
-#  SYNOPSIS
-#    udfLibLog
-# DESCRIPTION
-#   bashlyk LOG library test unit
-#   Запуск проверочных операций модуля выполняется если только аргументы 
-#   командной строки cодержат строку вида "--bashlyk-test=[.*,]log[,.*]",
-#   где * - ярлыки на другие тестируемые библиотеки
-#  SOURCE
-udfLibLog() {
- [ -z "$(echo "${_bashlyk_sArg}" | grep -E -e "--bashlyk-test=.*log")" ] \
-  && return 0
- local s pathLog fnLog emailRcpt emailSubj b=1 sS
- printf "\n- liblog.sh tests:\n\n"
- : ${_bashlyk_bInteract:=1}
- : ${_bashlyk_bTerminal:=1}
- : ${_bashlyk_bNotUseLog:=1}
- echo -n "Global variable testing: "
- for s in                \
-  "$_bashlyk_bUseSyslog" \
-  "$_bashlyk_pathLog"    \
-  "$_bashlyk_fnLog"      \
-  "$_bashlyk_emailRcpt"  \
-  "$_bashlyk_emailSubj"  \
-  "$_bashlyk_bTerminal"  \
-  "$_bashlyk_pathDat"    \
-  "$_bashlyk_bInteract"
-  do
-   [ -n "$s" ] && echo -n '.' || { echo -n '?'; b=0; }
- done
- [ $b -eq 1 ] && echo 'ok.' || echo 'fail.'
- mkdir -p ${_bashlyk_pathDat}
- udfAddPath2Clean ${_bashlyk_pathDat} 2>/dev/null
- echo -n "function testing on control terminal: "
- _bashlyk_bTerminal=1
- _bashlyk_bNotUseLog=1
- b=1
- for s in udfLog udfUptime udfFinally udfWarn; do
-  sS=$($s testing liblog $s)
-  [ -n "$(echo "$sS" | grep "testing liblog $s")" ] && echo -n '.' || { echo -n '?'; b=0; }
- done
-
- [ $b -eq 1 ] && echo 'ok.' || echo 'fail.'
- echo "test without control terminal (cat $_bashlyk_fnLog ): "
- _bashlyk_bTerminal=0
- _bashlyk_bNotUseLog=0
- b=1
- udfSetLog 2>/dev/null && echo -n '.' || { echo -n '?'; b=0; }
- [ $b -eq 1 ] && {
-  echo 'ok.'
-  for s in udfLog udfUptime udfFinally udfWarn; do
-   $s testing liblog $s; echo "return code ... $?"
-  done
- } || echo 'fail.'
- _bashlyk_bTerminal=0
- _bashlyk_bUseSyslog=1
-  echo "--- test without control terminal and syslog using: ---"
- for s in udfLog udfUptime udfFinally udfIsTerminal udfIsInteract udfWarn; do
-  echo "--- check $s: ---"
-  $s testing liblog $s; echo "return code ... $?"
- done
- _bashlyk_bTerminal=1
- for s in                             \
-  bUseSyslog=$_bashlyk_bUseSyslog     \
-  pathLog=$_bashlyk_pathLog           \
-  fnLog=$_bashlyk_fnLog               \
-  emailRcpt=$_bashlyk_emailRcpt       \
-  emailSubj=$_bashlyk_emailSubj       \
-  bTerminal=$_bashlyk_bTerminal       \
-  bInteract=$_bashlyk_bInteract
-  do
-   echo "$s"
- done
- echo "--"
- return 0
-}
-#******
-#****** bashlyk/liblog/Main section
-# DESCRIPTION
-#   Running LOG library test unit if $_bashlyk_sArg ($*) contains
-#   substrings "--bashlyk-test=" and "log" - command for test using
-#  SOURCE
-udfLibLog
 #******

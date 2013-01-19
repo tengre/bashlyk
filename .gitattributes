@@ -21,5 +21,11 @@ src/libpid.sh -text
 src/libppp.sh -text
 src/libstd.sh -text
 src/libxml.sh -text
+src/testcnf.sh -text
 src/testini.sh -text
+src/testlog.sh -text
+src/testmd5.sh -text
+src/testopt.sh -text
+src/testpid.sh -text
 src/teststd.sh -text
+src/testxml.sh -text

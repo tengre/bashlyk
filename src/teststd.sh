@@ -37,11 +37,12 @@ udfTestStd() {
   udfIsValidVariable "k$(date +%S)" && echo -n '.' || { echo -n '?'; b=0; }
   udfIsValidVariable "_$(date +%S)" && echo -n '.' || { echo -n '?'; b=0; }
   udfIsValidVariable "$(date +%S)M" && { echo -n '?'; b=0; } || echo -n '.'
- [ -n "$(udfShowVariable s1 | grep 's1=test')" ] && echo -n '.' || { echo -n '?'; b=0; }
-  udfOnEmptyVariable Warn s0     && { echo -n '?'; b=0; } || echo -n '.' 
-  udfOnEmptyVariable Warn s1     && echo -n '.' || { echo -n '?'; b=0; }
+  [ -n "$(udfShowVariable s1 | grep 's1=test')" ] \
+   && echo -n '.' || { echo -n '?'; b=0; }
+  udfOnEmptyVariable Warn s0 >/dev/null && { echo -n '?'; b=0; } || echo -n '.'
+  udfOnEmptyVariable Warn s1 >/dev/null && echo -n '.' || { echo -n '?'; b=0; }
  } 2>/dev/null
- [ $b -eq 1 ] && echo 'ok.' || echo 'fail.'
+ [ $b -eq 1 ] && echo 'ok' || echo 'fail.'
  echo "--"
  return 0
 }

@@ -22,6 +22,7 @@
 #   Здесь указываются модули, код которых используется данной библиотекой
 # SOURCE
 : ${_bashlyk_pathLib:=/usr/share/bashlyk}
+[ -s ./libstd.sh ] && . ./libstd.sh
 [ -s "${_bashlyk_pathLib}/libstd.sh" ] && . "${_bashlyk_pathLib}/libstd.sh"
 #******
 #****v*  bashlyk/libini/Init section
@@ -67,32 +68,44 @@
 udfGetIniSection() {
  [ -n "$1" ] || return 255
  #
- local aini csvIni csvResultm41dp3EM ini pathIni s sTag
+ local bashlyk_aini_rWrBeelW bashlyk_csvIni_rWrBeelW bashlyk_csvResult_rWrBeelW
+ local bashlyk_ini_rWrBeelW bashlyk_pathIni_rWrBeelW bashlyk_s_rWrBeelW
+ local bashlyk_sTag_rWrBeelW
  #
- ini=''
- pathIni="$_bashlyk_pathIni"
+ bashlyk_ini_rWrBeelW=''
+ bashlyk_pathIni_rWrBeelW="$_bashlyk_pathIni"
  #
- [ "$1"  = "${1##*/}" -a -f ${pathIni}/$1 ] || pathIni=
- [ "$1"  = "${1##*/}" -a -f $1 ] && pathIni=$(pwd)
- [ "$1" != "${1##*/}" -a -f $1 ] && pathIni=$(dirname $1)
- [ -n "$2" ] && sTag="$2"
+ [ "$1"  = "${1##*/}" -a -f ${bashlyk_pathIni_rWrBeelW}/$1 ] \
+  || bashlyk_pathIni_rWrBeelW=
+ [ "$1"  = "${1##*/}" -a -f $1 ] && bashlyk_pathIni_rWrBeelW=$(pwd)
+ [ "$1" != "${1##*/}" -a -f $1 ] && bashlyk_pathIni_rWrBeelW=$(dirname $1)
+ [ -n "$2" ] && bashlyk_sTag_rWrBeelW="$2"
  #
- if [ -z "$pathIni" ]; then
+ if [ -z "$bashlyk_pathIni_rWrBeelW" ]; then
   [ -f "/etc${_bashlyk_pathPrefix}/$1" ] \
-   && pathIni="/etc${_bashlyk_pathPrefix}" || return 1
+   && bashlyk_pathIni_rWrBeelW="/etc${_bashlyk_pathPrefix}" || return 1
  fi
  #
- aini=$(echo "${1##*/}" | awk 'BEGIN{FS="."} {for (i=NF;i>=1;i--) printf $i" "}')
- for s in $aini; do
-  [ -n "$s" ] || continue
-  [ -n "$ini" ] && ini="${s}.${ini}" || ini="$s"
-  [ -s "${pathIni}/${ini}" ] \
-   && csvIni+=";$(udfReadIniSection "${pathIni}/${ini}" "$sTag");"
+ bashlyk_aini_rWrBeelW=$(echo "${1##*/}" |\
+  awk 'BEGIN{FS="."} {for (i=NF;i>=1;i--) printf $i" "}')
+ for bashlyk_s_rWrBeelW in $bashlyk_aini_rWrBeelW; do
+  [ -n "$bashlyk_s_rWrBeelW" ] || continue
+  [ -n "$bashlyk_ini_rWrBeelW" ] \
+   && bashlyk_ini_rWrBeelW="${bashlyk_s_rWrBeelW}.${bashlyk_ini_rWrBeelW}" \
+   || bashlyk_ini_rWrBeelW="$bashlyk_s_rWrBeelW"
+  [ -s "${bashlyk_pathIni_rWrBeelW}/${bashlyk_ini_rWrBeelW}" ] \
+   && bashlyk_csvIni_rWrBeelW+=";$(udfReadIniSection \
+    "${bashlyk_pathIni_rWrBeelW}/${bashlyk_ini_rWrBeelW}" \
+    "$bashlyk_sTag_rWrBeelW");"
  done
- udfCsvOrder "$csvIni" csvResultm41dp3EM
- [ -n "$3" ] \
-  && eval 'export ${3}="${csvResultm41dp3EM}"' \
-  || echo "$csvResultm41dp3EM"
+ udfCsvOrder "$bashlyk_csvIni_rWrBeelW" bashlyk_csvResult_rWrBeelW
+ if [ -n "$3" ]; then
+  udfIsValidVariable "$3" \
+   || udfThrow "Error: required valid variable name \"$3\""
+  eval 'export ${3}="${bashlyk_csvResult_rWrBeelW}"'
+ else
+  echo "$bashlyk_csvResult_rWrBeelW"
+ fi
  return 0
 }
 #******
@@ -123,36 +136,49 @@ udfGetIniSection() {
 #  SOURCE
 udfReadIniSection() {
  [ -n "$1" -a -f "$1" ] || return 255
- unset csv9AT0Vgyp
- local ini="$1" csv9AT0Vgyp b bOpen=false k v s sTag i=0
- [ -n "$2" ] && sTag="$2" || bOpen=true
- while read s; do
-  ( echo $s | grep "^#\|^$" )>/dev/null && continue
-  b=$(echo $s | grep -oE '\[.*\]' | tr -d '[]' | xargs)
-  if [ -n "$b" ]; then
-   $bOpen && break
-   if [ "$b" = "$sTag" ]; then
-    csv9AT0Vgyp=''
-    bOpen=true
+ local bashlyk_ini_yLn0ZVLi bashlyk_csvResult_yLn0ZVLi bashlyk_b_yLn0ZVLi
+ local bashlyk_bOpen_yLn0ZVLi bashlyk_k_yLn0ZVLi bashlyk_v_yLn0ZVLi
+ local bashlyk_s_yLn0ZVLi bashlyk_sTag_yLn0ZVLi bashlyk_i_yLn0ZVLi
+ #
+ bashlyk_ini_yLn0ZVLi="$1"
+ bashlyk_bOpen_yLn0ZVLi=false
+ bashlyk_i_yLn0ZVLi=0
+ #
+ [ -n "$2" ] && bashlyk_sTag_yLn0ZVLi="$2" || bashlyk_bOpen_yLn0ZVLi=true
+ while read bashlyk_s_yLn0ZVLi; do
+  ( echo $bashlyk_s_yLn0ZVLi | grep "^#\|^$" )>/dev/null && continue
+  bashlyk_b_yLn0ZVLi=$(echo $bashlyk_s_yLn0ZVLi | grep -oE '\[.*\]' \
+   | tr -d '[]' | xargs)
+  if [ -n "$bashlyk_b_yLn0ZVLi" ]; then
+   $bashlyk_bOpen_yLn0ZVLi && break
+   if [ "$bashlyk_b_yLn0ZVLi" = "$bashlyk_sTag_yLn0ZVLi" ]; then
+    bashlyk_csvResult_yLn0ZVLi=''
+    bashlyk_bOpen_yLn0ZVLi=true
    else
     continue
    fi
   else
-   $bOpen || continue
-   s=$(echo $s | tr -d "'")
-   k="$(echo ${s%%=*}|xargs)"
-   v="$(echo ${s#*=}|xargs)"
-   if [ "$k" = "$v" -o -n "$(echo "$k" | grep '.*[[:space:]+].*')" ]; then
-     k=_zzz_bashlyk_ini_line_${i}
-     i=$((i+1))
-#   else
-#    [ -z "$(echo "$k" | grep '.*[[:space:]+].*')" ] || continue
+   $bashlyk_bOpen_yLn0ZVLi || continue
+   bashlyk_s_yLn0ZVLi=$(echo $bashlyk_s_yLn0ZVLi | tr -d "'")
+   bashlyk_k_yLn0ZVLi="$(echo ${bashlyk_s_yLn0ZVLi%%=*}|xargs)"
+   bashlyk_v_yLn0ZVLi="$(echo ${bashlyk_s_yLn0ZVLi#*=}|xargs)"
+   if [ "$bashlyk_k_yLn0ZVLi" = "$bashlyk_v_yLn0ZVLi" \
+    -o -n "$(echo "$bashlyk_k_yLn0ZVLi" | grep '.*[[:space:]+].*')" ]; then
+    bashlyk_k_yLn0ZVLi=_zzz_bashlyk_ini_line_${bashlyk_i_yLn0ZVLi}
+    bashlyk_i_yLn0ZVLi=$((bashlyk_i_yLn0ZVLi+1))
    fi
-   csv9AT0Vgyp+="$k=$(udfQuoteIfNeeded $v);"
+   bashlyk_csvResult_yLn0ZVLi+="$bashlyk_k_yLn0ZVLi=$(udfQuoteIfNeeded \
+    $bashlyk_v_yLn0ZVLi);"
   fi
- done < $ini
- $bOpen || csv9AT0Vgyp=''
- [ -n "$3" ] && eval 'export ${3}="${csv9AT0Vgyp}"' || echo "$csv9AT0Vgyp"
+ done < $bashlyk_ini_yLn0ZVLi
+ $bashlyk_bOpen_yLn0ZVLi || bashlyk_csvResult_yLn0ZVLi=''
+ if [ -n "$3" ]; then
+  udfIsValidVariable "$3" \
+   || udfThrow "Error: required valid variable name \"$3\""
+  eval 'export ${3}="${bashlyk_csvResult_yLn0ZVLi}"'
+ else
+  echo "$bashlyk_csvResult_yLn0ZVLi"
+ fi
  return 0
 }
 #******
@@ -178,26 +204,27 @@ udfReadIniSection() {
 #  SOURCE
 udfCsvOrder() {
  [ -n "$1" ] || return 255
- unset csvjzUfQLA9
- local fnExec aKeys csv csvjzUfQLA9
+ local bashlyk_fnExec_YAogTAX2 bashlyk_aKeys_YAogTAX2 bashlyk_csv_YAogTAX2
+ local bashlyk_csvResult_YAogTAX2
  #
- csv="$(udfCheckCsv "$1")"
- aKeys="$(udfCsvKeys "$csv" | tr ' ' '\n' | sort -u | uniq -u | xargs)"
- csv=$(echo "$csv" | tr ';' '\n')
+ bashlyk_csv_YAogTAX2="$(udfCheckCsv "$1")"
+ bashlyk_aKeys_YAogTAX2="$(udfCsvKeys "$bashlyk_csv_YAogTAX2" | tr ' ' '\n' \
+  | sort -u | uniq -u | xargs)"
+ bashlyk_csv_YAogTAX2=$(echo "$bashlyk_csv_YAogTAX2" | tr ';' '\n')
  #
- udfMakeTemp fnExec
+ udfMakeTemp bashlyk_fnExec_YAogTAX2
  #
- cat << _CsvOrder_EOF > $fnExec
+ cat << _CsvOrder_EOF > $bashlyk_fnExec_YAogTAX2
 #!/bin/bash
 #
 # . bashlyk
 #
 udfAssembly() {
- local $aKeys
+ local $bashlyk_aKeys_YAogTAX2
  #
- $csv
+ $bashlyk_csv_YAogTAX2
  #
- udfShowVariable $aKeys | grep -v Variable | tr -d '\t' \
+ udfShowVariable $bashlyk_aKeys_YAogTAX2 | grep -v Variable | tr -d '\t' \
   | sed -e "s/=\(.*[[:space:]]\+.*\)/=\"\1\"/" | tr '\n' ';' | sed -e "s/;;/;/"
  #
  return 0
@@ -206,9 +233,15 @@ udfAssembly() {
 udfAssembly
 _CsvOrder_EOF
 
- csvjzUfQLA9=$(. $fnExec 2>/dev/null)
- rm -f $fnExec
- [ -n "$2" ] && eval 'export ${2}="${csvjzUfQLA9}"' || echo "$csvjzUfQLA9"
+ bashlyk_csvResult_YAogTAX2=$(. $bashlyk_fnExec_YAogTAX2 2>/dev/null)
+ rm -f $bashlyk_fnExec_YAogTAX2
+ if [ -n "$2" ]; then
+  udfIsValidVariable "$2" \
+  || udfThrow "Error: required valid variable name \"$2\""
+  eval 'export ${2}="${bashlyk_csvResult_YAogTAX2}"'
+ else
+  echo "$bashlyk_csvResult_YAogTAX2"
+ fi
  return 0
 }
 #******
@@ -295,17 +328,23 @@ udfSetVarFromIni() {
 #  SOURCE
 udfCsvKeys() {
  [ -n "$1" ] || return 255
- unset csv8LayYbbT
- local cIFS csv csv8LayYbbT s
+ local bashlyk_cIFS_xWuzbRzM bashlyk_csv_xWuzbRzM bashlyk_csvResult_xWuzbRzM
+ local bashlyk_s_xWuzbRzM
  #
- csv="$1"
- cIFS=$IFS
+ bashlyk_csv_xWuzbRzM="$1"
+ bashlyk_cIFS_xWuzbRzM=$IFS
  IFS=';'
- for s in $csv; do
-  csv8LayYbbT+="${s%%=*} "
+ for bashlyk_s_xWuzbRzM in $bashlyk_csv_xWuzbRzM; do
+  bashlyk_csvResult_xWuzbRzM+="${bashlyk_s_xWuzbRzM%%=*} "
  done
- IFS=$cIFS
- [ -n "$2" ] && eval 'export ${2}="${csv8LayYbbT}"' || echo "$csv8LayYbbT"
+ IFS=$bashlyk_cIFS_xWuzbRzM
+ if [ -n "$2" ];then
+  udfIsValidVariable "$2" \
+   || udfThrow "Error: required valid variable name \"$2\""
+  eval 'export ${2}="${bashlyk_csvResult_xWuzbRzM}"'
+ else
+  echo "$bashlyk_csvResult_xWuzbRzM"
+ fi
  return 0
 }
 #******
@@ -333,26 +372,35 @@ udfCsvKeys() {
 #  SOURCE
 udfCheckCsv() {
  [ -n "$1" ] || return 255
- local swRhg7E54 c0AsEJm98 kynnxDV76 vYYu45sZw iEOJ1F48r csvuKwhY5ay
+ local bashlyk_s_Q1eiphgO bashlyk_cIFS_Q1eiphgO bashlyk_k_Q1eiphgO
+ local bashlyk_v_Q1eiphgO bashlyk_i_Q1eiphgO bashlyk_csvResult_Q1eiphgO
  #
- c0AsEJm98=$IFS
+ bashlyk_cIFS_Q1eiphgO=$IFS
  IFS=';'
- iEOJ1F48r=0
- csvuKwhY5ay=''
+ bashlyk_i_Q1eiphgO=0
+ bashlyk_csvResult_Q1eiphgO=''
  #
- for swRhg7E54 in $1; do
-  swRhg7E54=$(echo $swRhg7E54 | tr -d "'" | tr -d '"')
-  kynnxDV76="$(echo ${swRhg7E54%%=*}|xargs)"
-  vYYu45sZw="$(echo ${swRhg7E54#*=}|xargs)"
-  [ -n "$kynnxDV76" ] || continue
-  if [ "$kynnxDV76" = "$vYYu45sZw" -o -n "$(echo "$kynnxDV76" | grep '.*[[:space:]+].*')" ]; then
-   kynnxDV76=_zzz_bashlyk_ini_line_${iEOJ1F48r}
-   iEOJ1F48r=$((iEOJ1F48r+1))
+ for bashlyk_s_Q1eiphgO in $1; do
+  bashlyk_s_Q1eiphgO=$(echo $bashlyk_s_Q1eiphgO | tr -d "'" | tr -d '"')
+  bashlyk_k_Q1eiphgO="$(echo ${bashlyk_s_Q1eiphgO%%=*}|xargs)"
+  bashlyk_v_Q1eiphgO="$(echo ${bashlyk_s_Q1eiphgO#*=}|xargs)"
+  [ -n "$bashlyk_k_Q1eiphgO" ] || continue
+  if [ "$bashlyk_k_Q1eiphgO" = "$bashlyk_v_Q1eiphgO" \
+   -o -n "$(echo "$bashlyk_k_Q1eiphgO" | grep '.*[[:space:]+].*')" ]; then
+   bashlyk_k_Q1eiphgO=_zzz_bashlyk_ini_line_${bashlyk_i_Q1eiphgO}
+   bashlyk_i_Q1eiphgO=$((bashlyk_i_Q1eiphgO+1))
   fi
-  csvuKwhY5ay+="$kynnxDV76=$(udfQuoteIfNeeded $vYYu45sZw);"
+  bashlyk_csvResult_Q1eiphgO+="$bashlyk_k_Q1eiphgO=$(udfQuoteIfNeeded \
+   $bashlyk_v_Q1eiphgO);"
  done
- IFS=$c0AsEJm98
- [ -n "$2" ] && eval 'export ${2}="${csvuKwhY5ay}"' || echo "$csvuKwhY5ay"
+ IFS=$bashlyk_cIFS_Q1eiphgO
+ if [ -n "$2" ]; then
+  udfIsValidVariable "$2" \
+   || udfThrow "Error: required valid variable name \"$2\""
+  eval 'export ${2}="${bashlyk_csvResult_Q1eiphgO}"'
+ else
+  echo "$bashlyk_csvResult_Q1eiphgO"
+ fi
  return 0
 }
 #******
@@ -382,7 +430,9 @@ udfIniWrite() {
  csv="$2"
  #
  [ -s "$ini" ] && mv -f "$ini" "${ini}.bak"
- echo "$csv" | sed -e "s/[;]\+/;/g" -e "s/\[/;\[/g" | tr ';' '\n' | sed -e "s/\(.*\)=/\t\1\t=\t/g" -e "s/_zzz_bashlyk_ini_line_.*\t=\t//g" | tr -d '"' > "$ini"
+ echo "$csv" | sed -e "s/[;]\+/;/g" -e "s/\[/;\[/g" | tr ';' '\n' \
+  | sed -e "s/\(.*\)=/\t\1\t=\t/g" -e "s/_zzz_bashlyk_ini_line_.*\t=\t//g" \
+  | tr -d '"' > "$ini"
  #
  return 0
 }

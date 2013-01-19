@@ -33,6 +33,11 @@
 : ${_bashlyk_ajobClean:=}
 : ${_bashlyk_apidClean:=}
 : ${_bashlyk_pidLogSock:=}
+: ${_bashlyk_sUser:=$USER}
+: ${HOSTNAME:=$(hostname)}
+: ${_bashlyk_bNotUseLog:=1}
+: ${_bashlyk_emailRcpt:=postmaster}
+: ${_bashlyk_emailSubj:="${_bashlyk_sUser}@${HOSTNAME}::${_bashlyk_s0}"}
 : ${_bashlyk_aRequiredCmd_opt:="echo getopt grep mktemp tr sed umask ["}
 #******
 #****f* bashlyk/libstd/udfBaseId
@@ -59,6 +64,85 @@ udfBaseId() {
 #  SOURCE
 udfDate() {
  date "+%b %d %H:%M:%S $*"
+}
+#******
+#****f* bashlyk/libstd/udfEcho
+#  SYNOPSIS
+#    udfEcho [-] args
+#  DESCRIPTION
+#    Сборка сообщения из аргументов и стандартного ввода
+#  INPUTS
+#    -    - данные читаются из стандартного ввода
+#    args - строка для вывода. Если имеется в качестве первого аргумента
+#           "-", то эта строка выводится заголовком для данных
+#           из стандартного ввода
+#  OUTPUT
+#   Зависит от параметров вывода
+#  SOURCE
+udfEcho() {
+ if [ "$1" = "-" ]; then
+  shift
+  [ -n "$1" ] && printf "%s\n----\n" "$*"
+  cat
+ else
+  [ -n "$1" ] && echo $*
+ fi
+}
+#******
+#****f* bashlyk/libstd/udfMail
+#  SYNOPSIS
+#    udfMail [[-] args]
+#  DESCRIPTION
+#    Передача сообщения по почте
+#  INPUTS
+#    -    - данные читаются из стандартного ввода
+#    args - строка для вывода. Если имеется в качестве первого аргумента
+#           "-", то эта строка выводится заголовком для данных
+#           из стандартного ввода
+#  SOURCE
+udfMail() {
+ local fnTmp
+ udfMakeTemp fnTmp
+ udfEcho "$*" | tee -a $fnTmp
+ cat $fnTmp | mail -e -s "${_bashlyk_emailSubj}" ${_bashlyk_emailRcpt}
+ rm -f $fnTmp
+}
+#******
+#****f* bashlyk/libstd/udfWarn
+#  SYNOPSIS
+#    udfWarn [-] args
+#  DESCRIPTION
+#    Вывод предупреждающего сообщения. Если терминал отсутствует, то
+#    сообщение передается по почте.
+#  INPUTS
+#    -    - данные читаются из стандартного ввода
+#    args - строка для вывода. Если имеется в качестве первого аргумента
+#           "-", то строка выводится заголовком для данных
+#           из стандартного ввода
+#  OUTPUT
+#   Зависит от параметров вывода
+#  SOURCE
+udfWarn() {
+ [ $_bashlyk_bNotUseLog -ne 0 ] && udfEcho $* || udfMail $*
+}
+#******
+#****f* bashlyk/libstd/udfThrow
+#  SYNOPSIS
+#    udfThrow [-] args
+#  DESCRIPTION
+#    Вывод аварийного сообщения с завершением работы. Если терминал отсутствует,
+#    то сообщение передается по почте.
+#  INPUTS
+#    -    - данные читаются из стандартного ввода
+#    args - строка для вывода. Если имеется в качестве первого аргумента
+#           "-", то строка выводится заголовком для данных
+#           из стандартного ввода
+#  OUTPUT
+#   Зависит от параметров вывода
+#  SOURCE
+udfThrow() {
+ udfWarn $*
+ exit 255
 }
 #******
 #****f* bashlyk/libstd/udfOnEmptyVariable
@@ -275,7 +359,7 @@ udfAlias2WSpace() {
 #    Создание временного файла или каталога
 #  INPUTS
 #    varname=[<varid>] - идентификатор переменной для возврата результата, если
-#                        аргумент не именной, то должен быть всегда первый 
+#                        аргумент не именной, то должен быть всегда первый
 #    path=<path>       - каталог, в котором будут создаваться временные объекты
 #    prefix=<prefix>   - префикс имени временного объекта
 #    suffix=<suffix>   - суффикс имени временного объекта
@@ -283,7 +367,7 @@ udfAlias2WSpace() {
 #    owner=<owner>     - владелец временного объекта
 #    group=<group>     - группа временного объекта
 #    type=file|dir     - тип объекта: файл или каталог
-#    keep=true|false   - удалять/не удалять временные объекты после завершения 
+#    keep=true|false   - удалять/не удалять временные объекты после завершения
 #                        сценария (удалять по умолчанию)
 #  OUTPUT
 #
@@ -295,84 +379,113 @@ udfAlias2WSpace() {
 #
 #  SOURCE
 udfMakeTemp() {
- unset bashlyk_JtiMe1FiQYcdjOf1_fo
- local bashlyk_JtiMe1FiQYcdjOf1_fo optDir bNoKeep=true s sVar sCreateMode=direct 
- local path sPrefix sSuffix octMode sUser sGroup
+ local bashlyk_foResult_ioAUaE5R bashlyk_optDir_ioAUaE5R bashlyk_s_ioAUaE5R
+ local bashlyk_bNoKeep_ioAUaE5R bashlyk_sVar_ioAUaE5R bashlyk_sGroup_ioAUaE5R
+ local bashlyk_sCreateMode_ioAUaE5R bashlyk_path_ioAUaE5R bashlyk_sUser_ioAUaE5R
+ local bashlyk_sPrefix_ioAUaE5R bashlyk_sSuffix_ioAUaE5R bashlyk_rc_ioAUaE5R
+ local bashlyk_octMode_ioAUaE5R
  #
- for s in $*; do
-  case "$s" in 
-     path=*) path=${s#*=};;
-   prefix=*) sPrefix=${s#*=};;
-   suffix=*) sSuffix=${s#*=};;
-     mode=*) octMode=${s#*=};;
-    type=d*) optDir='-d';;
-    type=f*) optDir='';;
-     user=*) sUser=${s#*=};;
-    group=*) sGroup=${s#*=};;
-    keep=t*) bNoKeep=false;;
-    keep=f*) bNoKeep=true;;
-  varname=*) sVar=${s#*=};;
+ bashlyk_bNoKeep_ioAUaE5R=true
+ bashlyk_sCreateMode_ioAUaE5R=direct
+ #
+ for bashlyk_s_ioAUaE5R in $*; do
+  case "$bashlyk_s_ioAUaE5R" in
+     path=*) bashlyk_path_ioAUaE5R=${bashlyk_s_ioAUaE5R#*=};;
+   prefix=*) bashlyk_sPrefix_ioAUaE5R=${bashlyk_s_ioAUaE5R#*=};;
+   suffix=*) bashlyk_sSuffix_ioAUaE5R=${bashlyk_s_ioAUaE5R#*=};;
+     mode=*) bashlyk_octMode_ioAUaE5R=${bashlyk_s_ioAUaE5R#*=};;
+    type=d*) bashlyk_optDir_ioAUaE5R='-d';;
+    type=f*) bashlyk_optDir_ioAUaE5R='';;
+     user=*) bashlyk_sUser_ioAUaE5R=${bashlyk_s_ioAUaE5R#*=};;
+    group=*) bashlyk_sGroup_ioAUaE5R=${bashlyk_s_ioAUaE5R#*=};;
+    keep=t*) bashlyk_bNoKeep_ioAUaE5R=false;;
+    keep=f*) bashlyk_bNoKeep_ioAUaE5R=true;;
+  varname=*) bashlyk_sVar_ioAUaE5R=${bashlyk_s_ioAUaE5R#*=};;
           *)
-            sVar="$1"          
-            local rc
+            bashlyk_sVar_ioAUaE5R="$1"
             udfIsNumber "$2"
-            rc=$?
-            if [ -z "$3" -a -n "$2" -a $rc -eq 0 ]; then 
+            bashlyk_rc_ioAUaE5R=$?
+            if [ -z "$3" -a -n "$2" -a $bashlyk_rc_ioAUaE5R -eq 0 ]; then
              # oldstyle
-             octMode="$2"
-             sVar=''
-             sPrefix="$1"
+             bashlyk_octMode_ioAUaE5R="$2"
+             bashlyk_sVar_ioAUaE5R=''
+             bashlyk_sPrefix_ioAUaE5R="$1"
             fi
           ;;
   esac
  done
 
- [ -n "$sVar" ] || bNoKeep=false
- 
- if [ -f "$(which mktemp)" ]; then
-  sCreateMode=mktemp
- elif [ -f "$(which tempfile)" ]; then
-  [ -z "$optDir" ] && sCreateMode=tempfile || sCreateMode=direct
+ if [ -n "$bashlyk_sVar_ioAUaE5R" ]; then
+  udfIsValidVariable "$bashlyk_sVar_ioAUaE5R" \
+   || udfThrow "Error: required valid variable name \"$bashlyk_sVar_ioAUaE5R\""
+ else
+  bashlyk_bNoKeep_ioAUaE5R=false
  fi
- 
- case "$sCreateMode" in
+
+ if [ -f "$(which mktemp)" ]; then
+  bashlyk_sCreateMode_ioAUaE5R=mktemp
+ elif [ -f "$(which tempfile)" ]; then
+  [ -z "$bashlyk_optDir_ioAUaE5R" ] \
+   && bashlyk_sCreateMode_ioAUaE5R=tempfile \
+   || bashlyk_sCreateMode_ioAUaE5R=direct
+ fi
+
+ case "$bashlyk_sCreateMode_ioAUaE5R" in
     direct)
-   [ -n "$path"    ] && s="${path}/" || s="/tmp/"
-   s+="${sPrefix}${$}${sSuffix}"
-   [ -n "$optDir"  ] && mkdir -p $s || touch $s
-   [ -n "$octMode" ] && chmod $octMode $s
+   [ -n "$bashlyk_path_ioAUaE5R"    ] \
+    && bashlyk_s_ioAUaE5R="${bashlyk_path_ioAUaE5R}/" \
+    || bashlyk_s_ioAUaE5R="/tmp/"
+   bashlyk_s_ioAUaE5R+="${bashlyk_sPrefix_ioAUaE5R}${$}${bashlyk_sSuffix_ioAUaE5R}"
+   [ -n "$bashlyk_optDir_ioAUaE5R"  ] \
+    && mkdir -p $bashlyk_s_ioAUaE5R \
+    || touch $bashlyk_s_ioAUaE5R
+   [ -n "$bashlyk_octMode_ioAUaE5R" ] \
+    && chmod $bashlyk_octMode_ioAUaE5R $bashlyk_s_ioAUaE5R
   ;;
     mktemp)
-   [ -n "$path"    ] && path="-p $path"
-   #s=$(mktemp $path $optDir -t "${sPrefix}XXXXXXXX${sSuffix}")
-   s=$(mktemp $path $optDir -t "${sPrefix}${sSuffix}XXXXXXXX")
-   [ -n "$octMode" ] && chmod $octMode $s
+   if [ -n "$bashlyk_path_ioAUaE5R" ]; then
+    mkdir -p $bashlyk_path_ioAUaE5R
+    bashlyk_path_ioAUaE5R="-p $bashlyk_path_ioAUaE5R"
+   fi
+   #bashlyk_s_ioAUaE5R=$(mktemp $bashlyk_path_ioAUaE5R $bashlyk_optDir_ioAUaE5R -t "${bashlyk_sPrefix_ioAUaE5R}XXXXXXXX${bashlyk_sSuffix_ioAUaE5R}")
+   bashlyk_s_ioAUaE5R=$(mktemp $bashlyk_path_ioAUaE5R $bashlyk_optDir_ioAUaE5R \
+    -t "${bashlyk_sPrefix_ioAUaE5R}${bashlyk_sSuffix_ioAUaE5R}XXXXXXXX")
+
+   [ -n "$bashlyk_octMode_ioAUaE5R" ] \
+    && chmod $bashlyk_octMode_ioAUaE5R $bashlyk_s_ioAUaE5R
   ;;
   tempfile)
-   [ -n "$sPrefix" ] && sPrefix="-p $sPrefix"
-   [ -n "$sSuffix" ] && sSuffix="-s $sSuffix"
-   s=$(tempfile $optDir $sPrefix $sSuffix) 
+   [ -n "$bashlyk_sPrefix_ioAUaE5R" ] \
+    && bashlyk_sPrefix_ioAUaE5R="-p $bashlyk_sPrefix_ioAUaE5R"
+   [ -n "$bashlyk_sSuffix_ioAUaE5R" ] \
+    && bashlyk_sSuffix_ioAUaE5R="-s $bashlyk_sSuffix_ioAUaE5R"
+   bashlyk_s_ioAUaE5R=$(tempfile $bashlyk_optDir_ioAUaE5R \
+    $bashlyk_sPrefix_ioAUaE5R $bashlyk_sSuffix_ioAUaE5R)
   ;;
   *)
-   udfThrow "$0: Cannot create temporary file object.."
+   [ -n "$bashlyk_sVar_ioAUaE5R" ] \
+    && udfThrow "$0: Cannot create temporary file object.." \
+    || return 1
   ;;
  esac
- [ -n "$sUser"  ] && chown $sUser  $s
- [ -n "$sGroup" ] && chgrp $sGroup $s
+ [ -n "$bashlyk_sUser_ioAUaE5R"  ] \
+  && chown $bashlyk_sUser_ioAUaE5R  $bashlyk_s_ioAUaE5R
+ [ -n "$bashlyk_sGroup_ioAUaE5R" ] \
+  && chgrp $bashlyk_sGroup_ioAUaE5R $bashlyk_s_ioAUaE5R
 
- if   [ -f "$s" ]; then 
-  $bNoKeep && udfAddFile2Clean $s
- elif [ -d "$s" ]; then
-  $bNoKeep && udfAddPath2Clean $s
+ if   [ -f "$bashlyk_s_ioAUaE5R" ]; then
+  $bashlyk_bNoKeep_ioAUaE5R && udfAddFile2Clean $bashlyk_s_ioAUaE5R
+ elif [ -d "$bashlyk_s_ioAUaE5R" ]; then
+  $bashlyk_bNoKeep_ioAUaE5R && udfAddPath2Clean $bashlyk_s_ioAUaE5R
  else
-  udfThrow "Error: temporary file object $s cannot created..."
+  udfThrow "Error: temporary file object $bashlyk_s_ioAUaE5R cannot created..."
  fi
 
- bashlyk_JtiMe1FiQYcdjOf1_fo=$s
- if [ -n "$sVar" ]; then
-  eval 'export ${sVar}=${bashlyk_JtiMe1FiQYcdjOf1_fo}' 2>/dev/null
+ bashlyk_foResult_ioAUaE5R=$bashlyk_s_ioAUaE5R
+ if [ -n "$bashlyk_sVar_ioAUaE5R" ]; then
+  eval 'export ${bashlyk_sVar_ioAUaE5R}=${bashlyk_foResult_ioAUaE5R}'
  else
-  echo ${bashlyk_JtiMe1FiQYcdjOf1_fo}
+  echo ${bashlyk_foResult_ioAUaE5R}
  fi
  return $?
 }
@@ -406,28 +519,38 @@ udfMakeTemp() {
 #  SOURCE
 udfMakeTempV() {
  [ -n "$1" ] || return 255
- unset bashlyk_s2jyV6IRNTtdBaql_fo
- local bashlyk_s2jyV6IRNTtdBaql_fo sDir='' bKeep=0 pathTmp
- [ -n "$3" ] && sPrefix="$3"
+ udfIsValidVariable "$1" \
+  || udfThrow "Error: required valid variable name \"$1\""
+
+ local bashlyk_foResult_bPfWZngu bashlyk_sDir_bPfWZngu bashlyk_bKeep_bPfWZngu
+ local bashlyk_pathTmp_bPfWZngu bashlyk_sPrefix_bPfWZngu
+ #
+ bashlyk_sDir_bPfWZngu=''
+ bashlyk_bKeep_bPfWZngu=0
+ #
+ [ -n "$3" ] && bashlyk_sPrefix_bPfWZngu="$3"
  case "$2" in 
-          dir) sDir='-d' ;;
-  keep|keepf*) bKeep=1;;
-       keepd*) bKeep=1; sDir="-d";;
-            *) sPrefix="$2";;
+          dir) bashlyk_sDir_bPfWZngu='-d' ;;
+  keep|keepf*) bashlyk_bKeep_bPfWZngu=1;;
+       keepd*) bashlyk_bKeep_bPfWZngu=1; bashlyk_sDir_bPfWZngu="-d";;
+            *) bashlyk_sPrefix_bPfWZngu="$2";;
  esac
- if [ -d "$sPrefix" ]; then
-  TMPDIR=$sPrefix
-  sPrefix=$(basename $sPrefix)
-  pathTmp=TMPDIR
+ if [ -d "$bashlyk_sPrefix_bPfWZngu" ]; then
+  TMPDIR=$bashlyk_sPrefix_bPfWZngu
+  bashlyk_sPrefix_bPfWZngu=$(basename $bashlyk_sPrefix_bPfWZngu)
+  bashlyk_pathTmp_bPfWZngu=TMPDIR
  fi
- bashlyk_s2jyV6IRNTtdBaql_fo=$(mktemp $sDir -q -t "${sPrefix}XXXXXXXX") || \
-  udfThrow "Error: temporary file object $bashlyk_s2jyV6IRNTtdBaql_fo do not created..."
- TMPDIR=pathTmp
- if [ $bKeep -eq 0 ]; then
-  [ -f $bashlyk_s2jyV6IRNTtdBaql_fo ] && udfAddFile2Clean $bashlyk_s2jyV6IRNTtdBaql_fo
-  [ -d $bashlyk_s2jyV6IRNTtdBaql_fo ] && udfAddPath2Clean $bashlyk_s2jyV6IRNTtdBaql_fo
+ bashlyk_foResult_bPfWZngu=$(mktemp $bashlyk_sDir_bPfWZngu -q \
+  -t "${bashlyk_sPrefix_bPfWZngu}XXXXXXXX") || udfThrow \
+   "Error: temporary file object $bashlyk_foResult_bPfWZngu do not created..."
+ TMPDIR=bashlyk_pathTmp_bPfWZngu
+ if [ $bashlyk_bKeep_bPfWZngu -eq 0 ]; then
+  [ -f $bashlyk_foResult_bPfWZngu ] \
+   && udfAddFile2Clean $bashlyk_foResult_bPfWZngu
+  [ -d $bashlyk_foResult_bPfWZngu ] \
+   && udfAddPath2Clean $bashlyk_foResult_bPfWZngu
  fi
- eval 'export ${1}=${bashlyk_s2jyV6IRNTtdBaql_fo}' 2>/dev/null
+ eval 'export ${1}=${bashlyk_foResult_bPfWZngu}' 2>/dev/null
  return $?
 }
 #******

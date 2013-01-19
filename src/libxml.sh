@@ -49,41 +49,11 @@ udfXml() {
 #  DESCRIPTION
 #    Generate XML code to stdout
 #    Short alias for udfXML
-#******
+#  SOURCE
 _() {
  [ -n "$1" ] || return 1
  local s=($1)
  shift
  echo "<${s[*]}>${*}</${s[0]}>"
 }
-#****u* bashlyk/libxml/udfLibXml
-#  SYNOPSIS
-#    udfLibXml
-# DESCRIPTION
-#   bashlyk XML library test unit
-#   Запуск проверочных операций модуля выполняется если только аргументы 
-#   командной строки cодержат строку вида "--bashlyk-test=[.*,]xml[,.*]",
-#   где * - ярлыки на другие тестируемые библиотеки
-#  SOURCE
-udfLibXml() {
- [ -z "$(echo "${_bashlyk_sArg}" | grep -E -e "--bashlyk-test=.*xml")" ] \
-  && return 0
- local s='<entry><input>echo test</input><variable>sTest</variable></entry>' 
- local b=1
- printf "\n- libxml.sh tests: "
- [ "$s" = "$(udfXml entry $(udfXml input echo test)$(udfXml variable sTest))" ] \
-  && echo -n '.' || { echo -n 'fail.'; b=0; }
- [ "$s" = "$(_ entry $(_ input echo test)$(_ variable sTest))" ] \
-  && echo -n '.' || { echo -n 'fail.'; b=0; }
- [ $b -eq 1 ] && echo 'ok.' || echo 'fail.'
- echo "--"
- return 0
-}
-#******
-#****** bashlyk/libxml/Main section
-# DESCRIPTION
-#   Running XML library test unit if $_bashlyk_sArg ($*) contain
-#   substrings "--bashlyk-test" and "xml" - command for test using
-#  SOURCE
-udfLibXml
 #******
