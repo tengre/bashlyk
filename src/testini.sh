@@ -14,8 +14,7 @@
 #   Здесь указываются модули, код которых используется данной библиотекой
 # SOURCE
 : ${_bashlyk_pathLib:=/usr/share/bashlyk}
-#[ -s "${_bashlyk_pathLib}/libini.sh" ] && . "${_bashlyk_pathLib}/libini.sh"
-. ./libini.sh
+[ -s "${_bashlyk_pathLib}/libini.sh" ] && . "${_bashlyk_pathLib}/libini.sh"
 #******
 #****u* bashlyk/testini/udfTestIni
 #  SYNOPSIS

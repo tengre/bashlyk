@@ -14,8 +14,7 @@
 #   Здесь указываются модули, код которых используется данной библиотекой
 # SOURCE
 : ${_bashlyk_pathLib:=/usr/share/bashlyk}
-#[ -s "${_bashlyk_pathLib}/libpid.sh" ] && . "${_bashlyk_pathLib}/libpid.sh"
-. ./libpid.sh
+[ -s "${_bashlyk_pathLib}/libpid.sh" ] && . "${_bashlyk_pathLib}/libpid.sh"
 #******
 #****u* bashlyk/testpid/udfTestPid
 #  SYNOPSIS

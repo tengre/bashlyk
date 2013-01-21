@@ -22,7 +22,6 @@
 #   Здесь указываются модули, код которых используется данной библиотекой
 # SOURCE
 : ${_bashlyk_pathLib:=/usr/share/bashlyk}
-[ -s ./libstd.sh ] && . ./libstd.sh
 [ -s "${_bashlyk_pathLib}/libstd.sh" ] && . "${_bashlyk_pathLib}/libstd.sh"
 #******
 #****v*  bashlyk/libini/Init section

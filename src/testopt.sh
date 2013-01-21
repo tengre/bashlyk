@@ -14,8 +14,7 @@
 #   Здесь указываются модули, код которых используется данной библиотекой
 # SOURCE
 : ${_bashlyk_pathLib:=/usr/share/bashlyk}
-#[ -s "${_bashlyk_pathLib}/libopt.sh" ] && . "${_bashlyk_pathLib}/libopt.sh"
-. ./libopt.sh
+[ -s "${_bashlyk_pathLib}/libopt.sh" ] && . "${_bashlyk_pathLib}/libopt.sh"
 #******
 #****u* bashlyk/testopt/udfTestOpt
 #  SYNOPSIS

@@ -1,3 +1,11 @@
+Mon, 21 Jan 2013 16:26:12 +0400
+	New upstream release
+	Version 1.64
+ - тестовые функции выделены в отдельные файлы
+ - функции udfEcho udfMail udfWarn udfThrow и зависимые глобальные переменные
+   перенесены в из модуля liblog в libstd
+ - исправлена ошибка в функциях, выдающих результат в аргумент
+
 Mon, 14 Jan 2013 23:55:48 +0400
 	New upstream release
 	Version 1.63

@@ -77,6 +77,14 @@ udfInit() {
 
  [ -t 1 ] && _bashlyk_bInteract=1 || _bashlyk_bInteract=0
  tty > /dev/null 2>&1 && _bashlyk_bTerminal=1 || _bashlyk_bTerminal=0
+ #
+ if [ -n "$(echo "$_bashlyk_sArg" | grep -w 'bashlyk-test')" ]; then
+  _bashlyk_aUnit="$(echo "${_bashlyk_sArg#*--bashlyk-test=}" | cut -f1 -d' ' | tr ',' ' ')"
+  _bashlyk_sMode='test'
+ else
+  _bashlyk_aUnit="$(echo ${_bashlyk_aLib} | tr ',' ' ')"
+  _bashlyk_sMode='lib'
+ fi
 }
 #******
 #****f* bashlyk/udfMain
@@ -88,24 +96,18 @@ udfInit() {
 #    в зависимости от значения $_bashlyk_sCond4Log ("noterm" по умолчанию).
 #  SOURCE
 udfMain() {
- local aIncinpj8Ive fn s sModeYs8vfIqM='lib'
+ local fn s
  #
  udfInit
  #
- aIncinpj8Ive="$(echo "${_bashlyk_sArg#*--bashlyk-test=}" | cut -f1 -d' ' | tr ',' ' ')"
-
- if [ -n "$aIncinpj8Ive" ]; then
-  sModeYs8vfIqM='test'
- else
-  aIncinpj8Ive="$(echo ${_bashlyk_aLib} | tr ',' ' ')"
- fi
-
- for s in $aIncinpj8Ive; do
-  fn=${_bashlyk_pathLib}/${sModeYs8vfIqM}${s}.sh
+ for s in $_bashlyk_aUnit; do
+  fn=${_bashlyk_pathLib}/${_bashlyk_sMode}${s}.sh
   [ -s $fn ] && . $fn || eval 'echo "Error: $fn not found..."; exit 255'
  done
 
- [ "$sModeYs8vfIqM" = "test" ] && exit 0
+ unset _bashlyk_aUnit _bashlyk_sMode
+ 
+ [ "$_bashlyk_sMode" = "test" ] && exit 0
 
  case ${_bashlyk_sCond4Log} in
   redirect)

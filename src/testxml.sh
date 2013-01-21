@@ -14,8 +14,7 @@
 #   Здесь указываются модули, код которых используется данной библиотекой
 # SOURCE
 : ${_bashlyk_pathLib:=/usr/share/bashlyk}
-#[ -s "${_bashlyk_pathLib}/libxml.sh" ] && . "${_bashlyk_pathLib}/libxml.sh"
-. ./libxml.sh
+[ -s "${_bashlyk_pathLib}/libxml.sh" ] && . "${_bashlyk_pathLib}/libxml.sh"
 #******
 #****u* bashlyk/testxml/udfTestXml
 #  SYNOPSIS
