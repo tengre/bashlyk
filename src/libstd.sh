@@ -38,7 +38,7 @@
 : ${_bashlyk_bNotUseLog:=1}
 : ${_bashlyk_emailRcpt:=postmaster}
 : ${_bashlyk_emailSubj:="${_bashlyk_sUser}@${HOSTNAME}::${_bashlyk_s0}"}
-: ${_bashlyk_aRequiredCmd_opt:="echo getopt grep mktemp tr sed umask ["}
+: ${_bashlyk_aRequiredCmd_std:="[ basename cat chgrp chmod chown date dir echo false file grep kill mail mkdir mktemp printf ps rm rmdir sed sleep tee tempfile touch true w which xargs"
 #******
 #****f* bashlyk/libstd/udfBaseId
 #  SYNOPSIS
@@ -342,7 +342,7 @@ udfWSpace2Alias() {
 #  EXAMPLE
 #    выполнение: udfWSpace2Alias a___b______cd
 #         вывод: "a b  cd"
-#    выполнение: echo a___b______cd | udfWSpace2Alias -
+#    выполнение: echo a___b______cd | udfAlias2WSpace -
 #         вывод: a b  cd
 #  SOURCE
 udfAlias2WSpace() {
@@ -354,7 +354,7 @@ udfAlias2WSpace() {
 #******
 #****f* bashlyk/libstd/udfMakeTemp
 #  SYNOPSIS
-#    udfMakeTemp [varname ] options...
+#    udfMakeTemp [varname] options...
 #  DESCRIPTION
 #    Создание временного файла или каталога
 #  INPUTS
@@ -370,6 +370,16 @@ udfAlias2WSpace() {
 #    keep=true|false   - удалять/не удалять временные объекты после завершения
 #                        сценария (удалять по умолчанию)
 #  OUTPUT
+#    вывод происходит если нет аргументов или отсутствует именной аргумент
+#    varname, если временный объект не создан, то ничего не выдается
+#
+#  RETURN VALUE
+#     0  - Выполнено успешно
+#     1  - временный объект файловой системы не создан
+#     2  - Ошибка: аргумент <varname> не является валидным идентификатором
+#          переменной
+#    254 - неожиданная ошибка
+#    255 - Ошибка: аргумент отсутствует или файл конфигурации не найден
 #
 #  EXAMPLE
 #   udfMakeTemp fnTemp prefix=temp mode=0644 keep=true path=$HOME
@@ -416,8 +426,7 @@ udfMakeTemp() {
  done
 
  if [ -n "$bashlyk_sVar_ioAUaE5R" ]; then
-  udfIsValidVariable "$bashlyk_sVar_ioAUaE5R" \
-   || udfThrow "Error: required valid variable name \"$bashlyk_sVar_ioAUaE5R\""
+  udfIsValidVariable "$bashlyk_sVar_ioAUaE5R" || return 2
  else
   bashlyk_bNoKeep_ioAUaE5R=false
  fi
@@ -463,9 +472,7 @@ udfMakeTemp() {
     $bashlyk_sPrefix_ioAUaE5R $bashlyk_sSuffix_ioAUaE5R)
   ;;
   *)
-   [ -n "$bashlyk_sVar_ioAUaE5R" ] \
-    && udfThrow "$0: Cannot create temporary file object.." \
-    || return 1
+    return 254
   ;;
  esac
  [ -n "$bashlyk_sUser_ioAUaE5R"  ] \
@@ -478,7 +485,7 @@ udfMakeTemp() {
  elif [ -d "$bashlyk_s_ioAUaE5R" ]; then
   $bashlyk_bNoKeep_ioAUaE5R && udfAddPath2Clean $bashlyk_s_ioAUaE5R
  else
-  udfThrow "Error: temporary file object $bashlyk_s_ioAUaE5R cannot created..."
+  return 1
  fi
 
  bashlyk_foResult_ioAUaE5R=$bashlyk_s_ioAUaE5R

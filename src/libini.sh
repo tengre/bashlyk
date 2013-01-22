@@ -30,7 +30,7 @@
 #  SOURCE
 : ${_bashlyk_sArg:=$*}
 : ${_bashlyk_pathIni:=$(pwd)}
-: ${_bashlyk_aRequiredCmd_ini:=""}
+: ${_bashlyk_aRequiredCmd_ini:="[ awk cat cut dirname echo false grep mv printf pwd rm sed sort touch tr true uniq w xargs"}
 #******
 #udfGetIni $csv
 #****f* bashlyk/libini/udfGetIniSection
@@ -62,6 +62,8 @@
 #  RETURN VALUE
 #     0  - Выполнено успешно
 #     1  - Ошибка: файл конфигурации не найден
+#     2  - Ошибка: аргумент <varname> не является валидным идентификатором
+#          переменной
 #    255 - Ошибка: аргумент отсутствует
 #  SOURCE
 udfGetIniSection() {
@@ -99,8 +101,7 @@ udfGetIniSection() {
  done
  udfCsvOrder "$bashlyk_csvIni_rWrBeelW" bashlyk_csvResult_rWrBeelW
  if [ -n "$3" ]; then
-  udfIsValidVariable "$3" \
-   || udfThrow "Error: required valid variable name \"$3\""
+  udfIsValidVariable "$3" || return 2
   eval 'export ${3}="${bashlyk_csvResult_rWrBeelW}"'
  else
   echo "$bashlyk_csvResult_rWrBeelW"
@@ -131,6 +132,8 @@ udfGetIniSection() {
 #              стандартный вывод
 #  RETURN VALUE
 #     0  - Выполнено успешно
+#     2  - Ошибка: аргумент <varname> не является валидным идентификатором
+#          переменной
 #    255 - Ошибка: аргумент отсутствует или файл конфигурации не найден
 #  SOURCE
 udfReadIniSection() {
@@ -172,8 +175,8 @@ udfReadIniSection() {
  done < $bashlyk_ini_yLn0ZVLi
  $bashlyk_bOpen_yLn0ZVLi || bashlyk_csvResult_yLn0ZVLi=''
  if [ -n "$3" ]; then
-  udfIsValidVariable "$3" \
-   || udfThrow "Error: required valid variable name \"$3\""
+  udfIsValidVariable "$3" || return 2
+  #udfThrow "Error: required valid variable name \"$3\""
   eval 'export ${3}="${bashlyk_csvResult_yLn0ZVLi}"'
  else
   echo "$bashlyk_csvResult_yLn0ZVLi"
@@ -198,8 +201,10 @@ udfReadIniSection() {
 #              разделенный символом ";" строка, в полях которого содержатся 
 #              данные в формате "<key>=<value>;..."
 #  RETURN VALUE
-#    255 - Ошибка: аргумент отсутствует
 #     0  - Выполнено успешно
+#     2  - Ошибка: аргумент <varname> не является валидным идентификатором
+#          переменной
+#    255 - Ошибка: аргумент отсутствует
 #  SOURCE
 udfCsvOrder() {
  [ -n "$1" ] || return 255
@@ -235,8 +240,8 @@ _CsvOrder_EOF
  bashlyk_csvResult_YAogTAX2=$(. $bashlyk_fnExec_YAogTAX2 2>/dev/null)
  rm -f $bashlyk_fnExec_YAogTAX2
  if [ -n "$2" ]; then
-  udfIsValidVariable "$2" \
-  || udfThrow "Error: required valid variable name \"$2\""
+  udfIsValidVariable "$2" || return 2
+  #udfThrow "Error: required valid variable name \"$2\""
   eval 'export ${2}="${bashlyk_csvResult_YAogTAX2}"'
  else
   echo "$bashlyk_csvResult_YAogTAX2"
@@ -323,6 +328,8 @@ udfSetVarFromIni() {
 #              данные в формате "<key>=<value>;..."
 #  RETURN VALUE
 #     0  - Выполнено успешно
+#     2  - Ошибка: аргумент <varname> не является валидным идентификатором
+#          переменной
 #    255 - Ошибка: аргумент отсутствует
 #  SOURCE
 udfCsvKeys() {
@@ -338,8 +345,8 @@ udfCsvKeys() {
  done
  IFS=$bashlyk_cIFS_xWuzbRzM
  if [ -n "$2" ];then
-  udfIsValidVariable "$2" \
-   || udfThrow "Error: required valid variable name \"$2\""
+  udfIsValidVariable "$2" || return 2
+  #udfThrow "Error: required valid variable name \"$2\""
   eval 'export ${2}="${bashlyk_csvResult_xWuzbRzM}"'
  else
   echo "$bashlyk_csvResult_xWuzbRzM"
@@ -367,6 +374,8 @@ udfCsvKeys() {
 #              данные в формате "<key>=<value>;..."
 #  RETURN VALUE
 #     0  - Выполнено успешно
+#     2  - Ошибка: аргумент <varname> не является валидным идентификатором
+#          переменной
 #    255 - Ошибка: аргумент отсутствует
 #  SOURCE
 udfCheckCsv() {
@@ -394,8 +403,8 @@ udfCheckCsv() {
  done
  IFS=$bashlyk_cIFS_Q1eiphgO
  if [ -n "$2" ]; then
-  udfIsValidVariable "$2" \
-   || udfThrow "Error: required valid variable name \"$2\""
+  udfIsValidVariable "$2" || return 2
+  #udfThrow "Error: required valid variable name \"$2\""
   eval 'export ${2}="${bashlyk_csvResult_Q1eiphgO}"'
  else
   echo "$bashlyk_csvResult_Q1eiphgO"

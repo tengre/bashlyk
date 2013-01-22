@@ -5,8 +5,6 @@
 /NEWS -text
 /README -text
 /TODO -text
-debian/control -text
-debian/copyright -text
 doc/Makefile.am -text
 /robodoc.rc -text
 src/Makefile.am -text

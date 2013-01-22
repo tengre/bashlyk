@@ -10,3 +10,4 @@ options:
 ignore files:
     .svn
     *~
+    debian

@@ -29,7 +29,7 @@
 #  SOURCE
 : ${_bashlyk_sArg:=$*}
 : ${_bashlyk_pathCnf:=$(pwd)}
-: ${_bashlyk_aRequiredCmd_cnf:="awk basename cat date dirname echo grep pwd rm sleep ["}
+: ${_bashlyk_aRequiredCmd_cnf:="[ awk date dirname echo mkdir printf pwd"}
 #******
 #****f* bashlyk/libcnf/udfGetConfig
 #  SYNOPSIS

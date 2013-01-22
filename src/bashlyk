@@ -80,6 +80,7 @@ udfInit() {
  #
  if [ -n "$(echo "$_bashlyk_sArg" | grep -w 'bashlyk-test')" ]; then
   _bashlyk_aUnit="$(echo "${_bashlyk_sArg#*--bashlyk-test=}" | cut -f1 -d' ' | tr ',' ' ')"
+  [ -n "$_bashlyk_aUnit" ] || _bashlyk_aUnit="$(echo ${_bashlyk_aLib} | tr ',' ' ')"
   _bashlyk_sMode='test'
  else
   _bashlyk_aUnit="$(echo ${_bashlyk_aLib} | tr ',' ' ')"

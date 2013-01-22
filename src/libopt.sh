@@ -36,7 +36,7 @@
 #    утилит
 #  SOURCE
 : ${_bashlyk_sArg:=$*}
-: ${_bashlyk_aRequiredCmd_std:="echo grep tr sed ["}
+: ${_bashlyk_aRequiredCmd_opt:="[ echo getopt grep rm sed tr"}
 #******
 #****f* bashlyk/libopt/udfGetOptHash
 #  SYNOPSIS
