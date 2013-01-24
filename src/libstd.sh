@@ -1,4 +1,3 @@
-#!/bin/bash
 #
 # $Id$
 #
@@ -13,8 +12,12 @@
 #  DESCRIPTION
 #    Эта глобальная переменная обеспечивает
 #    защиту от повторного использования данного модуля
+#    Отсутствие значения $BASH_VERSION предполагает несовместимость с
+#    c текущим командным интерпретатором
 #  SOURCE
 [ -n "$_BASHLYK_LIBSTD" ] && return 0 || _BASHLYK_LIBSTD=1
+[ -n "$BASH_VERSION" ] \
+ || eval 'echo "bash interpreter for this script ($0) required ..."; exit 255'
 #******
 #****v*  bashlyk/libstd/Init section
 #  DESCRIPTION
@@ -39,6 +42,7 @@
 : ${_bashlyk_emailRcpt:=postmaster}
 : ${_bashlyk_emailSubj:="${_bashlyk_sUser}@${HOSTNAME}::${_bashlyk_s0}"}
 : ${_bashlyk_aRequiredCmd_std:="[ basename cat chgrp chmod chown date dir echo false file grep kill mail mkdir mktemp printf ps rm rmdir sed sleep tee tempfile touch true w which xargs"
+: ${_bashlyk_aExport_std:="udfBaseId udfDate udfEcho udfMail udfWarn udfThrow udfOnEmptyVariable udfThrowOnEmptyVariable udfWarnOnEmptyVariable udfShowVariable udfIsNumber udfIsValidVariable udfQuoteIfNeeded udfWSpace2Alias udfAlias2WSpace udfMakeTemp udfMakeTempV udfShellExec udfAddFile2Clean udfAddPath2Clean udfAddJob2Clean udfAddPid2Clean udfCleanQueue udfOnTrap _ARGUMENTS _s0"}
 #******
 #****f* bashlyk/libstd/udfBaseId
 #  SYNOPSIS

@@ -1,4 +1,3 @@
-#!/bin/bash
 #
 # $Id$
 #
@@ -14,8 +13,12 @@
 #  DESCRIPTION
 #    Эта глобальная переменная обеспечивает
 #    защиту от повторного использования данного модуля
+#    Отсутствие значения $BASH_VERSION предполагает несовместимость с
+#    c текущим командным интерпретатором
 #  SOURCE
 [ -n "$_BASHLYK_LIBLOG" ] && return 0 || _BASHLYK_LIBLOG=1
+[ -n "$BASH_VERSION" ] \
+ || eval 'echo "bash interpreter for this script ($0) required ..."; exit 255'
 #******
 #****** bashlyk/liblog/External modules
 #  DESCRIPTION
@@ -47,6 +50,7 @@
 : ${_bashlyk_bUseSyslog:=0}
 : ${_bashlyk_bNotUseLog:=1}
 : ${_bashlyk_aRequiredCmd_log:="basename date echo hostname false printf logger mail mkfifo sleep tee true jobs ["}
+: ${_bashlyk_aExport_log:="udfLogger udfLog udfIsInteract udfIsTerminal udfCheck4LogUse udfUptime udfFinally udfSetLogSocket udfSetLog _fnLog _pathDat udfDebug"}
 #******
 #****f* bashlyk/liblog/udfLogger
 #  SYNOPSIS

@@ -1,4 +1,3 @@
-#!/bin/bash
 #
 # $Id$
 #
@@ -12,9 +11,13 @@
 #****d* bashlyk/libcnf/Required Once
 #  DESCRIPTION
 #    Глобальная переменная $_BASHLYK_LIBCNF обеспечивает
-#    защиту от повторного использования данного модуля
+#    защиту от повторного использования данного модуля.
+#    Отсутствие значения $BASH_VERSION предполагает несовместимость с
+#    c текущим командным интерпретатором
 #  SOURCE
 [ -n "$_BASHLYK_LIBCNF" ] && return 0 || _BASHLYK_LIBCNF=1
+[ -n "$BASH_VERSION" ] \
+ || eval 'echo "bash interpreter for this script ($0) required ..."; exit 255'
 #******
 #****** bashlyk/libcnf/External Modules
 # DESCRIPTION
@@ -30,6 +33,7 @@
 : ${_bashlyk_sArg:=$*}
 : ${_bashlyk_pathCnf:=$(pwd)}
 : ${_bashlyk_aRequiredCmd_cnf:="[ awk date dirname echo mkdir printf pwd"}
+: ${_bashlyk_aExport_cnf:="udfGetConfig udfSetConfig"}
 #******
 #****f* bashlyk/libcnf/udfGetConfig
 #  SYNOPSIS
@@ -45,6 +49,7 @@
 #     умолчанию
 #     2. Если имя файла - полный путь, то каталог в котором он расположен
 #     3. Последняя попытка - найти файл в каталоге /etc
+#    Важно: имя <file> не должно начинаться с точки и им заканчиваться!
 #  INPUTS
 #    file     - имя файла конфигурации
 #  RETURN VALUE

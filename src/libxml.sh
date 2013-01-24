@@ -1,4 +1,3 @@
-#!/bin/bash
 #
 # $Id$
 #
@@ -11,8 +10,12 @@
 #****d* bashlyk/libxml/Required Once
 #  DESCRIPTION
 #    If this global variable defined then library already linked
+#    Отсутствие значения $BASH_VERSION предполагает несовместимость с
+#    c текущим командным интерпретатором
 #  SOURCE
 [ -n "$_BASHLYK_LIBXML" ] && return 0 || _BASHLYK_LIBXML=1
+[ -n "$BASH_VERSION" ] \
+ || eval 'echo "bash interpreter for this script ($0) required ..."; exit 255'
 #******
 #****v* bashlyk/libxml/Init section
 #  DESCRIPTION
@@ -20,6 +23,7 @@
 #  SOURCE
 : ${_bashlyk_sArg:=$*}
 : ${_bashlyk_aRequiredCmd_xml:="[ echo"}
+: ${_bashlyk_aExport_xml:="udfXml _"}
 #******
 #****f* bashlyk/libxml/udfXML
 #  SYNOPSIS

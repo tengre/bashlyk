@@ -1,4 +1,3 @@
-#!/bin/bash
 #
 # $Id$
 #
@@ -13,8 +12,12 @@
 #  DESCRIPTION
 #    Эта глобальная переменная обеспечивает
 #    защиту от повторного использования данного модуля
+#    Отсутствие значения $BASH_VERSION предполагает несовместимость с
+#    c текущим командным интерпретатором
 #  SOURCE
 [ -n "$_BASHLYK_LIBMD5" ] && return 0 || _BASHLYK_LIBMD5=1
+[ -n "$BASH_VERSION" ] \
+ || eval 'echo "bash interpreter for this script ($0) required ..."; exit 255'
 #******
 #****v*  bashlyk/libmd5/Init section
 #  DESCRIPTION
@@ -23,6 +26,7 @@
 : ${_bashlyk_sArg:=$*}
 : ${_bashlyk_pathLib:=/usr/share/bashlyk}
 : ${_bashlyk_aRequiredCmd_md5:="[ cat cut echo file ls md5sum pwd"}
+: ${_bashlyk_aExport_md5:="udfGetMd5 udfGetPathMd5"}
 #******
 #****f* bashlyk/libmd5/udfGetMd5
 #  SYNOPSIS

@@ -79,13 +79,13 @@ udfInit() {
  tty > /dev/null 2>&1 && _bashlyk_bTerminal=1 || _bashlyk_bTerminal=0
  #
  if [ -n "$(echo "$_bashlyk_sArg" | grep -w 'bashlyk-test')" ]; then
-  _bashlyk_aUnit="$(echo "${_bashlyk_sArg#*--bashlyk-test=}" | cut -f1 -d' ' | tr ',' ' ')"
+  _bashlyk_aUnit="$(echo "${_bashlyk_sArg#*--bashlyk-test=}" | cut -f1 -d' ' | tr ',' ' ' | grep -v '\-\-bashlyk-test')"
   [ -n "$_bashlyk_aUnit" ] || _bashlyk_aUnit="$(echo ${_bashlyk_aLib} | tr ',' ' ')"
   _bashlyk_sMode='test'
  else
-  _bashlyk_aUnit="$(echo ${_bashlyk_aLib} | tr ',' ' ')"
   _bashlyk_sMode='lib'
  fi
+ [ -n "$_bashlyk_aUnit" ] || _bashlyk_aUnit="$(echo ${_bashlyk_aLib} | tr ',' ' ')"
 }
 #******
 #****f* bashlyk/udfMain

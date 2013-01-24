@@ -1,4 +1,3 @@
-#!/bin/bash
 #
 # $Id$
 #
@@ -13,8 +12,12 @@
 #  DESCRIPTION
 #    Глобальная переменная $_BASHLYK_LIBPID обеспечивает
 #    защиту от повторного использования данного модуля
+#    Отсутствие значения $BASH_VERSION предполагает несовместимость с
+#    c текущим командным интерпретатором
 #  SOURCE
 [ -n "$_BASHLYK_LIBPID" ] && return 0 || _BASHLYK_LIBPID=1
+[ -n "$BASH_VERSION" ] \
+ || eval 'echo "bash interpreter for this script ($0) required ..."; exit 255'
 #******
 #****** bashlyk/libpid/External Modules
 # DESCRIPTION
@@ -37,6 +40,7 @@
 : ${_bashlyk_pathRun:=/tmp}
 : ${_bashlyk_sArg:=$*}
 : ${_bashlyk_aRequiredCmd_pid:="[ echo file grep head mkdir ps rm rmdir w"}
+: ${_bashlyk_aExport_pid:="udfCheckStarted udfSetPid udfExitIfAlreadyStarted udfClean"}
 #******
 #****f* bashlyk/libpid/udfCheckStarted
 #  SYNOPSIS

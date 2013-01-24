@@ -1,4 +1,3 @@
-#!/bin/bash
 #
 # $Id$
 #
@@ -15,8 +14,12 @@
 #  DESCRIPTION
 #    Эта глобальная переменная обеспечивает
 #    защиту от повторного использования данного модуля
+#    Отсутствие значения $BASH_VERSION предполагает несовместимость с
+#    c текущим командным интерпретатором
 #  SOURCE
 [ -n "$_BASHLYK_LIBOPT" ] && return 0 || _BASHLYK_LIBOPT=1
+[ -n "$BASH_VERSION" ] \
+ || eval 'echo "bash interpreter for this script ($0) required ..."; exit 255'
 #******
 #****** bashlyk/libopt/External modules
 #  DESCRIPTION
@@ -37,6 +40,7 @@
 #  SOURCE
 : ${_bashlyk_sArg:=$*}
 : ${_bashlyk_aRequiredCmd_opt:="[ echo getopt grep rm sed tr"}
+: ${_bashlyk_aExport_opt:="udfGetOptHash udfSetOptHash udfGetOpt udfExcludePairFromHash"}
 #******
 #****f* bashlyk/libopt/udfGetOptHash
 #  SYNOPSIS

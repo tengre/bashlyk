@@ -1,4 +1,3 @@
-#!/bin/bash
 #
 # $Id$
 #
@@ -13,8 +12,12 @@
 #  DESCRIPTION
 #    Глобальная переменная $_BASHLYK_LIBINI обеспечивает
 #    защиту от повторного использования данного модуля
+#    Отсутствие значения $BASH_VERSION предполагает несовместимость с
+#    c текущим командным интерпретатором
 #  SOURCE
 [ -n "$_BASHLYK_LIBINI" ] && return 0 || _BASHLYK_LIBINI=1
+[ -n "$BASH_VERSION" ] \
+ || eval 'echo "bash interpreter for this script ($0) required ..."; exit 255'
 #******
 #****** bashlyk/libini/External Modules
 # DESCRIPTION
@@ -31,6 +34,7 @@
 : ${_bashlyk_sArg:=$*}
 : ${_bashlyk_pathIni:=$(pwd)}
 : ${_bashlyk_aRequiredCmd_ini:="[ awk cat cut dirname echo false grep mv printf pwd rm sed sort touch tr true uniq w xargs"}
+: ${_bashlyk_aExport_ini:="udfGetIniSection udfReadIniSection udfCsvOrder udfAssembly udfSetVarFromCsv udfSetVarFromIni udfCsvKeys udfCheckCsv udfIniWrite udfIniChange"}
 #******
 #udfGetIni $csv
 #****f* bashlyk/libini/udfGetIniSection
@@ -48,6 +52,7 @@
 #     2. Если имя файла содержит полный путь, то рабочим каталогом является этот
 #     полный путь
 #     3. Последняя попытка - найти файл в каталоге /etc
+#    Важно: имя <file> не должно начинаться с точки и им заканчиваться!
 #  INPUTS
 #    file    - имя файла конфигурации
 #    section - название секции конфигурации, при отсутствии этого аргумента 
