@@ -272,15 +272,19 @@ _CsvOrder_EOF
 #  SOURCE
 udfSetVarFromCsv() {
  [ -n "$1" ] || return 255
- unset s1LXAboOd7DyIwoBI
- local aKeys csv k s1LXAboOd7DyIwoBI
  #
- csv=";$(udfCsvOrder "$1");"
+ local bashlyk_csvInput_KLokRJky bashlyk_csvResult_KLokRJky bashlyk_k_KLokRJky
+ #
+ bashlyk_csvInput_KLokRJky=";$(udfCsvOrder "$1");"
  shift
- for k in $*; do
-  #s1LXAboOd7DyIwoBI=$(echo $csv | grep -Po ";$k=.*?;" | tr -d ';')
-  s1LXAboOd7DyIwoBI=$(echo "$k=${csv#*;$k=}" | cut -f1 -d';')
-  [ -n "$s1LXAboOd7DyIwoBI" ] && eval "$s1LXAboOd7DyIwoBI" 2>/dev/null
+ #
+ for bashlyk_k_KLokRJky in $*; do
+  #bashlyk_csvResult_KLokRJky=$(echo $bashlyk_csvInput_KLokRJky | grep -Po ";$bashlyk_k_KLokRJky=.*?;" | tr -d ';')
+  bashlyk_csvResult_KLokRJky=$(echo \
+   "$bashlyk_k_KLokRJky=${bashlyk_csvInput_KLokRJky#*;$bashlyk_k_KLokRJky=}" \
+   | cut -f1 -d';')
+  [ -n "$bashlyk_csvResult_KLokRJky" ] \
+   && eval "$bashlyk_csvResult_KLokRJky" 2>/dev/null
  done
  return 0
 }
