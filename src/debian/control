@@ -1,5 +1,5 @@
 Source: bashlyk
-Section: optional
+Section: libs
 Priority: extra
 Maintainer: Damir Sh. Yakupov <yds@bk.ru>
 Build-Depends: debhelper (>= 5), autotools-dev
