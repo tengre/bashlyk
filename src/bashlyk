@@ -4,14 +4,14 @@
 #
 #****h* bashlyk/bashlyk
 #  DESCRIPTION
-#    bashlyk - сценарий подключения BASHLYK
+#    bashlyk - сценарий подключения BASHLYK библиотек
 #  AUTHOR
 #    Damir Sh. Yakupov <yds@bk.ru>
 #******
 #****d* bashlyk/Required Once
 #  DESCRIPTION
 #    Глобальная переменная $_BASHLYK обеспечивает
-#    защиту от повторного использования данного модуля
+#    защиту от повторного использования данного сценария
 #  SOURCE
 [ -n "$_BASHLYK" ] && return 0 || _BASHLYK=1
 #******
@@ -20,7 +20,7 @@
 #    Блок инициализации глобальных переменных
 #  SOURCE
 [ -s /etc/bashlyk/bashlyk.conf ] && . /etc/bashlyk/bashlyk.conf
-: ${_bashlyk_aLib:="std,log,cnf,pid,md5,opt,xml"}
+: ${_bashlyk_aLib:="std,md5,pid,cnf,ini,opt,xml,log"}
 : ${_bashlyk_pathLib:="/usr/share/bashlyk"}
 : ${_bashlyk_sArg:=$*}
 : ${_bashlyk_bInteract:=1}
@@ -35,8 +35,9 @@
 #    Подготовка к запуску сценария, определение условий его работы (каталоги 
 #    расположения создаваемых файлов, наличие терминала, перенаправления и т.п.)
 #    Если запуск выполняется от "root", то каталоги располагаются глобально,
-#    согласно LSB, иначе - в каталоге ~/.bashlyk или во временном каталоге, если
-#    не удалось определить владельца процесса
+#    согласно LSB, иначе в каталогах согласно XDG Base Directory Specification, 
+#    если не удалось определить владельца процесса или отсутствует домашний
+#    каталог, то в глобальном временном каталоге.
 #  SOURCE
 udfInit() {
  local pathCnf pathRoot pathRun pathLog pathDat sHome
