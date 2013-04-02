@@ -1,5 +1,5 @@
 ##
-## $Id: Makefile.am 50 2009-01-13 12:45:23Z yds $
+## $Id$
 ##
 #
 AUTOMAKE_OPTIONS	= -Wno-portability
