@@ -102,68 +102,85 @@ man(1), man(7), http://www.tldp.org/HOWTO/Man-Page/
     <refpurpose>set of bash libraries</refpurpose>
   </refnamediv>
   <refsect1 id="description">
-    <title>DESCRIPTION</title>
-    <para>
-     <command>&dhpackage;</command>
-     is a package that includes libraries of the tested code ready for a reuse:
-    </para>
-    <para>
-      - libstd.sh 
-    </para>
-    <para>  
-      functions for handling temp objects (file, folder, job), autocleaning,
-      validations, exceptions
-    </para>
-    <para>
-      - liblog.sh
-    </para>
-    <para>
-      debug level, logging routines
-    </para>
-    <para>
-      - libpid.sh
-    </para>
-    <para>
-      process running  control
-    </para>
-    <para>
-      - libcnf.sh
-    </para>
-    <para>
-      active configuration files control
-    </para>
-    <para>
-      - libopt.sh
-    </para>
-    <para>
-      command line options manipulations
-    </para>
-    <para>
-      - libini.sh
-    </para>
-    <para>
-      ini configuration files control
-    </para>
-    <para>
-      - libmd5.sh
-    </para>
-    <para>
-      get md5sum for file(s)
-    </para>
-    <para>
-      - libxml.sh
-    </para>
-    <para>
-      xml code generation
-    </para>
+   <title>DESCRIPTION</title>
+   <para>
+    <command>&dhpackage;</command>     
+    is a package that includes libraries of the tested code ready for a reuse.
+   </para>
+   <variablelist><title>Standart included libraries:</title>
+    <varlistentry>
+     <term><filename>libstd.sh</filename></term>
+     <listitem>
+      <para>
+       functions for handling temp objects (file, folder, job), autocleaning,
+       validations, exceptions
+      </para>
+     </listitem>
+    </varlistentry>
+    <varlistentry>
+     <term><filename>liblog.sh</filename></term>
+     <listitem>
+      <para>
+       debug level, logging routines
+      </para>
+     </listitem>
+    </varlistentry>
+    <varlistentry>
+     <term><filename>libpid.sh</filename></term>
+     <listitem>
+      <para>
+       process running  control
+      </para>
+     </listitem>
+    </varlistentry>
+    <varlistentry>
+     <term><filename>libcnf.sh</filename></term>
+     <listitem>
+      <para>
+       active configuration files control
+      </para>
+     </listitem>
+    </varlistentry>
+    <varlistentry>
+     <term><filename>libopt.sh</filename></term>
+     <listitem>
+      <para>
+       command line options manipulations
+      </para>
+     </listitem>
+    </varlistentry>
+    <varlistentry>
+     <term><filename>libini.sh</filename></term>
+     <listitem>
+      <para>
+       ini configuration files control
+      </para>
+     </listitem>
+    </varlistentry>
+    <varlistentry>
+     <term><filename>libmd5.sh</filename></term>
+     <listitem>
+      <para>
+       get md5sum for file(s)
+      </para>
+     </listitem>
+    </varlistentry>
+    <varlistentry>
+     <term><filename>libxml.sh</filename></term>
+     <listitem>
+      <para>
+       xml code generation
+      </para>
+     </listitem>
+    </varlistentry>
+   </variablelist>
   </refsect1>
   <refsect1 id="see_also">
     <title>SEE ALSO</title>
     <!-- In alpabetical order. -->
     <para>
-     <command>
-      /usr/share/doc/&dhpackage;/html/&dhpackage;.html
-     </command> - api documentation
+     <ulink url="file:///usr/share/doc/&dhpackage;/html/&dhpackage;.html" />
+     - api documentation
     </para>
     <para>
      <citerefentry>
