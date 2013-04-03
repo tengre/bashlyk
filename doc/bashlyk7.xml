@@ -3,7 +3,9 @@
 "http://www.oasis-open.org/docbook/xml/4.5/docbookx.dtd" [
 
 <!--
+
 $Id$
+
 `xsltproc -''-nonet \
           -''-param man.charmap.use.subset "0" \
           -''-param make.year.ranges "1" \
@@ -147,21 +149,28 @@ man(1), man(7), http://www.tldp.org/HOWTO/Man-Page/
     </para>
     <para>
       get md5sum for file(s)
-    </para>    
+    </para>
     <para>
       - libxml.sh
     </para>
     <para>
       xml code generation
-    </para>        
+    </para>
   </refsect1>
   <refsect1 id="see_also">
     <title>SEE ALSO</title>
     <!-- In alpabetical order. -->
-    <para><citerefentry>
-        <refentrytitle>&dhpackage;</refentrytitle>
-        <manvolnum>1</manvolnum>
-      </citerefentry></para>
+    <para>
+     <command>
+      /usr/share/doc/&dhpackage;/html/&dhpackage;.html
+     </command> - api documentation
+    </para>
+    <para>
+     <citerefentry>
+      <refentrytitle>&dhpackage;</refentrytitle>
+       <manvolnum>1</manvolnum>
+     </citerefentry>
+    </para>
   </refsect1>
 </refentry>
 

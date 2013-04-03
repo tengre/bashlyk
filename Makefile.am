@@ -3,5 +3,5 @@
 ##
 
 SUBDIRS = src doc
-DESTDIR = 
+DESTDIR =
 
