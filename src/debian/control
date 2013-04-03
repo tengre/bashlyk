@@ -2,7 +2,7 @@ Source: bashlyk
 Section: libs
 Priority: extra
 Maintainer: Damir Sh. Yakupov <yds@bk.ru>
-Build-Depends: debhelper (>= 5), autotools-dev
+Build-Depends: debhelper (>= 5), autotools-dev, xsltproc
 Standards-Version: 3.7.2
 
 Package: bashlyk
