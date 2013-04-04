@@ -767,8 +767,23 @@ _pathDat() {
 #    Вывести информацию о каталоге данных сценария
 #  SOURCE
 _(){
- [ -n "$1" ] || return 255
- [ -n "$2" ] && eval "_bashlyk_$1=$2" || eval "export $1="'$_bashlyk_'"${1}"
+ udfIsValidVariable "$1" || return 255
+ case "$2" in
+   '') eval "export $1="'$_bashlyk_'"${1}";;
+  '-') eval "echo "'$_bashlyk_'"${1}";;
+    *) eval "_bashlyk_$1=$2";;
+ esac
+ return 0
 }
-
-
+#******
+#****f* bashlyk/libstd/_get
+_get() {
+ [ -n "$1" ] || return 255
+ eval "echo "'$_bashlyk_'"${1}";;
+}
+#******
+#****f* bashlyk/libstd/_set
+_set() {
+ udfIsValidVariable "$1" || return 255
+ eval "_bashlyk_$1=$2";; 
+}
