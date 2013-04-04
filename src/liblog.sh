@@ -39,7 +39,6 @@
 : ${_bashlyk_s0:=$(basename $0)}
 : ${_bashlyk_sId:=$(basename $0 .sh)}
 : ${_bashlyk_pathRun:=/tmp}
-: ${_bashlyk_pathDat:=/tmp}
 : ${_bashlyk_pidLogSock:=}
 : ${_bashlyk_fnLogSock:=}
 : ${_bashlyk_iStartTimeStamp:=$(date "+%s")}
@@ -50,7 +49,7 @@
 : ${_bashlyk_bUseSyslog:=0}
 : ${_bashlyk_bNotUseLog:=1}
 : ${_bashlyk_aRequiredCmd_log:="basename date echo hostname false printf logger mail mkfifo sleep tee true jobs ["}
-: ${_bashlyk_aExport_log:="udfLogger udfLog udfIsInteract udfIsTerminal udfCheck4LogUse udfUptime udfFinally udfSetLogSocket udfSetLog _fnLog _pathDat udfDebug"}
+: ${_bashlyk_aExport_log:="udfLogger udfLog udfIsInteract udfIsTerminal udfCheck4LogUse udfUptime udfFinally udfSetLogSocket udfSetLog _fnLog udfDebug"}
 #******
 #****f* bashlyk/liblog/udfLogger
 #  SYNOPSIS
@@ -284,22 +283,6 @@ _fnLog() {
  else
   echo ${_bashlyk_fnLog}
  fi
-}
-#******
-#****f* bashlyk/liblog/_pathDat
-#  SYNOPSIS
-#    _pathDat
-#  DESCRIPTION
-#    Получить или установить значение переменной $_bashlyk_pathDat - 
-#    полное имя каталога данных сценария
-#  OUTPUT
-#    Вывод значения переменной $_bashlyk_pathDat
-#  EXAMPLE
-#    stat $(_pathDat)
-#    Вывести информацию о каталоге данных сценария
-#  SOURCE
-_pathDat() {
- [ -n "$1" ] && _bashlyk_pathDat="$*" || echo ${_bashlyk_pathDat}
 }
 #******
 #****f* bashlyk/liblog/udfDebug

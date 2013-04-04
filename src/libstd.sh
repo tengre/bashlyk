@@ -28,6 +28,7 @@
 #    утилит
 #  SOURCE
 : ${_bashlyk_sArg:=$*}
+: ${_bashlyk_pathDat:=/tmp}
 : ${_bashlyk_sWSpaceAlias:=___}
 : ${_bashlyk_s0:=$(basename $0)}
 : ${_bashlyk_sId:=$(basename $0 .sh)}
@@ -42,7 +43,7 @@
 : ${_bashlyk_emailRcpt:=postmaster}
 : ${_bashlyk_emailSubj:="${_bashlyk_sUser}@${HOSTNAME}::${_bashlyk_s0}"}
 : ${_bashlyk_aRequiredCmd_std:="[ basename cat chgrp chmod chown date dir echo false file grep kill mail mkdir mktemp printf ps rm rmdir sed sleep tee tempfile touch true w which xargs"
-: ${_bashlyk_aExport_std:="udfBaseId udfDate udfEcho udfMail udfWarn udfThrow udfOnEmptyVariable udfThrowOnEmptyVariable udfWarnOnEmptyVariable udfShowVariable udfIsNumber udfIsValidVariable udfQuoteIfNeeded udfWSpace2Alias udfAlias2WSpace udfMakeTemp udfMakeTempV udfShellExec udfAddFile2Clean udfAddPath2Clean udfAddJob2Clean udfAddPid2Clean udfCleanQueue udfOnTrap _ARGUMENTS _s0"}
+: ${_bashlyk_aExport_std:="udfBaseId udfDate udfEcho udfMail udfWarn udfThrow udfOnEmptyVariable udfThrowOnEmptyVariable udfWarnOnEmptyVariable udfShowVariable udfIsNumber udfIsValidVariable udfQuoteIfNeeded udfWSpace2Alias udfAlias2WSpace udfMakeTemp udfMakeTempV udfShellExec udfAddFile2Clean udfAddPath2Clean udfAddJob2Clean udfAddPid2Clean udfCleanQueue udfOnTrap _ARGUMENTS _s0 _pathDat"}
 #******
 #****f* bashlyk/libstd/udfBaseId
 #  SYNOPSIS
@@ -738,4 +739,36 @@ _s0() {
  [ -n "$1" ] && _bashlyk_s0="$*" || echo ${_bashlyk_s0}
 }
 #******
+#****f* bashlyk/libstd/_pathDat
+#  SYNOPSIS
+#    _pathDat
+#  DESCRIPTION
+#    Получить или установить значение переменной $_bashlyk_pathDat -
+#    полное имя каталога данных сценария
+#  OUTPUT
+#    Вывод значения переменной $_bashlyk_pathDat
+#  EXAMPLE
+#    stat $(_pathDat)
+#    Вывести информацию о каталоге данных сценария
+#  SOURCE
+_pathDat() {
+ [ -n "$1" ] && _bashlyk_pathDat="$*" || echo ${_bashlyk_pathDat}
+}
+#******
+#****f* bashlyk/libstd/_
+#  SYNOPSIS
+#    _ <term> <value>
+#  DESCRIPTION
+#    Получить или установить значение переменной $_bashlyk_<term>
+#  OUTPUT
+#    Вывод значения переменной $_bashlyk_pathDat
+#  EXAMPLE
+#    _ pathDat
+#    Вывести информацию о каталоге данных сценария
+#  SOURCE
+_(){
+ [ -n "$1" ] || return 255
+ [ -n "$2" ] && eval "_bashlyk_$1=$2" || eval "export $1="'$_bashlyk_'"${1}"
+}
+
 

@@ -104,7 +104,7 @@ man(1), man(7), http://www.tldp.org/HOWTO/Man-Page/
   <refsect1 id="description">
    <title>DESCRIPTION</title>
    <para>
-    <command>&dhpackage;</command>     
+    <command>&dhpackage;</command>
     is a package that includes libraries of the tested code ready for a reuse.
    </para>
    <variablelist><title>Standart included libraries:</title>

@@ -24,6 +24,11 @@
 #   Запуск проверочных операций модуля
 #  SOURCE
 udfTestStd() {
+ #"$_bashlyk_pathDat"
+ # mkdir -p ${_bashlyk_pathDat}
+ # udfAddPath2Clean ${_bashlyk_pathDat} 2>/dev/null
+
+
  local s b=1 s0='' s1="test" fnTmp
  printf "\n- libstd.sh tests: "
  fnTmp=/tmp/$$.$(date +%s).tmp

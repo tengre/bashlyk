@@ -47,7 +47,7 @@ udfInit() {
  _bashlyk_sId=${_bashlyk:-bashlyk}
  [ -n "$_bashlyk" ] && _bashlyk_pathPrefix="${_bashlyk}" \
   || _bashlyk_pathPrefix=bashlyk
-  
+
  _bashlyk_sUser=$(ps -p $$ -o user=)
  _bashlyk_sGroup=$(ps -p $$ -o group=)
 
@@ -55,9 +55,11 @@ udfInit() {
   'root')
    _bashlyk_pathCnf="/etc/${_bashlyk_pathPrefix}"
    _bashlyk_pathRun="/var/run/${_bashlyk_pathPrefix}"
-   _bashlyk_pathLog="/var/log${_bashlyk_pathPrefix}"
+   _bashlyk_pathLog="/var/log/${_bashlyk_pathPrefix}"
    _bashlyk_pathDat="/var/lib/${_bashlyk_pathPrefix}"
-  ;;
+   [ -s /etc/${_bashlyk_pathPrefix}/bashlyk.conf ] \
+    && . /etc/${_bashlyk_pathPrefix}/bashlyk.conf
+   ;;
   *)
    if [ -z "$HOME" -o ! -O "$HOME" ]; then
     sHome=$(getent passwd $_bashlyk_sUser | cut -d ":" -f 6)
@@ -69,8 +71,11 @@ udfInit() {
    _bashlyk_pathRun="${sHome}/.cache/${_bashlyk_pathPrefix}/run"
    _bashlyk_pathLog="${sHome}/.local/share/${_bashlyk_pathPrefix}/log"
    _bashlyk_pathDat="${sHome}/.local/share/${_bashlyk_pathPrefix}/lib"
-   _bashlyk_pathCnf="${sHome}/.config/${_bashlyk_pathPrefix}" 
-   [ -s ${sHome}/.config/bashlyk/bashlyk.conf ] && . ${sHome}/.config/bashlyk/bashlyk.conf
+   _bashlyk_pathCnf="${sHome}/.config/${_bashlyk_pathPrefix}"
+   [ -s ${sHome}/.config/bashlyk/bashlyk.conf ] && \
+    . ${sHome}/.config/bashlyk/bashlyk.conf
+   [ -s ${sHome}/.config/${_bashlyk_pathPrefix}/bashlyk.conf ] && \
+    . ${sHome}/.config/${_bashlyk_pathPrefix}/bashlyk.conf
   ;;
  esac
 
@@ -105,9 +110,9 @@ udfMain() {
   [ -s $fn ] && . $fn || eval 'echo "Error: $fn not found..."; exit 255'
  done
 
- unset _bashlyk_aUnit _bashlyk_sMode
- 
  [ "$_bashlyk_sMode" = "test" ] && exit 0
+
+ unset _bashlyk_aUnit _bashlyk_sMode
 
  case ${_bashlyk_sCond4Log} in
   redirect)

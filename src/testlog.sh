@@ -37,14 +37,11 @@ udfTestLog() {
   "$_bashlyk_emailRcpt"  \
   "$_bashlyk_emailSubj"  \
   "$_bashlyk_bTerminal"  \
-  "$_bashlyk_pathDat"    \
   "$_bashlyk_bInteract"
   do
    [ -n "$s" ] && echo -n '.' || { echo -n '?'; b=0; }
  done
  [ $b -eq 1 ] && echo 'ok.' || echo 'fail.'
- mkdir -p ${_bashlyk_pathDat}
- udfAddPath2Clean ${_bashlyk_pathDat} 2>/dev/null
  echo -n "function testing on control terminal: "
  _bashlyk_bTerminal=1
  _bashlyk_bNotUseLog=1
