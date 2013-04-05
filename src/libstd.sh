@@ -761,29 +761,46 @@ _pathDat() {
 #  DESCRIPTION
 #    Получить или установить значение переменной $_bashlyk_<term>
 #  OUTPUT
-#    Вывод значения переменной $_bashlyk_pathDat
+#    Вывод значения переменной $_bashlyk_
 #  EXAMPLE
-#    _ pathDat
+#    _ [name]=fnLog
+#    _ fnLog test
 #    Вывести информацию о каталоге данных сценария
 #  SOURCE
 _(){
- udfIsValidVariable "$1" || return 255
- case "$2" in
-   '') eval "export $1="'$_bashlyk_'"${1}";;
-  '-') eval "echo "'$_bashlyk_'"${1}";;
-    *) eval "_bashlyk_$1=$2";;
- esac
+ [ -n "$1" ] || return 255
+ if [ -n "$2" ]; then
+  eval "_bashlyk_$1=$2";;
+ else
+  case "$1" in
+   *=*)
+        local k v
+        k=${1%=*}
+        v=${1##*=}
+        [ -n "$k" ] || k=$v
+        udfIsValidVariable "$k" || return 254
+        eval "export $k="'$_bashlyk_'"${v}"
+        ;;
+     *) eval "echo "'$_bashlyk_'"${1}";;
+  esac
+ fi
  return 0
 }
 #******
-#****f* bashlyk/libstd/_get
-_get() {
+#****f* bashlyk/libstd/_getv
+_getv() {
+ udfIsValidVariable "$1" || return 255
+ eval "export $1="'$_bashlyk_'"${1}"
+}
+#******
+#****f* bashlyk/libstd/_gete
+_gete() {
  [ -n "$1" ] || return 255
  eval "echo "'$_bashlyk_'"${1}";;
 }
 #******
 #****f* bashlyk/libstd/_set
 _set() {
- udfIsValidVariable "$1" || return 255
+ [ -n "$1" ] || return 255
  eval "_bashlyk_$1=$2";; 
 }
