@@ -757,20 +757,29 @@ _pathDat() {
 #******
 #****f* bashlyk/libstd/_
 #  SYNOPSIS
-#    _ <term> <value>
+#    _ [[<get>]=]<subname> [<value>]
 #  DESCRIPTION
-#    Получить или установить значение переменной $_bashlyk_<term>
+#    Получить или установить (get/set) значение переменной $_bashlyk_<subname>
+#  INPUTS
+#    <get>     - переменная для приема значения (get) ${_bashlyk_<subname>}, 
+#                может быть опущена (знак "=" не опускается), в этом случае 
+#                предполагается, что она имеет имя <subname>
+#    <subname> - содержательная часть глобальной имени ${_bashlyk_<subname>}
+#    <value>   - новое значение (set) для ${_bashlyk_<subname>}. Имеет приоритет
+#                перед режимом "get" 
 #  OUTPUT
-#    Вывод значения переменной $_bashlyk_
+#    Вывод значения переменной $_bashlyk_<subname> в режиме get, если не указана
+#    приемная переменная и нет знака "="
 #  EXAMPLE
-#    _ [name]=fnLog
-#    _ fnLog test
-#    Вывести информацию о каталоге данных сценария
+#    _ name=fnLog
+#    _ =fnLog
+#    _ fnLog
+#    _ fnLog /var/log/name.log
 #  SOURCE
 _(){
  [ -n "$1" ] || return 255
  if [ -n "$2" ]; then
-  eval "_bashlyk_$1=$2";;
+  eval "_bashlyk_${1##*=}=${2}"
  else
   case "$1" in
    *=*)
