@@ -43,7 +43,7 @@
 : ${_bashlyk_emailRcpt:=postmaster}
 : ${_bashlyk_emailSubj:="${_bashlyk_sUser}@${HOSTNAME}::${_bashlyk_s0}"}
 : ${_bashlyk_aRequiredCmd_std:="[ basename cat chgrp chmod chown date dir echo false file grep kill mail mkdir mktemp printf ps rm rmdir sed sleep tee tempfile touch true w which xargs"
-: ${_bashlyk_aExport_std:="udfBaseId udfDate udfEcho udfMail udfWarn udfThrow udfOnEmptyVariable udfThrowOnEmptyVariable udfWarnOnEmptyVariable udfShowVariable udfIsNumber udfIsValidVariable udfQuoteIfNeeded udfWSpace2Alias udfAlias2WSpace udfMakeTemp udfMakeTempV udfShellExec udfAddFile2Clean udfAddPath2Clean udfAddJob2Clean udfAddPid2Clean udfCleanQueue udfOnTrap _ARGUMENTS _s0 _pathDat"}
+: ${_bashlyk_aExport_std:="udfBaseId udfDate udfEcho udfMail udfWarn udfThrow udfOnEmptyVariable udfThrowOnEmptyVariable udfWarnOnEmptyVariable udfShowVariable udfIsNumber udfIsValidVariable udfQuoteIfNeeded udfWSpace2Alias udfAlias2WSpace udfMakeTemp  udfMakeTempV udfShellExec udfAddFile2Clean udfAddPath2Clean udfAddJob2Clean udfAddPid2Clean udfCleanQueue udfOnTrap _ARGUMENTS _s0  _pathDat"}
 #******
 #****f* bashlyk/libstd/udfBaseId
 #  SYNOPSIS
@@ -233,6 +233,9 @@ udfWarnOnEmptyVariable() {
 #    args - имена переменных
 #  OUTPUT
 #    Имя переменной и значение в виде <Имя>=<Значение>
+#  EXAMPLE
+#   ex: sTest='test'
+#   ex: udfShowVariable sTest | grep -w 'sTest=test' $? 0 : 1
 #  SOURCE
 udfShowVariable() {
  local bashlyk_aSE10yGYS4AwxLJA_a bashlyk_G9WOnrBkEFSt9oKw_s
@@ -260,8 +263,12 @@ udfShowVariable() {
 #    1 - аргумент не является натуральным числом
 #    2 - аргумент не задан
 #  EXAMPLE
-#    udfIsNumber $iSize kMG
-#    Возвращает 0 если $iSize содержит число вида 12,34k,67M или 89G
+#   ex:  udfIsNumber 12      ? 0 : 1
+#   ex:  udfIsNumber 34k kMG ? 0 : 1
+#   ex:  udfIsNumber 67M kMG ? 0 : 1
+#   ex:  udfIsNumber 89G kMG ? 0 : 1
+#   ex:  udfIsNumber 12,34   ? 1 : 0
+#   ex:  Возвращает 0 если $iSize содержит число вида 12,34k,67M или 89G
 #  SOURCE
 udfIsNumber() {
  [ -n "$1" ] || return 2
@@ -285,6 +292,10 @@ udfIsNumber() {
 #    0 - аргумент является валидным идентификатором
 #    1 - аргумент не является валидным идентификатором
 #    2 - аргумент не задан
+#  EXAMPLE
+#   ex: udfIsValidVariable "12"  $? 1 : 0
+#   ex: udfIsValidVariable "_a"  $? 0 : 1
+#   ex: udfIsValidVariable "k1"  $? 0 : 1
 #  SOURCE
 udfIsValidVariable() {
  [ -n "$1" ] || return 2
@@ -304,7 +315,8 @@ udfIsValidVariable() {
 #  OUTPUT
 #    аргумент с кавычками, если есть пробелы
 #  EXAMPLE
-#    udfQuoteIfNeeded $(date)
+#   ex: ? $(udfQuoteIfNeeded "word") = 'word'
+#   ex: ? $(udfQuoteIfNeeded "two words") = '"two words"'
 #  SOURCE
 udfQuoteIfNeeded() {
  [ -n "$(echo "$*" | grep -e [[:space:]])" ] && echo "\"$*\"" || echo "$*"
@@ -322,8 +334,8 @@ udfQuoteIfNeeded() {
 #  OUTPUT
 #   Аргумент с заменой пробелов на специальную последовательность символов
 #  EXAMPLE
-#    выполнение: udfWSpace2Alias a b  cd
-#         вывод: a___b______cd
+#   ex: ? "a___b______cd" = "$(udfWSpace2Alias a b  cd)"          :
+#   ex: ? "a___b______cd" = "$(echo a b  cd | udfAlias2WSpace -)" :
 #  SOURCE
 udfWSpace2Alias() {
  case "$1" in
@@ -345,10 +357,8 @@ udfWSpace2Alias() {
 #  OUTPUT
 #    Аргумент с заменой специальной последовательности символов на пробел
 #  EXAMPLE
-#    выполнение: udfWSpace2Alias a___b______cd
-#         вывод: "a b  cd"
-#    выполнение: echo a___b______cd | udfAlias2WSpace -
-#         вывод: a b  cd
+#   ex: ? "a b  cd" = "$(udfWSpace2Alias a___b______cd)" :
+#   ex: ? "a b  cd" = "$(echo a___b______cd | udfAlias2WSpace -)" :
 #  SOURCE
 udfAlias2WSpace() {
  case "$1" in
@@ -759,22 +769,23 @@ _pathDat() {
 #  SYNOPSIS
 #    _ [[<get>]=]<subname> [<value>]
 #  DESCRIPTION
-#    Получить или установить (get/set) значение переменной $_bashlyk_<subname>
+#    Получить или установить (get/set) значение глобальной переменной 
+#    $_bashlyk_<subname>
 #  INPUTS
 #    <get>     - переменная для приема значения (get) ${_bashlyk_<subname>}, 
 #                может быть опущена (знак "=" не опускается), в этом случае 
 #                предполагается, что она имеет имя <subname>
 #    <subname> - содержательная часть глобальной имени ${_bashlyk_<subname>}
 #    <value>   - новое значение (set) для ${_bashlyk_<subname>}. Имеет приоритет
-#                перед режимом "get" 
+#                перед режимом "get"
 #  OUTPUT
 #    Вывод значения переменной $_bashlyk_<subname> в режиме get, если не указана
 #    приемная переменная и нет знака "="
 #  EXAMPLE
-#    _ name=fnLog
-#    _ =fnLog
-#    _ fnLog
-#    _ fnLog /var/log/name.log
+#   ex: _ name=bNotUseLog ? "$name" = "$_bashlyk_bNotUseLog"           :
+#   ex: _ =bNotUseLog     ? "$bNotUseLog" = "$_bashlyk_bNotUseLog"     :
+#   ex: _ bNotUseLog      ? "$(_ bNotUseLog)" = "$_bashlyk_bNotUseLog" :
+#   ex: _ bNotUseLog 0    ? "0" = "$_bashlyk_bNotUseLog"               :
 #  SOURCE
 _(){
  [ -n "$1" ] || return 255
@@ -797,19 +808,58 @@ _(){
 }
 #******
 #****f* bashlyk/libstd/_getv
+#  SYNOPSIS
+#    _getv <subname> [<get>]
+#  DESCRIPTION
+#    Получить (get) значение глобальной переменной $_bashlyk_<subname> в
+#    (локальную) переменную
+#  INPUTS
+#    <get>     - переменная для приема значения (get) ${_bashlyk_<subname>},
+#                может быть опущена, в этом случае приемником становится
+#                переменная <subname>
+#    <subname> - содержательная часть глобальной имени ${_bashlyk_<subname>}
+#  EXAMPLE
+#   ex: _getv bNotUseLog bLog ? "$bLog" = "$_bashlyk_bNotUseLog"       :
+#   ex: _getv bNotUseLog      ? "$bNotUseLog" = "$_bashlyk_bNotUseLog" :
+#  SOURCE
 _getv() {
- udfIsValidVariable "$1" || return 255
- eval "export $1="'$_bashlyk_'"${1}"
+ if [ -n "$2" ]; then
+  udfIsValidVariable "$2" || return 255
+  eval "export $2="'$_bashlyk_'"${1}"
+ else
+  udfIsValidVariable "$1" || return 255
+  eval "export $1="'$_bashlyk_'"${1}"
+ fi
+ return 0
 }
 #******
 #****f* bashlyk/libstd/_gete
+#  SYNOPSIS
+#    _gete <subname>
+#  DESCRIPTION
+#    Вывести значение глобальной переменной $_bashlyk_<subname>
+#  INPUTS
+#    <subname> - содержательная часть глобальной имени ${_bashlyk_<subname>}
+#  EXAMPLE
+#   ex:  _gete bNotUseLog ? "$(_gete bNotUseLog)" = "$_bashlyk_bNotUseLog" :
+#  SOURCE
 _gete() {
  [ -n "$1" ] || return 255
- eval "echo "'$_bashlyk_'"${1}";;
+ eval "echo "'$_bashlyk_'"${1}"
 }
 #******
 #****f* bashlyk/libstd/_set
+#  SYNOPSIS
+#    _set <subname> [<value>]
+#  DESCRIPTION
+#    установить (set) значение глобальной переменной $_bashlyk_<subname>
+#  INPUTS
+#    <subname> - содержательная часть глобальной имени ${_bashlyk_<subname>}
+#    <value>   - новое значение, в случае отсутствия - пустая строка
+#  EXAMPLE
+#   ex:  _set bNotUseLog 1 ? "1" = "$_bashlyk_bNotUseLog" :
+#  SOURCE
 _set() {
  [ -n "$1" ] || return 255
- eval "_bashlyk_$1=$2";; 
+ eval "_bashlyk_$1=$2"
 }
