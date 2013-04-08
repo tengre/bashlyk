@@ -42,7 +42,7 @@
 : ${_bashlyk_bNotUseLog:=1}
 : ${_bashlyk_emailRcpt:=postmaster}
 : ${_bashlyk_emailSubj:="${_bashlyk_sUser}@${HOSTNAME}::${_bashlyk_s0}"}
-: ${_bashlyk_aRequiredCmd_std:="[ basename cat chgrp chmod chown date dir echo false file grep kill mail mkdir mktemp printf ps rm rmdir sed sleep tee tempfile touch true w which xargs"
+: ${_bashlyk_aRequiredCmd_std:="[ basename cat chgrp chmod chown date dir echo false file grep kill mail mkdir mktemp printf ps rm rmdir sed sleep tee tempfile touch true w which xargs"}
 : ${_bashlyk_aExport_std:="udfBaseId udfDate udfEcho udfMail udfWarn udfThrow udfOnEmptyVariable udfThrowOnEmptyVariable udfWarnOnEmptyVariable udfShowVariable udfIsNumber udfIsValidVariable udfQuoteIfNeeded udfWSpace2Alias udfAlias2WSpace udfMakeTemp  udfMakeTempV udfShellExec udfAddFile2Clean udfAddPath2Clean udfAddJob2Clean udfAddPid2Clean udfCleanQueue udfOnTrap _ARGUMENTS _s0  _pathDat"}
 #******
 #****f* bashlyk/libstd/udfBaseId
@@ -52,6 +52,8 @@
 #    Alias для команды basename
 #  OUTPUT
 #    Короткое имя запущенного сценария без расширения ".sh"
+#  EXAMPLE
+#   ex: ? "$(udfBaseId)" = "$(basename $0 .sh)" :
 #  SOURCE
 udfBaseId() {
  basename $0 .sh
@@ -66,6 +68,8 @@ udfBaseId() {
 #    <args> - суффикс к форматной строке текущей даты
 #  OUTPUT
 #    текущая дата с возможным суффиксом
+#  EXAMPLE
+#   ex: ? udfDate 'test' | grep -E ".* [[:digit:]]+:[[:digit:]]+:[[:digit:]]+ test" :
 #  SOURCE
 udfDate() {
  date "+%b %d %H:%M:%S $*"
@@ -166,6 +170,8 @@ udfThrow() {
 #  RETURN VALUE
 #    0   - переменные не содержат пустые значения
 #    255 - есть не инициализированные переменные
+#  EXAMPLE
+#   
 #  SOURCE
 udfOnEmptyVariable() {
  local bashlyk_EysrBRwAuGMRNQoG_a bashlyk_tfAFyKrLgSeOatp2_s s='Throw'
@@ -200,6 +206,10 @@ udfOnEmptyVariable() {
 #  RETURN VALUE
 #    0   - переменные не содержат пустые значения
 #    255 - есть не инициализированные переменные
+#  EXAMPLE
+#   sNoEmpty='test' sEmpty=''                   ##udfThrowOnEmptyVariable-s
+#   udfThrowOnEmptyVariable sNoEmpty $? 0 : 1   ##udfThrowOnEmptyVariable+s
+#   udfThrowOnEmptyVariable sEmpty   $? 1 : 0   ##udfThrowOnEmptyVariable+s
 #  SOURCE
 udfThrowOnEmptyVariable() {
  udfOnEmptyVariable Throw $*
@@ -219,6 +229,10 @@ udfThrowOnEmptyVariable() {
 #  RETURN VALUE
 #    0   - переменные не содержат пустые значения
 #    255 - есть не инициализированные переменные
+#  EXAMPLE
+#   sNoEmpty='test' sEmpty=''                  ##udfWarnOnEmptyVariable-
+#   udfWarnOnEmptyVariable sNoEmpty $? 0 : 1   ##udfWarnOnEmptyVariable+
+#   udfWarnOnEmptyVariable sEmpty   $? 1 : 0   ##udfWarnOnEmptyVariable+
 #  SOURCE
 udfWarnOnEmptyVariable() {
  udfOnEmptyVariable Warn $*
@@ -234,8 +248,8 @@ udfWarnOnEmptyVariable() {
 #  OUTPUT
 #    Имя переменной и значение в виде <Имя>=<Значение>
 #  EXAMPLE
-#   ex: sTest='test'
-#   ex: udfShowVariable sTest | grep -w 'sTest=test' $? 0 : 1
+#   sTest='test'                                          ##-udfShowVariable
+#   udfShowVariable sTest | grep -w 'sTest=test' $? 0 : 1 ##+udfShowVariable
 #  SOURCE
 udfShowVariable() {
  local bashlyk_aSE10yGYS4AwxLJA_a bashlyk_G9WOnrBkEFSt9oKw_s
@@ -784,7 +798,7 @@ _pathDat() {
 #  EXAMPLE
 #   ex: _ name=bNotUseLog ? "$name" = "$_bashlyk_bNotUseLog"           :
 #   ex: _ =bNotUseLog     ? "$bNotUseLog" = "$_bashlyk_bNotUseLog"     :
-#   ex: _ bNotUseLog      ? "$(_ bNotUseLog)" = "$_bashlyk_bNotUseLog" :
+#   ex:                   ? "$(_ bNotUseLog)" = "$_bashlyk_bNotUseLog" :
 #   ex: _ bNotUseLog 0    ? "0" = "$_bashlyk_bNotUseLog"               :
 #  SOURCE
 _(){
@@ -841,7 +855,7 @@ _getv() {
 #  INPUTS
 #    <subname> - содержательная часть глобальной имени ${_bashlyk_<subname>}
 #  EXAMPLE
-#   ex:  _gete bNotUseLog ? "$(_gete bNotUseLog)" = "$_bashlyk_bNotUseLog" :
+#   ex:  ? "$(_gete bNotUseLog)" = "$_bashlyk_bNotUseLog" :
 #  SOURCE
 _gete() {
  [ -n "$1" ] || return 255

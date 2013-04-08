@@ -66,9 +66,11 @@
 #     * Вывод в системный журнал (syslog) и в файл $_bashlyk_fnLog
 #  SOURCE
 udfLogger() {
- local envLang bSysLog bUseLog sTagLog
+ local envLang envLC_TIME bSysLog bUseLog sTagLog
  envLang=$LANG
  LANG=C
+ envLC_TIME=$LC_TIME
+ LC_TIME=C
  bSysLog=0
  bUseLog=0
  sTagLog="${_bashlyk_s0}[$(printf "%05d" $$)]"
@@ -99,6 +101,7 @@ udfLogger() {
   ;;
  esac
  LANG=$envLang
+ LC_TIME=$envLC_TIME
 }
 #******
 #****f* bashlyk/liblog/udfLog
