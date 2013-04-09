@@ -53,7 +53,7 @@
 #  OUTPUT
 #    Короткое имя запущенного сценария без расширения ".sh"
 #  EXAMPLE
-#   ex: ? "$(udfBaseId)" = "$(basename $0 .sh)" :
+#   "$(udfBaseId)" = "$(basename $0 .sh)"                                       ? true ##udfBaseId>
 #  SOURCE
 udfBaseId() {
  basename $0 .sh
@@ -69,7 +69,7 @@ udfBaseId() {
 #  OUTPUT
 #    текущая дата с возможным суффиксом
 #  EXAMPLE
-#   ex: ? udfDate 'test' | grep -E ".* [[:digit:]]+:[[:digit:]]+:[[:digit:]]+ test" :
+#   udfDate 'test' | grep -E ".* [[:digit:]]+:[[:digit:]]+:[[:digit:]]+ test"   ? true ##udfDate>
 #  SOURCE
 udfDate() {
  date "+%b %d %H:%M:%S $*"
@@ -87,6 +87,9 @@ udfDate() {
 #           из стандартного ввода
 #  OUTPUT
 #   Зависит от параметров вывода
+#  EXAMPLE
+#   udfEcho   'test' | grep -w 'test'                                           ? true ##udfEcho>
+#   "$(echo 'body' | udfEcho - 'subject' | tr -d '\n')" = "subject----body"     ? true ##udfEcho>
 #  SOURCE
 udfEcho() {
  if [ "$1" = "-" ]; then
@@ -108,13 +111,17 @@ udfEcho() {
 #    args - строка для вывода. Если имеется в качестве первого аргумента
 #           "-", то эта строка выводится заголовком для данных
 #           из стандартного ввода
+#  EXAMPLE
+#   date | udfMail - test                                                       ? true ##udfMail>
 #  SOURCE
 udfMail() {
- local fnTmp
+ local fnTmp rc
  udfMakeTemp fnTmp
  udfEcho "$*" | tee -a $fnTmp
  cat $fnTmp | mail -e -s "${_bashlyk_emailSubj}" ${_bashlyk_emailRcpt}
+ rc=$?
  rm -f $fnTmp
+ return $rc
 }
 #******
 #****f* bashlyk/libstd/udfWarn
@@ -130,6 +137,11 @@ udfMail() {
 #           из стандартного ввода
 #  OUTPUT
 #   Зависит от параметров вывода
+#  EXAMPLE
+#   bNotUseLog=$_bashlyk_bNotUseLog                                             ##udfWarn
+#   _bashlyk_bNotUseLog=0 date | udfWarn - test                                 ? true ##udfWarn>
+#   _bashlyk_bNotUseLog=1 date | udfWarn - test                                 ? true ##udfWarn>
+#   _bashlyk_bNotUseLog=$bNotUseLog                                             ##udfWarn
 #  SOURCE
 udfWarn() {
  [ $_bashlyk_bNotUseLog -ne 0 ] && udfEcho $* || udfMail $*
@@ -148,6 +160,8 @@ udfWarn() {
 #           из стандартного ввода
 #  OUTPUT
 #   Зависит от параметров вывода
+#  EXAMPLE
+#   $(udfThrow test; true)                                                      ? false ##udfThrow>
 #  SOURCE
 udfThrow() {
  udfWarn $*
@@ -207,9 +221,9 @@ udfOnEmptyVariable() {
 #    0   - переменные не содержат пустые значения
 #    255 - есть не инициализированные переменные
 #  EXAMPLE
-#   sNoEmpty='test' sEmpty=''                   ##udfThrowOnEmptyVariable-s
-#   udfThrowOnEmptyVariable sNoEmpty $? 0 : 1   ##udfThrowOnEmptyVariable+s
-#   udfThrowOnEmptyVariable sEmpty   $? 1 : 0   ##udfThrowOnEmptyVariable+s
+#   sNoEmpty='test' sEmpty=''                                                           ##udfThrowOnEmptyVariable
+#   $(udfThrowOnEmptyVariable sNoEmpty)                                         ? true  ##udfThrowOnEmptyVariable>
+#   $(udfThrowOnEmptyVariable sEmpty)                                           ? false ##udfThrowOnEmptyVariable>
 #  SOURCE
 udfThrowOnEmptyVariable() {
  udfOnEmptyVariable Throw $*
@@ -230,9 +244,9 @@ udfThrowOnEmptyVariable() {
 #    0   - переменные не содержат пустые значения
 #    255 - есть не инициализированные переменные
 #  EXAMPLE
-#   sNoEmpty='test' sEmpty=''                  ##udfWarnOnEmptyVariable-
-#   udfWarnOnEmptyVariable sNoEmpty $? 0 : 1   ##udfWarnOnEmptyVariable+
-#   udfWarnOnEmptyVariable sEmpty   $? 1 : 0   ##udfWarnOnEmptyVariable+
+#   sNoEmpty='test' sEmpty=''                                                           ##udfWarnOnEmptyVariable
+#   udfWarnOnEmptyVariable sNoEmpty                                             ? true  ##udfWarnOnEmptyVariable>
+#   udfWarnOnEmptyVariable sEmpty                                               ? false ##udfWarnOnEmptyVariable>
 #  SOURCE
 udfWarnOnEmptyVariable() {
  udfOnEmptyVariable Warn $*
