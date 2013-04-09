@@ -185,7 +185,9 @@ udfThrow() {
 #    0   - переменные не содержат пустые значения
 #    255 - есть не инициализированные переменные
 #  EXAMPLE
-#   
+#   sNoEmpty='test' sEmpty=''                                                           ##udfOnEmptyVariable
+#   $(udfOnEmptyVariable sNoEmpty; false)                                       ? true  ##udfOnEmptyVariable>
+#   $(udfOnEmptyVariable sEmpty; true)                                          ? false ##udfOnEmptyVariable>
 #  SOURCE
 udfOnEmptyVariable() {
  local bashlyk_EysrBRwAuGMRNQoG_a bashlyk_tfAFyKrLgSeOatp2_s s='Throw'
@@ -262,8 +264,8 @@ udfWarnOnEmptyVariable() {
 #  OUTPUT
 #    Имя переменной и значение в виде <Имя>=<Значение>
 #  EXAMPLE
-#   sTest='test'                                          ##-udfShowVariable
-#   udfShowVariable sTest | grep -w 'sTest=test' $? 0 : 1 ##+udfShowVariable
+#   sTest='test'                                                                ##udfShowVariable
+#   udfShowVariable sTest | grep -w 'sTest=test'                                ? true ##udfShowVariable
 #  SOURCE
 udfShowVariable() {
  local bashlyk_aSE10yGYS4AwxLJA_a bashlyk_G9WOnrBkEFSt9oKw_s
@@ -280,29 +282,31 @@ udfShowVariable() {
 #  DESCRIPTION
 #    Проверка аргумента на то, что он является натуральным числом
 #    Аргумент считается числом, если он содержит цифры и может иметь в конце
-#    символ - признак порядка, например, k M G (kilo-, Mega-, Giga-)
+#    символ - признак порядка, например, k M G T (kilo-, Mega-, Giga-, Terra-)
 #  INPUTS
 #    number - проверяемое значение
 #    tag    - набор символов, один из которых можно применить
 #             после цифр для указания признака числа, например, 
-#             порядка.
+#             порядка. (регистр не имеет значения)
 #  RETURN VALUE
 #    0 - аргумент является натуральным числом
 #    1 - аргумент не является натуральным числом
 #    2 - аргумент не задан
 #  EXAMPLE
-#   ex:  udfIsNumber 12      ? 0 : 1
-#   ex:  udfIsNumber 34k kMG ? 0 : 1
-#   ex:  udfIsNumber 67M kMG ? 0 : 1
-#   ex:  udfIsNumber 89G kMG ? 0 : 1
-#   ex:  udfIsNumber 12,34   ? 1 : 0
-#   ex:  Возвращает 0 если $iSize содержит число вида 12,34k,67M или 89G
+#   udfIsNumber 12                                                              ? true  ##udfIsNumber>
+#   udfIsNumber 34k k                                                           ? true  ##udfIsNumber>
+#   udfIsNumber 67M kMGT                                                        ? true  ##udfIsNumber>
+#   udfIsNumber 89G G                                                           ? true  ##udfIsNumber>
+#   udfIsNumber 12,34                                                           ? false ##udfIsNumber>
+#   udfIsNumber 12T                                                             ? false ##udfIsNumber>
+#   udfIsNumber 1O2                                                             ? false ##udfIsNumber>
+#   udfIsNumber                                                                 ? false ##udfIsNumber>
 #  SOURCE
 udfIsNumber() {
  [ -n "$1" ] || return 2
  local s=''
  [ -n "$2" ] && s="[$2]?"
- case "$(echo "$1" | grep -E "^[[:digit:]]+${s}$")" in
+ case "$(echo "$1" | grep -i -E "^[[:digit:]]+${s}$")" in
   '') return 1;;
    *) return 0;;
  esac
@@ -321,9 +325,10 @@ udfIsNumber() {
 #    1 - аргумент не является валидным идентификатором
 #    2 - аргумент не задан
 #  EXAMPLE
-#   ex: udfIsValidVariable "12"  $? 1 : 0
-#   ex: udfIsValidVariable "_a"  $? 0 : 1
-#   ex: udfIsValidVariable "k1"  $? 0 : 1
+#    udfIsValidVariable                                                         ? false ##udfIsValidVariable>
+#    udfIsValidVariable "12"                                                    ? false ##udfIsValidVariable>
+#    udfIsValidVariable "_a"                                                    ? true  ##udfIsValidVariable>
+#    udfIsValidVariable "k1"                                                    ? true  ##udfIsValidVariable>                                                  
 #  SOURCE
 udfIsValidVariable() {
  [ -n "$1" ] || return 2
@@ -343,8 +348,8 @@ udfIsValidVariable() {
 #  OUTPUT
 #    аргумент с кавычками, если есть пробелы
 #  EXAMPLE
-#   ex: ? $(udfQuoteIfNeeded "word") = 'word'
-#   ex: ? $(udfQuoteIfNeeded "two words") = '"two words"'
+#    udfQuoteIfNeeded "word" | grep '^word$'                                    ? true ##udfQuoteIfNeeded>
+#    udfQuoteIfNeeded two words | grep '^".*"$'                                 ? true ##udfQuoteIfNeeded>
 #  SOURCE
 udfQuoteIfNeeded() {
  [ -n "$(echo "$*" | grep -e [[:space:]])" ] && echo "\"$*\"" || echo "$*"
@@ -362,8 +367,8 @@ udfQuoteIfNeeded() {
 #  OUTPUT
 #   Аргумент с заменой пробелов на специальную последовательность символов
 #  EXAMPLE
-#   ex: ? "a___b______cd" = "$(udfWSpace2Alias a b  cd)"          :
-#   ex: ? "a___b______cd" = "$(echo a b  cd | udfAlias2WSpace -)" :
+#   udfWSpace2Alias a b  cd | grep -w '^a___b______cd$'                         ? true ##udfAlias2WSpace>
+#   echo a b  cd | udfAlias2WSpace - | grep -w '^a___b______cd$'                ? true ##udfAlias2WSpace>
 #  SOURCE
 udfWSpace2Alias() {
  case "$1" in
@@ -385,8 +390,8 @@ udfWSpace2Alias() {
 #  OUTPUT
 #    Аргумент с заменой специальной последовательности символов на пробел
 #  EXAMPLE
-#   ex: ? "a b  cd" = "$(udfWSpace2Alias a___b______cd)" :
-#   ex: ? "a b  cd" = "$(echo a___b______cd | udfAlias2WSpace -)" :
+#    udfWSpace2Alias a___b______cd | grep -w '^"a b  cd"$'                      ? true ##udfWSpace2Alias>
+#    echo a___b______cd | udfAlias2WSpace - | grep -w '^"a b  cd"$'             ? true ##udfWSpace2Alias>
 #  SOURCE
 udfAlias2WSpace() {
  case "$1" in
@@ -425,8 +430,8 @@ udfAlias2WSpace() {
 #    255 - Ошибка: аргумент отсутствует или файл конфигурации не найден
 #
 #  EXAMPLE
-#   udfMakeTemp fnTemp prefix=temp mode=0644 keep=true path=$HOME
-#
+#    udfMakeTemp fnTemp prefix=temp mode=0644 keep=true path=$HOME              ##udfMakeTemp
+#    [ -f $fnTemp ]                                                             ? true ##udfMakeTemp>
 #   pathTemp=$(udfMakeTemp path=/var/tmp/$USER)
 #   udfAddPath2Clean $pathTemp
 #
