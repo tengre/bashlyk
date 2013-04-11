@@ -737,14 +737,17 @@ udfCleanQueue() {
 #    указанных в соответствующих глобальных переменных
 #    * Закрывается сокет журнала сценария, если он использовался.
 #  EXAMPLE
-#    local fnTemp pathTemp                                                      ##udfOnTrap
+#    local fnTemp pathTemp pid                                                  ##udfOnTrap
 #    udfMakeTemp fnTemp                                                         ##udfOnTrap
 #    udfMakeTemp pathTemp type=dir                                              ##udfOnTrap
-#    sleep 1024 &                                                               ##udfOnTrap
+#    sleep 1024 &; pid=$?                                                       ##udfOnTrap
 #    udfAddPid2Clean $?                                                         ##udfOnTrap
 #    udfAddFile2Clean $fnTemp                                                   ##udfOnTrap
 #    udfAddPath2Clean $pathTemp                                                 ##udfOnTrap
 #    udfOnTrap                                                                  ##udfOnTrap
+#    test -f $fnTemp                                                            ? false ##udfOnTrap>
+#    test -d $pathTemp                                                          ? false ##udfOnTrap>
+#    ps -p $pid                                                                 ? false ##udfOnTrap>
 #  SOURCE
 udfOnTrap() {
  local i s
