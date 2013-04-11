@@ -430,6 +430,7 @@ udfAlias2WSpace() {
 #    255 - Ошибка: аргумент отсутствует или файл конфигурации не найден
 #
 #  EXAMPLE
+#    local foTemp                                                               ##udfMakeTemp
 #    udfMakeTemp foTemp path=$HOME prefix=pre. suffix=.suf                      ##udfMakeTemp
 #    ls $foTemp | grep -w "$HOME/pre\.........\.suf"                            ? true ##udfMakeTemp>
 #    udfMakeTemp foTemp type=dir mode=0641                                      ##udfMakeTemp
@@ -653,6 +654,7 @@ udfShellExec() {
 #  INPUTS
 #    args - имена файлов
 #  EXAMPLE
+#    local fnTemp                                                               ##udfAddFile2Clean
 #    udfMakeTemp fnTemp keep=true                                               ##udfAddFile2Clean
 #    test $(udfAddFile2Clean $fnTemp)                                           ##udfAddFile2Clean
 #    test -f $fnTemp                                                            ? false ##udfAddFile2Clean>
@@ -672,9 +674,10 @@ udfAddFile2Clean() {
 #  INPUTS
 #    args - имена каталогов
 #  EXAMPLE
+#    local pathTemp                                                             ##udfAddPath2Clean
 #    udfMakeTemp pathTemp keep=true type=dir                                    ##udfAddPath2Clean
 #    test $(udfAddFile2Clean $pathTemp)                                         ##udfAddPath2Clean
-#    test -f $fnTemp                                                            ? false ##udfAddPath2Clean>
+#    test -f $pathTemp                                                          ? false ##udfAddPath2Clean>
 #  SOURCE
 udfAddPath2Clean() {
  [ -n "$1" ] || return 0
@@ -737,6 +740,8 @@ udfCleanQueue() {
 #    local fnTemp pathTemp                                                      ##udfOnTrap
 #    udfMakeTemp fnTemp                                                         ##udfOnTrap
 #    udfMakeTemp pathTemp type=dir                                              ##udfOnTrap
+#    sleep 1024 &                                                               ##udfOnTrap
+#    udfAddPid2Clean $?                                                         ##udfOnTrap
 #    udfAddFile2Clean $fnTemp                                                   ##udfOnTrap
 #    udfAddPath2Clean $pathTemp                                                 ##udfOnTrap
 #    udfOnTrap                                                                  ##udfOnTrap
@@ -783,8 +788,11 @@ udfOnTrap() {
 #  OUTPUT
 #    Вывод значения переменной $_bashlyk_sArg
 #  EXAMPLE
-#    for arg in $(_ARGUMENTS); do ... done
-#    Обработка аргументов командной строки
+#    local ARGUMENTS=$(_ARGUMENTS)                                              ##_ARGUMENTS
+#    _ARGUMENTS | grep -w "^${_bashlyk_sArgs}$"                                 ? true ##_ARGUMENTS>
+#    _ARGUMENTS "test"                                                          ##_ARGUMENTS
+#    _ARGUMENTS | grep -w "^test$"                                              ? true ##_ARGUMENTS>
+#    _ARGUMENTS $ARGUMENTS                                                      ##_ARGUMENTS
 #  SOURCE
 _ARGUMENTS() {
  [ -n "$1" ] && _bashlyk_sArg="$*" || echo ${_bashlyk_sArg}
@@ -800,8 +808,11 @@ _ARGUMENTS() {
 #  OUTPUT
 #    Вывод значения переменной $_bashlyk_s0
 #  EXAMPLE
-#    echo "Usage: $(_s0) ..."
-#    Вставить в вывод короткое имя сценария
+#    local s0=$(_s0)                                                            ##_s0
+#    _s0 | grep -w "^${_bashlyk_s0}$"                                           ? true ##_s0>
+#    _s0 "test"                                                                 ##_s0
+#    _s0 | grep -w "^test$"                                                     ? true ##_s0>
+#    _s0 $s0                                                                    ##_s0
 #  SOURCE
 _s0() {
  [ -n "$1" ] && _bashlyk_s0="$*" || echo ${_bashlyk_s0}

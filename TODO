@@ -12,5 +12,7 @@
 - fhs ++
 - {xml,md5} -> std
 - subproc for test throw & log func
+- job test udfOnTrap (libstd)
+
 
 
