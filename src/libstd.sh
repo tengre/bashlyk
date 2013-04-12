@@ -112,13 +112,17 @@ udfEcho() {
 #           "-", то эта строка выводится заголовком для данных
 #           из стандартного ввода
 #  EXAMPLE
+#    local emailOptions=$(_ emailOptions)                                       ##udfMail>
+#    _ emailOptions '-v'                                                        ##udfMail>
 #    date | udfMail - test                                                      ? true ##udfMail>
+#    _ emailOptions $emailOptions                                               ##udfMail>
 #  SOURCE
 udfMail() {
  local fnTmp rc
  udfMakeTemp fnTmp
  udfEcho "$*" | tee -a $fnTmp
- cat $fnTmp | mail -e -s "${_bashlyk_emailSubj}" ${_bashlyk_emailRcpt}
+ cat $fnTmp | mail -e -s "${_bashlyk_emailSubj}" ${_bashlyk_emailOptions} \
+  ${_bashlyk_emailRcpt}
  rc=$?
  rm -f $fnTmp
  return $rc
