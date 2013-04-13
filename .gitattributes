@@ -29,4 +29,5 @@ src/testmd5.sh -text
 src/testopt.sh -text
 src/testpid.sh -text
 src/teststd.sh -text
+src/testunit.sh -text
 src/testxml.sh -text
