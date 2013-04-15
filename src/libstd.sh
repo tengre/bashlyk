@@ -877,12 +877,12 @@ _pathDat() {
 #    _ sS=sWSpaceAlias                                                          ##_
 #    echo "$sS" | grep "^${_bashlyk_sWSpaceAlias}$"                             ##_ ? true
 #    _ =sWSpaceAlias                                                            ##_
-#    echo "$sWSpaceAlias" | grep -w "^${_bashlyk_sWSpaceAlias}$"                ##_ ? true
+#    echo "$sWSpaceAlias" | grep "^${_bashlyk_sWSpaceAlias}$"                   ##_ ? true
 #    _ sWSpaceAlias | grep "^${_bashlyk_sWSpaceAlias}$"                         ##_ ? true
 #    _ sWSpaceAlias _-_                                                         ##_
 #    _ sWSpaceAlias | grep "^_-_$"                                              ##_ ? true
 #    _ sWSpaceAlias ""                                                          ##_
-#    _ sWSpaceAlias | grep -w "^$"                                              ##_ ? true
+#    _ sWSpaceAlias | grep "^$"                                                 ##_ ? true
 #    _ sWSpaceAlias "$sWSpaceAlias"                                             ##_
 #  SOURCE
 _(){
@@ -919,9 +919,9 @@ _(){
 #  EXAMPLE
 #    local sS sWSpaceAlias                                                      ##_getv
 #    _getv sWSpaceAlias sS                                                      ##_getv
-#    echo "$sS" | grep -w "^${_bashlyk_sWSpaceAlias}$"                          ##_getv ? true
-#    _getv sWSpaceAlias                                                         ##_getv 
-#    echo "$sWSpaceAlias" | grep -w "^${_bashlyk_sWSpaceAlias}$"                ##_getv ? true
+#    echo "$sS" | grep "^${_bashlyk_sWSpaceAlias}$"                             ##_getv ? true
+#    _getv sWSpaceAlias                                                         ##_getv
+#    echo "$sWSpaceAlias" | grep "^${_bashlyk_sWSpaceAlias}$"                   ##_getv ? true
 #  SOURCE
 _getv() {
  if [ -n "$2" ]; then
@@ -942,7 +942,7 @@ _getv() {
 #  INPUTS
 #    <subname> - содержательная часть глобальной имени ${_bashlyk_<subname>}
 #  EXAMPLE
-#    _gete sWSpaceAlias | grep -w "^${_bashlyk_sWSpaceAlias}$"                  ##_gete ? true
+#    _gete sWSpaceAlias | grep "^${_bashlyk_sWSpaceAlias}$"                     ##_gete ? true
 #  SOURCE
 _gete() {
  [ -n "$1" ] || return 255
