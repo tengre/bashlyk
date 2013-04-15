@@ -19,7 +19,7 @@
 #: ${_bashlyk_TestUnit_fnLog=/var/log/bashlyk/testunit.log}
 : ${_bashlyk_TestUnit_fnTmp=$(mktemp 2>/dev/null || tempfile)}
 #******
-#****u* bashlyk/testunit/udfTestUnitMsg
+#****f* bashlyk/testunit/udfTestUnitMsg
 #  SYNOPSIS
 #    udfTestUnitMsg
 # DESCRIPTION
@@ -41,14 +41,14 @@ udfTestUnitMsg() {
  echo -n $rc2
  if [ "$rc2" = "?" ]; then
   _bashlyk_TestUnit_iCount=$((_bashlyk_TestUnit_iCount+1))
-  echo "?" >> $_bashlyk_TestUnit_fnLog
+  echo "[?] - test unit error -" >> $_bashlyk_TestUnit_fnLog
  fi
  return 0
 } 
 #******
-#****** bashlyk/testunit/Main section
+#****f* bashlyk/testunit/udfMain
 # DESCRIPTION
-#   Running XXX library test unit
+#   Running libraries test unit
 #  SOURCE
 udfMain() {
  [ -n "$1" ] || return 255
@@ -61,12 +61,17 @@ udfMain() {
    echo 'echo "testing '"${s}"':" >>$_bashlyk_TestUnit_fnLog'
    grep "^#.*##${s}" $fn | grep -w "##${s}" | sed -e "s/^#//" | sed -e "s/##${s}/>>\$_bashlyk_TestUnit_fnLog 2>\&1/" | sed -e "s/\? \(true\|false\)/; udfTestUnitMsg \1/"
   done
-#  echo '}'
-#  echo 'udfTestUnit'
  } >> $_bashlyk_TestUnit_fnTmp
+ echo "testunit for $fn library" > $_bashlyk_TestUnit_fnLog
+ echo -n "${fn}: "
  . $_bashlyk_TestUnit_fnTmp
+ rm -f $_bashlyk_TestUnit_fnTmp
+ if [ $_bashlyk_TestUnit_iCount -eq 0 ]; then
+  echo "ok."
+ else
+  echo "fail.."
+  echo "found $_bashlyk_TestUnit_iCount errors. See \"[?] - test unit error -\" lines from $_bashlyk_TestUnit_fnLog"
+ fi
 }
 #******
 udfMain $*
-
-
