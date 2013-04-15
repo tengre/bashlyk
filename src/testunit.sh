@@ -65,11 +65,11 @@ udfMain() {
  echo "testunit for $fn library" > $_bashlyk_TestUnit_fnLog
  echo -n "${fn}: "
  . $_bashlyk_TestUnit_fnTmp
- rm -f $_bashlyk_TestUnit_fnTmp
  if [ $_bashlyk_TestUnit_iCount -eq 0 ]; then
-  echo "ok."
+  echo " ok."
+  rm -f $_bashlyk_TestUnit_fnTmp
  else
-  echo "fail.."
+  echo " fail.."
   echo "found $_bashlyk_TestUnit_iCount errors. See \"[?] - test unit error -\" lines from $_bashlyk_TestUnit_fnLog"
  fi
 }

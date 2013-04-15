@@ -56,6 +56,20 @@
 #     0  - Выполнено успешно
 #     1  - Ошибка: файл конфигурации не найден
 #    255 - Ошибка: аргумент отсутствует
+#  EXAMPLE
+#    local b conf d pid s0 sS                                                   ##udfGetConfig
+#    conf=$(mktemp --tmpdir=. --suffix=.conf || tempfile -d . -s .test.conf)    ##udfGetConfig ? true
+#    conf=$(basename $conf)                                                     ##udfGetConfig
+#    udfSetConfig $conf "s0=$0;b=true;pid=$$;sS=\"$(uname -a)\""                ##udfGetConfig ? true
+#    udfGetConfig $conf                                                         ##udfGetConfig ? true
+#    test "$s0" = "$0" -a $b -a "$pid" = "$$" -a "$sS" = "$(uname -a)"          ##udfGetConfig ? true
+#    rm -f $conf                                                                ##udfGetConfig
+#    local b conf d pid s0 sS                                                   ##udfGetConfig
+#    conf=$(mktemp --suffix=.conf || tempfile -s .test.conf)                    ##udfGetConfig ? true
+#    udfSetConfig $conf "s0=$0;b=true;pid=$$;sS=\"$(uname -a)\""                ##udfGetConfig ? true
+#    udfGetConfig $conf                                                         ##udfGetConfig ? true
+#    test "$s0" = "$0" -a $b -a "$pid" = "$$" -a "$sS" = "$(uname -a)"          ##udfGetConfig ? true
+#    rm -f $conf                                                                ##udfGetConfig
 #  SOURCE
 udfGetConfig() {
  [ -n "$1" ] || return 255
@@ -94,9 +108,22 @@ udfGetConfig() {
 #    <csv;> - CSV-строка, разделённая ";", поля которой содержат данные вида
 #             "key=value"
 #  RETURN VALUE
-#    255 - Ошибка: аргумент отсутствует
+#    255 - Ошибка: аргументы отсутствует
 #     0  - Выполнено успешно
-#     1  - Ошибка: файл конфигурации не найден
+#  EXAMPLE
+#    local b conf d pid s0 s                                                    ##udfSetConfig
+#    conf=$(mktemp --tmpdir=. --suffix=.conf || tempfile -d . -s .test.conf)    ##udfSetConfig ? true
+#    conf=$(basename $conf)                                                     ##udfGetConfig
+#    udfSetConfig $conf "s0=$0;b=true;pid=$$;s=\"$(uname -a)\""                 ##udfSetConfig ? true
+#    test -s $conf && . $conf                                                   ##udfSetConfig ? true
+#    test "$s0" = "$0" -a $b -a "$pid" = "$$" -a "$s" = "$(uname -a)"           ##udfSetConfig ? true
+#    rm -f $conf                                                                ##udfSetConfig
+#    local b conf d pid s0 s                                                    ##udfSetConfig
+#    conf=$(mktemp --suffix=.conf || tempfile -s .test.conf)                    ##udfSetConfig ? true
+#    udfSetConfig $conf "s0=$0;b=true;pid=$$;s=\"$(uname -a)\""                 ##udfSetConfig ? true
+#    test -s $conf && . $conf                                                   ##udfSetConfig ? true
+#    test "$s0" = "$0" -a $b -a "$pid" = "$$" -a "$s" = "$(uname -a)"           ##udfSetConfig ? true
+#    rm -f $conf                                                                ##udfSetConfig
 #  SOURCE
 udfSetConfig() {
  [ -n "$1" -a -n "$2" ] || return 255
@@ -108,7 +135,8 @@ udfSetConfig() {
  conf="${pathCnf}/${1##*/}"
  IFS=';'
  {
-  LANG=C date "+#Created %c by $USER $0 ($$)"
+  #LANG=C date "+#Created %c by $USER $0 ($$)"
+  echo "# Created $(date -R) by $USER via $0 (pid $$)"
   for sKeyValue in $2; do
    [ -n "${sKeyValue}" ] && echo "${sKeyValue}"
   done
