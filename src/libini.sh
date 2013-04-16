@@ -171,7 +171,7 @@ udfReadIniSection() {
    bashlyk_v_yLn0ZVLi="$(echo ${bashlyk_s_yLn0ZVLi#*=}|xargs)"
    if [ "$bashlyk_k_yLn0ZVLi" = "$bashlyk_v_yLn0ZVLi" \
     -o -n "$(echo "$bashlyk_k_yLn0ZVLi" | grep '.*[[:space:]+].*')" ]; then
-    bashlyk_k_yLn0ZVLi=_zzz_bashlyk_ini_line_${bashlyk_i_yLn0ZVLi}
+    bashlyk_k_yLn0ZVLi=_zzz_bashlyk_line_${bashlyk_i_yLn0ZVLi}
     bashlyk_i_yLn0ZVLi=$((bashlyk_i_yLn0ZVLi+1))
    fi
    bashlyk_csvResult_yLn0ZVLi+="$bashlyk_k_yLn0ZVLi=$(udfQuoteIfNeeded \
@@ -404,7 +404,7 @@ udfCheckCsv() {
   [ -n "$bashlyk_k_Q1eiphgO" ] || continue
   if [ "$bashlyk_k_Q1eiphgO" = "$bashlyk_v_Q1eiphgO" \
    -o -n "$(echo "$bashlyk_k_Q1eiphgO" | grep '.*[[:space:]+].*')" ]; then
-   bashlyk_k_Q1eiphgO=_zzz_bashlyk_ini_line_${bashlyk_i_Q1eiphgO}
+   bashlyk_k_Q1eiphgO=_zzz_bashlyk_line_${bashlyk_i_Q1eiphgO}
    bashlyk_i_Q1eiphgO=$((bashlyk_i_Q1eiphgO+1))
   fi
   bashlyk_csvResult_Q1eiphgO+="$bashlyk_k_Q1eiphgO=$(udfQuoteIfNeeded \
@@ -448,7 +448,7 @@ udfIniWrite() {
  #
  [ -s "$ini" ] && mv -f "$ini" "${ini}.bak"
  echo "$csv" | sed -e "s/[;]\+/;/g" -e "s/\[/;\[/g" | tr ';' '\n' \
-  | sed -e "s/\(.*\)=/\t\1\t=\t/g" -e "s/_zzz_bashlyk_ini_line_.*\t=\t//g" \
+  | sed -e "s/\(.*\)=/\t\1\t=\t/g" -e "s/_zzz_bashlyk_line_.*\t=\t//g" \
   | tr -d '"' > "$ini"
  #
  return 0

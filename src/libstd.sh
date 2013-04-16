@@ -30,6 +30,7 @@
 : ${_bashlyk_sArg:=$*}
 : ${_bashlyk_pathDat:=/tmp}
 : ${_bashlyk_sWSpaceAlias:=___}
+: ${_bashlyk_sUnnamedKeyword:=_bashlyk_unnamed_key_}
 : ${_bashlyk_s0:=$(basename $0)}
 : ${_bashlyk_sId:=$(basename $0 .sh)}
 : ${_bashlyk_afnClean:=}

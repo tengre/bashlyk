@@ -24,7 +24,10 @@
 #   Using modules section
 #   Здесь указываются модули, код которых используется данной библиотекой
 # SOURCE
+#: ${_bashlyk_pathLib:=/usr/share/bashlyk}
 : ${_bashlyk_pathLib:=/usr/share/bashlyk}
+#[ -s "${_bashlyk_pathLib}/libstd.sh" ] && . "${_bashlyk_pathLib}/libstd.sh"
+[ -s libstd.sh ] && . libstd.sh
 #******
 #****v*  bashlyk/libcnf/Init section
 #  DESCRIPTION
@@ -32,6 +35,7 @@
 #  SOURCE
 : ${_bashlyk_sArg:=$*}
 : ${_bashlyk_pathCnf:=$(pwd)}
+: ${_bashlyk_sUnnamedKeyword:=_bashlyk_unnamed_key_}
 : ${_bashlyk_aRequiredCmd_cnf:="[ awk date dirname echo mkdir printf pwd"}
 : ${_bashlyk_aExport_cnf:="udfGetConfig udfSetConfig"}
 #******
@@ -57,47 +61,52 @@
 #     1  - Ошибка: файл конфигурации не найден
 #    255 - Ошибка: аргумент отсутствует
 #  EXAMPLE
-#    local b conf d pid s0 sS                                                   ##udfGetConfig
+#    local b conf d pid s0 s                                                    ##udfGetConfig
 #    conf=$(mktemp --tmpdir=. --suffix=.conf || tempfile -d . -s .test.conf)    ##udfGetConfig ? true
 #    conf=$(basename $conf)                                                     ##udfGetConfig
-#    udfSetConfig $conf "s0=$0;b=true;pid=$$;sS=\"$(uname -a)\""                ##udfGetConfig ? true
+#    udfSetConfig $conf "s0=$0;b=true;pid=$$;s=$(uname -a)"                     ##udfGetConfig ? true
 #    udfGetConfig $conf                                                         ##udfGetConfig ? true
-#    test "$s0" = "$0" -a $b -a "$pid" = "$$" -a "$sS" = "$(uname -a)"          ##udfGetConfig ? true
+#    test "$s0" = "$0" -a $b -a "$pid" = "$$" -a "$s" = "$(uname -a)"           ##udfGetConfig ? true
+#    cat $conf                                                                  ##udfGetConfig
 #    rm -f $conf                                                                ##udfGetConfig
 #    local b conf d pid s0 sS                                                   ##udfGetConfig
 #    conf=$(mktemp --suffix=.conf || tempfile -s .test.conf)                    ##udfGetConfig ? true
-#    udfSetConfig $conf "s0=$0;b=true;pid=$$;sS=\"$(uname -a)\""                ##udfGetConfig ? true
+#    udfSetConfig $conf "s0=$0;b=true;pid=$$;s=$(uname -a)"                     ##udfGetConfig ? true
 #    udfGetConfig $conf                                                         ##udfGetConfig ? true
-#    test "$s0" = "$0" -a $b -a "$pid" = "$$" -a "$sS" = "$(uname -a)"          ##udfGetConfig ? true
+#    test "$s0" = "$0" -a $b -a "$pid" = "$$" -a "$s" = "$(uname -a)"           ##udfGetConfig ? true
 #    rm -f $conf                                                                ##udfGetConfig
 #  SOURCE
 udfGetConfig() {
  [ -n "$1" ] || return 255
  #
- local aconf conf s pathCnf="$_bashlyk_pathCnf"
+ local bashlyk_aconf_MROATHra bashlyk_conf_MROATHra bashlyk_s_MROATHra
+ local bashlyk_pathCnf_MROATHra="$_bashlyk_pathCnf"
  #
- [ "$1"  = "${1##*/}" -a -f ${pathCnf}/$1 ] || pathCnf=
- [ "$1"  = "${1##*/}" -a -f $1 ] && pathCnf=$(pwd)
- [ "$1" != "${1##*/}" -a -f $1 ] && pathCnf=$(dirname $1)
+ [ "$1"  = "${1##*/}" -a -f ${bashlyk_pathCnf_MROATHra}/$1 ] || bashlyk_pathCnf_MROATHra=
+ [ "$1"  = "${1##*/}" -a -f $1 ] && bashlyk_pathCnf_MROATHra=$(pwd)
+ [ "$1" != "${1##*/}" -a -f $1 ] && bashlyk_pathCnf_MROATHra=$(dirname $1)
  #
- if [ -z "$pathCnf" ]; then
+ if [ -z "$bashlyk_pathCnf_MROATHra" ]; then
   [ -f "/etc${_bashlyk_pathPrefix}/$1" ] \
-   && pathCnf="/etc${_bashlyk_pathPrefix}" || return 1
+   && bashlyk_pathCnf_MROATHra="/etc${_bashlyk_pathPrefix}" || return 1
  fi
  #
- conf=
- aconf=$(echo "${1##*/}" | awk 'BEGIN{FS="."} {for (i=NF;i>=1;i--) printf $i" "}')
- for s in $aconf; do
-  [ -n "$s" ] || continue
-  [ -n "$conf" ] && conf="${s}.${conf}" || conf="$s"
-  [ -s "${pathCnf}/${conf}" ] && . "${pathCnf}/${conf}"
+ bashlyk_conf_MROATHra=
+ bashlyk_aconf_MROATHra=$(echo "${1##*/}" | awk 'BEGIN{FS="."} {for (i=NF;i>=1;i--) printf $i" "}')
+ for bashlyk_s_MROATHra in $bashlyk_aconf_MROATHra; do
+  [ -n "$bashlyk_s_MROATHra" ] || continue
+  [ -n "$bashlyk_conf_MROATHra" ] \
+   && bashlyk_conf_MROATHra="${bashlyk_s_MROATHra}.${bashlyk_conf_MROATHra}" \
+   || bashlyk_conf_MROATHra="$bashlyk_s_MROATHra"
+  [ -s "${bashlyk_pathCnf_MROATHra}/${bashlyk_conf_MROATHra}" ] \
+   && . "${bashlyk_pathCnf_MROATHra}/${bashlyk_conf_MROATHra}"
  done
  return 0
 }
 #******
 #****f* bashlyk/libcnf/udfSetConfig
 #  SYNOPSIS
-#    udfSetConfig <file> <csv;>
+#    udfSetConfig <file> "<csv;>"
 #  DESCRIPTION
 #    Дополнить <file> строками вида "key=value" из аргумента <csv;>
 #    Расположение файла определяется по следующим критериям:
@@ -107,20 +116,28 @@ udfGetConfig() {
 #    <file> - имя файла конфигурации
 #    <csv;> - CSV-строка, разделённая ";", поля которой содержат данные вида
 #             "key=value"
+#    Важно! Экранировать аргументы двойными кавычками, если есть вероятность
+#    наличия в них пробелов
 #  RETURN VALUE
 #    255 - Ошибка: аргументы отсутствует
+#    254 - Ошибка: нет каталога для файла конфигурации и его невозможно создать
 #     0  - Выполнено успешно
 #  EXAMPLE
 #    local b conf d pid s0 s                                                    ##udfSetConfig
 #    conf=$(mktemp --tmpdir=. --suffix=.conf || tempfile -d . -s .test.conf)    ##udfSetConfig ? true
-#    conf=$(basename $conf)                                                     ##udfGetConfig
-#    udfSetConfig $conf "s0=$0;b=true;pid=$$;s=\"$(uname -a)\""                 ##udfSetConfig ? true
+#    conf=$(basename $conf)                                                     ##udfSetConfig
+#    udfSetConfig $conf "s0=$0;b=true;pid=$$;s=$(uname -a);$(date -R)"          ##udfSetConfig ? true
+#    grep "^s0=$0$" $conf                                                       ##udfSetConfig ? true
+#    grep "^b=true$" $conf                                                      ##udfSetConfig ? true
+#    grep "^pid=${$}}$" $conf                                                   ##udfSetConfig ? true
+#    grep "^s=$(uname -a)$" $conf                                               ##udfSetConfig ? true
+#    grep "^$(_ sUnnamedKeyword).*=$(date -R)$" $conf                           ##udfSetConfig ? true
 #    test -s $conf && . $conf                                                   ##udfSetConfig ? true
 #    test "$s0" = "$0" -a $b -a "$pid" = "$$" -a "$s" = "$(uname -a)"           ##udfSetConfig ? true
 #    rm -f $conf                                                                ##udfSetConfig
 #    local b conf d pid s0 s                                                    ##udfSetConfig
 #    conf=$(mktemp --suffix=.conf || tempfile -s .test.conf)                    ##udfSetConfig ? true
-#    udfSetConfig $conf "s0=$0;b=true;pid=$$;s=\"$(uname -a)\""                 ##udfSetConfig ? true
+#    udfSetConfig $conf "s0=$0;b=true;pid=$$;s=$(uname -a)"                     ##udfSetConfig ? true
 #    test -s $conf && . $conf                                                   ##udfSetConfig ? true
 #    test "$s0" = "$0" -a $b -a "$pid" = "$$" -a "$s" = "$(uname -a)"           ##udfSetConfig ? true
 #    rm -f $conf                                                                ##udfSetConfig
@@ -128,20 +145,82 @@ udfGetConfig() {
 udfSetConfig() {
  [ -n "$1" -a -n "$2" ] || return 255
  #
- local conf sKeyValue chIFS="$IFS" pathCnf="$_bashlyk_pathCnf"
+ local bashlyk_conf_kpHeLmpy bashlyk_chIFS_kpHeLmpy="$IFS"
+ local bashlyk_pathCnf_kpHeLmpy="$_bashlyk_pathCnf" bashlyk_sPair_kpHeLmpy
  #
- [ "$1" != "${1##*/}" ] && pathCnf="$(dirname $1)"
- [ -d "$pathCnf" ] || mkdir -p "$pathCnf"
- conf="${pathCnf}/${1##*/}"
+ [ "$1" != "${1##*/}" ] && bashlyk_pathCnf_kpHeLmpy="$(dirname $1)"
+ mkdir -p "$bashlyk_pathCnf_kpHeLmpy" || return 254
+ bashlyk_conf_kpHeLmpy="${bashlyk_pathCnf_kpHeLmpy}/${1##*/}"
  IFS=';'
  {
   #LANG=C date "+#Created %c by $USER $0 ($$)"
   echo "# Created $(date -R) by $USER via $0 (pid $$)"
-  for sKeyValue in $2; do
-   [ -n "${sKeyValue}" ] && echo "${sKeyValue}"
+  for bashlyk_sPair_kpHeLmpy in $(udfCheckCsv "$2"); do
+   [ -n "${bashlyk_sPair_kpHeLmpy}" ] && echo "${bashlyk_sPair_kpHeLmpy}"
   done
- } >> $conf 2>/dev/null
- IFS="$chIFS"
+ } >> $bashlyk_conf_kpHeLmpy 2>/dev/null
+ IFS="$bashlyk_chIFS_kpHeLmpy"
  return 0
 }
 #******
+#****f* bashlyk/libini/udfCheckCsv
+#  SYNOPSIS
+#    udfCheckCsv "<csv;>" [<varname>]
+#  DESCRIPTION
+#    Нормализация CSV-строки <csv;>. Приведение к виду "ключ=значение" полей.
+#    В случае если поле не содержит ключа или ключ содержит пробел, то к полю
+#    добавляется ключ вида _bashlyk_unnamed_key_<инкремент>, всё содержимое поля
+#    становится значением.
+#    Результат выводится в стандартный вывод или в переменную, если имеется
+#    второй аргумент функции <varname>
+#  INPUTS
+#    csv;    - CSV-строка, разделённая ";"
+#    varname - идентификатор переменной (без "$ "). При его наличии результат
+#              будет помещен в соответствующую переменную. При отсутствии такого
+#              идентификатора результат будет выдан на стандартный вывод
+#    Важно! Экранировать аргументы двойными кавычками, если есть вероятность
+#    наличия в них пробелов
+#  OUTPUT
+#              разделенный символом ";" строка, в полях которого содержатся
+#              данные в формате "<key>=<value>;..."
+#  RETURN VALUE
+#     0  - Выполнено успешно
+#     2  - Ошибка: аргумент <varname> не является валидным идентификатором
+#          переменной
+#    255 - Ошибка: аргумент отсутствует
+#  SOURCE
+udfCheckCsv() {
+ [ -n "$1" ] || return 255
+ local bashlyk_s_Q1eiphgO bashlyk_cIFS_Q1eiphgO bashlyk_k_Q1eiphgO
+ local bashlyk_v_Q1eiphgO bashlyk_i_Q1eiphgO bashlyk_csvResult_Q1eiphgO
+ #
+ bashlyk_cIFS_Q1eiphgO=$IFS
+ IFS=';'
+ bashlyk_i_Q1eiphgO=0
+ bashlyk_csvResult_Q1eiphgO=''
+ #
+ for bashlyk_s_Q1eiphgO in $1; do
+  bashlyk_s_Q1eiphgO=$(echo $bashlyk_s_Q1eiphgO | tr -d "'" | tr -d '"')
+  bashlyk_k_Q1eiphgO="$(echo ${bashlyk_s_Q1eiphgO%%=*}|xargs)"
+  bashlyk_v_Q1eiphgO="$(echo ${bashlyk_s_Q1eiphgO#*=}|xargs)"
+  [ -n "$bashlyk_k_Q1eiphgO" ] || continue
+  if [ "$bashlyk_k_Q1eiphgO" = "$bashlyk_v_Q1eiphgO" \
+   -o -n "$(echo "$bashlyk_k_Q1eiphgO" | grep '.*[[:space:]+].*')" ]; then
+   bashlyk_k_Q1eiphgO=_bashlyk_sUnnamedKeyword${bashlyk_i_Q1eiphgO}
+   bashlyk_i_Q1eiphgO=$((bashlyk_i_Q1eiphgO+1))
+  fi
+  bashlyk_csvResult_Q1eiphgO+="$bashlyk_k_Q1eiphgO=$(udfQuoteIfNeeded \
+   $bashlyk_v_Q1eiphgO);"
+ done
+ IFS=$bashlyk_cIFS_Q1eiphgO
+ if [ -n "$2" ]; then
+  udfIsValidVariable "$2" || return 2
+  #udfThrow "Error: required valid variable name \"$2\""
+  eval 'export ${2}="${bashlyk_csvResult_Q1eiphgO}"'
+ else
+  echo "$bashlyk_csvResult_Q1eiphgO"
+ fi
+ return 0
+}
+#******
+
