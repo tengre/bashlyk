@@ -64,13 +64,14 @@
 #    local b conf d pid s0 s                                                    ##udfGetConfig
 #    conf=$(mktemp --tmpdir=. --suffix=.conf || tempfile -d . -s .test.conf)    ##udfGetConfig ? true
 #    conf=$(basename $conf)                                                     ##udfGetConfig
-#    udfSetConfig $conf "s0=$0;b=true;pid=$$;s=$(uname -a);$(date -R)"          ##udfGetConfig ? true
+#    udfSetConfig $conf "s0=$0;b=true;pid=$$;s=$(uname -a);$(date -R -r $0)"    ##udfGetConfig ? true
 #    udfGetConfig $conf                                                         ##udfGetConfig ? true
 #    test "$s0" = "$0" -a $b -a "$pid" = "$$" -a "$s" = "$(uname -a)"           ##udfGetConfig ? true
 #    rm -f $conf                                                                ##udfGetConfig
 #    b='' conf='' d='' pid='' s0='' sS=''                                       ##udfGetConfig
 #    conf=$(mktemp --suffix=.conf || tempfile -s .test.conf)                    ##udfGetConfig ? true
-#    udfSetConfig $conf "s0=$0;b=true;pid=$$;s=$(uname -a);$(date -R)"          ##udfGetConfig ? true
+#    udfSetConfig $conf "s0=$0;b=true;pid=$$;s=$(uname -a);$(date -R -r $0)"    ##udfGetConfig ? true
+#    date -R -r $0 ##udfGetConfig
 #    udfGetConfig $conf                                                         ##udfGetConfig ? true
 #    test "$s0" = "$0" -a $b -a "$pid" = "$$" -a "$s" = "$(uname -a)"           ##udfGetConfig ? true
 #    cat $conf                                                                  ##udfGetConfig
@@ -125,12 +126,12 @@ udfGetConfig() {
 #  EXAMPLE
 #    local b conf d pid s0 s                                                    ##udfSetConfig
 #    conf=$(mktemp --suffix=.conf || tempfile -s .test.conf)                    ##udfSetConfig ? true
-#    udfSetConfig $conf "s0=$0;b=true;pid=$$;s=$(uname -a);$(date -R)"          ##udfSetConfig ? true
+#    udfSetConfig $conf "s0=$0;b=true;pid=$$;s=$(uname -a);$(date -R -r $0)"    ##udfSetConfig ? true
 #    grep "^s0=$0$" $conf                                                       ##udfSetConfig ? true
 #    grep "^b=true$" $conf                                                      ##udfSetConfig ? true
 #    grep "^pid=${$}$" $conf                                                    ##udfSetConfig ? true
 #    grep "^s=\"$(uname -a)\"$" $conf                                           ##udfSetConfig ? true
-#    grep "^$(_ sUnnamedKeyword).*=\"$(date -R)\"$" $conf                       ##udfSetConfig ? true
+#    grep "^$(_ sUnnamedKeyword).*=\"$(date -R -r $0)\"$" $conf                 ##udfSetConfig ? true
 #    test -s $conf && . $conf                                                   ##udfSetConfig ? true
 #    test "$s0" = "$0" -a $b -a "$pid" = "$$" -a "$s" = "$(uname -a)"           ##udfSetConfig ? true
 #    rm -f $conf                                                                ##udfSetConfig
