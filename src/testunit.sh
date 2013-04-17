@@ -61,6 +61,7 @@ udfMain() {
   for s in $a; do
    echo 'echo "-- testing '"${s}"':" >>$_bashlyk_TestUnit_fnLog'
    grep "^#.*##${s}" $fn | grep -w "##${s}" | sed -e "s/^#//" | sed -e "s/##${s}/>>\$_bashlyk_TestUnit_fnLog 2>\&1/" | sed -e "s/\? \(true\|false\)/; udfTestUnitMsg \1/"
+   echo 'echo "--" >>$_bashlyk_TestUnit_fnLog'
    done
  } >> $_bashlyk_TestUnit_fnTmp
  echo "testunit for $fn library" > $_bashlyk_TestUnit_fnLog
