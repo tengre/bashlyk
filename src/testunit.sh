@@ -58,9 +58,10 @@ udfMain() {
  a=$(eval echo '$_bashlyk_aExport_'"${1}")
  {
   for s in $a; do
-   echo 'echo "testing '"${s}"':" >>$_bashlyk_TestUnit_fnLog'
+   echo 'echo "-- testing '"${s}"':" >>$_bashlyk_TestUnit_fnLog'
    grep "^#.*##${s}" $fn | grep -w "##${s}" | sed -e "s/^#//" | sed -e "s/##${s}/>>\$_bashlyk_TestUnit_fnLog 2>\&1/" | sed -e "s/\? \(true\|false\)/; udfTestUnitMsg \1/"
-  done
+   echo 'echo "-- ${BASH_SOURCE[0]} : ${BASH_SOURCE[0]} :: ${FUNCNAME[2]} : ${FUNCNAME[1]} :: ${BASH_LINENO[0]} : ${BASH_LINENO[1]}" >>$_bashlyk_TestUnit_fnLog'
+   done
  } >> $_bashlyk_TestUnit_fnTmp
  echo "testunit for $fn library" > $_bashlyk_TestUnit_fnLog
  echo -n "${fn}: "
