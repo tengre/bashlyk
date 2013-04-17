@@ -41,7 +41,8 @@ udfTestUnitMsg() {
  echo -n $rc2
  if [ "$rc2" = "?" ]; then
   _bashlyk_TestUnit_iCount=$((_bashlyk_TestUnit_iCount+1))
-  echo "[?] - test unit error -" >> $_bashlyk_TestUnit_fnLog
+  echo "[?] - test unit error - ${BASH_SOURCE[1]} (line ${BASH_LINENO[0]}):" >> $_bashlyk_TestUnit_fnLog
+  head -n ${BASH_LINENO[0]} ${BASH_SOURCE[1]} | tail -n 1 >> $_bashlyk_TestUnit_fnLog
  fi
  return 0
 } 
@@ -60,7 +61,6 @@ udfMain() {
   for s in $a; do
    echo 'echo "-- testing '"${s}"':" >>$_bashlyk_TestUnit_fnLog'
    grep "^#.*##${s}" $fn | grep -w "##${s}" | sed -e "s/^#//" | sed -e "s/##${s}/>>\$_bashlyk_TestUnit_fnLog 2>\&1/" | sed -e "s/\? \(true\|false\)/; udfTestUnitMsg \1/"
-   echo 'echo "-- ${BASH_SOURCE[0]} : ${BASH_SOURCE[0]} :: ${FUNCNAME[2]} : ${FUNCNAME[1]} :: ${BASH_LINENO[0]} : ${BASH_LINENO[1]}" >>$_bashlyk_TestUnit_fnLog'
    done
  } >> $_bashlyk_TestUnit_fnTmp
  echo "testunit for $fn library" > $_bashlyk_TestUnit_fnLog

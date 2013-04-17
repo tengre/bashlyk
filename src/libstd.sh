@@ -969,3 +969,63 @@ _set() {
  eval "_bashlyk_$1=$2"
 }
 #******
+#****f* bashlyk/libini/udfCheckCsv
+#  SYNOPSIS
+#    udfCheckCsv "<csv;>" [<varname>]
+#  DESCRIPTION
+#    Нормализация CSV-строки <csv;>. Приведение к виду "ключ=значение" полей.
+#    В случае если поле не содержит ключа или ключ содержит пробел, то к полю
+#    добавляется ключ вида _bashlyk_unnamed_key_<инкремент>, всё содержимое поля
+#    становится значением.
+#    Результат выводится в стандартный вывод или в переменную, если имеется
+#    второй аргумент функции <varname>
+#  INPUTS
+#    csv;    - CSV-строка, разделённая ";"
+#    varname - идентификатор переменной (без "$ "). При его наличии результат
+#              будет помещен в соответствующую переменную. При отсутствии такого
+#              идентификатора результат будет выдан на стандартный вывод
+#    Важно! Экранировать аргументы двойными кавычками, если есть вероятность
+#    наличия в них пробелов
+#  OUTPUT
+#              разделенный символом ";" строка, в полях которого содержатся
+#              данные в формате "<key>=<value>;..."
+#  RETURN VALUE
+#     0  - Выполнено успешно
+#     2  - Ошибка: аргумент <varname> не является валидным идентификатором
+#          переменной
+#    255 - Ошибка: аргумент отсутствует
+#  SOURCE
+udfCheckCsv() {
+ [ -n "$1" ] || return 255
+ local bashlyk_s_Q1eiphgO bashlyk_cIFS_Q1eiphgO bashlyk_k_Q1eiphgO
+ local bashlyk_v_Q1eiphgO bashlyk_i_Q1eiphgO bashlyk_csvResult_Q1eiphgO
+ #
+ bashlyk_cIFS_Q1eiphgO=$IFS
+ IFS=';'
+ bashlyk_i_Q1eiphgO=0
+ bashlyk_csvResult_Q1eiphgO=''
+ #
+ for bashlyk_s_Q1eiphgO in $1; do
+  bashlyk_s_Q1eiphgO=$(echo $bashlyk_s_Q1eiphgO | tr -d "'" | tr -d '"')
+  bashlyk_k_Q1eiphgO="$(echo ${bashlyk_s_Q1eiphgO%%=*}|xargs)"
+  bashlyk_v_Q1eiphgO="$(echo ${bashlyk_s_Q1eiphgO#*=}|xargs)"
+  [ -n "$bashlyk_k_Q1eiphgO" ] || continue
+  if [ "$bashlyk_k_Q1eiphgO" = "$bashlyk_v_Q1eiphgO" \
+   -o -n "$(echo "$bashlyk_k_Q1eiphgO" | grep '.*[[:space:]+].*')" ]; then
+   bashlyk_k_Q1eiphgO=${_bashlyk_sUnnamedKeyword}${bashlyk_i_Q1eiphgO}
+   bashlyk_i_Q1eiphgO=$((bashlyk_i_Q1eiphgO+1))
+  fi
+  bashlyk_csvResult_Q1eiphgO+="$bashlyk_k_Q1eiphgO=$(udfQuoteIfNeeded \
+   $bashlyk_v_Q1eiphgO);"
+ done
+ IFS=$bashlyk_cIFS_Q1eiphgO
+ if [ -n "$2" ]; then
+  udfIsValidVariable "$2" || return 2
+  #udfThrow "Error: required valid variable name \"$2\""
+  eval 'export ${2}="${bashlyk_csvResult_Q1eiphgO}"'
+ else
+  echo "$bashlyk_csvResult_Q1eiphgO"
+ fi
+ return 0
+}
+#******
