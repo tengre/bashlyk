@@ -43,8 +43,8 @@
 : ${_bashlyk_bNotUseLog:=1}
 : ${_bashlyk_emailRcpt:=postmaster}
 : ${_bashlyk_emailSubj:="${_bashlyk_sUser}@${HOSTNAME}::${_bashlyk_s0}"}
-: ${_bashlyk_aRequiredCmd_std:="[ basename cat chgrp chmod chown date dir echo false file grep kill mail mkdir mktemp printf ps rm rmdir sed sleep tee tempfile touch true w which xargs"}
-: ${_bashlyk_aExport_std:="udfBaseId udfDate udfEcho udfMail udfWarn udfThrow udfOnEmptyVariable udfThrowOnEmptyVariable udfWarnOnEmptyVariable udfShowVariable udfIsNumber udfIsValidVariable udfQuoteIfNeeded udfWSpace2Alias udfAlias2WSpace udfMakeTemp  udfMakeTempV udfShellExec udfAddFile2Clean udfAddPath2Clean udfAddJob2Clean udfAddPid2Clean udfCleanQueue udfOnTrap _ARGUMENTS _s0 _pathDat _ _gete _getv _set"}
+: ${_bashlyk_aRequiredCmd_std:="[ basename cat cut chgrp chmod chown date dir echo false file grep kill ls mail md5sum pwd mkdir mktemp printf ps rm rmdir sed sleep tee tempfile touch true w which xargs"}
+: ${_bashlyk_aExport_std:="udfBaseId udfDate udfEcho udfMail udfWarn udfThrow udfOnEmptyVariable udfThrowOnEmptyVariable udfWarnOnEmptyVariable udfShowVariable udfIsNumber udfIsValidVariable udfQuoteIfNeeded udfWSpace2Alias udfAlias2WSpace udfMakeTemp  udfMakeTempV udfShellExec udfAddFile2Clean udfAddPath2Clean udfAddJob2Clean udfAddPid2Clean udfCleanQueue udfOnTrap _ARGUMENTS _s0 _pathDat _ _gete _getv _set udfCheckCsv udfGetMd5 udfGetPathMd5"}
 #******
 #****f* bashlyk/libstd/udfBaseId
 #  SYNOPSIS
@@ -1026,6 +1026,67 @@ udfCheckCsv() {
  else
   echo "$bashlyk_csvResult_Q1eiphgO"
  fi
+ return 0
+}
+#******
+#****f* bashlyk/libmd5/udfGetMd5
+#  SYNOPSIS
+#    udfGetMd5 [-]|--file <filename>|<args>
+#  DESCRIPTION
+#   Получить дайджест MD5 указанных данных
+#  INPUTS
+#    "-"  - использовать поток данных "input"
+#    --file <filename> - использовать в качестве данных указанный файл
+#    <args> - использовать строку аргументов
+#  OUTPUT
+#    Дайджест MD5
+#  EXAMPLE
+#    udfGetMd5 $(date)
+#  SOURCE
+udfGetMd5() {
+ {
+  case "$1" in
+       "-")
+          cat | md5sum
+         ;;
+  "--file")
+          [ -f "$2" ] && md5sum $2
+         ;;
+         *)
+          [ -n "$1" ] && echo "$*" | md5sum
+         ;;
+  esac
+ } | cut -f 1 -d ' '
+ return 0
+}
+#******
+#****f* bashlyk/libmd5/udfGetPathMd5
+#  SYNOPSIS
+#    udfGetPathMd5 <path>
+#  DESCRIPTION
+#   Получить дайджест MD5 всех нескрытых файлов в каталоге <path>
+#  INPUTS
+#    <path>  - начальный каталог
+#  OUTPUT
+#    Список MD5-сумм и имён нескрытых файлов в каталоге <path> рекурсивно
+#  RETURN VALUE
+#    255 - аргумент не указан или это не каталог
+#     0  - выполнено
+#  EXAMPLE
+#    udfGetPathMd5 ~
+#  SOURCE
+udfGetPathMd5() {
+ [ -n "$1" -a -d "$1" ] || return 255
+ local pathSrc="$(pwd)"
+ cd $1 2>/dev/null
+ local pathDst="$(pwd)"
+ local a=$(ls)
+ for s in $a
+ do
+  [ -d "$s" ] && udfGetPathMd5 $s
+ done
+ md5sum $pathDst/* 2>/dev/null
+ cd $pathSrc
  return 0
 }
 #******
