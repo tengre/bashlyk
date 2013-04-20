@@ -332,15 +332,12 @@ udfIsNumber() {
 #  EXAMPLE
 #    udfIsValidVariable                                                         ##udfIsValidVariable ? false 
 #    udfIsValidVariable "12"                                                    ##udfIsValidVariable ? false 
-#    udfIsValidVariable "_a"                                                    ##udfIsValidVariable ? true
+#    udfIsValidVariable "a"                                                     ##udfIsValidVariable ? true
 #    udfIsValidVariable "k1"                                                    ##udfIsValidVariable ? true                                                  
 #  SOURCE
 udfIsValidVariable() {
  [ -n "$1" ] || return 2
- case "$(echo "$1" | grep -E '^[_a-zA-Z]+[_a-zA-Z0-9]+$')" in
-  '') return 1;;
-   *) return 0;;
- esac
+ echo "$1" | grep -E '^[_a-zA-Z]+[_a-zA-Z0-9]+?$' >/dev/null 2>&1
 }
 #******
 #****f* bashlyk/libstd/udfQuoteIfNeeded
@@ -994,6 +991,11 @@ _set() {
 #     2  - Ошибка: аргумент <varname> не является валидным идентификатором
 #          переменной
 #    255 - Ошибка: аргумент отсутствует
+#  EXAMPLE
+#    local s="a=b;a=c;s=a b c d e f;" r                                         ##udfCheckCsv
+#    udfCheckCsv "$s" | grep '^a=b;a=c;s="a b c d e f";$'                       ##udfCheckCsv ? true
+#    udfCheckCsv "$s" r                                                         ##udfCheckCsv ? true
+#    echo $r | grep '^a=b;a=c;s="a b c d e f";$'                                ##udfCheckCsv ? true
 #  SOURCE
 udfCheckCsv() {
  [ -n "$1" ] || return 255
@@ -1041,7 +1043,7 @@ udfCheckCsv() {
 #  OUTPUT
 #    Дайджест MD5
 #  EXAMPLE
-#    udfGetMd5 $(date)
+#    udfGetMd5 "test" | grep -w 'd8e8fca2dc0f896fd7cb4cb0031ba249'              ##udfGetMd5 ? true
 #  SOURCE
 udfGetMd5() {
  {
@@ -1072,17 +1074,19 @@ udfGetMd5() {
 #  RETURN VALUE
 #    255 - аргумент не указан или это не каталог
 #     0  - выполнено
-#  EXAMPLE
-#    udfGetPathMd5 ~
+#  EXAMPLE  
+#    local path=$(udfMakeTemp type=dir)                                         ##udfGetPathMd5 
+#    touch ${path}/testfile                                                     ##udfGetPathMd5 
+#    udfAddFile2Clean ${path}/testfile                                          ##udfGetPathMd5 
+#    udfAddPath2Clean ${path}                                                   ##udfGetPathMd5 
+#    udfGetPathMd5 $path                                                        ##udfGetPathMd5 ? true
 #  SOURCE
 udfGetPathMd5() {
  [ -n "$1" -a -d "$1" ] || return 255
- local pathSrc="$(pwd)"
- cd $1 2>/dev/null
- local pathDst="$(pwd)"
- local a=$(ls)
- for s in $a
- do
+ local pathSrc="$(pwd)" pathDst s
+ cd $1 2>/dev/null || return 254
+ pathDst="$(pwd)"
+ for s in $(ls); do
   [ -d "$s" ] && udfGetPathMd5 $s
  done
  md5sum $pathDst/* 2>/dev/null
