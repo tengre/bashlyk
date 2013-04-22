@@ -100,9 +100,9 @@ udfGetOptHash() {
 #    1  - Ошибка, переменные не сформированы
 #   255 - Ошибка, отсутствует аргумент
 #  EXAMPLE
-#    local sJob bForce                                                          ##udfSetOptHash
-#    udfSetOptHash "sJob=main;bForce=1;"                                        ##udfSetOptHash
-#    echo "dbg $sJob :: $bForce" | grep "^dbg main :: 1$"                       ##udfSetOptHash ? true
+#    local job bForce                                                           ##udfSetOptHash
+#    udfSetOptHash "job=main;bForce=1;"                                         ##udfSetOptHash
+#    echo "dbg $job :: $bForce" | grep "^dbg main :: 1$"                        ##udfSetOptHash ? true
 #  SOURCE
 udfSetOptHash() {
  [ -n "$*" ] || return 255
@@ -131,8 +131,9 @@ udfSetOptHash() {
 #    1 - Ошибка, переменные не сформированы
 #   255 - Ошибка, отсутствует аргумент
 #  EXAMPLE
-#    udfGetOpt uname:,force --uname $(uname) --force
-#    устанавливает переменные $uname ("Linux") и $force (1)
+#    local job bForce
+#    udfGetOpt job:,bForce --job main --bForce
+#    echo "dbg $job :: $bForce" | grep "^dbg main :: 1$"                        ##udfSetOptHash ? true
 #  SOURCE
 udfGetOpt() {
  udfSetOptHash $(udfGetOptHash $*)
@@ -151,8 +152,8 @@ udfGetOpt() {
 #  OUTPUT
 #    аргумент <hash> без подстрок ";<pair>;"
 #  EXAMPLE
-#    udfExcludePairFromHash save=1 "uname=Linux;force=1;save=1;"
-#    выводит "uname=Linux;force=1;"
+#    local s="job=main;bForce=1"                                                ##udfExcludePairFromHash
+#    udfExcludePairFromHash 'save=1' "${s};save=1;" | grep "^${s}$"             ##udfExcludePairFromHash ? true
 #  SOURCE
 udfExcludePairFromHash() {
  [ -n "$*" ] || return 1
