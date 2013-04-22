@@ -55,8 +55,8 @@
 #  OUTPUT
 #   Ассоциативный массив в виде CSV строки
 #  EXAMPLE
-#    udfGetOptHash uname:,force --uname $(uname) --force
-#    show "uname=Linux;force=1;"
+#    udfGetOptHash 'job:,force' --job main --force                              ##udfGetOptHash
+#    udfGetOptHash 'job:,force' --job main --force | grep "^;job=main;force=1;$"##udfGetOptHash ? true
 #  SOURCE
 udfGetOptHash() {
  [ -n "$*" ] || return -1
@@ -100,8 +100,9 @@ udfGetOptHash() {
 #    1  - Ошибка, переменные не сформированы
 #   255 - Ошибка, отсутствует аргумент
 #  EXAMPLE
-#    udfSetOptHash "uname=Linux;force=1;"
-#    Устанавливаются переменные $uname ("Linux") и $force (1)
+#    local sJob bForce                                                          ##udfSetOptHash
+#    udfSetOptHash "sJob=main;bForce=1;"                                        ##udfSetOptHash
+#    echo "dbg $sJob :: $bForce" | grep "^dbg main :: 1$"                       ##udfSetOptHash ? true
 #  SOURCE
 udfSetOptHash() {
  [ -n "$*" ] || return 255

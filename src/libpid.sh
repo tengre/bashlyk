@@ -25,8 +25,9 @@
 #   Здесь указываются модули, код которых используется данной библиотекой
 # SOURCE
 : ${_bashlyk_pathLib:=/usr/share/bashlyk}
-[ -s "${_bashlyk_pathLib}/libstd.sh" ] && . "${_bashlyk_pathLib}/libstd.sh"
-[ -s "${_bashlyk_pathLib}/libmd5.sh" ] && . "${_bashlyk_pathLib}/libmd5.sh"
+[ -s "libstd.sh" ] && . "libstd.sh"
+#[ -s "${_bashlyk_pathLib}/libstd.sh" ] && . "${_bashlyk_pathLib}/libstd.sh"
+#[ -s "${_bashlyk_pathLib}/libmd5.sh" ] && . "${_bashlyk_pathLib}/libmd5.sh"
 #******
 #****v*  bashlyk/libpid/Init section
 #  DESCRIPTION
@@ -56,8 +57,10 @@
 #    0 - Процесс с PID существует для указанной командной строки (command args)
 #    1 - Процесс с PID для проверяемой командной строки не обнаружен.
 #  EXAMPLE
-#    udfCheckStarted $pid $0 $* \
-#    && eval 'echo "$0 : Already started with pid = $pid"; return 1'
+#    (sleep 60)&                                                                ##udfCheckStarted
+#    udfCheckStarted $! sleep 60                                                ##udfCheckStarted ? true
+#    udfCheckStarted $! sleep 61                                                ##udfCheckStarted ? false
+#    udfCheckStarted $$ $0                                                      ##udfCheckStarted ? false
 #  SOURCE
 udfCheckStarted() {
  [ -n "$*" ] || return 255
@@ -82,7 +85,8 @@ udfCheckStarted() {
 #    1   - PID file exist and command line process already started
 #    255 - PID file don't created. Error status
 #  EXAMPLE
-#    udfSetPid
+#    udfSetPid                                                                  ##udfSetPid ? true
+#    head -n 1 $(_gete fnPid) | grep -w $$                                      ##udfSetPid ? true
 #  SOURCE
 udfSetPid() {
  local fnPid pid
@@ -118,15 +122,10 @@ udfSetPid() {
 #          current process stopped
 #    255 - PID file don't created. Error status - current process stopped
 #  EXAMPLE
-#    udfExitIfAlreadyStarted
+#    udfExitIfAlreadyStarted                                                    ##udfExitIfAlreadyStarted ? true
 #  SOURCE
 udfExitIfAlreadyStarted() {
- udfSetPid $*
- case $? in
-   255) exit 255 ;;
-     0) return 0 ;;
-     1) exit   0 ;;
- esac
+ udfSetPid || exit $?
 }
 #******
 # TODO проверить на используемость

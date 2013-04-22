@@ -1094,7 +1094,7 @@ udfGetPathMd5() {
  return 0
 }
 #******
-#****f* bashlyk/libxml/udfXML
+#****f* bashlyk/libxml/udfXml
 #  SYNOPSIS
 #    udfXml tag [property] data
 #  DESCRIPTION
@@ -1106,8 +1106,9 @@ udfGetPathMd5() {
 #  OUTPUT
 #    Show compiled XML code
 #  EXAMPLE
-#    udfXML 'date TO="+0500" TZ="SAMST"' "Sun, 21 Jun 2009 03:43:11 +0500"
-#    Show "<date TO="+0500" TZ="SAMST">Sun, 21 Jun 2009 03:43:11 +0500</date>
+#    local sTag='date TO="+0400" TZ="MSK"' sContent='Mon, 22 Apr 2013 15:55:50' ##udfXml
+#    local sXml='<date TO="+0400" TZ="MSK">Mon, 22 Apr 2013 15:55:50</date>'    ##udfXml
+#    udfXml "$sTag" "$sContent" | grep "^${sXml}$"                              ##udfXml ? true
 #  SOURCE
 udfXml() {
  [ -n "$1" ] || return 1
