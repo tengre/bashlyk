@@ -72,13 +72,13 @@
 #          переменной
 #    255 - Ошибка: аргумент отсутствует
 #  EXAMPLE
-#    local csv='b=true;iXo=1921;iY0=1080;sTxt="foo bar";' csvResult             ##udfGetIniSection
+#    local csv='b=true;iXo=1921;iYo=1080;sTxt="foo bar";' csvResult             ##udfGetIniSection
 #    local sTxt="foo bar" b=true iXo=1921 iYo=1080 ini iniChild                 ##udfGetIniSection
 #    local fmt="[test]\n\t%s\t=\t%s\n\t%s\t=\t%s\n\t%s\t=\t%s\n\t%s\t=\t%s\n"   ##udfGetIniSection
 #    ini=$(mktemp --suffix=.ini || tempfile -s .test.ini)                       ##udfGetIniSection ? true
 #    iniChild="$(dirname $ini)/child.$(basename $ini)"                          ##udfGetIniSection
-#    printf "$fmt" "sTxt" "foo" "b" "false" "iXo" "1920" "iY0" "$80" | tee $ini ##udfGetIniSection
-#    printf "$fmt" "sTxt" "$sTxt" "b" "$b" "iXo" "$iXo" "iY0" "$iYo" | tee $iniChild  ##udfGetIniSection
+#    printf "$fmt" "sTxt" "foo" "b" "false" "iXo" "1920" "iYo" "$80" | tee $ini ##udfGetIniSection
+#    printf "$fmt" "sTxt" "$sTxt" "b" "$b" "iXo" "$iXo" "iYo" "$iYo" | tee $iniChild  ##udfGetIniSection
 #    udfGetIniSection $iniChild test | grep "^${csv}$"                          ##udfGetIniSection ? true
 #    udfGetIniSection $iniChild test csvResult                                  ##udfGetIniSection ? true
 #    echo "$csvResult" | grep "^${csv}$"                                        ##udfGetIniSection ? true
@@ -155,11 +155,11 @@ udfGetIniSection() {
 #          переменной
 #    255 - Ошибка: аргумент отсутствует или файл конфигурации не найден
 #  EXAMPLE
-#    local csv='sTxt="foo bar";b=true;iXo=1921;iY0=1080;' csvResult             ##udfReadIniSection
+#    local csv='sTxt="foo bar";b=true;iXo=1921;iYo=1080;' csvResult             ##udfReadIniSection
 #    local sTxt="foo bar" b=true iXo=1921 iYo=1080 ini iniChild                 ##udfReadIniSection
 #    local fmt="[test]\n\t%s\t=\t%s\n\t%s\t=\t%s\n\t%s\t=\t%s\n\t%s\t=\t%s\n"   ##udfReadIniSection
 #    ini=$(mktemp --suffix=.ini || tempfile -s .test.ini)                       ##udfReadIniSection ? true
-#    printf "$fmt" "sTxt" "$sTxt" "b" "$b" "iXo" "$iXo" "iY0" "$iYo" | tee $ini ##udfReadIniSection
+#    printf "$fmt" "sTxt" "$sTxt" "b" "$b" "iXo" "$iXo" "iYo" "$iYo" | tee $ini ##udfReadIniSection
 #    udfReadIniSection $ini test | grep "^${csv}$"                              ##udfReadIniSection ? true
 #    udfReadIniSection $ini test csvResult                                      ##udfReadIniSection ? true
 #    echo "$csvResult" | grep "^${csv}$"                                        ##udfReadIniSection ? true
@@ -235,9 +235,9 @@ udfReadIniSection() {
 #          переменной
 #    255 - Ошибка: аргумент отсутствует
 #  EXAMPLE
-#    local csv='sTxt=bar;b=false;iXo=21;iY0=1080;sTxt=foo bar;b=true;iXo=1920;' ##udfCsvOrder
+#    local csv='sTxt=bar;b=false;iXo=21;iYo=1080;sTxt=foo bar;b=true;iXo=1920;' ##udfCsvOrder
 #    local csvResult                                                            ##udfCsvOrder
-#    local csvTest='b=true;iXo=1920;iY0=1080;sTxt="foo bar";'                   ##udfCsvOrder
+#    local csvTest='b=true;iXo=1920;iYo=1080;sTxt="foo bar";'                   ##udfCsvOrder
 #    udfCsvOrder "$csv" | grep "^${csvTest}$"                                   ##udfCsvOrder ? true
 #    udfCsvOrder "$csv" csvResult                                               ##udfCsvOrder ? true
 #    echo $csvResult | grep "^${csvTest}$"                                      ##udfCsvOrder ? true
@@ -300,6 +300,11 @@ _CsvOrder_EOF
 #  RETURN VALUE
 #    255 - Ошибка: аргумент(ы) отсутствуют
 #     0  - Выполнено успешно
+#  EXAMPLE
+#    local b sTxt iXo iYo                                                       ##udfSetVarFromCsv
+#    local csv='sTxt=bar;b=false;iXo=21;iYo=1080;sTxt=foo bar;b=true;iXo=1920;' ##udfSetVarFromCsv
+#    udfSetVarFromCsv "$csv" b sTxt iXo iYo                                     ##udfSetVarFromCsv
+#    udfShowVariable b sTxt iXo iYo                                             ##udfSetVarFromCsv
 #  SOURCE
 udfSetVarFromCsv() {
  [ -n "$1" ] || return 255
@@ -338,6 +343,15 @@ udfSetVarFromCsv() {
 #  RETURN VALUE
 #    255 - Ошибка: аргумент(ы) отсутствуют
 #     0  - Выполнено успешно
+#  EXAMPLE
+#    local csv='sTxt="foo bar";b=true;iXo=1921;iYo=1080;' csvResult             ##udfSetVarFromIni
+#    local sTxt b iXo iYo ini                                                   ##udfSetVarFromIni
+#    local fmt="[test]\n\t%s\t=\t%s\n\t%s\t=\t%s\n\t%s\t=\t%s\n\t%s\t=\t%s\n"   ##udfSetVarFromIni
+#    ini=$(mktemp --suffix=.ini || tempfile -s .test.ini)                       ##udfSetVarFromIni ? true
+#    printf "$fmt" "sTxt" "foo" "b" "false" "iXo" "720" "iYo" "999" | tee $ini  ##udfSetVarFromIni
+#    udfSetVarFromIni $ini test sTxt b iXo iYo                                  ##udfSetVarFromIni ? true
+#    udfShowVariable sTxt b iXo iYo                                             ##udfSetVarFromIni ? true
+#    rm -f $ini                                                                 ##udfSetVarFromIni
 #  SOURCE
 udfSetVarFromIni() {
  [ -n "$1" -a -f "$1" -a -n "$3" ] || return 255
@@ -364,13 +378,18 @@ udfSetVarFromIni() {
 #              будет помещен в соответствующую переменную. При отсутствии такого 
 #              идентификатора результат будет выдан на стандартный вывод
 #  OUTPUT
-#              разделенный символом ";" строка, в полях которого содержатся 
-#              данные в формате "<key>=<value>;..."
+#              строка ключей
 #  RETURN VALUE
 #     0  - Выполнено успешно
 #     2  - Ошибка: аргумент <varname> не является валидным идентификатором
 #          переменной
 #    255 - Ошибка: аргумент отсутствует
+#  EXAMPLE
+#    local csv='sTxt="foo bar";b=true;iXo=1921;iYo=1080;' csvResult             ##udfCsvKeys
+#    udfCsvKeys "$csv"                                                          ##udfCsvKeys ? true
+#    udfCsvKeys "$csv" | xargs | grep "^sTxt b iXo iYo$"                        ##udfCsvKeys ? true
+#    udfCsvKeys "$csv" csvResult                                                ##udfCsvKeys ? true
+#    echo $csvResult | grep "^sTxt b iXo iYo$"                                  ##udfCsvKeys ? true
 #  SOURCE
 udfCsvKeys() {
  [ -n "$1" ] || return 255
