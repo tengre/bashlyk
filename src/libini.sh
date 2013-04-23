@@ -25,7 +25,8 @@
 #   Здесь указываются модули, код которых используется данной библиотекой
 # SOURCE
 : ${_bashlyk_pathLib:=/usr/share/bashlyk}
-[ -s "${_bashlyk_pathLib}/libstd.sh" ] && . "${_bashlyk_pathLib}/libstd.sh"
+[ -s "libstd.sh" ] && . "libstd.sh"
+#[ -s "${_bashlyk_pathLib}/libstd.sh" ] && . "${_bashlyk_pathLib}/libstd.sh"
 #******
 #****v*  bashlyk/libini/Init section
 #  DESCRIPTION
@@ -71,7 +72,17 @@
 #          переменной
 #    255 - Ошибка: аргумент отсутствует
 #  EXAMPLE
-#    
+#    local csv='b=true;iXo=1921;iY0=1080;sTxt="foo bar";' csvResult             ##udfGetIniSection
+#    local sTxt="foo bar" b=true iXo=1921 iYo=1080 ini iniChild                 ##udfGetIniSection
+#    local fmt="[test]\n\t%s\t=\t%s\n\t%s\t=\t%s\n\t%s\t=\t%s\n\t%s\t=\t%s\n"   ##udfGetIniSection
+#    ini=$(mktemp --suffix=.ini || tempfile -s .test.ini)                       ##udfGetIniSection ? true
+#    iniChild="$(dirname $ini)/child.$(basename $ini)"                          ##udfGetIniSection
+#    printf "$fmt" "sTxt" "foo" "b" "false" "iXo" "1920" "iY0" "$80" | tee $ini ##udfGetIniSection
+#    printf "$fmt" "sTxt" "$sTxt" "b" "$b" "iXo" "$iXo" "iY0" "$iYo" | tee $iniChild  ##udfGetIniSection
+#    udfGetIniSection $iniChild test | grep "^${csv}$"                          ##udfGetIniSection ? true
+#    udfGetIniSection $iniChild test csvResult                                  ##udfGetIniSection ? true
+#    echo "$csvResult" | grep "^${csv}$"                                        ##udfGetIniSection ? true
+#    rm -f $iniChild $ini                                                       ##udfGetIniSection
 #  SOURCE
 udfGetIniSection() {
  [ -n "$1" ] || return 255
@@ -105,6 +116,7 @@ udfGetIniSection() {
    && bashlyk_csvIni_rWrBeelW+=";$(udfReadIniSection \
     "${bashlyk_pathIni_rWrBeelW}/${bashlyk_ini_rWrBeelW}" \
     "$bashlyk_sTag_rWrBeelW");"
+    echo "${bashlyk_pathIni_rWrBeelW}/${bashlyk_ini_rWrBeelW}" >> /tmp/$$.log
  done
  udfCsvOrder "$bashlyk_csvIni_rWrBeelW" bashlyk_csvResult_rWrBeelW
  if [ -n "$3" ]; then
@@ -142,6 +154,16 @@ udfGetIniSection() {
 #     2  - Ошибка: аргумент <varname> не является валидным идентификатором
 #          переменной
 #    255 - Ошибка: аргумент отсутствует или файл конфигурации не найден
+#  EXAMPLE
+#    local csv='sTxt="foo bar";b=true;iXo=1921;iY0=1080;' csvResult             ##udfReadIniSection
+#    local sTxt="foo bar" b=true iXo=1921 iYo=1080 ini iniChild                 ##udfReadIniSection
+#    local fmt="[test]\n\t%s\t=\t%s\n\t%s\t=\t%s\n\t%s\t=\t%s\n\t%s\t=\t%s\n"   ##udfReadIniSection
+#    ini=$(mktemp --suffix=.ini || tempfile -s .test.ini)                       ##udfReadIniSection ? true
+#    printf "$fmt" "sTxt" "$sTxt" "b" "$b" "iXo" "$iXo" "iY0" "$iYo" | tee $ini ##udfReadIniSection
+#    udfReadIniSection $ini test | grep "^${csv}$"                              ##udfReadIniSection ? true
+#    udfReadIniSection $ini test csvResult                                      ##udfReadIniSection ? true
+#    echo "$csvResult" | grep "^${csv}$"                                        ##udfReadIniSection ? true
+#    rm -f $ini                                                                 ##udfReadIniSection
 #  SOURCE
 udfReadIniSection() {
  [ -n "$1" -a -f "$1" ] || return 255
@@ -212,6 +234,13 @@ udfReadIniSection() {
 #     2  - Ошибка: аргумент <varname> не является валидным идентификатором
 #          переменной
 #    255 - Ошибка: аргумент отсутствует
+#  EXAMPLE
+#    local csv='sTxt=bar;b=false;iXo=21;iY0=1080;sTxt=foo bar;b=true;iXo=1920;' ##udfCsvOrder
+#    local csvResult                                                            ##udfCsvOrder
+#    local csvTest='b=true;iXo=1920;iY0=1080;sTxt="foo bar";'                   ##udfCsvOrder
+#    udfCsvOrder "$csv" | grep "^${csvTest}$"                                   ##udfCsvOrder ? true
+#    udfCsvOrder "$csv" csvResult                                               ##udfCsvOrder ? true
+#    echo $csvResult | grep "^${csvTest}$"                                      ##udfCsvOrder ? true
 #  SOURCE
 udfCsvOrder() {
  [ -n "$1" ] || return 255
