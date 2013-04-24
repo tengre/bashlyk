@@ -9,13 +9,15 @@
 - создать опции командной строки, которые позволят манипулировать режимом работы
   сценария: журналирование и т.п.
 - . bashlyk args
-- fhs ++
-- {xml,md5} -> std
++ fhs ++
++ {xml,md5} -> std 
 - subproc for test throw & log func
-- job test udfOnTrap (libstd)
-- use csv functions from libini for libcnf
-- include lines from test unit to test log
-- phenomen $s udfGetConfig
++ job test udfOnTrap (libstd)
+-+ use csv functions from libini for libcnf
++ include lines from test unit to test log
++ phenomen $s udfGetConfig
+- local vars bashlyk
+
 
 
 
