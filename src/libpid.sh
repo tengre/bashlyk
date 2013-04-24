@@ -25,9 +25,7 @@
 #   Здесь указываются модули, код которых используется данной библиотекой
 # SOURCE
 : ${_bashlyk_pathLib:=/usr/share/bashlyk}
-[ -s "libstd.sh" ] && . "libstd.sh"
-#[ -s "${_bashlyk_pathLib}/libstd.sh" ] && . "${_bashlyk_pathLib}/libstd.sh"
-#[ -s "${_bashlyk_pathLib}/libmd5.sh" ] && . "${_bashlyk_pathLib}/libmd5.sh"
+[ -s "${_bashlyk_pathLib}/libstd.sh" ] && . "${_bashlyk_pathLib}/libstd.sh"
 #******
 #****v*  bashlyk/libpid/Init section
 #  DESCRIPTION
@@ -57,17 +55,19 @@
 #    0 - Процесс с PID существует для указанной командной строки (command args)
 #    1 - Процесс с PID для проверяемой командной строки не обнаружен.
 #  EXAMPLE
-#    (sleep 60)&                                                                ##udfCheckStarted
-#    udfCheckStarted $! sleep 60                                                ##udfCheckStarted ? true
-#    udfCheckStarted $! sleep 61                                                ##udfCheckStarted ? false
-#    udfCheckStarted $$ $0                                                      ##udfCheckStarted ? false
+#    (sleep 8)&                                                                 ##udfCheckStarted
+#    local pid=$!                                                               ##udfCheckStarted
+#    ps -p $pid -o pid= -o args=                                                ##udfCheckStarted
+#    udfCheckStarted $pid sleep 8                                               ##udfCheckStarted ? true
+#    udfCheckStarted $pid sleep 88                                              ##udfCheckStarted ? false
+#    udfCheckStarted $$ $0                                                      ##udfCheckStarted ? 2
 #  SOURCE
 udfCheckStarted() {
  [ -n "$*" ] || return 255
+ [ "$$" = "$1" ] && return 2
  local pid="$1"
- local cmd="${2:-}"
- shift 2
- [ -n "$(ps -p $pid -o pid= -o args= | grep -vw $$ | grep -w -e "$cmd" | grep -e "$*" | head -n 1)" ] && return 0 || return 1
+ shift 1
+ ps -p $pid -o args= | grep "^${*}$" >/dev/null 2>&1
 }
 #******
 #****f* bashlyk/libpid/udfSetPid
@@ -86,7 +86,8 @@ udfCheckStarted() {
 #    255 - PID file don't created. Error status
 #  EXAMPLE
 #    udfSetPid                                                                  ##udfSetPid ? true
-#    head -n 1 $(_gete fnPid) | grep -w $$                                      ##udfSetPid ? true
+#    test -f $_bashlyk_fnPid                                                    ##udfSetPid ? true
+#    head -n 1 $_bashlyk_fnPid | grep -w $$                                     ##udfSetPid ? true
 #  SOURCE
 udfSetPid() {
  local fnPid pid

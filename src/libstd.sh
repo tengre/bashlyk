@@ -192,7 +192,7 @@ udfThrow() {
 #  EXAMPLE
 #    local sNoEmpty='test' sEmpty=''                                            ##udfOnEmptyVariable
 #    $(udfOnEmptyVariable sNoEmpty)                                             ##udfOnEmptyVariable ? true
-#    $(udfOnEmptyVariable sEmpty >/dev/null 2>&1; true)                         ##udfOnEmptyVariable ? false
+#    $(udfOnEmptyVariable sEmpty >/dev/null 2>&1; true)                         ##udfOnEmptyVariable ? 255
 #  SOURCE
 udfOnEmptyVariable() {
  local bashlyk_EysrBRwAuGMRNQoG_a bashlyk_tfAFyKrLgSeOatp2_s s='Throw'
@@ -230,7 +230,7 @@ udfOnEmptyVariable() {
 #  EXAMPLE
 #    local sNoEmpty='test' sEmpty=''                                            ##udfThrowOnEmptyVariable
 #    $(udfThrowOnEmptyVariable sNoEmpty >/dev/null 2>&1)                        ##udfThrowOnEmptyVariable ? true
-#    $(udfThrowOnEmptyVariable sEmpty >/dev/null 2>&1)                          ##udfThrowOnEmptyVariable ? false
+#    $(udfThrowOnEmptyVariable sEmpty >/dev/null 2>&1)                          ##udfThrowOnEmptyVariable ? 255
 #  SOURCE
 udfThrowOnEmptyVariable() {
  udfOnEmptyVariable Throw $*
@@ -253,7 +253,7 @@ udfThrowOnEmptyVariable() {
 #  EXAMPLE
 #    local sNoEmpty='test' sEmpty=''                                            ##udfWarnOnEmptyVariable
 #    udfWarnOnEmptyVariable sNoEmpty                                            ##udfWarnOnEmptyVariable ? true
-#    udfWarnOnEmptyVariable sEmpty                                              ##udfWarnOnEmptyVariable ? false
+#    udfWarnOnEmptyVariable sEmpty                                              ##udfWarnOnEmptyVariable ? 255
 #  SOURCE
 udfWarnOnEmptyVariable() {
  udfOnEmptyVariable Warn $*
@@ -302,19 +302,20 @@ udfShowVariable() {
 #    udfIsNumber 34k k                                                          ##udfIsNumber ? true
 #    udfIsNumber 67M kMGT                                                       ##udfIsNumber ? true
 #    udfIsNumber 89G G                                                          ##udfIsNumber ? true
-#    udfIsNumber 12,34                                                          ##udfIsNumber ? false 
-#    udfIsNumber 12T                                                            ##udfIsNumber ? false 
-#    udfIsNumber 1O2                                                            ##udfIsNumber ? false 
-#    udfIsNumber                                                                ##udfIsNumber ? false 
+#    udfIsNumber 12,34                                                          ##udfIsNumber ? false
+#    udfIsNumber 12T                                                            ##udfIsNumber ? false
+#    udfIsNumber 1O2                                                            ##udfIsNumber ? false
+#    udfIsNumber                                                                ##udfIsNumber ? 2
 #  SOURCE
 udfIsNumber() {
  [ -n "$1" ] || return 2
  local s=''
  [ -n "$2" ] && s="[$2]?"
- case "$(echo "$1" | grep -i -E "^[[:digit:]]+${s}$")" in
-  '') return 1;;
-   *) return 0;;
- esac
+ echo "$1" | grep -i -E "^[[:digit:]]+${s}$" >/dev/null 2>&1
+# case "$(echo "$1" | grep -i -E "^[[:digit:]]+${s}$")" in
+#  '') return 1;;
+#   *) return 0;;
+# esac
 }
 #******
 #****f* bashlyk/libstd/udfIsValidVariable
@@ -330,10 +331,10 @@ udfIsNumber() {
 #    1 - аргумент не является валидным идентификатором
 #    2 - аргумент не задан
 #  EXAMPLE
-#    udfIsValidVariable                                                         ##udfIsValidVariable ? false 
-#    udfIsValidVariable "12"                                                    ##udfIsValidVariable ? false 
+#    udfIsValidVariable                                                         ##udfIsValidVariable ? 2
+#    udfIsValidVariable "12"                                                    ##udfIsValidVariable ? false
 #    udfIsValidVariable "a"                                                     ##udfIsValidVariable ? true
-#    udfIsValidVariable "k1"                                                    ##udfIsValidVariable ? true                                                  
+#    udfIsValidVariable "k1"                                                    ##udfIsValidVariable ? true
 #  SOURCE
 udfIsValidVariable() {
  [ -n "$1" ] || return 2

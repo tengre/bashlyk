@@ -25,8 +25,7 @@
 #   Здесь указываются модули, код которых используется данной библиотекой
 # SOURCE
 : ${_bashlyk_pathLib:=/usr/share/bashlyk}
-[ -s "libstd.sh" ] && . "libstd.sh"
-#[ -s "${_bashlyk_pathLib}/libstd.sh" ] && . "${_bashlyk_pathLib}/libstd.sh"
+[ -s "${_bashlyk_pathLib}/libstd.sh" ] && . "${_bashlyk_pathLib}/libstd.sh"
 #******
 #****v*  bashlyk/libini/Init section
 #  DESCRIPTION
@@ -34,6 +33,7 @@
 #  SOURCE
 : ${_bashlyk_sArg:=$*}
 : ${_bashlyk_pathIni:=$(pwd)}
+: ${_bashlyk_sUnnamedKeyword:=_bashlyk_unnamed_key_}
 : ${_bashlyk_aRequiredCmd_ini:="[ awk cat cut dirname echo false grep mv printf pwd rm sed sort touch tr true uniq w xargs"}
 : ${_bashlyk_aExport_ini:="udfGetIniSection udfReadIniSection udfCsvOrder udfAssembly udfSetVarFromCsv udfSetVarFromIni udfCsvKeys udfCheckCsv udfIniWrite udfIniChange"}
 #******
@@ -116,7 +116,6 @@ udfGetIniSection() {
    && bashlyk_csvIni_rWrBeelW+=";$(udfReadIniSection \
     "${bashlyk_pathIni_rWrBeelW}/${bashlyk_ini_rWrBeelW}" \
     "$bashlyk_sTag_rWrBeelW");"
-    echo "${bashlyk_pathIni_rWrBeelW}/${bashlyk_ini_rWrBeelW}" >> /tmp/$$.log
  done
  udfCsvOrder "$bashlyk_csvIni_rWrBeelW" bashlyk_csvResult_rWrBeelW
  if [ -n "$3" ]; then
@@ -136,8 +135,8 @@ udfGetIniSection() {
 #    результат в виде строки CSV, разделенных ';', каждое поле которой содержит
 #    данные в формате "<ключ>=<значение>" согласно данных строки секции.
 #    В случае если исходная строка не содержит ключ или ключ содержит пробел, то
-#    ключом становится выражение _zzz_bashlyk_line_<инкремент>, а всё содержимое
-#    строки - значением.
+#    ключом становится выражение ${_bashlyk_sUnnamedKeyword}_<инкремент>, а всё
+#    содержимое строки - значением.
 #  INPUTS
 #    file    - имя файла конфигурации
 #    section - название секции конфигурации, при отсутствии этого аргумента 
@@ -155,11 +154,13 @@ udfGetIniSection() {
 #          переменной
 #    255 - Ошибка: аргумент отсутствует или файл конфигурации не найден
 #  EXAMPLE
-#    local csv='sTxt="foo bar";b=true;iXo=1921;iYo=1080;' csvResult             ##udfReadIniSection
-#    local sTxt="foo bar" b=true iXo=1921 iYo=1080 ini iniChild                 ##udfReadIniSection
+#    local csv='sTxt="foo bar";b=true;iXo=1921;iYo=1080;_bashlyk_unnamed_key_0="simple line";' ##udfReadIniSection
+#    local sTxt="foo bar" b=true iXo=1921 iYo=1080 ini iniChild csvResult       ##udfReadIniSection
 #    local fmt="[test]\n\t%s\t=\t%s\n\t%s\t=\t%s\n\t%s\t=\t%s\n\t%s\t=\t%s\n"   ##udfReadIniSection
 #    ini=$(mktemp --suffix=.ini || tempfile -s .test.ini)                       ##udfReadIniSection ? true
 #    printf "$fmt" "sTxt" "$sTxt" "b" "$b" "iXo" "$iXo" "iYo" "$iYo" | tee $ini ##udfReadIniSection
+#    echo "simple line" | tee -a $ini                                           ##udfReadIniSection
+#    udfReadIniSection $ini test                                                ##udfReadIniSection ? true
 #    udfReadIniSection $ini test | grep "^${csv}$"                              ##udfReadIniSection ? true
 #    udfReadIniSection $ini test csvResult                                      ##udfReadIniSection ? true
 #    echo "$csvResult" | grep "^${csv}$"                                        ##udfReadIniSection ? true
@@ -195,7 +196,7 @@ udfReadIniSection() {
    bashlyk_v_yLn0ZVLi="$(echo ${bashlyk_s_yLn0ZVLi#*=}|xargs)"
    if [ "$bashlyk_k_yLn0ZVLi" = "$bashlyk_v_yLn0ZVLi" \
     -o -n "$(echo "$bashlyk_k_yLn0ZVLi" | grep '.*[[:space:]+].*')" ]; then
-    bashlyk_k_yLn0ZVLi=_zzz_bashlyk_line_${bashlyk_i_yLn0ZVLi}
+    bashlyk_k_yLn0ZVLi=${_bashlyk_sUnnamedKeyword}${bashlyk_i_yLn0ZVLi}
     bashlyk_i_yLn0ZVLi=$((bashlyk_i_yLn0ZVLi+1))
    fi
    bashlyk_csvResult_yLn0ZVLi+="$bashlyk_k_yLn0ZVLi=$(udfQuoteIfNeeded \
@@ -303,8 +304,9 @@ _CsvOrder_EOF
 #  EXAMPLE
 #    local b sTxt iXo iYo                                                       ##udfSetVarFromCsv
 #    local csv='sTxt=bar;b=false;iXo=21;iYo=1080;sTxt=foo bar;b=true;iXo=1920;' ##udfSetVarFromCsv
-#    udfSetVarFromCsv "$csv" b sTxt iXo iYo                                     ##udfSetVarFromCsv
-#    udfShowVariable b sTxt iXo iYo                                             ##udfSetVarFromCsv
+#    local sResult="true:foo bar:1920:1080"                                     ##udfSetVarFromCsv
+#    udfSetVarFromCsv "$csv" b sTxt iXo iYo                                     ##udfSetVarFromCsv ? true
+#    echo "${b}:${sTxt}:${iXo}:${iYo}" | grep "^${sResult}$"                    ##udfSetVarFromCsv ? true
 #  SOURCE
 udfSetVarFromCsv() {
  [ -n "$1" ] || return 255
@@ -344,13 +346,13 @@ udfSetVarFromCsv() {
 #    255 - Ошибка: аргумент(ы) отсутствуют
 #     0  - Выполнено успешно
 #  EXAMPLE
-#    local csv='sTxt="foo bar";b=true;iXo=1921;iYo=1080;' csvResult             ##udfSetVarFromIni
+#    local sResult='true:foo bar:1024:768'                                      ##udfSetVarFromIni
 #    local sTxt b iXo iYo ini                                                   ##udfSetVarFromIni
 #    local fmt="[test]\n\t%s\t=\t%s\n\t%s\t=\t%s\n\t%s\t=\t%s\n\t%s\t=\t%s\n"   ##udfSetVarFromIni
 #    ini=$(mktemp --suffix=.ini || tempfile -s .test.ini)                       ##udfSetVarFromIni ? true
-#    printf "$fmt" "sTxt" "foo" "b" "false" "iXo" "720" "iYo" "999" | tee $ini  ##udfSetVarFromIni
+#    printf "$fmt" sTxt "foo bar" b true iXo 1024 iYo 768 | tee $ini            ##udfSetVarFromIni
 #    udfSetVarFromIni $ini test sTxt b iXo iYo                                  ##udfSetVarFromIni ? true
-#    udfShowVariable sTxt b iXo iYo                                             ##udfSetVarFromIni ? true
+#    echo "${b}:${sTxt}:${iXo}:${iYo}" | grep "^${sResult}$"                    ##udfSetVarFromIni ? true
 #    rm -f $ini                                                                 ##udfSetVarFromIni
 #  SOURCE
 udfSetVarFromIni() {
@@ -385,11 +387,11 @@ udfSetVarFromIni() {
 #          переменной
 #    255 - Ошибка: аргумент отсутствует
 #  EXAMPLE
-#    local csv='sTxt="foo bar";b=true;iXo=1921;iYo=1080;' csvResult             ##udfCsvKeys
+#    local csv='sTxt="foo bar";b=true;iXo=1921;iYo=1080;' sResult               ##udfCsvKeys
 #    udfCsvKeys "$csv"                                                          ##udfCsvKeys ? true
 #    udfCsvKeys "$csv" | xargs | grep "^sTxt b iXo iYo$"                        ##udfCsvKeys ? true
-#    udfCsvKeys "$csv" csvResult                                                ##udfCsvKeys ? true
-#    echo $csvResult | grep "^sTxt b iXo iYo$"                                  ##udfCsvKeys ? true
+#    udfCsvKeys "$csv" sResult                                                  ##udfCsvKeys ? true
+#    echo $sResult | grep "^sTxt b iXo iYo$"                                    ##udfCsvKeys ? true
 #  SOURCE
 udfCsvKeys() {
  [ -n "$1" ] || return 255
@@ -413,64 +415,6 @@ udfCsvKeys() {
  return 0
 }
 #******
-#****f* bashlyk/libini/udfCheckCsv
-#  SYNOPSIS
-#    udfCheckCsv <csv;> [<varname>]
-#  DESCRIPTION
-#    Нормализация CSV-строки <csv;>. Приведение к виду "ключ=значение" полей.
-#    В случае если поле не содержит ключа или ключ содержит пробел, то к полю 
-#    добавляется ключ вида _zzz_bashlyk_line_<инкремент>, всё содержимое поля
-#    становится значением.
-#    Результат выводится в стандартный вывод или в переменную, если имеется
-#    второй аргумент функции <varname>
-#  INPUTS
-#    csv;    - CSV-строка, разделённая ";"
-#    varname - идентификатор переменной (без "$ "). При его наличии результат 
-#              будет помещен в соответствующую переменную. При отсутствии такого
-#              идентификатора результат будет выдан на стандартный вывод
-#  OUTPUT
-#              разделенный символом ";" строка, в полях которого содержатся 
-#              данные в формате "<key>=<value>;..."
-#  RETURN VALUE
-#     0  - Выполнено успешно
-#     2  - Ошибка: аргумент <varname> не является валидным идентификатором
-#          переменной
-#    255 - Ошибка: аргумент отсутствует
-#  SOURCE
-udfCheckCsv() {
- [ -n "$1" ] || return 255
- local bashlyk_s_Q1eiphgO bashlyk_cIFS_Q1eiphgO bashlyk_k_Q1eiphgO
- local bashlyk_v_Q1eiphgO bashlyk_i_Q1eiphgO bashlyk_csvResult_Q1eiphgO
- #
- bashlyk_cIFS_Q1eiphgO=$IFS
- IFS=';'
- bashlyk_i_Q1eiphgO=0
- bashlyk_csvResult_Q1eiphgO=''
- #
- for bashlyk_s_Q1eiphgO in $1; do
-  bashlyk_s_Q1eiphgO=$(echo $bashlyk_s_Q1eiphgO | tr -d "'" | tr -d '"')
-  bashlyk_k_Q1eiphgO="$(echo ${bashlyk_s_Q1eiphgO%%=*}|xargs)"
-  bashlyk_v_Q1eiphgO="$(echo ${bashlyk_s_Q1eiphgO#*=}|xargs)"
-  [ -n "$bashlyk_k_Q1eiphgO" ] || continue
-  if [ "$bashlyk_k_Q1eiphgO" = "$bashlyk_v_Q1eiphgO" \
-   -o -n "$(echo "$bashlyk_k_Q1eiphgO" | grep '.*[[:space:]+].*')" ]; then
-   bashlyk_k_Q1eiphgO=_zzz_bashlyk_line_${bashlyk_i_Q1eiphgO}
-   bashlyk_i_Q1eiphgO=$((bashlyk_i_Q1eiphgO+1))
-  fi
-  bashlyk_csvResult_Q1eiphgO+="$bashlyk_k_Q1eiphgO=$(udfQuoteIfNeeded \
-   $bashlyk_v_Q1eiphgO);"
- done
- IFS=$bashlyk_cIFS_Q1eiphgO
- if [ -n "$2" ]; then
-  udfIsValidVariable "$2" || return 2
-  #udfThrow "Error: required valid variable name \"$2\""
-  eval 'export ${2}="${bashlyk_csvResult_Q1eiphgO}"'
- else
-  echo "$bashlyk_csvResult_Q1eiphgO"
- fi
- return 0
-}
-#******
 #****f* bashlyk/libini/udfIniWrite
 #  SYNOPSIS
 #    udfIniWrite <file> <csv;>
@@ -487,6 +431,16 @@ udfCheckCsv() {
 #  RETURN VALUE
 #     0  - Выполнено успешно
 #    255 - Ошибка: аргументы отсутствуют
+#  EXAMPLE
+#    local csv='[test];sTxt="foo bar";b=true;iXo=1921;iYo=1080;' ini s          ##udfIniWrite
+#    ini=$(mktemp --suffix=.ini || tempfile -s .test.ini)                       ##udfIniWrite ? true
+#    udfIniWrite $ini "$csv"                                                    ##udfIniWrite ? true
+#     grep -E '^\[test\]$'        $ini                                          ##udfIniWrite ? true
+#     grep -E 'sTxt.*=.*foo bar$' $ini                                          ##udfIniWrite ? true
+#     grep -E 'b.*=.*true$'       $ini                                          ##udfIniWrite ? true
+#     grep -E 'iXo.*=.*1921$'     $ini                                          ##udfIniWrite ? true
+#     grep -E 'iYo.*=.*1080$'     $ini                                          ##udfIniWrite ? true
+#     rm -f $ini                                                                ##udfIniWrite
 #  SOURCE
 udfIniWrite() {
  [ -n "$1" -a -n "$2" ] || return 255
@@ -498,7 +452,7 @@ udfIniWrite() {
  #
  [ -s "$ini" ] && mv -f "$ini" "${ini}.bak"
  echo "$csv" | sed -e "s/[;]\+/;/g" -e "s/\[/;\[/g" | tr ';' '\n' \
-  | sed -e "s/\(.*\)=/\t\1\t=\t/g" -e "s/_zzz_bashlyk_line_.*\t=\t//g" \
+  | sed -e "s/\(.*\)=/\t\1\t=\t/g" -e "s/${_bashlyk_sUnnamedKeyword}.*\t=\t//g"\
   | tr -d '"' > "$ini"
  #
  return 0
@@ -522,6 +476,16 @@ udfIniWrite() {
 #  RETURN VALUE
 #     0  - Выполнено успешно
 #    255 - Ошибка: аргументы отсутствуют
+#  EXAMPLE
+#    local csv='sTxt="foo bar";b=true;iXo=1921;iYo=1080;' csvResult             ##udfIniChange
+#    local sTxt="bar foo" b=true iXo=1234 iYo=4321 ini                          ##udfIniChange
+#    local fmt="[sect%s]\n\t%s\t=\t%s\n\t%s\t=\t%s\n\t%s\t=\t%s\n\t%s\t=\t%s\n" ##udfIniChange
+#    ini=$(mktemp --suffix=.ini || tempfile -s .test.ini)                       ##udfIniChange ? true
+#    printf "$fmt" 1 sTxt "foo" b false iXo 720 iYo 999 | tee $ini              ##udfIniChange
+#    printf "$fmt" 2 sTxt "$sTxt" b "$b" iXo "$iXo" iYo "$iYo" | tee -a $ini    ##udfIniChange
+#    udfIniChange $ini "$csv" sect1                                             ##udfIniChange ? true
+#    cat $ini                                                                   ##udfIniChange ? true
+#    rm -f $ini                                                                 ##udfIniChange
 #  SOURCE
 udfIniChange() {
  [ -n "$1" -a -n "$2" ] || return 255

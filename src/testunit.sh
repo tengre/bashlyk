@@ -13,7 +13,8 @@
 #   Using modules section
 #   Здесь указываются модули, код которых используется данной библиотекой
 # SOURCE
-: ${_bashlyk_pathLib:=/usr/share/bashlyk}
+#: ${_bashlyk_pathLib:=/usr/share/bashlyk}
+: ${_bashlyk_pathLib:=.}
 : ${_bashlyk_TestUnit_iCount=0}
 : ${_bashlyk_TestUnit_fnLog=/tmp/testunit.log}
 #: ${_bashlyk_TestUnit_fnLog=/var/log/bashlyk/testunit.log}
@@ -30,19 +31,17 @@ udfTestUnitMsg() {
  case "$1" in
    true) rc1=0;;
   false) rc1=1;;
-      *) return 255;;
+      *) rc1=$1;;
+     '') return 255
  esac
- case "${rc0}${rc1}" in
-  00) rc2='.';;
-  01) rc2='?';;
-  *0) rc2='?';;
-  *1) rc2='.';;
- esac
+ [ "$rc0" = "$rc1" ] && rc2='.' || rc2='?'
  echo -n $rc2
  if [ "$rc2" = "?" ]; then
-  _bashlyk_TestUnit_iCount=$((_bashlyk_TestUnit_iCount+1))
-  echo "[?] - test unit error - ${BASH_SOURCE[1]} (line ${BASH_LINENO[0]}):" >> $_bashlyk_TestUnit_fnLog
-  head -n ${BASH_LINENO[0]} ${BASH_SOURCE[1]} | tail -n 1 >> $_bashlyk_TestUnit_fnLog
+  {
+   _bashlyk_TestUnit_iCount=$((_bashlyk_TestUnit_iCount+1))
+   echo "? rc: [ $rc0 != $rc1 ] - ${BASH_SOURCE[1]} (line ${BASH_LINENO[0]}):"
+   head -n ${BASH_LINENO[0]} ${BASH_SOURCE[1]} | tail -n 1
+  } >> $_bashlyk_TestUnit_fnLog
  fi
  return 0
 } 
@@ -56,11 +55,12 @@ udfMain() {
 # local a s fn=${_bashlyk_pathLib}/lib${1}.sh
  local a s fn=lib${1}.sh
  [ -s $fn ] && . $fn || return 254
+ _bashlyk_TestUnit_fnLog=/tmp/${1}.testunit.log
  a=$(eval echo '$_bashlyk_aExport_'"${1}")
  {
   for s in $a; do
    echo 'echo "-- testing '"${s}"':" >>$_bashlyk_TestUnit_fnLog'
-   grep "^#.*##${s}" $fn | grep -w "##${s}" | sed -e "s/^#//" | sed -e "s/##${s}/>>\$_bashlyk_TestUnit_fnLog 2>\&1/" | sed -e "s/\? \(true\|false\)/; udfTestUnitMsg \1/"
+   grep "^#.*##${s}" $fn | grep -w "##${s}" | sed -e "s/^#//" | sed -e "s/##${s}/>>\$_bashlyk_TestUnit_fnLog 2>\&1/" | sed -e "s/\? \(.*\)/; udfTestUnitMsg \1/"
    echo 'echo "--" >>$_bashlyk_TestUnit_fnLog'
    done
  } >> $_bashlyk_TestUnit_fnTmp
