@@ -64,6 +64,10 @@
 #     * Вывод только в файл $_bashlyk_fnLog
 #     * Вывод в системный журнал (syslog) и на консоль терминала
 #     * Вывод в системный журнал (syslog) и в файл $_bashlyk_fnLog
+#  EXAMPLE
+#  local fnLog=$(mktemp --suffix=.ini || tempfile -s .test.ini)                       ##udfGetIniSection ? true
+#  _fnLog $fnLog
+#  
 #  SOURCE
 udfLogger() {
  local envLang envLC_TIME bSysLog bUseLog sTagLog
@@ -167,6 +171,9 @@ udfIsTerminal() {
 #  RETURN VALUE
 #    0 - не требуется
 #    1 - вести запись лог-файла
+#  EXAMPLE
+#    udfCheck4LogUse  ##udfCheck4LogUse ? true
+#    udfCheck4LogUse | tee  ##udfCheck4LogUse ? true
 #  SOURCE
 udfCheck4LogUse() {
  udfIsTerminal
@@ -190,6 +197,8 @@ udfCheck4LogUse() {
 #    Подсчёт количества секунд, прошедших с момента запуска сценария
 #  INPUTS
 #    args - префикс для выводимого сообщения о прошедших секундах
+#  EXAMPLE
+#    udfUptime test | grep "test (.* sec)"                                      ##udfUptime ? true
 #  SOURCE
 udfUptime() {
  local iDiffTime=$(($(date "+%s")-${_bashlyk_iStartTimeStamp}))
@@ -203,6 +212,8 @@ udfUptime() {
 #    Псевдоним для udfUptime (Устаревшее)
 #  INPUTS
 #    args - префикс для выводимого сообщения о прошедших секундах
+#  EXAMPLE
+#    udfFinally test | grep "test (.* sec)"                                     ##udfFinally ? true
 #  SOURCE
 udfFinally() {
  udfUptime $*
@@ -277,7 +288,20 @@ udfSetLog() {
 #  OUTPUT
 #    Вывод значения переменной $_bashlyk_fnLog
 #  EXAMPLE
-#    stat $(_fnLog)
+#    local fnLog=$(mktemp --suffix=.log || tempfile -s .test.log)               ##_fnLog
+#    _fnLog $fnLog                                                              ##_fnLog
+#    _fnLog                                                                     ##_fnLog
+#    _ sCond4Log redirect                                                       ##_fnLog
+#    _ bInteract 0                                                              ##_fnLog
+#    _ bTerminal 0                                                              ##_fnLog
+#    _ sCond4Log                                                                ##_fnLog
+#    _ bNotUseLog 0                                                             ##_fnLog
+#    _ fnLogSock                                                                ##_fnLog
+#    ls -l $fnLog	 ##_fnLog
+#    _ bNotUseLog                                                               ##_fnLog
+#    echo "true" | cat  ##_fnLog
+#    ls -l $fnLog	 ##_fnLog
+#    rm -f $fnLog	 ##_fnLog
 #    Вывести информацию о лог-файле
 #  SOURCE
 _fnLog() {
@@ -305,12 +329,21 @@ _fnLog() {
 #    0 - уровень "level" не больше значения глобальной переменной DEBUGLEVEL
 #    1 - уровень "level" больше значения глобальной переменной DEBUGLEVEL
 #    2 - аргументы отсутствуют
+#  EXAMPLE
+#    DEBUGLEVEL=0                                                               ##udfDebug
+#    udfDebug                                                                   ##udfDebug ? 2
+#    udfDebug 0 echo level 0                                                    ##udfDebug ? true
+#    udfDebug 1 silence level 0                                                 ##udfDebug ? 1
+#    DEBUGLEVEL=5                                                               ##udfDebug
+#    udfDebug 0 echo level 5                                                    ##udfDebug ? true
+#    udfDebug 6 echo 5                                                          ##udfDebug ? 1
+#    udfDebug non valid test level 5                                            ##udfDebug ? true
 #  SOURCE
 udfDebug() {
  local i re='^[0-9]+$'
  [ -n "$*" ] && i=$1 || return 2
  shift
- [ -n "$(echo $i | grep -E $re)" ] || i=0
+ echo $i | grep -E $re >/dev/null 2>&1 || i=0
  [ $DEBUGLEVEL -ge $i ] || return 1
  [ -n "$*" ] && echo "$*"
  return 0
