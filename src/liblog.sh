@@ -48,6 +48,7 @@
 : ${_bashlyk_fnLog:="${_bashlyk_pathLog}/${_bashlyk_s0}.log"}
 : ${_bashlyk_bUseSyslog:=0}
 : ${_bashlyk_bNotUseLog:=1}
+: ${_bashlyk_sCond4Log:=redirect}
 : ${_bashlyk_aRequiredCmd_log:="basename date echo hostname false printf logger mail mkfifo sleep tee true jobs ["}
 : ${_bashlyk_aExport_log:="udfLogger udfLog udfIsInteract udfIsTerminal udfCheck4LogUse udfUptime udfFinally udfSetLogSocket udfSetLog _fnLog udfDebug"}
 #******
@@ -65,9 +66,13 @@
 #     * Вывод в системный журнал (syslog) и на консоль терминала
 #     * Вывод в системный журнал (syslog) и в файл $_bashlyk_fnLog
 #  EXAMPLE
-#  local fnLog=$(mktemp --suffix=.ini || tempfile -s .test.ini)                       ##udfGetIniSection ? true
-#  _fnLog $fnLog
-#  
+#    local fnLog=$(mktemp --suffix=.log || tempfile -s .test.log)               ##udfLogger ? true
+#    _ fnLog $fnLog                                                             ##udfLogger ? true
+#    _bashlyk_bInteract=0                                                       ##udfLogger
+#    _bashlyk_bNotUseLog=0                                                      ##udfLogger 
+#    _bashlyk_bTerminal=0                                                       ##udfLogger
+#    udfSetLogSocket                                                            ##udfLogger ? true
+#    udfLogger test                                                             ##udfLogger
 #  SOURCE
 udfLogger() {
  local envLang envLC_TIME bSysLog bUseLog sTagLog
@@ -142,6 +147,8 @@ udfLog() {
 #        и/или вывода
 #    1 - "интерактивный" режим, перенаправление стандартных ввода и/или вывода
 #        не обнаружено
+#  EXAMPLE
+#    udfIsInteract                                                              ##udfIsInteract ? true
 #  SOURCE
 udfIsInteract() {
  [ -t 1 -a -t 0 ] && [ -n "$TERM" ] && [ "$TERM" != "dumb" ] \
@@ -157,6 +164,8 @@ udfIsInteract() {
 #  RETURN VALUE
 #    0 - терминал отсутствует
 #    1 - терминал обнаружен
+#  EXAMPLE
+#    udfIsTerminal                                                              ##udfIsTerminal ? false
 #  SOURCE
 udfIsTerminal() {
  tty > /dev/null 2>&1 && _bashlyk_bTerminal=1 || _bashlyk_bTerminal=0
@@ -169,11 +178,10 @@ udfIsTerminal() {
 #  DESCRIPTION
 #    Проверка условий использования лог-файла
 #  RETURN VALUE
-#    0 - не требуется
-#    1 - вести запись лог-файла
+#    0 - вести запись лог-файла
+#    1 - не требуется
 #  EXAMPLE
-#    udfCheck4LogUse  ##udfCheck4LogUse ? true
-#    udfCheck4LogUse | tee  ##udfCheck4LogUse ? true
+#    udfCheck4LogUse                                                            ##udfCheck4LogUse ? true
 #  SOURCE
 udfCheck4LogUse() {
  udfIsTerminal
@@ -231,6 +239,13 @@ udfFinally() {
 #     1   - Сокет не создан, но стандартный вывод перенаправляется в файл лога 
 #           (без тегирования)
 #     255 - Каталог для сокета не существует и не может быть создан
+#  EXAMPLE
+#    local fnLog=$(mktemp --suffix=.log || tempfile -s .test.log)               ##udfSetLogSocket ? true
+#    _ fnLog $fnLog                                                             ##udfSetLogSocket ? true
+#    _bashlyk_bInteract=0                                                       ##udfSetLogSocket
+#    _bashlyk_bNotUseLog=0                                                      ##udfSetLogSocket 
+#    udfSetLogSocket                                                            ##udfSetLogSocket ? true
+#    date                                                                       ##udfSetLogSocket
 #  SOURCE
 udfSetLogSocket() {
  local fnSock
@@ -262,6 +277,12 @@ udfSetLogSocket() {
 #  RETURN VALUE
 #     0   - Выполнено
 #     255   - невозможно использовать файл лога, аварийное завершение сценария
+#  EXAMPLE
+#    local fnLog=$(mktemp --suffix=.log || tempfile -s .test.log)               ##udfSetLog ? true
+#    rm -f $fnLog                                                               ##udfSetLog
+#    udfSetLog $fnLog                                                           ##udfSetLog ? true
+#    ls -l $fnLog	                                                        ##udfSetLog ? true
+#    rm -f $fnLog                                                               ##udfSetLog
 #  SOURCE
 udfSetLog() {
  case "$1" in
@@ -288,21 +309,11 @@ udfSetLog() {
 #  OUTPUT
 #    Вывод значения переменной $_bashlyk_fnLog
 #  EXAMPLE
-#    local fnLog=$(mktemp --suffix=.log || tempfile -s .test.log)               ##_fnLog
-#    _fnLog $fnLog                                                              ##_fnLog
-#    _fnLog                                                                     ##_fnLog
-#    _ sCond4Log redirect                                                       ##_fnLog
-#    _ bInteract 0                                                              ##_fnLog
-#    _ bTerminal 0                                                              ##_fnLog
-#    _ sCond4Log                                                                ##_fnLog
-#    _ bNotUseLog 0                                                             ##_fnLog
-#    _ fnLogSock                                                                ##_fnLog
-#    ls -l $fnLog	 ##_fnLog
-#    _ bNotUseLog                                                               ##_fnLog
-#    echo "true" | cat  ##_fnLog
-#    ls -l $fnLog	 ##_fnLog
-#    rm -f $fnLog	 ##_fnLog
-#    Вывести информацию о лог-файле
+#    local fnLog=$(mktemp --suffix=.log || tempfile -s .test.log)               ##_fnLog ? true
+#    rm -f $fnLog                                                               ##_fnLog
+#    _fnLog $fnLog                                                              ##_fnLog ? true
+#    ls -l $fnLog	                                                        ##_fnLog ? true
+#    rm -f $fnLog                                                               ##_fnLog
 #  SOURCE
 _fnLog() {
  if [ -n "$1" ]; then 
