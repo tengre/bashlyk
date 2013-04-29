@@ -53,7 +53,8 @@ udfTestUnitMsg() {
 udfMain() {
  [ -n "$1" ] || return 255
 # local a s fn=${_bashlyk_pathLib}/lib${1}.sh
- local a s fn=lib${1}.sh
+ local a s fn
+ fn=${_bashlyk_pathLib}/lib${1}.sh
  [ -s $fn ] && . $fn || return 254
  _bashlyk_TestUnit_fnLog=/tmp/${1}.testunit.log
  a=$(eval echo '$_bashlyk_aExport_'"${1}")

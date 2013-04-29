@@ -20,13 +20,15 @@
 #    Блок инициализации глобальных переменных
 #  SOURCE
 [ -s /etc/bashlyk/bashlyk.conf ] && . /etc/bashlyk/bashlyk.conf
-: ${_bashlyk_aLib:="std,md5,pid,cnf,ini,opt,xml,log"}
+: ${_bashlyk_aLib:="std,pid,cnf,ini,opt,log"}
 : ${_bashlyk_pathLib:="/usr/share/bashlyk"}
 : ${_bashlyk_sArg:=$*}
 : ${_bashlyk_bInteract:=1}
 : ${_bashlyk_bTerminal:=1}
 : ${_bashlyk_sCond4Log:=noterm}
 : ${_bashlyk_bNotUseLog:=0}
+_bashlyk_pathLib=.
+
 #******
 #****f* bashlyk/udfInit
 #  SYNOPSIS
@@ -101,16 +103,24 @@ udfInit() {
 #    в зависимости от значения $_bashlyk_sCond4Log ("noterm" по умолчанию).
 #  SOURCE
 udfMain() {
- local fn s
+ local cmd fn s
  #
  udfInit
  #
- for s in $_bashlyk_aUnit; do
-  fn=${_bashlyk_pathLib}/${_bashlyk_sMode}${s}.sh
-  [ -s $fn ] && . $fn || eval 'echo "Error: $fn not found..."; exit 255'
- done
-
- [ "$_bashlyk_sMode" = "test" ] && exit 0
+# [ "$_bashlyk_sMode" = "test" ] && cmd=${_bashlyk_pathLib}/testunit.sh || cmd=.
+ if [ "$_bashlyk_sMode" = "test" ]; then
+  cmd=${_bashlyk_pathLib}/testunit.sh
+  [ -x $cmd ] || eval 'echo "Error: $cmd not found..."; exit 255'
+  for s in $_bashlyk_aUnit; do
+   $cmd $s
+  done
+  [ "$_bashlyk_sMode" = "test" ] && exit 0
+ else 
+  for s in $_bashlyk_aUnit; do
+   fn=${_bashlyk_pathLib}/lib${s}.sh
+   [ -s $fn ] && . $fn || eval 'echo "Error: $fn not found..."; exit 255'
+  done
+ fi
 
  unset _bashlyk_aUnit _bashlyk_sMode
 
