@@ -60,7 +60,7 @@ udfMain() {
  {
   for s in $a; do
    echo 'echo "-- testing '"${s}"':" >>$_bashlyk_TestUnit_fnLog'
-   grep "^#.*##${s}" $fn | grep -w "##${s}" | sed -e "s/^#//" | sed -e "s/##${s}/>>\$_bashlyk_TestUnit_fnLog 2>\&1/" | sed -e "s/\? \(.*\)/; udfTestUnitMsg \1/"
+   grep "^#.*#.${s}" $fn | grep -w "#.${s}" | sed -e "s/^#//" | sed -e "s/##${s}/>>\$_bashlyk_TestUnit_fnLog 2>\&1/" -e "s/#-${s}//"  -e "s/\? \(.*\)/; udfTestUnitMsg \1/" -e "s/[ ]\+$//"
    echo 'echo "--" >>$_bashlyk_TestUnit_fnLog'
    done
  } >> $_bashlyk_TestUnit_fnTmp

@@ -66,13 +66,29 @@
 #     * Вывод в системный журнал (syslog) и на консоль терминала
 #     * Вывод в системный журнал (syslog) и в файл $_bashlyk_fnLog
 #  EXAMPLE
-#    local fnLog=$(mktemp --suffix=.log || tempfile -s .test.log)               ##udfLogger ? true
-#    _ fnLog $fnLog                                                             ##udfLogger ? true
-#    _bashlyk_bInteract=0                                                       ##udfLogger
-#    _bashlyk_bNotUseLog=0                                                      ##udfLogger 
-#    _bashlyk_bTerminal=0                                                       ##udfLogger
-#    udfSetLogSocket                                                            ##udfLogger ? true
-#    udfLogger test                                                             ##udfLogger
+#    local fnExec=$(mktemp --suffix=.sh || tempfile -s .test.sh)                ##udfLogger ? true
+#    cat <<'EOF' > $fnExec                                                      #-udfLogger
+#    local fnLog=$(mktemp --suffix=.log || tempfile -s .test.log)               #-udfLogger
+#    _ fnLog $fnLog                                                             #-udfLogger
+#    _ bInteract 0                                                              #-udfLogger
+#    _ bNotUseLog 0                                                             #-udfLogger
+#    _ bTerminal 0                                                              #-udfLogger
+#    udfSetLogSocket                                                            #-udfLogger
+#    _ fnLog                                                                    #-udfLogger
+#    udfLogger test                                                             #-udfLogger
+#    date                                                                       #-udfLogger
+#    echo $_bashlyk_pidLogSock                                                  #-udfLogger
+#EOF                                                                            #-udfLogger
+#    . $fnExec                                                                  ##udfLogger
+#    kill $_bashlyk_pidLogSock                                                  ##udfLogger
+#    rm -f $_bashlyk_fnLogSock                                                  ##udfLogger
+#    sleep 0.6                                                                  ##udfLogger ? true
+#    sleep 0.6                                                                  ##udfLogger ? true
+#    sleep 0.6                                                                  ##udfLogger ? true
+#    sleep 0.6                                                                  ##udfLogger ? true
+#    sleep 0.6                                                                  ##udfLogger ? true
+#    cat $fnLog                                                                 ##udfLogger
+#    rm -f $fnExec $fnLog                                                       ##udfLogger
 #  SOURCE
 udfLogger() {
  local envLang envLC_TIME bSysLog bUseLog sTagLog
@@ -125,6 +141,9 @@ udfLogger() {
 #           из стандартного ввода
 #  OUTPUT
 #   Зависит от параметров вывода
+#  EXAMPLE
+#    echo test | udfLog - tag                                                   #-udfLog
+#    echo test | udfLog - tag                                                   ##udfLog
 #  SOURCE
 udfLog() {
  if [ "$1" = "-" ]; then
@@ -149,6 +168,7 @@ udfLog() {
 #        не обнаружено
 #  EXAMPLE
 #    udfIsInteract                                                              ##udfIsInteract ? true
+#    udfIsInteract                                                              #-udfIsInteract ? false
 #  SOURCE
 udfIsInteract() {
  [ -t 1 -a -t 0 ] && [ -n "$TERM" ] && [ "$TERM" != "dumb" ] \
@@ -166,6 +186,7 @@ udfIsInteract() {
 #    1 - терминал обнаружен
 #  EXAMPLE
 #    udfIsTerminal                                                              ##udfIsTerminal ? false
+#    udfIsTerminal                                                              #-udfIsTerminal ? false
 #  SOURCE
 udfIsTerminal() {
  tty > /dev/null 2>&1 && _bashlyk_bTerminal=1 || _bashlyk_bTerminal=0
@@ -182,6 +203,7 @@ udfIsTerminal() {
 #    1 - не требуется
 #  EXAMPLE
 #    udfCheck4LogUse                                                            ##udfCheck4LogUse ? true
+#    udfCheck4LogUse                                                            #-udfCheck4LogUse ? false
 #  SOURCE
 udfCheck4LogUse() {
  udfIsTerminal
@@ -242,10 +264,9 @@ udfFinally() {
 #  EXAMPLE
 #    local fnLog=$(mktemp --suffix=.log || tempfile -s .test.log)               ##udfSetLogSocket ? true
 #    _ fnLog $fnLog                                                             ##udfSetLogSocket ? true
-#    _bashlyk_bInteract=0                                                       ##udfSetLogSocket
-#    _bashlyk_bNotUseLog=0                                                      ##udfSetLogSocket 
 #    udfSetLogSocket                                                            ##udfSetLogSocket ? true
-#    date                                                                       ##udfSetLogSocket
+#    ls -l $fnLog                                                               ##udfSetLogSocket ? true
+#    rm -f $fnLog                                                               ##udfSetLogSocket
 #  SOURCE
 udfSetLogSocket() {
  local fnSock
@@ -281,7 +302,7 @@ udfSetLogSocket() {
 #    local fnLog=$(mktemp --suffix=.log || tempfile -s .test.log)               ##udfSetLog ? true
 #    rm -f $fnLog                                                               ##udfSetLog
 #    udfSetLog $fnLog                                                           ##udfSetLog ? true
-#    ls -l $fnLog	                                                        ##udfSetLog ? true
+#    ls -l $fnLog                                                               ##udfSetLog ? true
 #    rm -f $fnLog                                                               ##udfSetLog
 #  SOURCE
 udfSetLog() {
@@ -312,7 +333,7 @@ udfSetLog() {
 #    local fnLog=$(mktemp --suffix=.log || tempfile -s .test.log)               ##_fnLog ? true
 #    rm -f $fnLog                                                               ##_fnLog
 #    _fnLog $fnLog                                                              ##_fnLog ? true
-#    ls -l $fnLog	                                                        ##_fnLog ? true
+#    ls -l $fnLog                                                               ##_fnLog ? true
 #    rm -f $fnLog                                                               ##_fnLog
 #  SOURCE
 _fnLog() {
