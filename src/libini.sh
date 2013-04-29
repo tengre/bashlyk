@@ -35,7 +35,7 @@
 : ${_bashlyk_pathIni:=$(pwd)}
 : ${_bashlyk_sUnnamedKeyword:=_bashlyk_unnamed_key_}
 : ${_bashlyk_aRequiredCmd_ini:="[ awk cat cut dirname echo false grep mv printf pwd rm sed sort touch tr true uniq w xargs"}
-: ${_bashlyk_aExport_ini:="udfGetIniSection udfReadIniSection udfCsvOrder udfAssembly udfSetVarFromCsv udfSetVarFromIni udfCsvKeys udfCheckCsv udfIniWrite udfIniChange"}
+: ${_bashlyk_aExport_ini:="udfGetIniSection udfReadIniSection udfCsvOrder udfAssembly udfSetVarFromCsv udfSetVarFromIni udfCsvKeys udfIniWrite udfIniChange"}
 #******
 #udfGetIni $csv
 #****f* bashlyk/libini/udfGetIniSection
@@ -525,4 +525,3 @@ udfIniChange() {
  return 0
 }
 #******
-
