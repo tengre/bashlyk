@@ -27,7 +27,6 @@
 #  SOURCE
 : ${_bashlyk_pathLib:=/usr/share/bashlyk}
 [ -s "${_bashlyk_pathLib}/libstd.sh" ] && . "${_bashlyk_pathLib}/libstd.sh"
-[ -s "${_bashlyk_pathLib}/libmd5.sh" ] && . "${_bashlyk_pathLib}/libmd5.sh"
 #******
 #****v*  bashlyk/liblog/Init section
 #  DESCRIPTION

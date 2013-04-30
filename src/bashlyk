@@ -27,8 +27,6 @@
 : ${_bashlyk_bTerminal:=1}
 : ${_bashlyk_sCond4Log:=noterm}
 : ${_bashlyk_bNotUseLog:=0}
-_bashlyk_pathLib=.
-
 #******
 #****f* bashlyk/udfInit
 #  SYNOPSIS
@@ -85,7 +83,8 @@ udfInit() {
  tty > /dev/null 2>&1 && _bashlyk_bTerminal=1 || _bashlyk_bTerminal=0
  #
  if [ -n "$(echo "$_bashlyk_sArg" | grep -w 'bashlyk-test')" ]; then
-  _bashlyk_aUnit="$(echo "${_bashlyk_sArg#*--bashlyk-test=}" | cut -f1 -d' ' | tr ',' ' ' | grep -v '\-\-bashlyk-test')"
+  _bashlyk_aUnit="$(echo "${_bashlyk_sArg#*--bashlyk-test=}" | cut -f1 -d' ' \
+   | tr ',' ' ' | grep -v '\-\-bashlyk-test')"
   [ -n "$_bashlyk_aUnit" ] || _bashlyk_aUnit="$(echo ${_bashlyk_aLib} | tr ',' ' ')"
   _bashlyk_sMode='test'
  else
@@ -107,21 +106,19 @@ udfMain() {
  #
  udfInit
  #
-# [ "$_bashlyk_sMode" = "test" ] && cmd=${_bashlyk_pathLib}/testunit.sh || cmd=.
  if [ "$_bashlyk_sMode" = "test" ]; then
   cmd=${_bashlyk_pathLib}/testunit.sh
   [ -x $cmd ] || eval 'echo "Error: $cmd not found..."; exit 255'
   for s in $_bashlyk_aUnit; do
    $cmd $s
   done
-  [ "$_bashlyk_sMode" = "test" ] && exit 0
- else 
+  exit $?
+ else
   for s in $_bashlyk_aUnit; do
    fn=${_bashlyk_pathLib}/lib${s}.sh
    [ -s $fn ] && . $fn || eval 'echo "Error: $fn not found..."; exit 255'
   done
  fi
-
  unset _bashlyk_aUnit _bashlyk_sMode
 
  case ${_bashlyk_sCond4Log} in

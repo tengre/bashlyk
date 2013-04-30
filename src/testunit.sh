@@ -13,14 +13,13 @@
 #   Using modules section
 #   Здесь указываются модули, код которых используется данной библиотекой
 # SOURCE
-#: ${_bashlyk_pathLib:=/usr/share/bashlyk}
-: ${_bashlyk_pathLib:=.}
+: ${_bashlyk_pathLib:=/usr/share/bashlyk}
 : ${_bashlyk_TestUnit_iCount=0}
 : ${_bashlyk_TestUnit_fnLog=/tmp/testunit.log}
 #: ${_bashlyk_TestUnit_fnLog=/var/log/bashlyk/testunit.log}
 : ${_bashlyk_TestUnit_fnTmp=$(mktemp 2>/dev/null || tempfile)}
 #******
-#****f* bashlyk/testunit/udfTestUnitMsg
+#****u* bashlyk/testunit/udfTestUnitMsg
 #  SYNOPSIS
 #    udfTestUnitMsg
 # DESCRIPTION
@@ -46,7 +45,7 @@ udfTestUnitMsg() {
  return 0
 } 
 #******
-#****f* bashlyk/testunit/udfMain
+#****u* bashlyk/testunit/udfMain
 # DESCRIPTION
 #   Running libraries test unit
 #  SOURCE

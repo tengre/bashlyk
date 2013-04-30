@@ -453,19 +453,11 @@ udfIniWrite() {
  #
  ini="$1"
  csv="$2"
- #bNonValidKey=false
- #re="${_bashlyk_sUnnamedKeyword}[[:digit:]]+="
  #
  [ -s "$ini" ] && mv -f "$ini" "${ini}.bak"
- #echo "$csv" | grep -E ";${re}" >/dev/null 2>&1 && bNonValidKey=true
  echo "$csv" | sed -e "s/[;]\+/;/g" -e "s/\[/;\[/g" | tr ';' '\n' \
   | sed -e "s/${_bashlyk_sUnnamedKeyword}[0-9]\+=//g" \
    -e "s/\(.*\)=/\t\1\t=\t/g" | tr -d '"' > "$ini"
- #$bNonValidKey && {
- # echo "#non valid keys:"
- # echo "$csv" | sed -e "s/[;]\+/;/g" -e "s/\[/;\[/g" | tr ';' '\n' | tr -d '"' \
- #  | grep -E "${re}" | sed -e "s/${_bashlyk_sUnnamedKeyword}[0-9]\+=/\t/g" 
- #} >> "$ini" 2>/dev/null
  #
  return 0
 }
