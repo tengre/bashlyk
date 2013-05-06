@@ -13,6 +13,8 @@ src/Makefile.am -text
 src/bashlyk -text
 src/bashlyk.conf -text
 src/debian/control -text
+src/debian/postinst -text
+src/debian/prerm -text
 src/libcnf.sh -text
 src/libini.sh -text
 src/liblog.sh -text

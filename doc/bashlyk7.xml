@@ -157,22 +157,6 @@ man(1), man(7), http://www.tldp.org/HOWTO/Man-Page/
       </para>
      </listitem>
     </varlistentry>
-    <varlistentry>
-     <term><filename>libmd5.sh</filename></term>
-     <listitem>
-      <para>
-       get md5sum for file(s)
-      </para>
-     </listitem>
-    </varlistentry>
-    <varlistentry>
-     <term><filename>libxml.sh</filename></term>
-     <listitem>
-      <para>
-       xml code generation
-      </para>
-     </listitem>
-    </varlistentry>
    </variablelist>
   </refsect1>
   <refsect1 id="see_also">

@@ -11,9 +11,9 @@
 - . bashlyk args
 + fhs ++
 + {xml,md5} -> std 
-- subproc for test throw & log func
++ subproc for test throw & log func
 + job test udfOnTrap (libstd)
--+ use csv functions from libini for libcnf
++ use csv functions from libini for libcnf
 + include lines from test unit to test log
 + phenomen $s udfGetConfig
 - local vars bashlyk

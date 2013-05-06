@@ -1,14 +1,13 @@
 #
 # $Id$
 #
-#****h* bashlyk/testXXX
+#****h* bashlyk/testunit
 #  DESCRIPTION
-#    bashlyk XXX test unit
-#    Тестовый модуль библиотеки XXX
+#    bashlyk test unit compiler
 #  AUTHOR
 #    Damir Sh. Yakupov <yds@bk.ru>
 #******
-#****** bashlyk/testXXX/External Modules
+#****** bashlyk/testunit/External Modules
 # DESCRIPTION
 #   Using modules section
 #   Здесь указываются модули, код которых используется данной библиотекой
@@ -16,10 +15,9 @@
 : ${_bashlyk_pathLib:=/usr/share/bashlyk}
 : ${_bashlyk_TestUnit_iCount=0}
 : ${_bashlyk_TestUnit_fnLog=/tmp/testunit.log}
-#: ${_bashlyk_TestUnit_fnLog=/var/log/bashlyk/testunit.log}
 : ${_bashlyk_TestUnit_fnTmp=$(mktemp 2>/dev/null || tempfile)}
 #******
-#****u* bashlyk/testunit/udfTestUnitMsg
+#****f* bashlyk/testunit/udfTestUnitMsg
 #  SYNOPSIS
 #    udfTestUnitMsg
 # DESCRIPTION
@@ -45,13 +43,12 @@ udfTestUnitMsg() {
  return 0
 } 
 #******
-#****u* bashlyk/testunit/udfMain
+#****f* bashlyk/testunit/udfMain
 # DESCRIPTION
-#   Running libraries test unit
+#   main function libraries test unit
 #  SOURCE
 udfMain() {
  [ -n "$1" ] || return 255
-# local a s fn=${_bashlyk_pathLib}/lib${1}.sh
  local a s fn
  fn=${_bashlyk_pathLib}/lib${1}.sh
  [ -s $fn ] && . $fn || return 254
