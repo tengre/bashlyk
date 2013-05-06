@@ -511,6 +511,8 @@ udfMakeTemp() {
    if [ -n "$bashlyk_path_ioAUaE5R" ]; then
     mkdir -p ${bashlyk_path_ioAUaE5R}
     bashlyk_path_ioAUaE5R="--tmpdir=${bashlyk_path_ioAUaE5R}"
+   else
+    bashlyk_path_ioAUaE5R="--tmpdir=/tmp"
    fi
    if [ -n "$bashlyk_sPrefix_ioAUaE5R" ]; then
     bashlyk_sPrefix_ioAUaE5R=$(echo $bashlyk_sPrefix_ioAUaE5R | tr -d '/')

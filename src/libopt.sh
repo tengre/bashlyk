@@ -55,7 +55,6 @@
 #  OUTPUT
 #   Ассоциативный массив в виде CSV строки
 #  EXAMPLE
-#    udfGetOptHash 'job:,force' --job main --force                              ##udfGetOptHash
 #    udfGetOptHash 'job:,force' --job main --force | grep "^;job=main;force=1;$"##udfGetOptHash ? true
 #  SOURCE
 udfGetOptHash() {
@@ -133,7 +132,7 @@ udfSetOptHash() {
 #  EXAMPLE
 #    local job bForce
 #    udfGetOpt job:,bForce --job main --bForce
-#    echo "dbg $job :: $bForce" | grep "^dbg main :: 1$"                        ##udfSetOptHash ? true
+#    echo "dbg $job :: $bForce" | grep "^dbg main :: 1$"                        ##udfGetOpt ? true
 #  SOURCE
 udfGetOpt() {
  udfSetOptHash $(udfGetOptHash $*)
