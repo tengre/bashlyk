@@ -18,6 +18,17 @@
 + phenomen $s udfGetConfig
 - local vars bashlyk
 
+--
+NB SVN 239:
+libstd.sh:
+- скорректирован тестовый блок _pathDat - удаление временного объекта
+bashlyk:
+- добавлен export некоторых глобальных переменных _bashlyk_{*}, так как при
+  testunit.sh их не получает при запуске.
+
+- протестировать вызов тестового блока как . <путь/>testunit.sh <lib>
+
+
 
 
 
