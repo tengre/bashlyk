@@ -60,19 +60,16 @@
 #    255 - Ошибка: аргумент отсутствует
 #  EXAMPLE
 #    local b conf d pid s0 s                                                    ##udfGetConfig
-#    cd /tmp                                                                    ##udfGetConfig
 #    conf=$(mktemp --tmpdir=. --suffix=.conf || tempfile -d . -s .test.conf)    ##udfGetConfig ? true
-#    conf=$(basename $conf)                                                     ##udfGetConfig
 #    udfSetConfig $conf "s0=$0;b=true;pid=$$;s=$(uname -a);$(date -R -r $0)"    ##udfGetConfig ? true
 #    udfGetConfig $conf                                                         ##udfGetConfig ? true
-#    test "$s0" = "$0" -a $b -a "$pid" = "$$" -a "$s" = "$(uname -a)"           ##udfGetConfig ? true
+#    test "$s0" = $0 -a "$b" = true -a "$pid" = $$ -a "$s" = "$(uname -a)"      ##udfGetConfig ? true
 #    rm -f $conf                                                                ##udfGetConfig
 #    b='' conf='' d='' pid='' s0='' sS=''                                       ##udfGetConfig
 #    conf=$(mktemp --suffix=.conf || tempfile -s .test.conf)                    ##udfGetConfig ? true
 #    udfSetConfig $conf "s0=$0;b=true;pid=$$;s=$(uname -a);$(date -R -r $0)"    ##udfGetConfig ? true
-#    date -R -r $0 ##udfGetConfig
 #    udfGetConfig $conf                                                         ##udfGetConfig ? true
-#    test "$s0" = "$0" -a $b -a "$pid" = "$$" -a "$s" = "$(uname -a)"           ##udfGetConfig ? true
+#    test "$s0" = $0 -a "$b" = true -a "$pid" = $$ -a "$s" = "$(uname -a)"      ##udfGetConfig ? true
 #    cat $conf                                                                  ##udfGetConfig
 #    rm -f $conf                                                                ##udfGetConfig
 #  SOURCE
@@ -132,7 +129,7 @@ udfGetConfig() {
 #    grep "^s=\"$(uname -a)\"$" $conf                                           ##udfSetConfig ? true
 #    grep "^$(_ sUnnamedKeyword).*=\"$(date -R -r $0)\"$" $conf                 ##udfSetConfig ? true
 #    test -s $conf && . $conf                                                   ##udfSetConfig ? true
-#    test "$s0" = "$0" -a $b -a "$pid" = "$$" -a "$s" = "$(uname -a)"           ##udfSetConfig ? true
+#    test "$s0" = $0 -a "$b" = true -a "$pid" = $$ -a "$s" = "$(uname -a)"      ##udfSetConfig ? true
 #    rm -f $conf                                                                ##udfSetConfig
 #  SOURCE
 udfSetConfig() {
@@ -146,7 +143,6 @@ udfSetConfig() {
  bashlyk_conf_kpHeLmpy="${bashlyk_pathCnf_kpHeLmpy}/${1##*/}"
  IFS=';'
  {
-  #LANG=C date "+#Created %c by $USER $0 ($$)"
   echo "# Created $(date -R) by $USER via $0 (pid $$)"
   for bashlyk_sPair_kpHeLmpy in $(udfCheckCsv "$2"); do
    [ -n "${bashlyk_sPair_kpHeLmpy}" ] && echo "${bashlyk_sPair_kpHeLmpy}"

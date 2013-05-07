@@ -87,6 +87,7 @@ udfInit() {
    | tr ',' ' ' | grep -v '\-\-bashlyk-test')"
   [ -n "$_bashlyk_aUnit" ] || _bashlyk_aUnit="$(echo ${_bashlyk_aLib} | tr ',' ' ')"
   _bashlyk_sMode='test'
+  export _bashlyk_pathCnf _bashlyk_pathRun _bashlyk_pathDat _bashlyk_pathLog
  else
   _bashlyk_sMode='lib'
  fi

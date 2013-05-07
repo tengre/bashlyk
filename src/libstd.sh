@@ -840,9 +840,10 @@ _s0() {
 #  EXAMPLE
 #    local pathDat=$(_pathDat)                                                  ##_pathDat
 #    _pathDat | grep -w "^${_bashlyk_pathDat}$"                                 ##_pathDat ? true
-#    _pathDat "/tmp/testdat.$$/lib"                                             ##_pathDat
-#    _pathDat | grep -w "^/tmp/testdat.$$/lib$"                                 ##_pathDat ? true
-#    rmdir $(_pathDat)                                                          ##_pathDat
+#    _pathDat "/tmp/testdat.$$"                                                 ##_pathDat
+#    _pathDat | grep -w "^/tmp/testdat.${$}$"                                   ##_pathDat ? true
+#    rmdir $(_pathDat)                                                          ##_pathDat ? true
+#    _pathDat $pathDat                                                          ##_pathDat
 #  SOURCE
 _pathDat() {
  if [ -n "$1" ]; then
