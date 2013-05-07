@@ -843,7 +843,6 @@ _s0() {
 #    _pathDat "/tmp/testdat.$$/lib"                                             ##_pathDat
 #    _pathDat | grep -w "^/tmp/testdat.$$/lib$"                                 ##_pathDat ? true
 #    rmdir $(_pathDat)                                                          ##_pathDat
-#    _pathDat $pathDat                                                          ##_pathDat
 #  SOURCE
 _pathDat() {
  if [ -n "$1" ]; then
