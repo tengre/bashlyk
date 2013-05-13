@@ -517,3 +517,50 @@ udfIniChange() {
  return 0
 }
 #******
+#****f* bashlyk/libini/udfGetIni
+#  SYNOPSIS
+#    udfGetIni <file> [<varname>]
+#  DESCRIPTION
+#    Получить все опции всех секций конфигурации <file> в CSV-строку в формате
+#    "[section]<key>=<value>;..." в переменную <varname>, если представлена или
+#    на стандартный вывод
+#  INPUTS
+#     file - файл конфигурации формата "*.ini".
+#  RETURN VALUE
+#     0  - Выполнено успешно
+#    255 - Ошибка: аргументы отсутствуют
+#  EXAMPLE
+#    local csv='sTxt="foo bar";b=true;iXo=1921;iYo=999;' csvResult              ##udfIniChange
+#    local sTxt="bar foo" b=true iXo=1234 iYo=4321 ini                          ##udfIniChange
+#    local fmt="[sect%s]\n\t%s\t=\t%s\n\t%s\t=\t%s\n\t%s\t=\t%s\n\t%s\t=\t%s\n" ##udfIniChange
+#    local md5='85d52ed0688bc4406aa0021b44901ba4'                               ##udfIniChange
+#    ini=$(mktemp --suffix=.ini || tempfile -s .test.ini)                       ##udfIniChange ? true
+#    printf "$fmt" 1 sTxt foo '' value iXo 720 "non valid key" value | tee $ini ##udfIniChange
+#    echo "simple line" | tee -a $ini                                           ##udfIniChange
+#    printf "$fmt" 2 sTxt "$sTxt" b "$b" iXo "$iXo" iYo "$iYo" | tee -a $ini    ##udfIniChange
+#    udfIniChange $ini "$csv" sect1                                             ##udfIniChange ? true
+#    udfReadIniSection $ini sect1 | md5sum | grep "^${md5}.*-$"                 ##udfIniChange ? true
+#    rm -f $ini ${ini}.bak                                                      ##udfIniChange
+#  SOURCE
+udfGetIni() {
+ [ -n "$1" ] || return 255
+ [ -f "$1" ] || return 254
+ #
+ local a aKeys aTag csv ini s csvNew sTag
+ #
+ ini="$1"
+ #
+ aTag="$(grep -oE '\[.*\]' $ini | tr -d '[]' | sort -u | uniq -u | xargs)"
+ [ -n "$sTag" ] && echo "$aTag" | grep -w "$sTag" >/dev/null || aTag+=" $sTag"
+ for s in "" $aTag; do
+  udfReadIniSection $ini "$s" csv
+  if [ "$s" = "$sTag" ]; then
+   csv=$(udfCsvOrder "${csv};${csvNew}")
+  fi
+  a+=";[${s}];$csv;"
+ done
+ a="$(echo "$a" | sed -e "s/\[\]//")"
+ udfIniWrite $ini "$a"
+ return 0
+}
+#******
