@@ -144,7 +144,7 @@ udfGetIniSection() {
 #    section - название секции конфигурации, при отсутствии этого аргумента 
 #              считываются данные до первого заголовка секции [<...>] данных 
 #              или до конца конфигурационного файла, если секций нет
-#    varname - идентификатор переменной (без "$ "). При его наличии результат
+#    varname - идентификатор переменной (без "$"). При его наличии результат
 #              будет помещен в соответствующую переменную. При отсутствии такого
 #              идентификатора результат будет выдан на стандартный вывод
 #  OUTPUT
@@ -519,7 +519,7 @@ udfIniChange() {
 #******
 #****f* bashlyk/libini/udfGetIni
 #  SYNOPSIS
-#    udfGetIni <file> [<varname>]
+#    udfGetIni <file> <csvSections> [<varname>]
 #  DESCRIPTION
 #    Получить все опции всех секций конфигурации <file> в CSV-строку в формате
 #    "[section]<key>=<value>;..." в переменную <varname>, если представлена или
@@ -543,24 +543,19 @@ udfIniChange() {
 #    rm -f $ini ${ini}.bak                                                      ##udfIniChange
 #  SOURCE
 udfGetIni() {
- [ -n "$1" ] || return 255
- [ -f "$1" ] || return 254
+ [ -n "$2" ] || return 255
  #
- local a aKeys aTag csv ini s csvNew sTag
+ local bashlyk_csv_HNAuwHlU bashlyk_ini_HNAuwHlU bashlyk_s_HNAuwHlU
  #
- ini="$1"
- #
- aTag="$(grep -oE '\[.*\]' $ini | tr -d '[]' | sort -u | uniq -u | xargs)"
- [ -n "$sTag" ] && echo "$aTag" | grep -w "$sTag" >/dev/null || aTag+=" $sTag"
- for s in "" $aTag; do
-  udfReadIniSection $ini "$s" csv
-  if [ "$s" = "$sTag" ]; then
-   csv=$(udfCsvOrder "${csv};${csvNew}")
-  fi
-  a+=";[${s}];$csv;"
+ for bashlyk_s_HNAuwHlU in "" $(echo $2 | tr ',' ' '); do
+  bashlyk_csv_HNAuwHlU+="[${bashlyk_s_HNAuwHlU}];$(udfGetIniSection $1 "$bashlyk_s_HNAuwHlU")"
  done
- a="$(echo "$a" | sed -e "s/\[\]//")"
- udfIniWrite $ini "$a"
+ if [ -n "$3" ];then
+  udfIsValidVariable "$3" || return 2
+  eval 'export ${3}="${bashlyk_csv_HNAuwHlU}"'
+ else
+  echo "$bashlyk_csv_HNAuwHlU"
+ fi
  return 0
 }
 #******
