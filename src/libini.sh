@@ -35,7 +35,7 @@
 : ${_bashlyk_pathIni:=$(pwd)}
 : ${_bashlyk_sUnnamedKeyword:=_bashlyk_unnamed_key_}
 : ${_bashlyk_aRequiredCmd_ini:="[ awk cat cut dirname echo false grep mv printf pwd rm sed sort touch tr true uniq w xargs"}
-: ${_bashlyk_aExport_ini:="udfGetIniSection udfReadIniSection udfCsvOrder udfAssembly udfSetVarFromCsv udfSetVarFromIni udfCsvKeys udfIniWrite udfIniChange"}
+: ${_bashlyk_aExport_ini:="udfGetIniSection udfReadIniSection udfCsvOrder udfAssembly udfSetVarFromCsv udfSetVarFromIni udfCsvKeys udfIniWrite udfIniChange udfGetIni"}
 #******
 #udfGetIni $csv
 #****f* bashlyk/libini/udfGetIniSection
@@ -521,26 +521,29 @@ udfIniChange() {
 #  SYNOPSIS
 #    udfGetIni <file> <csvSections> [<varname>]
 #  DESCRIPTION
-#    Получить все опции всех секций конфигурации <file> в CSV-строку в формате
-#    "[section]<key>=<value>;..." в переменную <varname>, если представлена или
-#    на стандартный вывод
+#    Получить опции секций <csvSections> конфигурации <file> в CSV-строку в
+#    формате "[section];<key>=<value>;..." в переменную <varname>, если 
+#    представлена или на стандартный вывод
 #  INPUTS
 #     file - файл конфигурации формата "*.ini".
 #  RETURN VALUE
 #     0  - Выполнено успешно
 #    255 - Ошибка: аргументы отсутствуют
 #  EXAMPLE
-#    local csv='sTxt="foo bar";b=true;iXo=1921;iYo=999;' csvResult              ##udfIniChange
-#    local sTxt="bar foo" b=true iXo=1234 iYo=4321 ini                          ##udfIniChange
-#    local fmt="[sect%s]\n\t%s\t=\t%s\n\t%s\t=\t%s\n\t%s\t=\t%s\n\t%s\t=\t%s\n" ##udfIniChange
-#    local md5='85d52ed0688bc4406aa0021b44901ba4'                               ##udfIniChange
-#    ini=$(mktemp --suffix=.ini || tempfile -s .test.ini)                       ##udfIniChange ? true
-#    printf "$fmt" 1 sTxt foo '' value iXo 720 "non valid key" value | tee $ini ##udfIniChange
-#    echo "simple line" | tee -a $ini                                           ##udfIniChange
-#    printf "$fmt" 2 sTxt "$sTxt" b "$b" iXo "$iXo" iYo "$iYo" | tee -a $ini    ##udfIniChange
-#    udfIniChange $ini "$csv" sect1                                             ##udfIniChange ? true
-#    udfReadIniSection $ini sect1 | md5sum | grep "^${md5}.*-$"                 ##udfIniChange ? true
-#    rm -f $ini ${ini}.bak                                                      ##udfIniChange
+#    local csv='b=true;_bashlyk_unnamed_key_0="iXo Xo = 19";_bashlyk_unnamed_key_1="simple line";iXo=1921;iYo=1080;sTxt="foo bar";' ##udfGetIni
+#    local sTxt="foo bar" b=true iXo=1921 iYo=1080 ini iniChild                 ##udfGetIni
+#    local fmt="[test]\n\t%s\t=\t%s\n\t%s\t=\t%s\n\t%s\t=\t%s\n\t%s\t=\t%s\n"   ##udfGetIni
+#    ini=$(mktemp --suffix=.ini || tempfile -s .test.ini)                       ##udfGetIni ? true
+#    iniChild="$(dirname $ini)/child.$(basename $ini)"                          ##udfGetIni
+#    printf "$fmt" sTxt foo b false "iXo Xo" 19 iYo 80 | tee $ini               ##udfGetIni
+#    echo "simple line" | tee -a $ini                                           ##udfGetIni
+#    printf "$fmt" "sTxt" "$sTxt" "b" "$b" "iXo" "$iXo" "iYo" "$iYo" | tee $iniChild  ##udfGetIni
+#    udfGetIni $iniChild test                                                   ##udfGetIni ? true
+#    udfGetIni $iniChild test | grep "^\[\];;\[test\];${csv}$"                                 ##udfGetIni ? true
+#    udfGetIni $iniChild test csvResult                                         ##udfGetIni ? true
+#    echo "$csvResult" | grep "^\[\];;\[test\];${csv}$"                                        ##udfGetIni ? true
+#    rm -f $iniChild $ini                                                       ##udfGetIni
+
 #  SOURCE
 udfGetIni() {
  [ -n "$2" ] || return 255
@@ -548,7 +551,8 @@ udfGetIni() {
  local bashlyk_csv_HNAuwHlU bashlyk_ini_HNAuwHlU bashlyk_s_HNAuwHlU
  #
  for bashlyk_s_HNAuwHlU in "" $(echo $2 | tr ',' ' '); do
-  bashlyk_csv_HNAuwHlU+="[${bashlyk_s_HNAuwHlU}];$(udfGetIniSection $1 "$bashlyk_s_HNAuwHlU")"
+  bashlyk_csv_HNAuwHlU+="[${bashlyk_s_HNAuwHlU}];$(udfGetIniSection $1 \
+  "$bashlyk_s_HNAuwHlU")"
  done
  if [ -n "$3" ];then
   udfIsValidVariable "$3" || return 2
