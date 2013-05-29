@@ -539,9 +539,9 @@ udfIniChange() {
 #    echo "simple line" | tee -a $ini                                           ##udfGetIni
 #    printf "$fmt" "sTxt" "$sTxt" "b" "$b" "iXo" "$iXo" "iYo" "$iYo" | tee $iniChild  ##udfGetIni
 #    udfGetIni $iniChild test                                                   ##udfGetIni ? true
-#    udfGetIni $iniChild test | grep "^\[\];;\[test\];${csv}$"                                 ##udfGetIni ? true
+#    udfGetIni $iniChild test | grep "^\[\];;\[test\];${csv}$"                  ##udfGetIni ? true
 #    udfGetIni $iniChild test csvResult                                         ##udfGetIni ? true
-#    echo "$csvResult" | grep "^\[\];;\[test\];${csv}$"                                        ##udfGetIni ? true
+#    echo "$csvResult" | grep "^\[\];;\[test\];${csv}$"                         ##udfGetIni ? true
 #    rm -f $iniChild $ini                                                       ##udfGetIni
 
 #  SOURCE
