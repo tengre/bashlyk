@@ -563,3 +563,12 @@ udfGetIni() {
  return 0
 }
 #******
+#****f*
+udfGetCsvSection() {
+ local sTag="$1"
+ shift
+ s="$*"
+ echo "${s#*\[$sTag\];}" | cut -f 1 -d '['
+}
+#******
+
