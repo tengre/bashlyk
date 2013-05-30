@@ -45,6 +45,11 @@ udfTestUnitMsg() {
  return 0
 } 
 #******
+udfError() {
+ local rc=$?
+ echo "$*"
+ exit $rc
+}
 #****f* bashlyk/testunit/udfMain
 # DESCRIPTION
 #   main function libraries test unit
@@ -54,8 +59,8 @@ udfMain() {
  local a s fn
  fn=${_bashlyk_pathLib}/lib${1}.sh
  [ -s $fn ] && . $fn || return 254
+ mkdir -p $_bashlyk_pathLog || udfError "path $_bashlyk_pathLog not exist..."
  _bashlyk_TestUnit_fnLog=${_bashlyk_pathLog}/${1}.testunit.log
-
  a=$(eval echo '$_bashlyk_aExport_'"${1}")
  {
   for s in $a; do
