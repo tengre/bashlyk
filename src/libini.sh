@@ -35,7 +35,7 @@
 : ${_bashlyk_pathIni:=$(pwd)}
 : ${_bashlyk_sUnnamedKeyword:=_bashlyk_unnamed_key_}
 : ${_bashlyk_aRequiredCmd_ini:="[ awk cat cut dirname echo false grep mv printf pwd rm sed sort touch tr true uniq w xargs"}
-: ${_bashlyk_aExport_ini:="udfGetIniSection udfReadIniSection udfCsvOrder udfAssembly udfSetVarFromCsv udfSetVarFromIni udfCsvKeys udfIniWrite udfIniChange udfGetIni"}
+: ${_bashlyk_aExport_ini:="udfGetIniSection udfReadIniSection udfCsvOrder udfAssembly udfSetVarFromCsv udfSetVarFromIni udfCsvKeys udfIniWrite udfIniChange udfGetIni udfGetCsvSection"}
 #******
 #udfGetIni $csv
 #****f* bashlyk/libini/udfGetIniSection
@@ -543,7 +543,6 @@ udfIniChange() {
 #    udfGetIni $iniChild test csvResult                                         ##udfGetIni ? true
 #    echo "$csvResult" | grep "^\[\];;\[test\];${csv}$"                         ##udfGetIni ? true
 #    rm -f $iniChild $ini                                                       ##udfGetIni
-
 #  SOURCE
 udfGetIni() {
  [ -n "$2" ] || return 255
@@ -563,7 +562,27 @@ udfGetIni() {
  return 0
 }
 #******
-#****f*
+#****f* bashlyk/libini/udfGetCsvSection
+#  SYNOPSIS
+#    udfGetCsvSection <tag> <csv>
+#  DESCRIPTION
+#    Выделить из CSV-строки <csv> фрагмент вида "[tag];key=value;...;" до
+#    символа [ (очередная секция) или конца строки
+#    формате "[section];<key>=<value>;..." в переменную <varname>, если
+#    представлена или на стандартный вывод
+#  INPUTS
+#    tag - имя ini-секции
+#    csv - строка сериализации данных ini-файлов
+#  OUTPUT
+#    csv; строка без заголовка секции [tag]
+#  RETURN VALUE
+#     0  - Выполнено успешно
+#  EXAMPLE
+#    local csv='[];a=b;c=d e;[s1];a=f;c=g h;[s2];a=k;c=l m;'                    ##udfGetCsvSection
+#    udfGetCsvSection '' $csv | grep '^a=b;c=d e;$'                             ##udfGetCsvSection ? true
+#    udfGetCsvSection s1 $csv | grep '^a=f;c=g h;$'                             ##udfGetCsvSection ? true
+#    udfGetCsvSection s2 $csv | grep '^a=k;c=l m;$'                             ##udfGetCsvSection ? true
+#  SOURCE
 udfGetCsvSection() {
  local sTag="$1"
  shift
