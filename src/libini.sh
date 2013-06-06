@@ -103,8 +103,8 @@ udfGetIniSection() {
  [ -n "$2" ] && bashlyk_sTag_rWrBeelW="$2"
  #
  if [ -z "$bashlyk_pathIni_rWrBeelW" ]; then
-  [ -f "/etc${_bashlyk_pathPrefix}/$1" ] \
-   && bashlyk_pathIni_rWrBeelW="/etc${_bashlyk_pathPrefix}" || return 1
+  [ -f "/etc/${_bashlyk_pathPrefix}/$1" ] \
+   && bashlyk_pathIni_rWrBeelW="/etc/${_bashlyk_pathPrefix}" || return 1
  fi
  #
  bashlyk_aini_rWrBeelW=$(echo "${1##*/}" |\

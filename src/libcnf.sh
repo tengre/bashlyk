@@ -84,8 +84,8 @@ udfGetConfig() {
  [ "$1" != "${1##*/}" -a -f $1 ] && bashlyk_pathCnf_MROATHra=$(dirname $1)
  #
  if [ -z "$bashlyk_pathCnf_MROATHra" ]; then
-  [ -f "/etc${_bashlyk_pathPrefix}/$1" ] \
-   && bashlyk_pathCnf_MROATHra="/etc${_bashlyk_pathPrefix}" || return 1
+  [ -f "/etc/${_bashlyk_pathPrefix}/$1" ] \
+   && bashlyk_pathCnf_MROATHra="/etc/${_bashlyk_pathPrefix}" || return 1
  fi
  #
  bashlyk_conf_MROATHra=
