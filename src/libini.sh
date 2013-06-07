@@ -91,7 +91,7 @@ udfGetIniSection() {
  #
  local bashlyk_aini_rWrBeelW bashlyk_csvIni_rWrBeelW bashlyk_csvResult_rWrBeelW
  local bashlyk_ini_rWrBeelW bashlyk_pathIni_rWrBeelW bashlyk_s_rWrBeelW
- local bashlyk_sTag_rWrBeelW
+ local bashlyk_sTag_rWrBeelW bashlyk_sGlobIgnore_rWrBeelW
  #
  bashlyk_ini_rWrBeelW=''
  bashlyk_pathIni_rWrBeelW="$_bashlyk_pathIni"
@@ -109,6 +109,10 @@ udfGetIniSection() {
  #
  bashlyk_aini_rWrBeelW=$(echo "${1##*/}" |\
   awk 'BEGIN{FS="."} {for (i=NF;i>=1;i--) printf $i" "}')
+
+ bashlyk_sGlobIgnore_rWrBeelW=$GLOBIGNORE
+ GLOBIGNORE="*:?"
+
  for bashlyk_s_rWrBeelW in $bashlyk_aini_rWrBeelW; do
   [ -n "$bashlyk_s_rWrBeelW" ] || continue
   [ -n "$bashlyk_ini_rWrBeelW" ] \
@@ -119,7 +123,11 @@ udfGetIniSection() {
     "${bashlyk_pathIni_rWrBeelW}/${bashlyk_ini_rWrBeelW}" \
     "$bashlyk_sTag_rWrBeelW");"
  done
+
  udfCsvOrder "$bashlyk_csvIni_rWrBeelW" bashlyk_csvResult_rWrBeelW
+
+ GLOBIGNORE=$bashlyk_sGlobIgnore_rWrBeelW
+
  if [ -n "$3" ]; then
   udfIsValidVariable "$3" || return 2
   eval 'export ${3}="${bashlyk_csvResult_rWrBeelW}"'
@@ -194,8 +202,8 @@ udfReadIniSection() {
   else
    $bashlyk_bOpen_yLn0ZVLi || continue
    bashlyk_s_yLn0ZVLi=$(echo $bashlyk_s_yLn0ZVLi | tr -d "'")
-   bashlyk_k_yLn0ZVLi="$(echo ${bashlyk_s_yLn0ZVLi%%=*}|xargs)"
-   bashlyk_v_yLn0ZVLi="$(echo ${bashlyk_s_yLn0ZVLi#*=}|xargs)"
+   bashlyk_k_yLn0ZVLi="$(echo ${bashlyk_s_yLn0ZVLi%%=*}|xargs -0)"
+   bashlyk_v_yLn0ZVLi="$(echo ${bashlyk_s_yLn0ZVLi#*=}|xargs -0)"
    if [ -z "$bashlyk_k_yLn0ZVLi" -o "$bashlyk_k_yLn0ZVLi" = "$bashlyk_v_yLn0ZVLi" \
     -o -n "$(echo "$bashlyk_k_yLn0ZVLi" | grep '.*[[:space:]+].*')" ]; then
     bashlyk_k_yLn0ZVLi=${_bashlyk_sUnnamedKeyword}${bashlyk_i_yLn0ZVLi}
