@@ -598,7 +598,7 @@ udfGetCsvSection() {
  echo "${s#*\[$sTag\];}" | cut -f 1 -d '['
 }
 #******
-udfGetIniLine() {
+udfGetIniLine2Csv() {
  local cIFS s csv
  cIFS=$IFS
  IFS=';'.
