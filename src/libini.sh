@@ -601,12 +601,12 @@ udfGetCsvSection() {
 udfGetIniLine2Csv() {
  local cIFS s csv
  cIFS=$IFS
- IFS=';'.
+ IFS=';'
  for s in $*
  do
-  s=$(echo $s | grep "^${_bashlyk_sUnnamedKeyword}" | sed -e "s/${_bashlyk_sUnnamedKeyword}.*=//")
+  s=$(echo "$s" | grep "^${_bashlyk_sUnnamedKeyword}" | sed -e "s/${_bashlyk_sUnnamedKeyword}.*=//")
   [ -n "$s" ] && csv+="${s};"
  done
  IFS=$cIFS
- echo $csv
+ echo "$csv"
 }
