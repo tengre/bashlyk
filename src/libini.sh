@@ -322,18 +322,18 @@ _CsvOrder_EOF
 udfSetVarFromCsv() {
  [ -n "$1" ] || return 255
  #
- local bashlyk_csvInput_KLokRJky bashlyk_csvResult_KLokRJky bashlyk_k_KLokRJky
+ local bashlyk_csvInput_KLokRJky bashlyk_csvResult_KLokRJky 
+ local bashlyk_k_KLokRJky bashlyk_v_KLokRJky
  #
  bashlyk_csvInput_KLokRJky=";$(udfCsvOrder "$1");"
  shift
  #
  for bashlyk_k_KLokRJky in $*; do
   #bashlyk_csvResult_KLokRJky=$(echo $bashlyk_csvInput_KLokRJky | grep -Po ";$bashlyk_k_KLokRJky=.*?;" | tr -d ';')
-  bashlyk_csvResult_KLokRJky=$(echo \
-   "$bashlyk_k_KLokRJky=${bashlyk_csvInput_KLokRJky#*;$bashlyk_k_KLokRJky=}" \
-   | cut -f1 -d';')
-  [ -n "$bashlyk_csvResult_KLokRJky" ] \
-   && eval "$bashlyk_csvResult_KLokRJky" 2>/dev/null
+  bashlyk_v_KLokRJky="$(echo "${bashlyk_csvInput_KLokRJky#*;$bashlyk_k_KLokRJky=}" | cut -f 1 -d ';')"
+  if [ -n "$bashlyk_v_KLokRJky" ]; then
+   eval "$bashlyk_k_KLokRJky=$bashlyk_v_KLokRJky" 2>/dev/null
+  fi
  done
  return 0
 }
@@ -598,11 +598,12 @@ udfGetCsvSection() {
  echo "${s#*\[$sTag\];}" | cut -f 1 -d '['
 }
 #******
-udfGetIniLine2Csv() {
- local cIFS s csv
+udfGetLines2Csv() {
+ local cIFS s sTag csv
+ sTag="$1"
  cIFS=$IFS
  IFS=';'
- for s in $*
+ for s in $(echo "${2#*\[$sTag\];}" | cut -f1 -d'[')
  do
   s=$(echo "$s" | grep "^${_bashlyk_sUnnamedKeyword}" | sed -e "s/${_bashlyk_sUnnamedKeyword}.*=//")
   [ -n "$s" ] && csv+="${s};"
