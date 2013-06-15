@@ -572,7 +572,7 @@ udfGetIni() {
 #******
 #****f* bashlyk/libini/udfGetCsvSection
 #  SYNOPSIS
-#    udfGetCsvSection <tag> <csv>
+#    udfGetCsvSection <csv> <tag>
 #  DESCRIPTION
 #    Выделить из CSV-строки <csv> фрагмент вида "[tag];key=value;...;" до
 #    символа [ (очередная секция) или конца строки
@@ -587,23 +587,27 @@ udfGetIni() {
 #     0  - Выполнено успешно
 #  EXAMPLE
 #    local csv='[];a=b;c=d e;[s1];a=f;c=g h;[s2];a=k;c=l m;'                    ##udfGetCsvSection
-#    udfGetCsvSection '' $csv | grep '^a=b;c=d e;$'                             ##udfGetCsvSection ? true
-#    udfGetCsvSection s1 $csv | grep '^a=f;c=g h;$'                             ##udfGetCsvSection ? true
-#    udfGetCsvSection s2 $csv | grep '^a=k;c=l m;$'                             ##udfGetCsvSection ? true
+#    udfGetCsvSection "$csv" | grep '^a=b;c=d e;$'                              ##udfGetCsvSection ? true
+#    udfGetCsvSection "$csv" s1 | grep '^a=f;c=g h;$'                           ##udfGetCsvSection ? true
+#    udfGetCsvSection "$csv" s2 | grep '^a=k;c=l m;$'                           ##udfGetCsvSection ? true
 #  SOURCE
 udfGetCsvSection() {
- local sTag="$1"
- shift
- s="$*"
- echo "${s#*\[$sTag\];}" | cut -f 1 -d '['
+ local bashlyk_csv_KLokRJk1
+ bashlyk_csv_KLokRJk1=$(echo "${1#*\[$2\];}" | cut -f1 -d'[')
+ if [ -n "$3" ];then
+  udfIsValidVariable "$3" || return 2
+  eval 'export ${3}="${bashlyk_csv_KLokRJk1}"'
+ else
+  echo "$bashlyk_csv_KLokRJk1"
+ fi
+ return 0
 }
 #******
 udfGetLines2Csv() {
- local cIFS s sTag csv
- sTag="$1"
+ local cIFS s csv
  cIFS=$IFS
  IFS=';'
- for s in $(echo "${2#*\[$sTag\];}" | cut -f1 -d'[')
+ for s in $(echo "${1#*\[$2\];}" | cut -f1 -d'[')
  do
   s=$(echo "$s" | grep "^${_bashlyk_sUnnamedKeyword}" | sed -e "s/${_bashlyk_sUnnamedKeyword}.*=//")
   [ -n "$s" ] && csv+="${s};"
