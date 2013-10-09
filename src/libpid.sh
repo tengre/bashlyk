@@ -67,7 +67,7 @@ udfCheckStarted() {
  [ "$$" = "$1" ] && return 2
  local pid="$1"
  shift 1
- ps -p $pid -o args= | grep "^${*}$" >/dev/null 2>&1
+ ps -p $pid -o args= | grep "${*}$" >/dev/null 2>&1
 }
 #******
 #****f* bashlyk/libpid/udfSetPid
