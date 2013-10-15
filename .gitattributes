@@ -10,12 +10,14 @@ doc/bashlyk1.xml -text
 doc/bashlyk7.xml -text
 /robodoc.rc -text
 src/Makefile.am -text
+src/awk.ini -text
 src/bashlyk -text
 src/bashlyk.conf -text
 src/debian/control -text
 src/debian/copyright -text
 src/debian/postinst -text
 src/debian/prerm -text
+src/ini.awk -text
 src/libcnf.sh -text
 src/libini.sh -text
 src/liblog.sh -text
