@@ -1,15 +1,11 @@
 BEGIN {
- b = 0; i = 0; csv="";
- if (s == "") s="_"sId"_Key_"
- if ( sId == "" ) { re = "\[\]"; b = 1 }
-           else { re = "\["sId"\]" }
+ b = 0; i = 0; csv="[];"; s="_unnamed_Key_"
 }
 
-$0 ~ re { b = 1; next }
-/\[/ { if (b == 1) exit }
+/\[/ { sId = $0; sub(/(\])|(\[)/, "", sId); csv = csv""$0";"; s="_"sId"_Key_" }
+
 
 $1=$1 {
- if ( b == 0 ) { next }
  s0 = $0
  if ( match(s0, /= *.*$/) < 2 ) {
   if ( match(s0, /[ =]/) ) { s0 = "\""s0"\"" }
@@ -30,4 +26,4 @@ $1=$1 {
  }
 }
 
-END   { print "["sId"];"csv }
+END   { print csv }
