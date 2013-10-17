@@ -1,8 +1,8 @@
 BEGIN {
  b = 0; i = 0; csv="";
- if (s == "") s="_"sId"_Key_"
- if ( sId == "" ) { re = "\[\]"; b = 1 }
-           else { re = "\["sId"\]" }
+ if (s == "") s="_"sTag"_Key_"
+ if ( sTag == "" ) { re = "\[\]"; b = 1 }
+           else { re = "\["sTag"\]" }
 }
 
 $0 ~ re { b = 1; next }
@@ -30,4 +30,5 @@ $1=$1 {
  }
 }
 
-END   { print "["sId"];"csv }
+#END   { print "["sTag"];"csv }
+END   { print csv }

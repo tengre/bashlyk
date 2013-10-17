@@ -35,7 +35,8 @@
 : ${_bashlyk_pathIni:=$(pwd)}
 : ${_bashlyk_sUnnamedKeyword:=_bashlyk_unnamed_key_}
 : ${_bashlyk_aRequiredCmd_ini:="[ awk cat cut dirname echo false grep mv printf pwd rm sed sort touch tr true uniq w xargs"}
-: ${_bashlyk_aExport_ini:="udfGetIniSection udfReadIniSection udfCsvOrder udfAssembly udfSetVarFromCsv udfSetVarFromIni udfCsvKeys udfIniWrite udfIniChange udfGetIni udfGetCsvSection"}
+: ${_bashlyk_aExport_ini:="udfGetIniSection udfReadIniSection udfCsvOrder udfAssembly udfSetVarFromCsv udfSetVarFromIni udfCsvKeys udfIniWrite udfIniChange udfGetIni udfGetCsvSection udfIniSection2Csv"}
+
 #******
 #udfGetIni $csv
 #****f* bashlyk/libini/udfGetIniSection
@@ -615,3 +616,56 @@ udfGetLines2Csv() {
  IFS=$cIFS
  echo "$csv"
 }
+#****f* bashlyk/libini/udfIniSection2Csv
+#  SYNOPSIS
+#    udfIniSection2Csv <file> [<section>] [<varname>]
+#  DESCRIPTION
+#    Получить секцию конфигурационных данных <section> из файла <file> и выдать
+#    результат в виде строки CSV, разделенных ';', каждое поле которой содержит
+#    данные в формате "<ключ>=<значение>" согласно данных строки секции.
+#    В случае если исходная строка не содержит ключ или ключ содержит пробел, то
+#    ключом становится выражение ${_bashlyk_sUnnamedKeyword}_<инкремент>, а всё
+#    содержимое строки - значением.
+#  INPUTS
+#    file    - имя файла конфигурации
+#    section - название секции конфигурации, при отсутствии этого аргумента 
+#              считываются данные до первого заголовка секции [<...>] данных 
+#              или до конца конфигурационного файла, если секций нет
+#    varname - идентификатор переменной (без "$"). При его наличии результат
+#              будет помещен в соответствующую переменную. При отсутствии такого
+#              идентификатора результат будет выдан на стандартный вывод
+#  OUTPUT
+#              При отсутствии аргумента <varname> результат будет выдан на
+#              стандартный вывод
+#  RETURN VALUE
+#     0  - Выполнено успешно
+#     2  - Ошибка: аргумент <varname> не является валидным идентификатором
+#          переменной
+#    255 - Ошибка: аргумент отсутствует или файл конфигурации не найден
+#  EXAMPLE
+#    local csv='sTxt="foo bar";b=true;iXo=1921;iYo=1080;_test_Key_0="simple line";' ##udfIniSection2Csv
+#    local sTxt="foo bar" b=true iXo=1921 iYo=1080 ini iniChild csvResult       ##udfIniSection2Csv
+#    local fmt="[test]\n\t%s\t=\t%s\n\t%s\t=\t%s\n\t%s\t=\t%s\n\t%s\t=\t%s\n"   ##udfIniSection2Csv
+#    ini=$(mktemp --suffix=.ini || tempfile -s .test.ini)                       ##udfIniSection2Csv ? true
+#    printf "$fmt" "sTxt" "$sTxt" "b" "$b" "iXo" "$iXo" "iYo" "$iYo" | tee $ini ##udfIniSection2Csv
+#    echo "simple line" | tee -a $ini                                           ##udfIniSection2Csv
+#    udfIniSection2Csv $ini test                                                ##udfIniSection2Csv ? true
+#    udfIniSection2Csv $ini test | grep "^${csv}$"                              ##udfIniSection2Csv ? true
+#    udfIniSection2Csv $ini test csvResult                                      ##udfIniSection2Csv ? true
+#    echo "$csvResult" | grep "^${csv}$"                                        ##udfIniSection2Csv ? true
+#    rm -f $ini                                                                 ##udfIniSection2Csv
+#  SOURCE
+udfIniSection2Csv() {
+ [ -n "$1" -a -f "$1" ] || return 255
+ local bashlyk_sResultName_yLn0ZVLi=''
+ #
+ if [ -n "$3" ]; then
+  udfIsValidVariable "$3" || return 2
+  #udfThrow "Error: required valid variable name \"$1\""
+  eval 'export ${3}="$(awk -f ${_bashlyk_pathLib}/inisection2csv.awk -v "sTag=$2" -- $1)"'
+ else
+  awk -f ${_bashlyk_pathLib}/inisection2csv.awk -v "sTag=$2" -- $1
+ fi
+ return 0
+}
+#******

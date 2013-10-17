@@ -2,7 +2,7 @@ BEGIN {
  b = 0; i = 0; csv="[];"; s="_unnamed_Key_"
 }
 
-/\[/ { sId = $0; sub(/\]/, "", sId); sub(/\[/, "", sId); csv = csv""$0";"; s="_"sId"_Key_" }
+/\[/ { sTag = $0; sub(/\]/, "", sTag); sub(/\[/, "", sTag); csv = csv""$0";"; s="_"sTag"_Key_" }
 
 $1=$1 {
  s0 = $0
