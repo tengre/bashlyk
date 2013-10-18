@@ -1,8 +1,8 @@
 BEGIN {
  b = 0; i = 0; csv="";
- if (s == "") s="_"sTag"_Key_"
- if ( sTag == "" ) { re = "\[\]"; b = 1 }
-           else { re = "\["sTag"\]" }
+ if ( sTag == "" ) { re = "\[\]"; sTag = "void"; b = 1 }
+ else { re = "\["sTag"\]" }
+ s="_bashlyk_ini_"sTag"_autoKey_"
 }
 
 $0 ~ re { b = 1; next }

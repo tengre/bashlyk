@@ -33,7 +33,7 @@
 #  SOURCE
 : ${_bashlyk_sArg:=$*}
 : ${_bashlyk_pathIni:=$(pwd)}
-: ${_bashlyk_sUnnamedKeyword:=_bashlyk_unnamed_key_}
+: ${_bashlyk_sUnnamedKeyword:=_bashlyk_ini_void_autoKey_}
 : ${_bashlyk_aRequiredCmd_ini:="[ awk cat cut dirname echo false grep mv printf pwd rm sed sort touch tr true uniq w xargs"}
 : ${_bashlyk_aExport_ini:="udfGetIniSection udfReadIniSection udfCsvOrder udfAssembly udfSetVarFromCsv udfSetVarFromIni udfCsvKeys udfIniWrite udfIniChange udfGetIni udfGetCsvSection udfGetLines2Csv udfIniGroupSection2Csv"}
 #: ${_bashlyk_aExport_ini:="udfGetIniSection udfReadIniSection udfIniSection2Csv udfIniGroupSection2Csv"}
@@ -72,7 +72,7 @@
 #          переменной
 #    255 - Ошибка: аргумент отсутствует
 #  EXAMPLE
-#    local csv='b=true;_bashlyk_unnamed_key_0="iXo Xo = 19";_bashlyk_unnamed_key_1="simple line";iXo=1921;iYo=1080;sTxt="foo bar";'  ##udfGetIniSection
+#    local csv='b=true;_bashlyk_ini_test_autoKey_0="iXo Xo = 19";_bashlyk_ini_test_autoKey_1="simple line";iXo=1921;iYo=1080;sTxt="foo bar";'  ##udfGetIniSection
 #    local sTxt="foo bar" b=true iXo=1921 iYo=1080 ini iniChild                 ##udfGetIniSection
 #    local fmt="[test]\n\t%s\t=\t%s\n\t%s\t=\t%s\n\t%s\t=\t%s\n\t%s\t=\t%s\n"   ##udfGetIniSection
 #    ini=$(mktemp --suffix=.ini || tempfile -s .test.ini)                       ##udfGetIniSection ? true
@@ -80,9 +80,9 @@
 #    printf "$fmt" sTxt foo b false "iXo Xo" 19 iYo 80 | tee $ini               ##udfGetIniSection
 #    echo "simple line" | tee -a $ini                                           ##udfGetIniSection
 #    printf "$fmt" "sTxt" "$sTxt" "b" "$b" "iXo" "$iXo" "iYo" "$iYo" | tee $iniChild  ##udfGetIniSection
-#    time udfGetIniSection $iniChild test                                            ##udfGetIniSection ? true
+#     udfGetIniSection $iniChild test                                            ##udfGetIniSection ? true
 #    udfGetIniSection $iniChild test | grep "^${csv}$"                          ##udfGetIniSection ? true
-#    time udfGetIniSection $iniChild test csvResult                                  ##udfGetIniSection ? true
+#     udfGetIniSection $iniChild test csvResult                                  ##udfGetIniSection ? true
 #    echo "$csvResult" | grep "^${csv}$"                                        ##udfGetIniSection ? true
 #    rm -f $iniChild $ini                                                       ##udfGetIniSection
 #  SOURCE
@@ -119,7 +119,7 @@ udfGetIniSection() {
    && bashlyk_ini_rWrBeelW="${bashlyk_s_rWrBeelW}.${bashlyk_ini_rWrBeelW}" \
    || bashlyk_ini_rWrBeelW="$bashlyk_s_rWrBeelW"
   [ -s "${bashlyk_pathIni_rWrBeelW}/${bashlyk_ini_rWrBeelW}" ] \
-   && bashlyk_csvIni_rWrBeelW+=";$(udfReadIniSection \
+   && bashlyk_csvIni_rWrBeelW+=";$(udfIniSection2Csv \
     "${bashlyk_pathIni_rWrBeelW}/${bashlyk_ini_rWrBeelW}" \
     "$bashlyk_sTag_rWrBeelW");"
  done
@@ -164,15 +164,15 @@ udfGetIniSection() {
 #          переменной
 #    255 - Ошибка: аргумент отсутствует или файл конфигурации не найден
 #  EXAMPLE
-#    local csv='sTxt="foo bar";b=true;iXo=1921;iYo=1080;_bashlyk_unnamed_key_0="simple line";' ##udfReadIniSection
+#    local csv='sTxt="foo bar";b=true;iXo=1921;iYo=1080;_bashlyk_ini_test_autoKey_0="simple line";' ##udfReadIniSection
 #    local sTxt="foo bar" b=true iXo=1921 iYo=1080 ini iniChild csvResult       ##udfReadIniSection
 #    local fmt="[test]\n\t%s\t=\t%s\n\t%s\t=\t%s\n\t%s\t=\t%s\n\t%s\t=\t%s\n"   ##udfReadIniSection
 #    ini=$(mktemp --suffix=.ini || tempfile -s .test.ini)                       ##udfReadIniSection ? true
 #    printf "$fmt" "sTxt" "$sTxt" "b" "$b" "iXo" "$iXo" "iYo" "$iYo" | tee $ini ##udfReadIniSection
 #    echo "simple line" | tee -a $ini                                           ##udfReadIniSection
-#    time udfReadIniSection $ini test                                                ##udfReadIniSection ? true
+#     udfReadIniSection $ini test                                                ##udfReadIniSection ? true
 #    udfReadIniSection $ini test | grep "^${csv}$"                              ##udfReadIniSection ? true
-#    time udfReadIniSection $ini test csvResult                                      ##udfReadIniSection ? true
+#     udfReadIniSection $ini test csvResult                                      ##udfReadIniSection ? true
 #    echo "$csvResult" | grep "^${csv}$"                                        ##udfReadIniSection ? true
 #    rm -f $ini                                                                 ##udfReadIniSection
 #  SOURCE
@@ -181,6 +181,7 @@ udfReadIniSection() {
  local bashlyk_ini_yLn0ZVLi bashlyk_csvResult_yLn0ZVLi bashlyk_b_yLn0ZVLi
  local bashlyk_bOpen_yLn0ZVLi bashlyk_k_yLn0ZVLi bashlyk_v_yLn0ZVLi
  local bashlyk_s_yLn0ZVLi bashlyk_sTag_yLn0ZVLi bashlyk_i_yLn0ZVLi
+ local bashlyk_sUnnamedKeyword="_bashlyk_ini_${2:-void}_autoKey_"
  #
  bashlyk_ini_yLn0ZVLi="$1"
  bashlyk_bOpen_yLn0ZVLi=false
@@ -206,7 +207,7 @@ udfReadIniSection() {
    bashlyk_v_yLn0ZVLi="$(echo ${bashlyk_s_yLn0ZVLi#*=}|xargs -0)"
    if [ -z "$bashlyk_k_yLn0ZVLi" -o "$bashlyk_k_yLn0ZVLi" = "$bashlyk_v_yLn0ZVLi" \
     -o -n "$(echo "$bashlyk_k_yLn0ZVLi" | grep '.*[[:space:]+].*')" ]; then
-    bashlyk_k_yLn0ZVLi=${_bashlyk_sUnnamedKeyword}${bashlyk_i_yLn0ZVLi}
+    bashlyk_k_yLn0ZVLi=${bashlyk_sUnnamedKeyword}${bashlyk_i_yLn0ZVLi}
     bashlyk_i_yLn0ZVLi=$((bashlyk_i_yLn0ZVLi+1))
     bashlyk_v_yLn0ZVLi="$bashlyk_s_yLn0ZVLi"
    fi
@@ -464,7 +465,7 @@ udfIniWrite() {
  #
  [ -s "$ini" ] && mv -f "$ini" "${ini}.bak"
  echo "$csv" | sed -e "s/[;]\+/;/g" -e "s/\[/;\[/g" | tr ';' '\n' \
-  | sed -e "s/${_bashlyk_sUnnamedKeyword}[0-9]\+=//g" \
+  | sed -e "s/_bashlyk_ini_.*_autoKey_[0-9]\+=//g" \
    -e "s/\(.*\)=/\t\1\t=\t/g" | tr -d '"' > "$ini"
  #
  return 0
@@ -492,12 +493,13 @@ udfIniWrite() {
 #    local csv='sTxt="foo bar";b=true;iXo=1921;iYo=999;' csvResult              ##udfIniChange
 #    local sTxt="bar foo" b=true iXo=1234 iYo=4321 ini                          ##udfIniChange
 #    local fmt="[sect%s]\n\t%s\t=\t%s\n\t%s\t=\t%s\n\t%s\t=\t%s\n\t%s\t=\t%s\n" ##udfIniChange
-#    local md5='85d52ed0688bc4406aa0021b44901ba4'                               ##udfIniChange
+#    local md5='c48c02c5744053a7dbf14dc775730e8c'                               ##udfIniChange
 #    ini=$(mktemp --suffix=.ini || tempfile -s .test.ini)                       ##udfIniChange ? true
 #    printf "$fmt" 1 sTxt foo '' value iXo 720 "non valid key" value | tee $ini ##udfIniChange
 #    echo "simple line" | tee -a $ini                                           ##udfIniChange
 #    printf "$fmt" 2 sTxt "$sTxt" b "$b" iXo "$iXo" iYo "$iYo" | tee -a $ini    ##udfIniChange
 #    udfIniChange $ini "$csv" sect1                                             ##udfIniChange ? true
+#    udfReadIniSection $ini sect1                                               ##udfIniChange ? true
 #    udfReadIniSection $ini sect1 | md5sum | grep "^${md5}.*-$"                 ##udfIniChange ? true
 #    rm -f $ini ${ini}.bak                                                      ##udfIniChange
 #  SOURCE
@@ -538,7 +540,7 @@ udfIniChange() {
 #     0  - Выполнено успешно
 #    255 - Ошибка: аргументы отсутствуют
 #  EXAMPLE
-#    local csv='b=true;_bashlyk_unnamed_key_0="iXo Xo = 19";_bashlyk_unnamed_key_1="simple line";iXo=1921;iYo=1080;sTxt="foo bar";' ##udfGetIni
+#    local csv='b=true;_bashlyk_ini_test_autoKey_0="iXo Xo = 19";_bashlyk_ini_test_autoKey_1="simple line";iXo=1921;iYo=1080;sTxt="foo bar";' ##udfGetIni
 #    local sTxt="foo bar" b=true iXo=1921 iYo=1080 ini iniChild                 ##udfGetIni
 #    local fmt="[test]\n\t%s\t=\t%s\n\t%s\t=\t%s\n\t%s\t=\t%s\n\t%s\t=\t%s\n"   ##udfGetIni
 #    ini=$(mktemp --suffix=.ini || tempfile -s .test.ini)                       ##udfGetIni ? true
@@ -621,18 +623,22 @@ udfGetCsvSection() {
 #  RETURN VALUE
 #     0  - Выполнено успешно
 #  EXAMPLE
-#    local csv='[];a=b;c=d e;[s1];a=f;c=g h;[s2];a=k;c=l m;'                    ##udfGetLines2Csv
-#    udfGetLines2Csv "$csv" | grep '^a=b;c=d e;$'                              ##udfGetLines2Csv ? true
-#    udfGetLines2Csv "$csv" s1 | grep '^a=f;c=g h;$'                           ##udfGetLines2Csv ? true
-#    udfGetLines2Csv "$csv" s2 | grep '^a=k;c=l m;$'                           ##udfGetLines2Csv ? true
+#    local csv='[];a=b;_bashlyk_ini_void_autoKey_0=d e;[s1];_bashlyk_ini_s1_autoKey_0=f;c=g h;[s2];a=k;_bashlyk_ini_s2_autoKey_0=l m;'                    ##udfGetLines2Csv
+#    udfGetLines2Csv "$csv"                               ##udfGetLines2Csv ? true
+#    udfGetLines2Csv "$csv" | grep '^d e;$'                              ##udfGetLines2Csv ? true
+#    udfGetLines2Csv "$csv" s1                              ##udfGetLines2Csv ? true
+#    udfGetLines2Csv "$csv" s1 | grep '^f;$'                           ##udfGetLines2Csv ? true
+#    udfGetLines2Csv "$csv" s2                              ##udfGetLines2Csv ? true
+#    udfGetLines2Csv "$csv" s2 | grep '^l m;$'                           ##udfGetLines2Csv ? true
 #  SOURCE
 udfGetLines2Csv() {
- local cIFS s csv
+ local cIFS csv s
+ bashlyk_sUnnamedKeyword="_bashlyk_ini_${2:-void}_autoKey_"
  cIFS=$IFS
  IFS=';'
  for s in $(echo "${1#*\[$2\];}" | cut -f1 -d'[')
  do
-  s=$(echo "$s" | grep "^${_bashlyk_sUnnamedKeyword}" | sed -e "s/${_bashlyk_sUnnamedKeyword}.*=//")
+  s=$(echo "$s" | grep "^${bashlyk_sUnnamedKeyword}" | sed -e "s/${bashlyk_sUnnamedKeyword}.*=//")
   [ -n "$s" ] && csv+="${s};"
  done
  IFS=$cIFS
@@ -671,9 +677,9 @@ udfGetLines2Csv() {
 #    ini=$(mktemp --suffix=.ini || tempfile -s .test.ini)                       ##udfIniSection2Csv ? true
 #    printf "$fmt" "sTxt" "$sTxt" "b" "$b" "iXo" "$iXo" "iYo" "$iYo" | tee $ini ##udfIniSection2Csv
 #    echo "simple line" | tee -a $ini                                           ##udfIniSection2Csv
-#    time udfIniSection2Csv $ini test                                                ##udfIniSection2Csv ? true
+#     udfIniSection2Csv $ini test                                                ##udfIniSection2Csv ? true
 #    udfIniSection2Csv $ini test | grep "^${csv}$"                              ##udfIniSection2Csv ? true
-#    time udfIniSection2Csv $ini test csvResult                                      ##udfIniSection2Csv ? true
+#     udfIniSection2Csv $ini test csvResult                                      ##udfIniSection2Csv ? true
 #    echo "$csvResult" | grep "^${csv}$"                                        ##udfIniSection2Csv ? true
 #    rm -f $ini                                                                 ##udfIniSection2Csv
 #  SOURCE
@@ -725,7 +731,7 @@ udfIniSection2Csv() {
 #          переменной
 #    255 - Ошибка: аргумент отсутствует
 #  EXAMPLE
-#    local csv='b=true;iXo=1921;iYo=1080;sTxt="foo bar";_test_Key_0="iXo Xo = 19";_test_Key_1="simple line";'  ##udfIniGroupSection2Csv
+#    local csv='b=true;_bashlyk_ini_test_autoKey_0="iXo Xo = 19";_bashlyk_ini_test_autoKey_1="simple line";iXo=1921;iYo=1080;sTxt="foo bar";'  ##udfIniGroupSection2Csv
 #    local sTxt="foo bar" b=true iXo=1921 iYo=1080 ini iniChild                 ##udfIniGroupSection2Csv
 #    local fmt="[test]\n\t%s\t=\t%s\n\t%s\t=\t%s\n\t%s\t=\t%s\n\t%s\t=\t%s\n"   ##udfIniGroupSection2Csv
 #    ini=$(mktemp --suffix=.ini || tempfile -s .test.ini)                       ##udfIniGroupSection2Csv ? true
@@ -733,9 +739,9 @@ udfIniSection2Csv() {
 #    printf "$fmt" sTxt foo b false "iXo Xo" 19 iYo 80 | tee $ini               ##udfIniGroupSection2Csv
 #    echo "simple line" | tee -a $ini                                           ##udfIniGroupSection2Csv
 #    printf "$fmt" "sTxt" "$sTxt" "b" "$b" "iXo" "$iXo" "iYo" "$iYo" | tee $iniChild  ##udfIniGroupSection2Csv
-#    time udfIniGroupSection2Csv $iniChild test                                       ##udfIniGroupSection2Csv ? true
+#     udfIniGroupSection2Csv $iniChild test                                       ##udfIniGroupSection2Csv ? true
 #    udfIniGroupSection2Csv $iniChild test | grep "^${csv}$"                          ##udfIniGroupSection2Csv ? true
-#    time udfIniGroupSection2Csv $iniChild test csvResult                             ##udfIniGroupSection2Csv ? true
+#     udfIniGroupSection2Csv $iniChild test csvResult                             ##udfIniGroupSection2Csv ? true
 #    echo "$csvResult" | grep "^${csv}$"                                        ##udfIniGroupSection2Csv ? true
 #    rm -f $iniChild $ini                                                       ##udfIniGroupSection2Csv
 #  SOURCE

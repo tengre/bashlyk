@@ -1,8 +1,11 @@
 BEGIN {
- b = 0; i = 0; csv="[];"; s="_unnamed_Key_"
+ b = 0; i = 0; csv="[];"; s="_bashlyk_ini_void_autoKey_"
 }
 
-/\[/ { sTag = $0; sub(/\]/, "", sTag); sub(/\[/, "", sTag); csv = csv""$0";"; s="_"sTag"_Key_" }
+/\[/ { 
+ sTag = $0; sub(/\]/, "", sTag); 
+ sub(/\[/, "", sTag); csv = csv""$0";"; s="_bashlyk_ini_"sTag"_autoKey_" 
+}
 
 $1=$1 {
  s0 = $0
