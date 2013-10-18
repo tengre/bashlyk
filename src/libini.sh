@@ -35,8 +35,8 @@
 : ${_bashlyk_pathIni:=$(pwd)}
 : ${_bashlyk_sUnnamedKeyword:=_bashlyk_unnamed_key_}
 : ${_bashlyk_aRequiredCmd_ini:="[ awk cat cut dirname echo false grep mv printf pwd rm sed sort touch tr true uniq w xargs"}
-#: ${_bashlyk_aExport_ini:="udfGetIniSection udfReadIniSection udfCsvOrder udfAssembly udfSetVarFromCsv udfSetVarFromIni udfCsvKeys udfIniWrite udfIniChange udfGetIni udfGetCsvSection udfIniSection2Csv udfIniGroupSection2Csv"}
-: ${_bashlyk_aExport_ini:="udfGetIniSection udfReadIniSection udfIniSection2Csv udfIniGroupSection2Csv"}
+: ${_bashlyk_aExport_ini:="udfGetIniSection udfReadIniSection udfCsvOrder udfAssembly udfSetVarFromCsv udfSetVarFromIni udfCsvKeys udfIniWrite udfIniChange udfGetIni udfGetCsvSection udfGetLines2Csv udfIniGroupSection2Csv"}
+#: ${_bashlyk_aExport_ini:="udfGetIniSection udfReadIniSection udfIniSection2Csv udfIniGroupSection2Csv"}
 #******
 #****f* bashlyk/libini/udfGetIniSection
 #  SYNOPSIS
@@ -603,6 +603,29 @@ udfGetCsvSection() {
  return 0
 }
 #******
+#****f* bashlyk/libini/udfGetLines2Csv
+# TODO отредактировать описание и тест
+#  SYNOPSIS
+#    udfGetLines2Csv <csv> <tag>
+#  DESCRIPTION
+#    Выделить из CSV-строки <csv> вида "[tag];key=value;...;" до
+#    символа [ (очередная секция) или конца строки все поля, которые не
+#    представляют собой пару "key=value" в
+#    формате "<value>;..." в переменную <varname>, если
+#    представлена или на стандартный вывод
+#  INPUTS
+#    tag - имя ini-секции
+#    csv - строка сериализации данных ini-файлов
+#  OUTPUT
+#    csv; строка без заголовка секции [tag]
+#  RETURN VALUE
+#     0  - Выполнено успешно
+#  EXAMPLE
+#    local csv='[];a=b;c=d e;[s1];a=f;c=g h;[s2];a=k;c=l m;'                    ##udfGetLines2Csv
+#    udfGetLines2Csv "$csv" | grep '^a=b;c=d e;$'                              ##udfGetLines2Csv ? true
+#    udfGetLines2Csv "$csv" s1 | grep '^a=f;c=g h;$'                           ##udfGetLines2Csv ? true
+#    udfGetLines2Csv "$csv" s2 | grep '^a=k;c=l m;$'                           ##udfGetLines2Csv ? true
+#  SOURCE
 udfGetLines2Csv() {
  local cIFS s csv
  cIFS=$IFS
