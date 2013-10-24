@@ -80,9 +80,9 @@
 #    printf "$fmt" sTxt foo b false "iXo Xo" 19 iYo 80 | tee $ini               ##udfGetIniSection
 #    echo "simple line" | tee -a $ini                                           ##udfGetIniSection
 #    printf "$fmt" "sTxt" "$sTxt" "b" "$b" "iXo" "$iXo" "iYo" "$iYo" | tee $iniChild  ##udfGetIniSection
-#     udfGetIniSection $iniChild test                                            ##udfGetIniSection ? true
+#    udfGetIniSection $iniChild test                                            ##udfGetIniSection ? true
 #    udfGetIniSection $iniChild test | grep "^${csv}$"                          ##udfGetIniSection ? true
-#     udfGetIniSection $iniChild test csvResult                                  ##udfGetIniSection ? true
+#    udfGetIniSection $iniChild test csvResult                                  ##udfGetIniSection ? true
 #    echo "$csvResult" | grep "^${csv}$"                                        ##udfGetIniSection ? true
 #    rm -f $iniChild $ini                                                       ##udfGetIniSection
 #  SOURCE
@@ -170,9 +170,9 @@ udfGetIniSection() {
 #    ini=$(mktemp --suffix=.ini || tempfile -s .test.ini)                       ##udfReadIniSection ? true
 #    printf "$fmt" "sTxt" "$sTxt" "b" "$b" "iXo" "$iXo" "iYo" "$iYo" | tee $ini ##udfReadIniSection
 #    echo "simple line" | tee -a $ini                                           ##udfReadIniSection
-#     udfReadIniSection $ini test                                                ##udfReadIniSection ? true
+#    udfReadIniSection $ini test                                                ##udfReadIniSection ? true
 #    udfReadIniSection $ini test | grep "^${csv}$"                              ##udfReadIniSection ? true
-#     udfReadIniSection $ini test csvResult                                      ##udfReadIniSection ? true
+#    udfReadIniSection $ini test csvResult                                      ##udfReadIniSection ? true
 #    echo "$csvResult" | grep "^${csv}$"                                        ##udfReadIniSection ? true
 #    rm -f $ini                                                                 ##udfReadIniSection
 #  SOURCE
@@ -624,12 +624,12 @@ udfGetCsvSection() {
 #     0  - Выполнено успешно
 #  EXAMPLE
 #    local csv='[];a=b;_bashlyk_ini_void_autoKey_0=d e;[s1];_bashlyk_ini_s1_autoKey_0=f;c=g h;[s2];a=k;_bashlyk_ini_s2_autoKey_0=l m;'                    ##udfGetLines2Csv
-#    udfGetLines2Csv "$csv"                               ##udfGetLines2Csv ? true
-#    udfGetLines2Csv "$csv" | grep '^d e;$'                              ##udfGetLines2Csv ? true
-#    udfGetLines2Csv "$csv" s1                              ##udfGetLines2Csv ? true
-#    udfGetLines2Csv "$csv" s1 | grep '^f;$'                           ##udfGetLines2Csv ? true
-#    udfGetLines2Csv "$csv" s2                              ##udfGetLines2Csv ? true
-#    udfGetLines2Csv "$csv" s2 | grep '^l m;$'                           ##udfGetLines2Csv ? true
+#    udfGetLines2Csv "$csv"                                                     ##udfGetLines2Csv ? true
+#    udfGetLines2Csv "$csv" | grep '^d e;$'                                     ##udfGetLines2Csv ? true
+#    udfGetLines2Csv "$csv" s1                                                  ##udfGetLines2Csv ? true
+#    udfGetLines2Csv "$csv" s1 | grep '^f;$'                                    ##udfGetLines2Csv ? true
+#    udfGetLines2Csv "$csv" s2                                                  ##udfGetLines2Csv ? true
+#    udfGetLines2Csv "$csv" s2 | grep '^l m;$'                                  ##udfGetLines2Csv ? true
 #  SOURCE
 udfGetLines2Csv() {
  local cIFS csv s
@@ -677,9 +677,9 @@ udfGetLines2Csv() {
 #    ini=$(mktemp --suffix=.ini || tempfile -s .test.ini)                       ##udfIniSection2Csv ? true
 #    printf "$fmt" "sTxt" "$sTxt" "b" "$b" "iXo" "$iXo" "iYo" "$iYo" | tee $ini ##udfIniSection2Csv
 #    echo "simple line" | tee -a $ini                                           ##udfIniSection2Csv
-#     udfIniSection2Csv $ini test                                                ##udfIniSection2Csv ? true
+#    udfIniSection2Csv $ini test                                                ##udfIniSection2Csv ? true
 #    udfIniSection2Csv $ini test | grep "^${csv}$"                              ##udfIniSection2Csv ? true
-#     udfIniSection2Csv $ini test csvResult                                      ##udfIniSection2Csv ? true
+#    udfIniSection2Csv $ini test csvResult                                      ##udfIniSection2Csv ? true
 #    echo "$csvResult" | grep "^${csv}$"                                        ##udfIniSection2Csv ? true
 #    rm -f $ini                                                                 ##udfIniSection2Csv
 #  SOURCE
@@ -739,9 +739,9 @@ udfIniSection2Csv() {
 #    printf "$fmt" sTxt foo b false "iXo Xo" 19 iYo 80 | tee $ini               ##udfIniGroupSection2Csv
 #    echo "simple line" | tee -a $ini                                           ##udfIniGroupSection2Csv
 #    printf "$fmt" "sTxt" "$sTxt" "b" "$b" "iXo" "$iXo" "iYo" "$iYo" | tee $iniChild  ##udfIniGroupSection2Csv
-#     udfIniGroupSection2Csv $iniChild test                                       ##udfIniGroupSection2Csv ? true
-#    udfIniGroupSection2Csv $iniChild test | grep "^${csv}$"                          ##udfIniGroupSection2Csv ? true
-#     udfIniGroupSection2Csv $iniChild test csvResult                             ##udfIniGroupSection2Csv ? true
+#    udfIniGroupSection2Csv $iniChild test                                      ##udfIniGroupSection2Csv ? true
+#    udfIniGroupSection2Csv $iniChild test | grep "^${csv}$"                    ##udfIniGroupSection2Csv ? true
+#    udfIniGroupSection2Csv $iniChild test csvResult                            ##udfIniGroupSection2Csv ? true
 #    echo "$csvResult" | grep "^${csv}$"                                        ##udfIniGroupSection2Csv ? true
 #    rm -f $iniChild $ini                                                       ##udfIniGroupSection2Csv
 #  SOURCE
