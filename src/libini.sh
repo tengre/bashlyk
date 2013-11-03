@@ -35,7 +35,7 @@
 : ${_bashlyk_pathIni:=$(pwd)}
 : ${_bashlyk_sUnnamedKeyword:=_bashlyk_ini_void_autoKey_}
 : ${_bashlyk_aRequiredCmd_ini:="[ awk cat cut dirname echo false grep mv printf pwd rm sed sort touch tr true uniq w xargs"}
-: ${_bashlyk_aExport_ini:="udfGetIniSection udfReadIniSection udfCsvOrder udfAssembly udfSetVarFromCsv udfSetVarFromIni udfCsvKeys udfIniWrite udfIniChange udfGetIni udfGetCsvSection udfGetLines2Csv udfIniGroupSection2Csv"}
+: ${_bashlyk_aExport_ini:="udfGetIniSection udfReadIniSection udfCsvOrder udfAssembly udfSetVarFromCsv udfSetVarFromIni udfCsvKeys udfIniWrite udfIniChange udfGetIni udfGetCsvSection udfGetLines2Csv udfIniGroupSection2Csv udfIni2Csv udfIniGroup2Csv"}
 #: ${_bashlyk_aExport_ini:="udfGetIniSection udfReadIniSection udfIniSection2Csv udfIniGroupSection2Csv"}
 #******
 #****f* bashlyk/libini/udfGetIniSection
@@ -785,6 +785,154 @@ udfIniGroupSection2Csv() {
 
  udfCsvOrder "$bashlyk_csvIni_rWrBeelW" bashlyk_csvResult_rWrBeelW
 
+ GLOBIGNORE=$bashlyk_sGlobIgnore_rWrBeelW
+
+ if [ -n "$3" ]; then
+  udfIsValidVariable "$3" || return 2
+  eval 'export ${3}="${bashlyk_csvResult_rWrBeelW}"'
+ else
+  echo "$bashlyk_csvResult_rWrBeelW"
+ fi
+ return 0
+}
+#******
+#****f* bashlyk/libini/udfIni2Csv
+#  SYNOPSIS
+#    udfIni2Csv <file> [<varname>]
+#  DESCRIPTION
+#    Получить конфигурационныe данныe всех секций ini-файла <file> и выдать
+#    результат в виде строки CSV, разделенных ';', каждое поле которой содержит
+#    данные в формате "[<секция>];<ключ>=<значение>" согласно данных строки 
+#    секции.
+#    В случае если исходная строка не содержит ключ или ключ содержит пробел, то
+#    ключом становится выражение ${_bashlyk_sUnnamedKeyword}_<инкремент>, а всё
+#    содержимое строки - значением.
+#  INPUTS
+#    file    - имя файла конфигурации
+#    varname - идентификатор переменной (без "$"). При его наличии результат
+#              будет помещен в соответствующую переменную. При отсутствии такого
+#              идентификатора результат будет выдан на стандартный вывод
+#  OUTPUT
+#              При отсутствии аргумента <varname> результат будет выдан на
+#              стандартный вывод
+#  RETURN VALUE
+#     0  - Выполнено успешно
+#     2  - Ошибка: аргумент <varname> не является валидным идентификатором
+#          переменной
+#    255 - Ошибка: аргумент отсутствует или файл конфигурации не найден
+#  EXAMPLE
+#    local csv='sTxt="foo bar";b=true;iXo=1921;iYo=1080;_test_Key_0="simple line";' ##udfIniSection2Csv
+#    local sTxt="foo bar" b=true iXo=1921 iYo=1080 ini iniChild csvResult       ##udfIniSection2Csv
+#    local fmt="[test]\n\t%s\t=\t%s\n\t%s\t=\t%s\n\t%s\t=\t%s\n\t%s\t=\t%s\n"   ##udfIniSection2Csv
+#    ini=$(mktemp --suffix=.ini || tempfile -s .test.ini)                       ##udfIniSection2Csv ? true
+#    printf "$fmt" "sTxt" "$sTxt" "b" "$b" "iXo" "$iXo" "iYo" "$iYo" | tee $ini ##udfIniSection2Csv
+#    echo "simple line" | tee -a $ini                                           ##udfIniSection2Csv
+#    udfIniSection2Csv $ini test                                                ##udfIniSection2Csv ? true
+#    udfIniSection2Csv $ini test | grep "^${csv}$"                              ##udfIniSection2Csv ? true
+#    udfIniSection2Csv $ini test csvResult                                      ##udfIniSection2Csv ? true
+#    echo "$csvResult" | grep "^${csv}$"                                        ##udfIniSection2Csv ? true
+#    rm -f $ini                                                                 ##udfIniSection2Csv
+#  SOURCE
+udfIni2Csv() {
+ [ -n "$1" -a -f "$1" ] || return 255
+ local bashlyk_csvResult_yLn0ZVLi="$(awk -f ${_bashlyk_pathLib}/ini2csv.awk -- $1)"
+ #
+ if [ -n "$3" ]; then
+  udfIsValidVariable "$3" || return 2
+  #udfThrow "Error: required valid variable name \"$1\""
+  eval 'export ${3}="$bashlyk_csvResult_yLn0ZVLi"'
+ else
+  echo "$bashlyk_csvResult_yLn0ZVLi"
+ fi
+ return 0
+}
+#******
+#****f* bashlyk/libini/udfIniGroup2Csv
+#  SYNOPSIS
+#    udfIniGroup2Csv <file> [<varname>]
+#  DESCRIPTION
+#    Получить конфигурационные данные всех секций <section> из <file> и, при 
+#    наличии, от группы "родительских" к нему файлов. Например, если <file> это 
+#    "a.b.c.ini", то "родительскими" будут считаться файлы "ini", "c.ini" и 
+#    "b.c.ini" если они есть в том же каталоге. Данные наследуются и 
+#    перекрываются от "старшего" файла к младшему.
+#    Поиск конфигурационных файлов выполняется по следующим критериям:
+#     1. Если имя файла <file> содержит неполный путь, то в начале проверяется
+#     текущий каталог, затем каталог конфигураций по умолчанию
+#     2. Если имя файла содержит полный путь, то рабочим каталогом является этот
+#     полный путь
+#     3. Последняя попытка - найти файл в каталоге /etc
+#    Важно: имя <file> не должно начинаться с точки и им заканчиваться!
+#  INPUTS
+#    file    - имя файла конфигурации
+#    varname - идентификатор переменной (без "$ "). При его наличии результат 
+#              будет помещен в соответствующую переменную. При отсутствии такого 
+#              идентификатора результат будет выдан на стандартный вывод
+#  OUTPUT
+#              разделенный символом ";" строка, в полях которого содержатся 
+#              конфигурационные данные в формате "<key>=<value>;..."
+#  RETURN VALUE
+#     0  - Выполнено успешно
+#     1  - Ошибка: файл конфигурации не найден
+#     2  - Ошибка: аргумент <varname> не является валидным идентификатором
+#          переменной
+#    255 - Ошибка: аргумент отсутствует
+#  EXAMPLE
+#    local csv='b=true;_bashlyk_ini_test_autoKey_0="iXo Xo = 19";_bashlyk_ini_test_autoKey_1="simple line";iXo=1921;iYo=1080;sTxt="foo bar";'  ##udfIniGroup2Csv
+#    local sTxt="foo bar" b=true iXo=1921 iYo=1080 ini iniChild                 ##udfIniGroup2Csv
+#    local fmt="[test]\n\t%s\t=\t%s\n\t%s\t=\t%s\n\t%s\t=\t%s\n\t%s\t=\t%s\n"   ##udfIniGroup2Csv
+#    ini=$(mktemp --suffix=.ini || tempfile -s .test.ini)                       ##udfIniGroup2Csv ? true
+#    iniChild="$(dirname $ini)/child.$(basename $ini)"                          ##udfIniGroup2Csv
+#    printf "$fmt" sTxt foo b false "iXo Xo" 19 iYo 80 | tee $ini               ##udfIniGroup2Csv
+#    echo "simple line" | tee -a $ini                                           ##udfIniGroup2Csv
+#    printf "$fmt" "sTxt" "$sTxt" "b" "$b" "iXo" "$iXo" "iYo" "$iYo" | tee $iniChild  ##udfIniGroup2Csv
+#    udfIniGroup2Csv $iniChild test                                      ##udfIniGroup2Csv ? true
+#    udfIniGroup2Csv $iniChild test | grep "^${csv}$"                    ##udfIniGroup2Csv ? true
+#    udfIniGroup2Csv $iniChild test csvResult                            ##udfIniGroup2Csv ? true
+#    echo "$csvResult"                                                          ##udfIniGroup2Csv ? true
+#    echo "$csvResult" | grep "^${csv}$"                                        ##udfIniGroup2Csv ? true
+#    rm -f $iniChild $ini                                                       ##udfIniGroup2Csv
+#  SOURCE
+udfIniGroup2Csv() {
+ [ -n "$1" ] || return 255
+ #
+ local bashlyk_aini_rWrBeelW bashlyk_csvIni_rWrBeelW bashlyk_csvResult_rWrBeelW
+ local bashlyk_ini_rWrBeelW bashlyk_pathIni_rWrBeelW bashlyk_s_rWrBeelW
+ local bashlyk_sTag_rWrBeelW bashlyk_sGlobIgnore_rWrBeelW
+ #
+ bashlyk_ini_rWrBeelW=''
+ bashlyk_pathIni_rWrBeelW="$_bashlyk_pathIni"
+ #
+ [ "$1"  = "${1##*/}" -a -f ${bashlyk_pathIni_rWrBeelW}/$1 ] \
+  || bashlyk_pathIni_rWrBeelW=
+ [ "$1"  = "${1##*/}" -a -f $1 ] && bashlyk_pathIni_rWrBeelW=$(pwd)
+ [ "$1" != "${1##*/}" -a -f $1 ] && bashlyk_pathIni_rWrBeelW=$(dirname $1)
+ [ -n "$2" ] && bashlyk_sTag_rWrBeelW="$2"
+ #
+ if [ -z "$bashlyk_pathIni_rWrBeelW" ]; then
+  [ -f "/etc/${_bashlyk_pathPrefix}/$1" ] \
+   && bashlyk_pathIni_rWrBeelW="/etc/${_bashlyk_pathPrefix}" || return 1
+ fi
+ #
+ bashlyk_aini_rWrBeelW=$(echo "${1##*/}" |\
+  awk 'BEGIN{FS="."} {for (i=NF;i>=1;i--) printf $i" "}')
+
+ bashlyk_sGlobIgnore_rWrBeelW=$GLOBIGNORE
+ GLOBIGNORE="*:?"
+
+ for bashlyk_s_rWrBeelW in $bashlyk_aini_rWrBeelW; do
+  [ -n "$bashlyk_s_rWrBeelW" ] || continue
+  [ -n "$bashlyk_ini_rWrBeelW" ] \
+   && bashlyk_ini_rWrBeelW="${bashlyk_s_rWrBeelW}.${bashlyk_ini_rWrBeelW}" \
+   || bashlyk_ini_rWrBeelW="$bashlyk_s_rWrBeelW"
+  [ -s "${bashlyk_pathIni_rWrBeelW}/${bashlyk_ini_rWrBeelW}" ] \
+   && bashlyk_csvIni_rWrBeelW+=";$(udfIni2Csv \
+    "${bashlyk_pathIni_rWrBeelW}/${bashlyk_ini_rWrBeelW}" \
+    "$bashlyk_sTag_rWrBeelW");"
+ done
+
+ #udfCsvOrder "$bashlyk_csvIni_rWrBeelW" bashlyk_csvResult_rWrBeelW
+ bashlyk_csvResult_rWrBeelW="$bashlyk_csvIni_rWrBeelW"
  GLOBIGNORE=$bashlyk_sGlobIgnore_rWrBeelW
 
  if [ -n "$3" ]; then

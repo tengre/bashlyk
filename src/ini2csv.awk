@@ -4,7 +4,8 @@ BEGIN {
 
 /\[/ { 
  sTag = $0; sub(/\]/, "", sTag); 
- sub(/\[/, "", sTag); csv = csv""$0";"; s="_bashlyk_ini_"sTag"_autoKey_" 
+ sub(/\[/, "", sTag); csv = csv""$0";"; s="_bashlyk_ini_"sTag"_autoKey_"
+ next 
 }
 
 $1=$1 {
