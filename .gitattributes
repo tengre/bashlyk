@@ -19,6 +19,7 @@ src/debian/postinst -text
 src/debian/prerm -text
 src/ini.awk -text
 src/ini2csv.awk -text
+src/ini2csv.sh -text
 src/inisection2csv.awk -text
 src/libcnf.sh -text
 src/libini.sh -text
