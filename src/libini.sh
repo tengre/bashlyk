@@ -878,7 +878,7 @@ udfIni2Csv() {
 #          переменной
 #    255 - Ошибка: аргумент отсутствует
 #  EXAMPLE
-#    local csv='b=true;_bashlyk_ini_test_autoKey_0="iXo Xo = 19";_bashlyk_ini_test_autoKey_1="simple line";iXo=1921;iYo=1080;sTxt="foo bar";'  ##udfIniGroup2Csv
+#    local csv='\[\];\[test\];b=true;_bashlyk_ini_test_autoKey_0="iXo Xo = 19";_bashlyk_ini_test_autoKey_1="simple line";iXo=1921;iYo=1080;sTxt="foo bar";'  ##udfIniGroup2Csv
 #    local sTxt="foo bar" b=true iXo=1921 iYo=1080 ini iniChild                 ##udfIniGroup2Csv
 #    local fmt="[test]\n\t%s\t=\t%s\n\t%s\t=\t%s\n\t%s\t=\t%s\n\t%s\t=\t%s\n"   ##udfIniGroup2Csv
 #    ini=$(mktemp --suffix=.ini || tempfile -s .test.ini)                       ##udfIniGroup2Csv ? true
@@ -899,6 +899,8 @@ udfIniGroup2Csv() {
  local bashlyk_aini_rWrBeelW bashlyk_csvIni_rWrBeelW bashlyk_csvResult_rWrBeelW
  local bashlyk_ini_rWrBeelW bashlyk_pathIni_rWrBeelW bashlyk_s_rWrBeelW
  local bashlyk_sTag_rWrBeelW bashlyk_sGlobIgnore_rWrBeelW
+ local bashlyk_aTag_rWrBeelW bashlyk_sS_rWrBeelW bashlyk_sF_rWrBeelW bashlyk_sT_rWrBeelW
+ local bashlyk_sR_rWrBeelW 
  #
  bashlyk_ini_rWrBeelW=''
  bashlyk_pathIni_rWrBeelW="$_bashlyk_pathIni"
@@ -931,8 +933,24 @@ udfIniGroup2Csv() {
     "$bashlyk_sTag_rWrBeelW");"
  done
 
- #udfCsvOrder "$bashlyk_csvIni_rWrBeelW" bashlyk_csvResult_rWrBeelW
- bashlyk_csvResult_rWrBeelW="$bashlyk_csvIni_rWrBeelW"
+ 
+ bashlyk_aTag_rWrBeelW=$(echo $bashlyk_csvIni_rWrBeelW | tr ';' '\n' | grep -oE '\[.*\]' | sort | uniq | tr -d '[]' | tr '\n' ' ')
+ bashlyk_sR_rWrBeelW=''
+ for bashlyk_s_rWrBeelW in "" $bashlyk_aTag_rWrBeelW; do
+  bashlyk_sT_rWrBeelW=''
+  bashlyk_sS_rWrBeelW='\['${bashlyk_s_rWrBeelW}'\]'
+  while [ true ]; do
+   [ -n "$(echo $bashlyk_csvIni_rWrBeelW | grep -oE $bashlyk_sS_rWrBeelW)" ] || break
+   bashlyk_sF_rWrBeelW=$(echo "${bashlyk_csvIni_rWrBeelW#*${bashlyk_sS_rWrBeelW};}" | cut -f1 -d'[')
+   bashlyk_csvIni_rWrBeelW=$(echo ${bashlyk_csvIni_rWrBeelW/${bashlyk_sS_rWrBeelW};${bashlyk_sF_rWrBeelW}/})
+   bashlyk_sT_rWrBeelW+=";"${bashlyk_sF_rWrBeelW}
+  done
+  bashlyk_sR_rWrBeelW+="[${bashlyk_s_rWrBeelW}];$(udfCsvOrder "${bashlyk_sT_rWrBeelW}");"
+ done
+ bashlyk_csvResult_rWrBeelW=$(echo ${bashlyk_sR_rWrBeelW} | sed -e "s/;\+/;/g")
+ 
+ # "$bashlyk_csvIni_rWrBeelW" bashlyk_csvResult_rWrBeelW
+ #bashlyk_csvResult_rWrBeelW="$bashlyk_csvIni_rWrBeelW"
  GLOBIGNORE=$bashlyk_sGlobIgnore_rWrBeelW
 
  if [ -n "$3" ]; then
