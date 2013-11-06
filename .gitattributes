@@ -23,6 +23,7 @@ src/ini2csv.sh -text
 src/inisection2csv.awk -text
 src/libcnf.sh -text
 src/libini.sh -text
+src/libiniX.sh -text
 src/liblog.sh -text
 src/libopt.sh -text
 src/libpid.sh -text
