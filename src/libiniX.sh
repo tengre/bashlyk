@@ -35,7 +35,7 @@
 : ${_bashlyk_pathIni:=$(pwd)}
 : ${_bashlyk_sUnnamedKeyword:=_bashlyk_ini_void_autoKey_}
 : ${_bashlyk_aRequiredCmd_ini:="[ awk cat cut dirname echo false grep mv printf pwd rm sed sort touch tr true uniq w xargs"}
-: ${_bashlyk_aExport_ini:="udfGetIniSection udfReadIniSection udfCsvOrder udfAssembly udfSetVarFromCsv udfSetVarFromIni udfCsvKeys udfIniWrite udfIniChange udfGetIni udfGetCsvSection udfGetLines2Csv udfIniGroupSection2Csv udfIni2Csv udfIniGroup2Csv"}
+: ${_bashlyk_aExport_ini:="udfGetIniSection udfReadIniSection udfReadIniSection2Var udfCsvOrder udfAssembly udfSetVarFromCsv udfSetVarFromIni udfCsvKeys udfIniWrite udfIniChange udfGetIni udfGetCsvSection udfGetCsvSection2Var udfGetIniSection2Var udfCsvOrder2Var udfCsvKeys2Var udfGetIni2Var udfGetLines2Csv udfIniGroupSection2Csv udfIniGroupSection2CsvVar udfIni2Csv udfIni2CsvVar udfIniGroup2Csv udfIniGroup2CsvVar"}
 #: ${_bashlyk_aExport_ini:="udfGetIniSection udfReadIniSection udfIniSection2Csv udfIniGroupSection2Csv"}
 #******
 #****f* bashlyk/libini/udfGetIniSection
@@ -91,19 +91,16 @@ udfGetIniSection() {
  ini=''
  pathIni="$_pathIni"
  #
- [ "$1"  = "${1##*/}" -a -f ${pathIni}/$1 ] \
-  || pathIni=
+ [ "$1"  = "${1##*/}" -a -f ${pathIni}/$1 ] || pathIni=
  [ "$1"  = "${1##*/}" -a -f $1 ] && pathIni=$(pwd)
  [ "$1" != "${1##*/}" -a -f $1 ] && pathIni=$(dirname $1)
  [ -n "$2" ] && sTag="$2"
  #
  if [ -z "$pathIni" ]; then
-  [ -f "/etc/${_pathPrefix}/$1" ] \
-   && pathIni="/etc/${_pathPrefix}" || return 1
+  [ -f "/etc/${_bashlyk_pathPrefix}/$1" ] && pathIni="/etc/${_bashlyk_pathPrefix}" || return 1
  fi
  #
- aini=$(echo "${1##*/}" |\
-  awk 'BEGIN{FS="."} {for (i=NF;i>=1;i--) printf $i" "}')
+ aini=$(echo "${1##*/}" | awk 'BEGIN{FS="."} {for (i=NF;i>=1;i--) printf $i" "}')
 
  sGlobIgnore=$GLOBIGNORE
  GLOBIGNORE="*:?"
@@ -124,18 +121,7 @@ udfGetIniSection() {
 #  SYNOPSIS
 #    udfGetIniSection <varname> <file> [<section>]
 #  DESCRIPTION
-#    Получить секцию конфигурационных данных <section> из <file> и, при наличии,
-#    от "родительских" к нему файлов. Например, если <file> это "a.b.c.ini", то 
-#    "родительскими" будут считаться файлы "ini", "c.ini" и "b.c.ini" если есть 
-#    в том же каталоге. Данные наследуются и перекрываются от "старшего" файла к
-#    младшему.
-#    Поиск конфигурационных файлов выполняется по следующим критериям:
-#     1. Если имя файла <file> содержит неполный путь, то в начале проверяется
-#     текущий каталог, затем каталог конфигураций по умолчанию
-#     2. Если имя файла содержит полный путь, то рабочим каталогом является этот
-#     полный путь
-#     3. Последняя попытка - найти файл в каталоге /etc
-#    Важно: имя <file> не должно начинаться с точки и им заканчиваться!
+#    поместить результат вызова udfGetIniSection в переменную <varname>
 #  INPUTS
 #    file    - имя файла конфигурации
 #    section - название секции конфигурации, при отсутствии этого аргумента 
@@ -259,14 +245,14 @@ udfReadIniSection() {
 udfReadIniSection2Var() {
  [ -n "$2" -a -f "$2" ] || return 255
  udfIsValidVariable $1 || return 2
- #udfThrow "Error: required valid variable name \"$3\""
+ #udfThrow "Error: required valid variable name \"$1\""
  eval 'export ${1}="$(udfReadIniSection "$2" $3)"'
  return 0
 }
 #******
 #****f* bashlyk/libini/udfCsvOrder
 #  SYNOPSIS
-#    udfCsvOrder <csv;> [<varname>]
+#    udfCsvOrder <csv;>
 #  DESCRIPTION
 #    упорядочение CSV-строки, которое заключается в удалении устаревших значений
 #    пар "<key>=<value>". Более старыми при повторении ключей считаются более 
@@ -274,23 +260,18 @@ udfReadIniSection2Var() {
 #  INPUTS
 #    csv;    - CSV-строка, разделённая ";", поля которой содержат данные вида 
 #              "key=value"
-#    varname - идентификатор переменной (без "$ "). При его наличии результат 
-#              будет помещен в соответствующую переменную. При отсутствии такого 
-#              идентификатора результат будет выдан на стандартный вывод
 #  OUTPUT
 #              разделенный символом ";" строка, в полях которого содержатся 
 #              данные в формате "<key>=<value>;..."
 #  RETURN VALUE
 #     0  - Выполнено успешно
-#     2  - Ошибка: аргумент <varname> не является валидным идентификатором
-#          переменной
 #    255 - Ошибка: аргумент отсутствует
 #  EXAMPLE
 #    local csv='sTxt=bar;b=false;iXo=21;iYo=1080;sTxt=foo bar;b=true;iXo=1920;' ##udfCsvOrder
 #    local csvResult                                                            ##udfCsvOrder
 #    local csvTest='b=true;iXo=1920;iYo=1080;sTxt="foo bar";'                   ##udfCsvOrder
 #    udfCsvOrder "$csv" | grep "^${csvTest}$"                                   ##udfCsvOrder ? true
-#    udfCsvOrder2Var "$csv" csvResult                                           ##udfCsvOrder ? true
+#    udfCsvOrder2Var csvResult "$csv"                                           ##udfCsvOrder ? true
 #    echo $csvResult | grep "^${csvTest}$"                                      ##udfCsvOrder ? true
 #  SOURCE
 udfCsvOrder() {
@@ -328,12 +309,32 @@ _CsvOrder_EOF
  echo $csvResult
  return 0
 }
-
+#******
+#****f* bashlyk/libini/udfCsvOrder2Var
+#  SYNOPSIS
+#    udfCsvOrder2Var <varname> <csv;>
+#  DESCRIPTION
+#    поместить результат вызова udfCsvOrder в переменную <varname>
+#  INPUTS
+#    csv;    - CSV-строка, разделённая ";", поля которой содержат данные вида 
+#              "key=value"
+#    varname - валидный идентификатор переменной (без "$ "). Результат в виде 
+#              разделённой символом ";" CSV-строки, поля которого содержат 
+#              данные в формате "<key>=<value>;...", будет помещен в
+#              соответствующую переменну.
+#  RETURN VALUE
+#     0  - Выполнено успешно
+#     2  - Ошибка: аргумент <varname> не является валидным идентификатором
+#          переменной
+#    255 - Ошибка: аргумент отсутствует
+#  EXAMPLE
+#    пример приведен в описании udfCsvOrder
+#  SOURCE
 udfCsvOrder2Var() {
  [ -n "$2" ] || return 255
- udfIsValidVariable "$2" || return 2
- #udfThrow "Error: required valid variable name \"$2\""
- eval 'export ${2}="$(udfCsvOrder "$1")"'
+ udfIsValidVariable $1 || return 2
+ #udfThrow "Error: required valid variable name \"$1\""
+ eval 'export ${1}="$(udfCsvOrder "$2")"'
  return 0
 }
 #******
@@ -422,27 +423,22 @@ udfSetVarFromIni() {
 #******
 #****f* bashlyk/libini/udfCsvKeys
 #  SYNOPSIS
-#    udfCsvKeys <csv;> [<varname>]
+#    udfCsvKeys <csv;>
 #  DESCRIPTION
 #    Получить ключи пар "ключ=значение" из CSV-строки <csv;>
 #  INPUTS
 #    csv;    - CSV-строка, разделённая ";", поля которой содержат данные вида 
 #              "key=value"
-#    varname - идентификатор переменной (без "$ "). При его наличии результат 
-#              будет помещен в соответствующую переменную. При отсутствии такого 
-#              идентификатора результат будет выдан на стандартный вывод
 #  OUTPUT
 #              строка ключей
 #  RETURN VALUE
 #     0  - Выполнено успешно
-#     2  - Ошибка: аргумент <varname> не является валидным идентификатором
-#          переменной
 #    255 - Ошибка: аргумент отсутствует
 #  EXAMPLE
 #    local csv='sTxt="foo bar";b=true;iXo=1921;iYo=1080;' sResult               ##udfCsvKeys
 #    udfCsvKeys "$csv"                                                          ##udfCsvKeys ? true
 #    udfCsvKeys "$csv" | xargs | grep "^sTxt b iXo iYo$"                        ##udfCsvKeys ? true
-#    udfCsvKeys2Var "$csv" sResult                                                  ##udfCsvKeys ? true
+#    udfCsvKeys2Var sResult "$csv"                                              ##udfCsvKeys ? true
 #    echo $sResult | grep "^sTxt b iXo iYo$"                                    ##udfCsvKeys ? true
 #  SOURCE
 udfCsvKeys() {
@@ -460,12 +456,30 @@ udfCsvKeys() {
  echo "$csvResult"
  return 0
 }
-
+#******
+#****f* bashlyk/libini/udfCsvKeys2Var
+#  SYNOPSIS
+#    udfCsvKeys2Var <varname> <csv;>
+#  DESCRIPTION
+#    Поместить вывод udfCsvKeys в переменную <varname>
+#  INPUTS
+#    csv;  - CSV-строка, разделённая ";", поля которой содержат данные вида 
+#            "key=value"
+#  varname - валидный идентификатор переменной. Результат в виде строки ключей, 
+#            разделенной пробелами, будет помещёна в соответствующую переменную
+#  RETURN VALUE
+#     0  - Выполнено успешно
+#     2  - Ошибка: аргумент <varname> не является валидным идентификатором
+#          переменной  
+#    255 - Ошибка: аргумент отсутствует
+#  EXAMPLE
+#    пример приведен в описании udfCsvKeys
+#  SOURCE
 udfCsvKeys2Var() {
  [ -n "$2" ] || return 255
- udfIsValidVariable "$2" || return 2
- #udfThrow "Error: required valid variable name \"$2\""
- eval 'export ${2}="$(udfCsvKeys "$1")"'
+ udfIsValidVariable $1 || return 2
+ #udfThrow "Error: required valid variable name \"$1\""
+ eval 'export ${1}="$(udfCsvKeys "$2")"'
  return 0
 }
 #******
@@ -535,7 +549,7 @@ udfIniWrite() {
 #    local csv='sTxt="foo bar";b=true;iXo=1921;iYo=999;' csvResult              ##udfIniChange
 #    local sTxt="bar foo" b=true iXo=1234 iYo=4321 ini                          ##udfIniChange
 #    local fmt="[sect%s]\n\t%s\t=\t%s\n\t%s\t=\t%s\n\t%s\t=\t%s\n\t%s\t=\t%s\n" ##udfIniChange
-#    local md5='c48c02c5744053a7dbf14dc775730e8c'                               ##udfIniChange
+#    local md5='67fd9ffaf56c1852c82ae03f922bce39'                               ##udfIniChange
 #    ini=$(mktemp --suffix=.ini || tempfile -s .test.ini)                       ##udfIniChange ? true
 #    printf "$fmt" 1 sTxt foo '' value iXo 720 "non valid key" value | tee $ini ##udfIniChange
 #    echo "simple line" | tee -a $ini                                           ##udfIniChange
@@ -572,16 +586,18 @@ udfIniChange() {
 #******
 #****f* bashlyk/libini/udfGetIni
 #  SYNOPSIS
-#    udfGetIni <file> <csvSections> [<varname>]
+#    udfGetIni <file> [<section>] ...
 #  DESCRIPTION
 #    Получить опции секций <csvSections> конфигурации <file> в CSV-строку в
-#    формате "[section];<key>=<value>;..." в переменную <varname>, если 
-#    представлена или на стандартный вывод
+#    формате "[section];<key>=<value>;..." на стандартный вывод
 #  INPUTS
-#     file - файл конфигурации формата "*.ini".
+#     file    - файл конфигурации формата "*.ini".
+#     section - любое количество имен секций, данные которых нужно получить. 
+#               По умолчанию и всегда выполняется сериализация "безымянной" 
+#               секции
 #  RETURN VALUE
 #     0  - Выполнено успешно
-#    255 - Ошибка: аргументы отсутствуют
+#    255 - Ошибка: аргументы отсутствуют или файл конфигурации не найден
 #  EXAMPLE
 #    local csv='b=true;_bashlyk_ini_test_autoKey_0="iXo Xo = 19";_bashlyk_ini_test_autoKey_1="simple line";iXo=1921;iYo=1080;sTxt="foo bar";' ##udfGetIni
 #    local sTxt="foo bar" b=true iXo=1921 iYo=1080 ini iniChild                 ##udfGetIni
@@ -593,26 +609,47 @@ udfIniChange() {
 #    printf "$fmt" "sTxt" "$sTxt" "b" "$b" "iXo" "$iXo" "iYo" "$iYo" | tee $iniChild  ##udfGetIni
 #    udfGetIni $iniChild test                                                   ##udfGetIni ? true
 #    udfGetIni $iniChild test | grep "^\[\];;\[test\];${csv}$"                  ##udfGetIni ? true
-#    udfGetIni2Var $iniChild test csvResult                                     ##udfGetIni ? true
+#    udfGetIni2Var csvResult $iniChild test                                     ##udfGetIni ? true
 #    echo "$csvResult" | grep "^\[\];;\[test\];${csv}$"                         ##udfGetIni ? true
 #    rm -f $iniChild $ini                                                       ##udfGetIni
 #  SOURCE
 udfGetIni() {
- [ -n "$2" ] || return 255
+ [ -n "$1" -a -f "$1" ] || return 255
  #
- local csv ini s
+ local csv s ini="$1"
+ shift
  #
- for s in "" $(echo $2 | tr ',' ' '); do
-  csv+="[${s}];$(udfGetIniSection $1 "$s")"
+ for s in "" $*; do
+  ## TODO заменить udfGetIniSection
+  csv+="[${s}];$(udfGetIniSection $ini "$s")"
  done
  echo "$csv"
  return 0
 }
-
+#******
+#****f* bashlyk/libini/udfGetIni2Var
+#  SYNOPSIS
+#    udfGetIni2Var <varname> <file> [<section>] ...
+#  DESCRIPTION
+#    Поместить вывод udfGetIni в переменную <varname>
+#  INPUTS
+#    file    - файл конфигурации формата "*.ini".
+#    varname - валидный идентификатор переменной. Результат в виде 
+#              CSV-строки в формате "[section];<key>=<value>;..." будет 
+#              помещён в соответствующую переменную
+#    section - список имен секций, данные которых нужно получить 
+#  RETURN VALUE
+#     0  - Выполнено успешно
+#    255 - Ошибка: аргументы отсутствуют
+#  EXAMPLE
+#    пример приведен в описании udfGetIni
+#  SOURCE
 udfGetIni2Var() {
- [ -n "$3" ] || return 255
- udfIsValidVariable "$3" || return 2
- eval 'export ${3}="$(udfGetIni "$1" "$2")"'
+ [ -n "$2" -a -f "$2" ] || return 255
+ udfIsValidVariable $1 || return 2
+ local bashlyk_GetIni2Var_ini="$2" bashlyk_GetIni2Var_s="$1"
+ shift 2
+ eval 'export ${bashlyk_GetIni2Var_s}="$(udfGetIni ${bashlyk_GetIni2Var_ini} $*)"'
  return 0
 }
 #******
@@ -659,9 +696,9 @@ udfGetCsvSection() {
 #    local csv='[];a=b;c=d e;[s1];a=f;c=g h;[s2];a=k;c=l m;' csvResult          ##udfGetCsvSection2Var
 #    udfGetCsvSection2Var csvResult "$csv"                                      ##udfGetCsvSection2Var
 #    echo $csvResult | grep '^a=b;c=d e;$'                                      ##udfGetCsvSection2Var ? true
-#    udfGetCsvSection csvResult "$csv" s1                                       ##udfGetCsvSection2Var
+#    udfGetCsvSection2Var csvResult "$csv" s1                                   ##udfGetCsvSection2Var
 #    echo $csvResult | grep '^a=f;c=g h;$'                                      ##udfGetCsvSection2Var ? true
-#    udfGetCsvSection csvResult "$csv" s2                                       ##udfGetCsvSection2Var
+#    udfGetCsvSection2Var csvResult "$csv" s2                                   ##udfGetCsvSection2Var
 #    echo $csvResult | grep '^a=k;c=l m;$'                                      ##udfGetCsvSection2Var ? true
 #  SOURCE
 udfGetCsvSection2Var() {
@@ -744,7 +781,7 @@ udfGetLines2Csv() {
 #  SOURCE
 udfIniSection2Csv() {
  [ -n "$1" -a -f "$1" ] || return 255
- awk -f ${_pathLib}/inisection2csv.awk -v "sTag=$2" -- $1
+ awk -f ${_bashlyk_pathLib}/inisection2csv.awk -v "sTag=$2" -- $1
  return 0
 }
 #******
@@ -769,7 +806,7 @@ udfIniSection2Csv() {
 #  EXAMPLE
 #    пример приведен в описании udfIniGroupSection2Csv
 #  SOURCE
-udfIniSection2CsvVar
+udfIniSection2CsvVar() {
  [ -n "$2" -a -f "$2" ] || return 255
  udfIsValidVariable $1  || return 2
  #udfThrow "Error: required valid variable name \"$1\""
@@ -837,8 +874,8 @@ udfIniGroupSection2Csv() {
  [ -n "$2" ] && sTag="$2"
  #
  if [ -z "$pathIni" ]; then
-  [ -f "/etc/${_pathPrefix}/$1" ] \
-   && pathIni="/etc/${_pathPrefix}" || return 1
+  [ -f "/etc/${_bashlyk_pathPrefix}/$1" ] \
+   && pathIni="/etc/${_bashlyk_pathPrefix}" || return 1
  fi
  #
  aini=$(echo "${1##*/}" |\
@@ -895,8 +932,8 @@ udfIniGroupSection2CsvVar() {
 #    данные в формате "[<секция>];<ключ>=<значение>" согласно данных строки 
 #    секции.
 #    В случае если исходная строка не содержит ключ или ключ содержит пробел, то
-#    ключом становится выражение ${_bashlyk_sUnnamedKeyword}_<инкремент>, а всё
-#    содержимое строки - значением.
+#    ключом становится переменная "_bashlyk_ini_<секция>_autoKey_<инкремент>", а
+#    всё содержимое строки - значением
 #  INPUTS
 #    file - имя файла конфигурации
 #  OUTPUT
@@ -922,7 +959,7 @@ udfIniGroupSection2CsvVar() {
 #  SOURCE
 udfIni2Csv() {
  [ -n "$1" -a -f "$1" ] || return 255
- awk -f ${_pathLib}/ini2csv.awk -- $1
+ awk -f ${_bashlyk_pathLib}/ini2csv.awk -- $1
  return 0
 }
 #******
@@ -944,7 +981,7 @@ udfIni2Csv() {
 #  EXAMPLE
 #    пример приведен в описании udfIni2Csv
 #  SOURCE
-udfIni2CsvVar
+udfIni2CsvVar() {
  [ -n "$2" ] || return 255
  udfIsValidVariable $1 || return 2
  #udfThrow "Error: required valid variable name \"$1\""
@@ -1008,8 +1045,8 @@ udfIniGroup2Csv() {
  [ -n "$2" ] && sTag="$2"
  #
  if [ -z "$pathIni" ]; then
-  [ -f "/etc/${_pathPrefix}/$1" ] \
-   && pathIni="/etc/${_pathPrefix}" || return 1
+  [ -f "/etc/${_bashlyk_pathPrefix}/$1" ] \
+   && pathIni="/etc/${_bashlyk_pathPrefix}" || return 1
  fi
  #
  aini=$(echo "${1##*/}" |\
