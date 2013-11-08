@@ -410,14 +410,15 @@ udfSetVarFromCsv() {
 udfSetVarFromIni() {
  [ -n "$1" -a -f "$1" -a -n "$3" ] || return 255
  #
- local ini aTag
+ local ini sSection
  #
  ini="$1"
- [ -n "$2" ] && aTag="$2"
+ [ -n "$2" ] && sSection="$2"
  shift 2
  #
- ## TODO заменить udfGetIniSection
- udfSetVarFromCsv ";$(udfGetIniSection $ini "$aTag");" $* 
+ #udfSetVarFromCsv ";$(udfGetIniSection $ini $sSection);" $* 
+ udfSetVarFromCsv ";$(udfIniGroupSection2Csv $ini $sSection);" $* 
+ 
  return 0
 }
 #******
@@ -549,7 +550,7 @@ udfIniWrite() {
 #    local csv='sTxt="foo bar";b=true;iXo=1921;iYo=999;' csvResult              ##udfIniChange
 #    local sTxt="bar foo" b=true iXo=1234 iYo=4321 ini                          ##udfIniChange
 #    local fmt="[sect%s]\n\t%s\t=\t%s\n\t%s\t=\t%s\n\t%s\t=\t%s\n\t%s\t=\t%s\n" ##udfIniChange
-#    local md5='67fd9ffaf56c1852c82ae03f922bce39'                               ##udfIniChange
+#    local md5='c48c02c5744053a7dbf14dc775730e8c'                               ##udfIniChange
 #    ini=$(mktemp --suffix=.ini || tempfile -s .test.ini)                       ##udfIniChange ? true
 #    printf "$fmt" 1 sTxt foo '' value iXo 720 "non valid key" value | tee $ini ##udfIniChange
 #    echo "simple line" | tee -a $ini                                           ##udfIniChange
@@ -573,7 +574,9 @@ udfIniChange() {
  [ -n "$sTag" ] && echo "$aTag" | grep -w "$sTag" >/dev/null || aTag+=" $sTag"
  for s in "" $aTag; do
   ## TODO расмотреть возможность замены udfReadIniSection2Var
-  udfReadIniSection2Var $ini "$s" csv
+  #csv=$(udfReadIniSection $ini $s) 
+  csv=$(udfIniSection2Csv $ini $s)
+  #udfIniSection2CsvVar csv $ini $s
   if [ "$s" = "$sTag" ]; then
    csv=$(udfCsvOrder "${csv};${csvNew}")
   fi 
@@ -621,7 +624,8 @@ udfGetIni() {
  #
  for s in "" $*; do
   ## TODO заменить udfGetIniSection
-  csv+="[${s}];$(udfGetIniSection $ini "$s")"
+  #csv+="[${s}];$(udfGetIniSection $ini "$s")"
+  csv+="[${s}];$(udfIniGroupSection2Csv $ini $s)"
  done
  echo "$csv"
  return 0
