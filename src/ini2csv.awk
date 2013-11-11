@@ -2,6 +2,8 @@ BEGIN {
  b = 0; i = 0; csv="[];"; s="_bashlyk_ini_void_autoKey_"
 }
 
+/^#|^$/ { next }
+
 /\[/ { 
  sTag = $0; sub(/\]/, "", sTag); 
  sub(/\[/, "", sTag); csv = csv""$0";"; s="_bashlyk_ini_"sTag"_autoKey_"

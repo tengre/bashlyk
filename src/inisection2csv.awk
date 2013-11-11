@@ -5,6 +5,8 @@ BEGIN {
  s="_bashlyk_ini_"sTag"_autoKey_"
 }
 
+/^#|^$/ { next }
+
 $0 ~ re { b = 1; next }
 /\[/ { if (b == 1) exit }
 
