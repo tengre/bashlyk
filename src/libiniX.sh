@@ -587,6 +587,52 @@ udfIniChange() {
  return 0
 }
 #******
+#****f* bashlyk/libini/udfIni
+#  SYNOPSIS
+#    udfIni <file> [<section>]:<csv;> ...
+#  DESCRIPTION
+#    инициализировать перечисленные в <csv;> переменные секций <section> 
+#    конфигурации <file> 
+#  INPUTS
+#     file    - файл конфигурации формата "*.ini".
+#     section - любое количество имен секций, переменные которых нужно получить. 
+#     csv;    - список переменных
+#  RETURN VALUE
+#     0  - Выполнено успешно
+#    255 - Ошибка: аргументы отсутствуют или файл конфигурации не найден
+#  EXAMPLE
+#    local csv='b=true;_bashlyk_ini_test_autoKey_0="iXo Xo = 19";_bashlyk_ini_test_autoKey_1="simple line";iXo=1921;iYo=1080;sTxt="foo bar";' ##udfIni
+#    local sTxt="foo bar" b=true iXo=1921 iYo=1080 ini iniChild                 ##udfIni
+#    local fmt="[test]\n\t%s\t=\t%s\n\t%s\t=\t%s\n\t%s\t=\t%s\n\t%s\t=\t%s\n"   ##udfIni
+#    ini=$(mktemp --suffix=.ini || tempfile -s .test.ini)                       ##udfIni ? true
+#    iniChild="$(dirname $ini)/child.$(basename $ini)"                          ##udfIni
+#    printf "$fmt" sTxt foo b false "iXo Xo" 19 iYo 80 | tee $ini               ##udfIni
+#    echo "simple line" | tee -a $ini                                           ##udfIni
+#    printf "$fmt" sTxt "$sTxt" b "$b" iXo "$iXo" iYo "$iYo" | tee $iniChild    ##udfIni
+#    udfIni $iniChild : test:                                                   ##udfIni ? true
+#    rm -f $iniChild $ini                                                       ##udfIni
+#  SOURCE
+udfIni() {
+ [ -n "$1" -a -f "$1" ] || return 255
+ #
+ local csv s sSection csvSection csvVar
+ #
+ csv=$(udfIniGroup2Csv "$1")
+ shift
+ #
+ for s in $*; do
+  sSection=${s%:*}
+  #: ${sSection:=void}
+  aVar="$(echo ${s#*:} | tr ';' ' ')"
+  csvSection=$(udfGetCsvSection $csv $sSection)
+  ## TODO udfCsvOrder лишний вызов
+  udfSetVarFromCsv $csvSection $aVar
+  eval '_bashlyk_ini_${sSection:=void}_enum="$(udfGetLines2Csv $csvSection $sSection)"'
+ done
+ return 0
+}
+#******
+#******
 #****f* bashlyk/libini/udfGetIni
 #  SYNOPSIS
 #    udfGetIni <file> [<section>] ...
