@@ -373,7 +373,8 @@ udfSetVarFromCsv() {
   #bashlyk_csvResult_KLokRJky=$(echo $bashlyk_csvInput_KLokRJky | grep -Po ";$bashlyk_k_KLokRJky=.*?;" | tr -d ';')
   bashlyk_v_KLokRJky="$(echo "${bashlyk_csvInput_KLokRJky#*;$bashlyk_k_KLokRJky=}" | cut -f 1 -d ';')"
   if [ -n "$bashlyk_v_KLokRJky" ]; then
-   eval "$bashlyk_k_KLokRJky=$bashlyk_v_KLokRJky" 2>/dev/null
+   eval "$bashlyk_k_KLokRJky=$bashlyk_v_KLokRJky"
+   #2>/dev/null
   fi
  done
  return 0
@@ -601,16 +602,17 @@ udfIniChange() {
 #     0  - Выполнено успешно
 #    255 - Ошибка: аргументы отсутствуют или файл конфигурации не найден
 #  EXAMPLE
-#    local csv='b=true;_bashlyk_ini_test_autoKey_0="iXo Xo = 19";_bashlyk_ini_test_autoKey_1="simple line";iXo=1921;iYo=1080;sTxt="foo bar";' ##udfIni
-#    local sTxt="foo bar" b=true iXo=1921 iYo=1080 ini iniChild                 ##udfIni
+#    local sTxt="foo = bar" b=true iXo=1921 iYo=1080 ini iniChild               ##udfIni
 #    local fmt="[test]\n\t%s\t=\t%s\n\t%s\t=\t%s\n\t%s\t=\t%s\n\t%s\t=\t%s\n"   ##udfIni
 #    ini=$(mktemp --suffix=.ini || tempfile -s .test.ini)                       ##udfIni ? true
 #    iniChild="$(dirname $ini)/child.$(basename $ini)"                          ##udfIni
 #    printf "$fmt" sTxt foo b false "iXo Xo" 19 iYo 80 | tee $ini               ##udfIni
 #    echo "simple line" | tee -a $ini                                           ##udfIni
 #    printf "$fmt" sTxt "$sTxt" b "$b" iXo "$iXo" iYo "$iYo" | tee $iniChild    ##udfIni
+#    sTxt='';b='';iXo=''                                                        ##udfIni
 #    udfIni $iniChild ':' 'test:sTxt;b;iXo'                                     ##udfIni ? true
-#    echo "dbg ${sTxt};${b};${iXo}"                                             ##udfIni ? true
+#    echo "${sTxt};${b};${iXo}" | grep -e "^foo = bar;true;1921$"               ##udfIni ? true
+#    echo "$_bashlyk_ini_test_enum" | grep -e '^"iXo Xo = 19";"simple line";$'  ##udfIni ? true
 #    rm -f $iniChild $ini                                                       ##udfIni
 #  SOURCE
 udfIni() {
@@ -623,13 +625,10 @@ udfIni() {
  #
  for s in $*; do
   sSection=${s%:*}
-  #: ${sSection:=void}
   aVar="$(echo ${s#*:} | tr ';' ' ')"
   csvSection=$(udfGetCsvSection "$csv" "$sSection")
   ## TODO udfCsvOrder лишний вызов
-  #echo "udfSetVarFromCsv \"$csvSection\" $aVar"
-  #echo "udfGetLines2Csv _${csvSection}_ _${sSection}_"
-  #udfGetLines2Csv "$csvSection" "$sSection"
+  udfSetVarFromCsv "$csvSection" $aVar
   eval 'export _bashlyk_ini_${sSection:-void}_enum="$(udfGetLines2Csv "$csvSection" "$sSection")"'
  done
  return 0
@@ -672,8 +671,6 @@ udfGetIni() {
  shift
  #
  for s in "" $*; do
-  ## TODO заменить udfGetIniSection
-  #csv+="[${s}];$(udfGetIniSection $ini "$s")"
   csv+="[${s}];$(udfIniGroupSection2Csv $ini $s)"
  done
  echo "$csv"
@@ -792,11 +789,8 @@ udfGetLines2Csv() {
  for s in $(echo "${1#*\[$2\];}" | cut -f1 -d'[')
  do
   echo "$s" | grep "^${sUnnamedKeyword}" >/dev/null 2>&1 && {
-   #echo ${s#*=}
    csv+="${s#*=};"
-   #sed -e "s/${sUnnamedKeyword}[[:digit:]]+=//")
   }
-  
  done
  IFS=$cIFS
  echo "$csv"
