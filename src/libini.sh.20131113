@@ -1,5 +1,5 @@
 #
-# $Id: libini.sh 272 2013-11-06 13:28:19Z yds $
+# $Id: libini.sh 276 2013-11-08 12:08:45Z yds $
 #
 #****h* bashlyk/libini
 #  DESCRIPTION
@@ -35,7 +35,7 @@
 : ${_bashlyk_pathIni:=$(pwd)}
 : ${_bashlyk_sUnnamedKeyword:=_bashlyk_ini_void_autoKey_}
 : ${_bashlyk_aRequiredCmd_ini:="[ awk cat cut dirname echo false grep mv printf pwd rm sed sort touch tr true uniq w xargs"}
-: ${_bashlyk_aExport_ini:="udfGetIniSection udfReadIniSection udfReadIniSection2Var udfCsvOrder udfAssembly udfSetVarFromCsv udfSetVarFromIni udfCsvKeys udfIniWrite udfIniChange udfGetIni udfGetCsvSection udfGetCsvSection2Var udfGetIniSection2Var udfCsvOrder2Var udfCsvKeys2Var udfGetIni2Var udfGetLines2Csv udfIniGroupSection2Csv udfIniGroupSection2CsvVar udfIni2Csv udfIni2CsvVar udfIniGroup2Csv udfIniGroup2CsvVar udfIni"}
+: ${_bashlyk_aExport_ini:="udfGetIniSection udfReadIniSection udfReadIniSection2Var udfCsvOrder udfAssembly udfSetVarFromCsv udfSetVarFromIni udfCsvKeys udfIniWrite udfIniChange udfGetIni udfGetCsvSection udfGetCsvSection2Var udfGetIniSection2Var udfCsvOrder2Var udfCsvKeys2Var udfGetIni2Var udfGetLines2Csv udfIniGroupSection2Csv udfIniGroupSection2CsvVar udfIni2Csv udfIni2CsvVar udfIniGroup2Csv udfIniGroup2CsvVar"}
 #: ${_bashlyk_aExport_ini:="udfGetIniSection udfReadIniSection udfIniSection2Csv udfIniGroupSection2Csv"}
 #******
 #****f* bashlyk/libini/udfGetIniSection
@@ -587,55 +587,6 @@ udfIniChange() {
  return 0
 }
 #******
-#****f* bashlyk/libini/udfIni
-#  SYNOPSIS
-#    udfIni <file> [<section>]:<csv;> ...
-#  DESCRIPTION
-#    инициализировать перечисленные в <csv;> переменные секций <section> 
-#    конфигурации <file> 
-#  INPUTS
-#     file    - файл конфигурации формата "*.ini".
-#     section - любое количество имен секций, переменные которых нужно получить. 
-#     csv;    - список переменных
-#  RETURN VALUE
-#     0  - Выполнено успешно
-#    255 - Ошибка: аргументы отсутствуют или файл конфигурации не найден
-#  EXAMPLE
-#    local csv='b=true;_bashlyk_ini_test_autoKey_0="iXo Xo = 19";_bashlyk_ini_test_autoKey_1="simple line";iXo=1921;iYo=1080;sTxt="foo bar";' ##udfIni
-#    local sTxt="foo bar" b=true iXo=1921 iYo=1080 ini iniChild                 ##udfIni
-#    local fmt="[test]\n\t%s\t=\t%s\n\t%s\t=\t%s\n\t%s\t=\t%s\n\t%s\t=\t%s\n"   ##udfIni
-#    ini=$(mktemp --suffix=.ini || tempfile -s .test.ini)                       ##udfIni ? true
-#    iniChild="$(dirname $ini)/child.$(basename $ini)"                          ##udfIni
-#    printf "$fmt" sTxt foo b false "iXo Xo" 19 iYo 80 | tee $ini               ##udfIni
-#    echo "simple line" | tee -a $ini                                           ##udfIni
-#    printf "$fmt" sTxt "$sTxt" b "$b" iXo "$iXo" iYo "$iYo" | tee $iniChild    ##udfIni
-#    udfIni $iniChild ':' 'test:sTxt;b;iXo'                                     ##udfIni ? true
-#    echo "dbg ${sTxt};${b};${iXo}"                                             ##udfIni ? true
-#    rm -f $iniChild $ini                                                       ##udfIni
-#  SOURCE
-udfIni() {
- [ -n "$1" -a -f "$1" ] || return 255
- #
- local csv s sSection csvSection csvVar
- #
- csv=$(udfIniGroup2Csv "$1")
- shift
- #
- for s in $*; do
-  sSection=${s%:*}
-  #: ${sSection:=void}
-  aVar="$(echo ${s#*:} | tr ';' ' ')"
-  csvSection=$(udfGetCsvSection "$csv" "$sSection")
-  ## TODO udfCsvOrder лишний вызов
-  #echo "udfSetVarFromCsv \"$csvSection\" $aVar"
-  #echo "udfGetLines2Csv _${csvSection}_ _${sSection}_"
-  #udfGetLines2Csv "$csvSection" "$sSection"
-  eval 'export _bashlyk_ini_${sSection:-void}_enum="$(udfGetLines2Csv "$csvSection" "$sSection")"'
- done
- return 0
-}
-#******
-#******
 #****f* bashlyk/libini/udfGetIni
 #  SYNOPSIS
 #    udfGetIni <file> [<section>] ...
@@ -777,11 +728,11 @@ udfGetCsvSection2Var() {
 #  RETURN VALUE
 #     0  - Выполнено успешно
 #  EXAMPLE
-#    local csv='[];a=b;_bashlyk_ini_void_autoKey_0="d = e";[s1];_bashlyk_ini_s1_autoKey_0=f=0;c=g h;[s2];a=k;_bashlyk_ini_s2_autoKey_0=l m;'                    ##udfGetLines2Csv
+#    local csv='[];a=b;_bashlyk_ini_void_autoKey_0=d e;[s1];_bashlyk_ini_s1_autoKey_0=f;c=g h;[s2];a=k;_bashlyk_ini_s2_autoKey_0=l m;'                    ##udfGetLines2Csv
 #    udfGetLines2Csv "$csv"                                                     ##udfGetLines2Csv ? true
-#    udfGetLines2Csv "$csv" | grep '^"d = e";$'                                     ##udfGetLines2Csv ? true
+#    udfGetLines2Csv "$csv" | grep '^d e;$'                                     ##udfGetLines2Csv ? true
 #    udfGetLines2Csv "$csv" s1                                                  ##udfGetLines2Csv ? true
-#    udfGetLines2Csv "$csv" s1 | grep '^f=0;$'                                    ##udfGetLines2Csv ? true
+#    udfGetLines2Csv "$csv" s1 | grep '^f;$'                                    ##udfGetLines2Csv ? true
 #    udfGetLines2Csv "$csv" s2                                                  ##udfGetLines2Csv ? true
 #    udfGetLines2Csv "$csv" s2 | grep '^l m;$'                                  ##udfGetLines2Csv ? true
 #  SOURCE
@@ -791,12 +742,8 @@ udfGetLines2Csv() {
  IFS=';'
  for s in $(echo "${1#*\[$2\];}" | cut -f1 -d'[')
  do
-  echo "$s" | grep "^${sUnnamedKeyword}" >/dev/null 2>&1 && {
-   #echo ${s#*=}
-   csv+="${s#*=};"
-   #sed -e "s/${sUnnamedKeyword}[[:digit:]]+=//")
-  }
-  
+  s=$(echo "$s" | grep "^${sUnnamedKeyword}" | sed -e "s/${sUnnamedKeyword}.*=//")
+  [ -n "$s" ] && csv+="${s};"
  done
  IFS=$cIFS
  echo "$csv"
