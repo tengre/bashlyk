@@ -610,7 +610,7 @@ udfIniChange() {
 #    echo "simple line" | tee -a $ini                                           ##udfIni
 #    printf "$fmt" sTxt "$sTxt" b "$b" iXo "$iXo" iYo "$iYo" | tee $iniChild    ##udfIni
 #    sTxt='';b='';iXo=''                                                        ##udfIni
-#    udfIni $iniChild ':' 'test:sTxt;b;iXo'                                     ##udfIni ? true
+#    udfIni $iniChild 'test:sTxt;b;iXo'                                     ##udfIni ? true
 #    echo "${sTxt};${b};${iXo}" | grep -e "^foo = bar;true;1921$"               ##udfIni ? true
 #    echo "$_bashlyk_ini_test_enum" | grep -e '^"iXo Xo = 19";"simple line";$'  ##udfIni ? true
 #    rm -f $iniChild $ini                                                       ##udfIni
