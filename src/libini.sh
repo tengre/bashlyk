@@ -629,6 +629,7 @@ udfIni() {
   csvSection=$(udfGetCsvSection "$csv" "$sSection")
   ## TODO udfCsvOrder лишний вызов
   udfSetVarFromCsv "$csvSection" $aVar
+  ## TODO проработать инициализацию переменной для CSV "безымянных" значений
   eval 'export _bashlyk_ini_${sSection:-void}_enum="$(udfGetLines2Csv "$csvSection" "$sSection")"'
  done
  return 0
@@ -1089,8 +1090,7 @@ udfIniGroup2Csv() {
  ini=''
  pathIni="$_pathIni"
  #
- [ "$1"  = "${1##*/}" -a -f ${pathIni}/$1 ] \
-  || pathIni=
+ [ "$1"  = "${1##*/}" -a -f ${pathIni}/$1 ] || pathIni=
  [ "$1"  = "${1##*/}" -a -f $1 ] && pathIni=$(pwd)
  [ "$1" != "${1##*/}" -a -f $1 ] && pathIni=$(dirname $1)
  [ -n "$2" ] && sTag="$2"

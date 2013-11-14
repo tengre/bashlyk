@@ -1089,8 +1089,7 @@ udfIniGroup2Csv() {
  ini=''
  pathIni="$_pathIni"
  #
- [ "$1"  = "${1##*/}" -a -f ${pathIni}/$1 ] \
-  || pathIni=
+ [ "$1"  = "${1##*/}" -a -f ${pathIni}/$1 ] || pathIni=
  [ "$1"  = "${1##*/}" -a -f $1 ] && pathIni=$(pwd)
  [ "$1" != "${1##*/}" -a -f $1 ] && pathIni=$(dirname $1)
  [ -n "$2" ] && sTag="$2"
