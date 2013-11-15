@@ -375,6 +375,8 @@ udfSetVarFromCsv() {
   if [ -n "$bashlyk_v_KLokRJky" ]; then
    eval "$bashlyk_k_KLokRJky=$bashlyk_v_KLokRJky"
    #2>/dev/null
+  else 
+   #[ -n "$ ];
   fi
  done
  return 0
