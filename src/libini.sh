@@ -375,8 +375,6 @@ udfSetVarFromCsv() {
   if [ -n "$bashlyk_v_KLokRJky" ]; then
    eval "$bashlyk_k_KLokRJky=$bashlyk_v_KLokRJky"
    #2>/dev/null
-  else 
-   #[ -n "$ ];
   fi
  done
  return 0
@@ -591,6 +589,7 @@ udfIniChange() {
 }
 #******
 #****f* bashlyk/libini/udfIni
+## TODO подправить документацию
 #  SYNOPSIS
 #    udfIni <file> [<section>]:<csv;> ...
 #  DESCRIPTION
@@ -604,7 +603,7 @@ udfIniChange() {
 #     0  - Выполнено успешно
 #    255 - Ошибка: аргументы отсутствуют или файл конфигурации не найден
 #  EXAMPLE
-#    local sTxt="foo = bar" b=true iXo=1921 iYo=1080 ini iniChild               ##udfIni
+#    local sTxt="foo = bar" b=true iXo=1921 iYo=1080 ini iniChild test          ##udfIni
 #    local fmt="[test]\n\t%s\t=\t%s\n\t%s\t=\t%s\n\t%s\t=\t%s\n\t%s\t=\t%s\n"   ##udfIni
 #    ini=$(mktemp --suffix=.ini || tempfile -s .test.ini)                       ##udfIni ? true
 #    iniChild="$(dirname $ini)/child.$(basename $ini)"                          ##udfIni
@@ -612,27 +611,35 @@ udfIniChange() {
 #    echo "simple line" | tee -a $ini                                           ##udfIni
 #    printf "$fmt" sTxt "$sTxt" b "$b" iXo "$iXo" iYo "$iYo" | tee $iniChild    ##udfIni
 #    sTxt='';b='';iXo=''                                                        ##udfIni
-#    udfIni $iniChild 'test:sTxt;b;iXo'                                     ##udfIni ? true
+#    udfIni $iniChild 'test:sTxt;b;iXo' 'test:='                                ##udfIni ? true
 #    echo "${sTxt};${b};${iXo}" | grep -e "^foo = bar;true;1921$"               ##udfIni ? true
-#    echo "$_bashlyk_ini_test_enum" | grep -e '^"iXo Xo = 19";"simple line";$'  ##udfIni ? true
+#    echo "dbg $test"                                                           ##udfIni
+#    echo "$test" | grep -e '^"iXo Xo = 19";"simple line";$'                    ##udfIni ? true
 #    rm -f $iniChild $ini                                                       ##udfIni
 #  SOURCE
 udfIni() {
  [ -n "$1" -a -f "$1" ] || return 255
  #
- local csv s sSection csvSection csvVar
+ local bashlyk_udfIni_csv bashlyk_udfIni_s bashlyk_udfIni_sSection 
+ local bashlyk_udfIni_csvSection bashlyk_udfIni_csvVar
  #
- csv=$(udfIniGroup2Csv "$1")
+ bashlyk_udfIni_csv=$(udfIniGroup2Csv "$1")
  shift
  #
- for s in $*; do
-  sSection=${s%:*}
-  aVar="$(echo ${s#*:} | tr ';' ' ')"
-  csvSection=$(udfGetCsvSection "$csv" "$sSection")
-  ## TODO udfCsvOrder лишний вызов
-  udfSetVarFromCsv "$csvSection" $aVar
-  ## TODO проработать инициализацию переменной для CSV "безымянных" значений
-  eval 'export _bashlyk_ini_${sSection:-void}_enum="$(udfGetLines2Csv "$csvSection" "$sSection")"'
+ for bashlyk_udfIni_s in $*; do
+  bashlyk_udfIni_sSection=${bashlyk_udfIni_s%:*}
+  bashlyk_udfIni_csvSection=$(udfGetCsvSection "$bashlyk_udfIni_csv" "$bashlyk_udfIni_sSection")
+  if [ $bashlyk_udfIni_s = "${bashlyk_udfIni_s%:=*}" ]; then
+   bashlyk_udfIni_aVar="$(echo ${bashlyk_udfIni_s#*:}  | tr ';' ' ')"
+   ## TODO udfCsvOrder лишний вызов
+   udfSetVarFromCsv "$bashlyk_udfIni_csvSection" $bashlyk_udfIni_aVar 
+  else
+   ## TODO проработать инициализацию переменной для CSV "безымянных" значений
+   bashlyk_udfIni_aVar="${bashlyk_udfIni_s#*:=}"   
+   : ${bashlyk_udfIni_aVar:=$bashlyk_udfIni_sSection}
+   udfIsValidVariable $bashlyk_udfIni_aVar || return 2
+   eval 'export $bashlyk_udfIni_aVar="$(udfGetLines2Csv "$bashlyk_udfIni_csvSection" "$bashlyk_udfIni_sSection")"'  
+  fi
  done
  return 0
 }
