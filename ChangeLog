@@ -1,7 +1,6 @@
 Mon, 18 Nov 2013 14:30:56 +0400
 	New upstream release
 	Version 1.70
-
  libini.sh:
  - Добавлена функция udfGetEnum2Csv для получения значений (неименованных) с 
    автоматическими ключами вида «_bashlyk_ini_<section>_autoKey_<increment>»

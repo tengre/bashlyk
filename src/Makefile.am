@@ -9,5 +9,5 @@ bin_SCRIPTS		= bashlyk
 sysconfdir		= ${ETC}/bashlyk
 sysconf_DATA		= bashlyk.conf
 syslibdir		= /usr/share/bashlyk
-syslib_DATA		= $(wildcard lib*.sh) testunit.sh
+syslib_DATA		= $(wildcard lib*.sh) $(wildcard *.awk) testunit.sh
 DESTDIR			=
