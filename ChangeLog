@@ -1,7 +1,38 @@
 Mon, 18 Nov 2013 14:30:56 +0400
 	New upstream release
 	Version 1.70
- -
+
+ libini.sh:
+ - Добавлена функция udfGetEnum2Csv для получения значений (неименованных) с 
+   автоматическими ключами вида «_bashlyk_ini_<section>_autoKey_<increment>»
+   CSV-строки
+ - udfGetSectionCsv - сменился порядок аргументов - такой как и в udfGetEnum2Csv
+ - Для улучшения скорости разбора ini-конфигураций начато применение 
+   awk-сценариев вместо циклов чтения read с применением конвейера команд. 
+   Добавлены функции:
+    udfIniSection2Csv - аналог udfReadIniSection, использует inisection2csv.awk
+    udfIniGroupSection2Csv  - аналог udfGetIniSection использует 
+    udfIniSection2Csv
+    udfIni2Csv - получить данные всех секций ini-файла, использует ini2csv.awk
+    udfiniGroup2Csv - получить данные всех секций родственных ini-файлов, 
+    использует udfIni2Csv
+    udfIni — получить в переменные данные родственных ini-конфигураций, в том 
+    числе списки неименованных значений
+ - Принято решение вынести код инициализации переменных-аргументов в отдельные 
+   функции обертки для улучшения читаемости кода за счёт уменьшения количества 
+   длинных  уникальных идентификаторов локальных переменных ряда функций:
+    udfGetIniSection2Var
+    udfReadIniSection2Var 
+    udfCsvOrder2Var
+    udfCsvKeys2Var
+    udfGetIni2Var
+    udfGetCsvSection2Var 
+    udfIniGroupSection2CsvVar 
+    udfIni2CsvVar 
+    udfIniGroup2CsvVar 
+ libpid.sh:
+ - Исправлена ошибка в udfCheckStarted - слишком жесткий фильтр при проверке 
+   командной строки. Дополнена документация (код возврата 2)
 
 Fri, 07 Jun 2013 12:27:16 +0400
 	New upstream release
