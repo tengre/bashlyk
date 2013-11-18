@@ -35,7 +35,7 @@
 : ${_bashlyk_pathIni:=$(pwd)}
 : ${_bashlyk_sUnnamedKeyword:=_bashlyk_ini_void_autoKey_}
 : ${_bashlyk_aRequiredCmd_ini:="[ awk cat cut dirname echo false grep mv printf pwd rm sed sort touch tr true uniq w xargs"}
-: ${_bashlyk_aExport_ini:="udfGetIniSection udfReadIniSection udfReadIniSection2Var udfCsvOrder udfAssembly udfSetVarFromCsv udfSetVarFromIni udfCsvKeys udfIniWrite udfIniChange udfGetIni udfGetCsvSection udfGetCsvSection2Var udfGetIniSection2Var udfCsvOrder2Var udfCsvKeys2Var udfGetIni2Var udfGetLines2Csv udfIniGroupSection2Csv udfIniGroupSection2CsvVar udfIni2Csv udfIni2CsvVar udfIniGroup2Csv udfIniGroup2CsvVar udfIni"}
+: ${_bashlyk_aExport_ini:="udfGetIniSection udfReadIniSection udfReadIniSection2Var udfCsvOrder udfAssembly udfSetVarFromCsv udfSetVarFromIni udfCsvKeys udfIniWrite udfIniChange udfGetIni udfGetCsvSection udfGetCsvSection2Var udfGetIniSection2Var udfCsvOrder2Var udfCsvKeys2Var udfGetIni2Var udfGetEnum2Csv udfIniGroupSection2Csv udfIniGroupSection2CsvVar udfIni2Csv udfIni2CsvVar udfIniGroup2Csv udfIniGroup2CsvVar udfIni"}
 #: ${_bashlyk_aExport_ini:="udfGetIniSection udfReadIniSection udfIniSection2Csv udfIniGroupSection2Csv"}
 #******
 #****f* bashlyk/libini/udfGetIniSection
@@ -638,7 +638,7 @@ udfIni() {
    bashlyk_udfIni_aVar="${bashlyk_udfIni_s#*:=}"   
    : ${bashlyk_udfIni_aVar:=$bashlyk_udfIni_sSection}
    udfIsValidVariable $bashlyk_udfIni_aVar || return 2
-   eval 'export $bashlyk_udfIni_aVar="$(udfGetLines2Csv "$bashlyk_udfIni_csvSection" "$bashlyk_udfIni_sSection")"'  
+   eval 'export $bashlyk_udfIni_aVar="$(udfGetEnum2Csv "$bashlyk_udfIni_csvSection" "$bashlyk_udfIni_sSection")"'  
   fi
  done
  return 0
@@ -768,9 +768,9 @@ udfGetCsvSection2Var() {
  return 0
 }
 #******
-#****f* bashlyk/libini/udfGetLines2Csv
+#****f* bashlyk/libini/udfGetEnum2Csv
 #  SYNOPSIS
-#    udfGetLines2Csv <csv> [<tag>]
+#    udfGetEnum2Csv <csv> [<tag>]
 #  DESCRIPTION
 #    получить CSV-строку, в полях которых указаны только неименованные значения,
 #    из CSV-строки <csv>. Предполагается, что данная <csv> строка является 
@@ -784,15 +784,15 @@ udfGetCsvSection2Var() {
 #  RETURN VALUE
 #     0  - Выполнено успешно
 #  EXAMPLE
-#    local csv='[];a=b;_bashlyk_ini_void_autoKey_0="d = e";[s1];_bashlyk_ini_s1_autoKey_0=f=0;c=g h;[s2];a=k;_bashlyk_ini_s2_autoKey_0=l m;'                    ##udfGetLines2Csv
-#    udfGetLines2Csv "$csv"                                                     ##udfGetLines2Csv ? true
-#    udfGetLines2Csv "$csv" | grep '^"d = e";$'                                     ##udfGetLines2Csv ? true
-#    udfGetLines2Csv "$csv" s1                                                  ##udfGetLines2Csv ? true
-#    udfGetLines2Csv "$csv" s1 | grep '^f=0;$'                                    ##udfGetLines2Csv ? true
-#    udfGetLines2Csv "$csv" s2                                                  ##udfGetLines2Csv ? true
-#    udfGetLines2Csv "$csv" s2 | grep '^l m;$'                                  ##udfGetLines2Csv ? true
+#    local csv='[];a=b;_bashlyk_ini_void_autoKey_0="d = e";[s1];_bashlyk_ini_s1_autoKey_0=f=0;c=g h;[s2];a=k;_bashlyk_ini_s2_autoKey_0=l m;'                                        ##udfGetEnum2Csv
+#    udfGetEnum2Csv "$csv"                                                      ##udfGetEnum2Csv ? true
+#    udfGetEnum2Csv "$csv" | grep '^"d = e";$'                                  ##udfGetEnum2Csv ? true
+#    udfGetEnum2Csv "$csv" s1                                                   ##udfGetEnum2Csv ? true
+#    udfGetEnum2Csv "$csv" s1 | grep '^f=0;$'                                   ##udfGetEnum2Csv ? true
+#    udfGetEnum2Csv "$csv" s2                                                   ##udfGetEnum2Csv ? true
+#    udfGetEnum2Csv "$csv" s2 | grep '^l m;$'                                   ##udfGetEnum2Csv ? true
 #  SOURCE
-udfGetLines2Csv() {
+udfGetEnum2Csv() {
  local cIFS csv s sUnnamedKeyword="_bashlyk_ini_${2:-void}_autoKey_"
  cIFS=$IFS
  IFS=';'
