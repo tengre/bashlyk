@@ -193,8 +193,7 @@ udfReadIniSection() {
  [ -n "$2" ] && sTag="$2" || bOpen=true
  while read s; do
   ( echo $s | grep "^#\|^$" )>/dev/null && continue
-  b=$(echo $s | grep -oE '\[.*\]' \
-   | tr -d '[]' | xargs)
+  b=$(echo $s | grep -oE '\[.*\]' | tr -d '[]' | xargs)
   if [ -n "$b" ]; then
    $bOpen && break
    if [ "$b" = "$sTag" ]; then
@@ -208,8 +207,8 @@ udfReadIniSection() {
    s=$(echo $s | tr -d "'")
    k="$(echo ${s%%=*}|xargs -0)"
    v="$(echo ${s#*=}|xargs -0)"
-   if [ -z "$k" -o "$k" = "$v" \
-    -o -n "$(echo "$k" | grep '.*[[:space:]+].*')" ]; then
+   if [ -z "$k" -o "$k" = "$v" -o -n "$(echo "$k" | grep '.*[[:space:]+].*')" ]
+   then
     k=${sUnnamedKeyword}${i}
     i=$((i+1))
     v="$s"
@@ -802,9 +801,43 @@ udfGetEnum2Csv() {
  IFS=';'
  for s in $(echo "${1#*\[$2\];}" | cut -f1 -d'[')
  do
-  echo "$s" | grep "^${sUnnamedKeyword}" >/dev/null 2>&1 && {
-   csv+="${s#*=};"
-  }
+  echo "$s" | grep "^${sUnnamedKeyword}" >/dev/null 2>&1 && csv+="${s#*=};"
+ done
+ IFS=$cIFS
+ echo "$csv"
+}
+#******
+#****f* bashlyk/libini/udfPrepare2Exec
+#  SYNOPSIS
+#    udfPrepare2Exec <csv> [<tag>]
+#  DESCRIPTION
+#    получить CSV-строку, в полях которых указаны только неименованные значения,
+#    из CSV-строки <csv>. Предполагается, что данная <csv> строка является 
+#    сериализацией ini-файла, неименованные данные которого получают ключи вида
+#    "_bashlyk_ini_<секция>_autoKey_<номер>"
+#  INPUTS
+#    tag - имя ini-секции
+#    csv - строка сериализации данных ini-файлов
+#  OUTPUT
+#    csv; строка без заголовка секции [tag]
+#  RETURN VALUE
+#     0  - Выполнено успешно
+#  EXAMPLE
+#    local csv='[];a=b;_bashlyk_ini_void_autoKey_0="d = e";[s1];_bashlyk_ini_s1_autoKey_0=f=0;c=g h;[s2];a=k;_bashlyk_ini_s2_autoKey_0=l m;'                                        ##udfPrepare2Exec
+#    udfPrepare2Exec "$csv"                                                      ##udfPrepare2Exec ? true
+#    udfPrepare2Exec "$csv" | grep '^"d = e";$'                                  ##udfPrepare2Exec ? true
+#    udfPrepare2Exec "$csv" s1                                                   ##udfPrepare2Exec ? true
+#    udfPrepare2Exec "$csv" s1 | grep '^f=0;$'                                   ##udfPrepare2Exec ? true
+#    udfPrepare2Exec "$csv" s2                                                   ##udfPrepare2Exec ? true
+#    udfPrepare2Exec "$csv" s2 | grep '^l m;$'                                   ##udfPrepare2Exec ? true
+#  SOURCE
+udfPrepare2Exec() {
+ local cIFS csv s sUnnamedKeyword="_bashlyk_ini_${2:-void}_autoKey_"
+ cIFS=$IFS
+ IFS=';'
+ for s in $(echo "${1#*\[$2\];}" | cut -f1 -d'[')
+ do
+  csv+="${s/${sUnnamedKeyword}[0-9]*=/};"
  done
  IFS=$cIFS
  echo "$csv"
