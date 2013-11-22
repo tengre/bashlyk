@@ -617,7 +617,7 @@ udfIniChange() {
 #    udfIni $iniChild 'test:sTxt;b;iXo' 'test:='                                ##udfIni ? true
 #    echo "${sTxt};${b};${iXo}" | grep -e "^foo = bar;true;1921$"               ##udfIni ? true
 #    echo "dbg $test"                                                           ##udfIni
-#    echo "$test" | grep -e '^"iXo Xo = 19";"simple line";$'                    ##udfIni ? true
+#    echo "$test" | grep -e '^b=true;"iXo Xo = 19";"simple line";iXo=1921;iYo=1080;sTxt="foo = bar";$' ##udfIni ? true
 #    rm -f $iniChild $ini                                                       ##udfIni
 #  SOURCE
 udfIni() {
@@ -641,7 +641,7 @@ udfIni() {
    bashlyk_udfIni_aVar="${bashlyk_udfIni_s#*:=}"   
    : ${bashlyk_udfIni_aVar:=$bashlyk_udfIni_sSection}
    udfIsValidVariable $bashlyk_udfIni_aVar || return 2
-   eval 'export $bashlyk_udfIni_aVar="$(udfGetEnum2Csv "$bashlyk_udfIni_csvSection" "$bashlyk_udfIni_sSection")"'  
+   eval 'export $bashlyk_udfIni_aVar="$(udfPrepare2Exec "$bashlyk_udfIni_csvSection" "$bashlyk_udfIni_sSection")"'  
   fi
  done
  return 0
@@ -1155,10 +1155,11 @@ udfIniGroup2Csv() {
  for s in $aini; do
   [ -n "$s" ] || continue
   [ -n "$ini" ] && ini="${s}.${ini}" || ini="$s"
-  [ -s "${pathIni}/${ini}" ] && csvIni+=";$(udfIni2Csv "${pathIni}/${ini}" "$sTag");"
+  [ -s "${pathIni}/${ini}" ] && csvIni+=";$(udfIni2Csv "${pathIni}/${ini}" "$sTag" | tr -d '\\');"
  done
- 
+
  aTag=$(echo $csvIni | tr ';' '\n' | grep -oE '\[.*\]' | sort | uniq | tr -d '[]' | tr '\n' ' ')
+ 
  sR=''
  for s in "" $aTag; do
   sT=''
