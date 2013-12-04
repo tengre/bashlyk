@@ -32,5 +32,4 @@ $1=$1 {
  }
 }
 
-#END   { print "["sTag"];"csv }
 END   { print csv }

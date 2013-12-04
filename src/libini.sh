@@ -1170,7 +1170,8 @@ udfIniGroup2Csv() {
    csvIni=$(echo ${csvIni/${sS};${sF}/})
    sT+=";"${sF}
   done
-  sR+="[${s}];$(udfCsvOrder "${sT}");"
+  [ -z "${s/*Exec*/}" ] && sF="${sT}" || sF="$(udfCsvOrder "${sT}")"
+  sR+="[${s}];${sF};"
  done
  GLOBIGNORE=$sGlobIgnore
  echo ${sR} | sed -e "s/;\+/;/g"
