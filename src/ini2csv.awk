@@ -10,6 +10,8 @@ BEGIN {
  next 
 }
 
+/;/ { gsub(";", "_bashlyk_semicolon_") }
+
 $1=$1 {
  s0 = $0
  if ( match(s0, /= *.*$/) < 2 ) {
