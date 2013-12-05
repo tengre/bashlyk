@@ -4,13 +4,19 @@ BEGIN {
 
 /^#|^$/ { next }
 
-/\[/ { 
- sTag = $0; sub(/\]/, "", sTag); 
- sub(/\[/, "", sTag); csv = csv""$0";"; s="_bashlyk_ini_"sTag"_autoKey_"
- next 
+/<embed>/  { b = 1; next }
+/<\/embed>/ { b = 0; next }
+
+/\[/ {
+ if ( b == 0 ) {
+  sTag = $0; sub(/\]/, "", sTag); sub(/\[/, "", sTag); csv = csv""$0";";
+  s="_bashlyk_ini_"sTag"_autoKey_"
+  next 
+ } 
 }
 
 /;/ { gsub(";", "_bashlyk_semicolon_") }
+
 
 $1=$1 {
  s0 = $0
