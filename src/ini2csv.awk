@@ -4,22 +4,25 @@ BEGIN {
 
 /^#|^$/ { next }
 
-/<embed>/  { b = 1; next }
-/<\/embed>/ { b = 0; next }
-
 /\[/ {
  if ( b == 0 ) {
+  if (match($0, /:\[.*\]:/)) { b = 1; gsub(":", "") } 
   sTag = $0; sub(/\]/, "", sTag); sub(/\[/, "", sTag); csv = csv""$0";";
   s="_bashlyk_ini_"sTag"_autoKey_"
   next 
- } 
+ } else {
+  if (match($0, /:\[\/.*\]:/)) { b = 0; next }   
+ }
 }
 
-/;/ { gsub(";", "_bashlyk_semicolon_") }
-
-
 $1=$1 {
+ gsub(";", "_bashlyk_semicolon_")
+ if ( b == 1 ) { 
+  gsub("\[", "_bashlyk_lsqb_")
+  gsub("\]", "_bashlyk_rsqb_")
+ }  
  s0 = $0
+ 
  if ( match(s0, /= *.*$/) < 2 ) {
   if ( match(s0, /[ =]/) ) { s0 = "\""s0"\"" }
   csv = csv""s""i++"="s0";"
