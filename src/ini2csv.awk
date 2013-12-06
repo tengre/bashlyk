@@ -6,21 +6,20 @@ BEGIN {
 
 /\[/ {
  if ( b == 0 ) {
-  if (match($0, /:\[.*\]:/)) { b = 1; gsub(":", "") } 
-  sTag = $0; sub(/\]/, "", sTag); sub(/\[/, "", sTag); csv = csv""$0";";
+  if (match($0, /\[.*\]:/)) { b = 1; gsub(":", "") } 
+  sTag = $0; sub(/\]/, "", sTag); sub(/\[/, "", sTag); csv = csv"["sTag"];";
   s="_bashlyk_ini_"sTag"_autoKey_"
   next 
  } else {
-  if (match($0, /:\[\/.*\]:/)) { b = 0; next }   
+  if (match($0, /:\[.*\]/)) { b = 0; next }   
  }
 }
 
 $1=$1 {
- gsub(";", "_bashlyk_semicolon_")
- if ( b == 1 ) { 
-  gsub("\[", "_bashlyk_lsqb_")
-  gsub("\]", "_bashlyk_rsqb_")
- }  
+ gsub(";",  "_bashlyk_\&#59_")
+ gsub("\[", "_bashlyk_\&#91_")
+ gsub("\]", "_bashlyk_\&#93_")
+
  s0 = $0
  
  if ( match(s0, /= *.*$/) < 2 ) {
