@@ -1164,13 +1164,14 @@ udfIniGroup2Csv() {
  for s in "" $aTag; do
   sT=''
   sS='\['${s}'\]'
+  ## TODO защита от зацикливания
   while [ true ]; do
    [ -n "$(echo $csvIni | grep -oE $sS)" ] || break
    sF=$(echo "${csvIni#*${sS};}" | cut -f1 -d'[')
    csvIni=$(echo ${csvIni/${sS};${sF}/})
    sT+=";"${sF}
   done
-  [ -z "${s/*Exec*/}" ] && sF="${sT}" || sF="$(udfCsvOrder "${sT}")"
+  [ -z "${sF/:;*/}" ] && sF="${sT}" || sF="$(udfCsvOrder "${sT}")"
   sR+="[${s}];${sF};"
  done
  GLOBIGNORE=$sGlobIgnore
