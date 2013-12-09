@@ -43,6 +43,7 @@
 : ${_bashlyk_bNotUseLog:=1}
 : ${_bashlyk_emailRcpt:=postmaster}
 : ${_bashlyk_emailSubj:="${_bashlyk_sUser}@${HOSTNAME}::${_bashlyk_s0}"}
+: ${_bashlyk_reMetaRules:='_bashlyk_&#91=>\[;_bashlyk_&#93_=>\[;_bashlyk_&#59_=>\;'}
 : ${_bashlyk_aRequiredCmd_std:="[ basename cat cut chgrp chmod chown date dir echo false file grep kill ls mail md5sum pwd mkdir mktemp printf ps rm rmdir sed sleep tee tempfile touch true w which xargs"}
 : ${_bashlyk_aExport_std:="udfBaseId udfDate udfEcho udfMail udfWarn udfThrow udfOnEmptyVariable udfThrowOnEmptyVariable udfWarnOnEmptyVariable udfShowVariable udfIsNumber udfIsValidVariable udfQuoteIfNeeded udfWSpace2Alias udfAlias2WSpace udfMakeTemp  udfMakeTempV udfShellExec udfAddFile2Clean udfAddPath2Clean udfAddJob2Clean udfAddPid2Clean udfCleanQueue udfOnTrap _ARGUMENTS _s0 _pathDat _ _gete _getv _set udfCheckCsv udfGetMd5 udfGetPathMd5 udfXml"}
 #******
@@ -642,9 +643,21 @@ udfMakeTempV() {
 #  SOURCE
 udfShellExec() {
  [ -n "$*" ] || return 255
- local fn rc
+ local fn rc s cIFS re
  udfMakeTemp fn
- echo $* > $fn
+ cIFS=$IFS
+ IFS=';'
+ for s in ${_bashlyk_reMetaRules}; do
+  re+=' -e "s/'${s%=>*}'/'${s#*=>}'/g" '
+ done
+ echo "$s" > /tmp/libini.log
+ s=''
+ for s in "$*"; do
+  echo $s | sed $re >> $fn
+ done
+ IFS=$cIFS
+ echo 
+ cat $fn >> /tmp/libini.log
  . $fn
  rc=$?
  rm -f $fn
