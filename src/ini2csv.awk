@@ -19,8 +19,9 @@ BEGIN {
 $1=$1 {
  gsub(";",  "_bashlyk_\&#59_")
  gsub("\[", "_bashlyk_\&#91_")
+ gsub("\\", "_bashlyk_\&#92_")
  gsub("\]", "_bashlyk_\&#93_")
-
+ 
  s0 = $0
  
  if ( match(s0, /= *.*$/) < 2 ) {

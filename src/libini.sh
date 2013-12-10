@@ -35,7 +35,7 @@
 : ${_bashlyk_pathIni:=$(pwd)}
 : ${_bashlyk_sUnnamedKeyword:=_bashlyk_ini_void_autoKey_}
 : ${_bashlyk_aRequiredCmd_ini:="[ awk cat cut dirname echo false grep mv printf pwd rm sed sort touch tr true uniq w xargs"}
-: ${_bashlyk_aExport_ini:="udfGetIniSection udfReadIniSection udfReadIniSection2Var udfCsvOrder udfAssembly udfSetVarFromCsv udfSetVarFromIni udfCsvKeys udfIniWrite udfIniChange udfGetIni udfGetCsvSection udfGetCsvSection2Var udfGetIniSection2Var udfCsvOrder2Var udfCsvKeys2Var udfGetIni2Var udfGetEnum2Csv udfIniGroupSection2Csv udfIniGroupSection2CsvVar udfIni2Csv udfIni2CsvVar udfIniGroup2Csv udfIniGroup2CsvVar udfIni udfPrepare2Exec"}
+: ${_bashlyk_aExport_ini:="udfGetIniSection udfReadIniSection udfReadIniSection2Var udfCsvOrder udfAssembly udfSetVarFromCsv udfSetVarFromIni udfCsvKeys udfIniWrite udfIniChange udfGetIni udfGetCsvSection udfGetCsvSection2Var udfGetIniSection2Var udfCsvOrder2Var udfCsvKeys2Var udfGetIni2Var udfSelectEnumFromCsvHash udfIniGroupSection2Csv udfIniGroupSection2CsvVar udfIni2Csv udfIni2CsvVar udfIniGroup2Csv udfIniGroup2CsvVar udfIni udfCsvHash2Raw"}
 #: ${_bashlyk_aExport_ini:="udfGetIniSection udfReadIniSection udfIniSection2Csv udfIniGroupSection2Csv"}
 #******
 #****f* bashlyk/libini/udfGetIniSection
@@ -641,7 +641,7 @@ udfIni() {
    bashlyk_udfIni_aVar="${bashlyk_udfIni_s#*:=}"   
    : ${bashlyk_udfIni_aVar:=$bashlyk_udfIni_sSection}
    udfIsValidVariable $bashlyk_udfIni_aVar || return 2
-   eval 'export $bashlyk_udfIni_aVar="$(udfPrepare2Exec "$bashlyk_udfIni_csvSection" "$bashlyk_udfIni_sSection")"'  
+   eval 'export $bashlyk_udfIni_aVar="$(udfCsvHash2Raw "$bashlyk_udfIni_csvSection" "$bashlyk_udfIni_sSection")"'  
   fi
  done
  return 0
@@ -771,11 +771,11 @@ udfGetCsvSection2Var() {
  return 0
 }
 #******
-#****f* bashlyk/libini/udfGetEnum2Csv
+#****f* bashlyk/libini/udfSelectEnumFromCsvHash
 #  SYNOPSIS
-#    udfGetEnum2Csv <csv> [<tag>]
+#    udfSelectEnumFromCsvHash <csv> [<tag>]
 #  DESCRIPTION
-#    получить CSV-строку, в полях которых указаны только неименованные значения,
+#     CSV-строку, в полях которых указаны только неименованные значения,
 #    из CSV-строки <csv>. Предполагается, что данная <csv> строка является 
 #    сериализацией ini-файла, неименованные данные которого получают ключи вида
 #    "_bashlyk_ini_<секция>_autoKey_<номер>"
@@ -787,15 +787,15 @@ udfGetCsvSection2Var() {
 #  RETURN VALUE
 #     0  - Выполнено успешно
 #  EXAMPLE
-#    local csv='[];a=b;_bashlyk_ini_void_autoKey_0="d = e";[s1];_bashlyk_ini_s1_autoKey_0=f=0;c=g h;[s2];a=k;_bashlyk_ini_s2_autoKey_0=l m;'                                        ##udfGetEnum2Csv
-#    udfGetEnum2Csv "$csv"                                                      ##udfGetEnum2Csv ? true
-#    udfGetEnum2Csv "$csv" | grep '^"d = e";$'                                  ##udfGetEnum2Csv ? true
-#    udfGetEnum2Csv "$csv" s1                                                   ##udfGetEnum2Csv ? true
-#    udfGetEnum2Csv "$csv" s1 | grep '^f=0;$'                                   ##udfGetEnum2Csv ? true
-#    udfGetEnum2Csv "$csv" s2                                                   ##udfGetEnum2Csv ? true
-#    udfGetEnum2Csv "$csv" s2 | grep '^l m;$'                                   ##udfGetEnum2Csv ? true
+#    local csv='[];a=b;_bashlyk_ini_void_autoKey_0="d = e";[s1];_bashlyk_ini_s1_autoKey_0=f=0;c=g h;[s2];a=k;_bashlyk_ini_s2_autoKey_0=l m;'                                        ##udfSelectEnumFromCsvHash
+#    udfSelectEnumFromCsvHash "$csv"                                            ##udfSelectEnumFromCsvHash ? true
+#    udfSelectEnumFromCsvHash "$csv" | grep '^"d = e";$'                        ##udfSelectEnumFromCsvHash ? true
+#    udfSelectEnumFromCsvHash "$csv" s1                                         ##udfSelectEnumFromCsvHash ? true
+#    udfSelectEnumFromCsvHash "$csv" s1 | grep '^f=0;$'                         ##udfSelectEnumFromCsvHash ? true
+#    udfSelectEnumFromCsvHash "$csv" s2                                         ##udfSelectEnumFromCsvHash ? true
+#    udfSelectEnumFromCsvHash "$csv" s2 | grep '^l m;$'                         ##udfSelectEnumFromCsvHash ? true
 #  SOURCE
-udfGetEnum2Csv() {
+udfSelectEnumFromCsvHash() {
  local cIFS csv s sUnnamedKeyword="_bashlyk_ini_${2:-void}_autoKey_"
  cIFS=$IFS
  IFS=';'
@@ -807,14 +807,15 @@ udfGetEnum2Csv() {
  echo "$csv"
 }
 #******
-#****f* bashlyk/libini/udfPrepare2Exec
+#****f* bashlyk/libini/udfCsvHash2Raw
 #  SYNOPSIS
-#    udfPrepare2Exec <csv> [<tag>]
+#    udfCsvHash2Raw <csv> [<tag>]
 #  DESCRIPTION
-#    получить CSV-строку, в полях которых указаны только неименованные значения,
-#    из CSV-строки <csv>. Предполагается, что данная <csv> строка является 
-#    сериализацией ini-файла, неименованные данные которого получают ключи вида
-#    "_bashlyk_ini_<секция>_autoKey_<номер>"
+#    подготовить CSV;-строку для выполнения в качестве сценария, поля которого 
+#    рассматриваются как строки команд. При этом автоматические ключи вида 
+#    "_bashlyk_ini_<секция>_autoKey_<номер>" будут убраны. Поля вида 
+#    "ключ=значение" становятся командами присвоения значения переменной.
+#    Предполагается, что входная <csv> строка является сериализацией ini-файла.
 #  INPUTS
 #    tag - имя ini-секции
 #    csv - строка сериализации данных ini-файлов
@@ -823,15 +824,15 @@ udfGetEnum2Csv() {
 #  RETURN VALUE
 #     0  - Выполнено успешно
 #  EXAMPLE
-#    local csv='[];a=b;_bashlyk_ini_void_autoKey_0="d = e";[s1];_bashlyk_ini_s1_autoKey_0=f=0;c=g h;[s2];a=k;_bashlyk_ini_s2_autoKey_0=l m;'                                        ##udfPrepare2Exec
-#    udfPrepare2Exec "$csv"                                                     ##udfPrepare2Exec ? true
-#    udfPrepare2Exec "$csv" | grep '^a=b;"d = e";$'                             ##udfPrepare2Exec ? true
-#    udfPrepare2Exec "$csv" s1                                                  ##udfPrepare2Exec ? true
-#    udfPrepare2Exec "$csv" s1 | grep '^f=0;c=g h;$'                            ##udfPrepare2Exec ? true
-#    udfPrepare2Exec "$csv" s2                                                  ##udfPrepare2Exec ? true
-#    udfPrepare2Exec "$csv" s2 | grep '^a=k;l m;$'                              ##udfPrepare2Exec ? true
+#    local csv='[];a=b;_bashlyk_ini_void_autoKey_0="d = e";[s1];_bashlyk_ini_s1_autoKey_0=f=0;c=g h;[s2];a=k;_bashlyk_ini_s2_autoKey_0=l m;'                                        ##udfCsvHash2Raw
+#    udfCsvHash2Raw "$csv"                                                      ##udfCsvHash2Raw ? true
+#    udfCsvHash2Raw "$csv" | grep '^a=b;"d = e";$'                              ##udfCsvHash2Raw ? true
+#    udfCsvHash2Raw "$csv" s1                                                   ##udfCsvHash2Raw ? true
+#    udfCsvHash2Raw "$csv" s1 | grep '^f=0;c=g h;$'                             ##udfCsvHash2Raw ? true
+#    udfCsvHash2Raw "$csv" s2                                                   ##udfCsvHash2Raw ? true
+#    udfCsvHash2Raw "$csv" s2 | grep '^a=k;l m;$'                               ##udfCsvHash2Raw ? true
 #  SOURCE
-udfPrepare2Exec() {
+udfCsvHash2Raw() {
  local cIFS csv s sUnnamedKeyword="_bashlyk_ini_${2:-void}_autoKey_"
  cIFS=$IFS
  IFS=';'

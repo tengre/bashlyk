@@ -45,7 +45,7 @@
 : ${_bashlyk_emailSubj:="${_bashlyk_sUser}@${HOSTNAME}::${_bashlyk_s0}"}
 : ${_bashlyk_reMetaRules:='_bashlyk_\&#91_=>\[|_bashlyk_\&#93_=>\[|_bashlyk_\&#59_=>\;'}
 : ${_bashlyk_aRequiredCmd_std:="[ basename cat cut chgrp chmod chown date dir echo false file grep kill ls mail md5sum pwd mkdir mktemp printf ps rm rmdir sed sleep tee tempfile touch true w which xargs"}
-: ${_bashlyk_aExport_std:="udfBaseId udfDate udfEcho udfMail udfWarn udfThrow udfOnEmptyVariable udfThrowOnEmptyVariable udfWarnOnEmptyVariable udfShowVariable udfIsNumber udfIsValidVariable udfQuoteIfNeeded udfWSpace2Alias udfAlias2WSpace udfMakeTemp  udfMakeTempV udfShellExec udfAddFile2Clean udfAddPath2Clean udfAddJob2Clean udfAddPid2Clean udfCleanQueue udfOnTrap _ARGUMENTS _s0 _pathDat _ _gete _getv _set udfCheckCsv udfGetMd5 udfGetPathMd5 udfXml"}
+: ${_bashlyk_aExport_std:="udfBaseId udfDate udfEcho udfMail udfWarn udfThrow udfOnEmptyVariable udfThrowOnEmptyVariable udfWarnOnEmptyVariable udfShowVariable udfIsNumber udfIsValidVariable udfQuoteIfNeeded udfWSpace2Alias udfAlias2WSpace udfMakeTemp  udfMakeTempV udfShellExec udfAddFile2Clean udfAddPath2Clean udfAddJob2Clean udfAddPid2Clean udfCleanQueue udfOnTrap _ARGUMENTS _s0 _pathDat _ _gete _getv _set udfCheckCsv udfGetMd5 udfGetPathMd5 udfXml udfPrepare2Exec"}
 #******
 #****f* bashlyk/libstd/udfBaseId
 #  SYNOPSIS
@@ -626,6 +626,33 @@ udfMakeTempV() {
  return $?
 }
 #******
+#****f* bashlyk/libstd/udfPrepare2Exec
+#  SYNOPSIS
+#    udfPrepare2Exec args
+#  DESCRIPTION
+#    Подготовка входных CSV; строк для выполнения в качестве сценария командной строки во внешнем временном файле
+#    в текущей среде интерпретатора оболочки
+#  INPUTS
+#    args - командная строка
+#  OUTPUT
+#    Поток строк сценария
+#    в остальных случаях код возврата командной строки с учетом доступа к временному файлу
+#  EXAMPLE
+#    udfPrepare2Exec 'true; false'                                              ##udfPrepare2Exec ? true
+#    udfPrepare2Exec 'false; true'                                              ##udfPrepare2Exec ? true
+#  SOURCE
+udfPrepare2Exec() {
+ local s cIFS
+ cIFS=$IFS
+ IFS=';'
+ for s in $*
+ do
+  echo "$s" | sed -e "s/_bashlyk_\&#91_/\[/g" -e "s/_bashlyk_\&#92_/\\\/g" -e "s/_bashlyk_\&#93_/\]/g" -e "s/_bashlyk_\&#59_/\;/g" -e "s/^\"\(.*\)\"$/\1/"
+ done
+ IFS=$cIFS
+ return 0
+}
+#******
 #****f* bashlyk/libstd/udfShellExec
 #  SYNOPSIS
 #    udfShellExec args
@@ -643,15 +670,9 @@ udfMakeTempV() {
 #  SOURCE
 udfShellExec() {
  [ -n "$*" ] || return 255
- local fn rc s cIFS re
+ local rc fn
  udfMakeTemp fn
- cIFS=$IFS
- IFS=';'
- for s in $*
- do
-  echo "$s" | sed -e "s/_bashlyk_\&#91_/\[/g" -e "s/_bashlyk_\&#93_/\]/g" -e "s/_bashlyk_\&#59_/\;/g" -e "s/^\"//" -e "s/\"$//" >> $fn
- done
- IFS=$cIFS
+ udfPrepare2Exec $* > $fn
  . $fn
  rc=$?
  rm -f $fn
