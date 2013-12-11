@@ -638,8 +638,9 @@ udfMakeTempV() {
 #    Поток строк сценария
 #    в остальных случаях код возврата командной строки с учетом доступа к временному файлу
 #  EXAMPLE
-#    udfPrepare2Exec 'true; false'                                              ##udfPrepare2Exec ? true
-#    udfPrepare2Exec 'false; true'                                              ##udfPrepare2Exec ? true
+#    local s='_bashlyk_&#91_ -n "$USER" _bashlyk_&#93__bashlyk_&#59_ true'      ##udfPrepare2Exec
+#    udfPrepare2Exec "$s"                                                       ##udfPrepare2Exec
+#    udfPrepare2Exec "$s" | grep -e '^\[ -n "$USER" \]; true$'                  ##udfPrepare2Exec ? true
 #  SOURCE
 udfPrepare2Exec() {
  local s cIFS
