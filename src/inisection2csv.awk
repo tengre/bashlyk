@@ -7,12 +7,16 @@ BEGIN {
 
 /^#|^$/ { next }
 
-/;/ { gsub(";", "_bashlyk_semicolon_") }
-
 $0 ~ re { b = 1; next }
 /\[/ { if (b == 1) exit }
 
 $1=$1 {
+
+ gsub(";",  "_bashlyk_\&#59_")
+ gsub("\[", "_bashlyk_\&#91_")
+ gsub("\\", "_bashlyk_\&#92_")
+ gsub("\]", "_bashlyk_\&#93_")
+  
  if ( b == 0 ) { next }
  s0 = $0
  if ( match(s0, /= *.*$/) < 2 ) {
