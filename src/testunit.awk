@@ -5,7 +5,8 @@ BEGIN {
 
 
 /^#\*\*\*\*f\* .*$/ {
- print "# "$NF
+ f=$NF"_test"
+ print f"() {"
 }
 
 /^#  EXAMPLE/ {
@@ -15,12 +16,14 @@ BEGIN {
 
 /^#  SOURCE/ {
  b = 0
+ print "}"
+ print f
 }
 
 $1=$1 {
  if ( b == 1 ) { 
   sub(/^# *?/, "")
-  sub(/##.* \?/, "; udfTestUnitMsg")
+  sub(/##.* \?/, " >>$_bashlyk_TestUnit_fnLog 2>\&1; udfTestUnitMsg")
   print $0 
  }
 }

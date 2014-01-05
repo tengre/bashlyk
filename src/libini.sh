@@ -136,7 +136,7 @@ udfGetIniSection() {
 #          переменной
 #    255 - Ошибка: аргумент отсутствует
 #  EXAMPLE
-#    пример приведен в описании udfGetIniSection
+#    #пример приведен в описании udfGetIniSection
 #  SOURCE
 udfGetIniSection2Var() {
  [ -n "$2" ] || return 255
@@ -240,7 +240,7 @@ udfReadIniSection() {
 #          переменной
 #    255 - Ошибка: аргумент отсутствует или файл конфигурации не найден
 #  EXAMPLE
-#    пример приведен в описании udfIniGroup2Csv
+#    #пример приведен в описании udfIniGroup2Csv
 #  SOURCE
 udfReadIniSection2Var() {
  [ -n "$2" -a -f "$2" ] || return 255
@@ -328,7 +328,7 @@ _CsvOrder_EOF
 #          переменной
 #    255 - Ошибка: аргумент отсутствует
 #  EXAMPLE
-#    пример приведен в описании udfCsvOrder
+#    #пример приведен в описании udfCsvOrder
 #  SOURCE
 udfCsvOrder2Var() {
  [ -n "$2" ] || return 255
@@ -475,7 +475,7 @@ udfCsvKeys() {
 #          переменной  
 #    255 - Ошибка: аргумент отсутствует
 #  EXAMPLE
-#    пример приведен в описании udfCsvKeys
+#    #пример приведен в описании udfCsvKeys
 #  SOURCE
 udfCsvKeys2Var() {
  [ -n "$2" ] || return 255
@@ -706,7 +706,7 @@ udfGetIni() {
 #     0  - Выполнено успешно
 #    255 - Ошибка: аргументы отсутствуют
 #  EXAMPLE
-#    пример приведен в описании udfGetIni
+#    #пример приведен в описании udfGetIni
 #  SOURCE
 udfGetIni2Var() {
  [ -n "$2" -a -f "$2" ] || return 255
@@ -904,7 +904,7 @@ udfIniSection2Csv() {
 #          переменной
 #    255 - Ошибка: аргумент отсутствует или файл конфигурации не найден
 #  EXAMPLE
-#    пример приведен в описании udfIniGroupSection2Csv
+#    #пример приведен в описании udfIniGroupSection2Csv
 #  SOURCE
 udfIniSection2CsvVar() {
  [ -n "$2" -a -f "$2" ] || return 255
@@ -1014,7 +1014,7 @@ udfIniGroupSection2Csv() {
 #          переменной
 #    255 - Ошибка: аргумент отсутствует
 #  EXAMPLE
-#    пример приведен в описании udfIniGroupSection2Csv
+#    #пример приведен в описании udfIniGroupSection2Csv
 #  SOURCE
 udfIniGroupSection2CsvVar() {
  [ -n "$2" ] || return 255
@@ -1079,7 +1079,7 @@ udfIni2Csv() {
 #          переменной
 #    255 - Ошибка: аргумент отсутствует
 #  EXAMPLE
-#    пример приведен в описании udfIni2Csv
+#    #пример приведен в описании udfIni2Csv
 #  SOURCE
 udfIni2CsvVar() {
  [ -n "$2" ] || return 255
@@ -1197,7 +1197,7 @@ udfIniGroup2Csv() {
 #          переменной
 #    255 - Ошибка: аргумент отсутствует
 #  EXAMPLE
-#    пример приведен в описании udfIniGroup2Csv
+#    #пример приведен в описании udfIniGroup2Csv
 #  SOURCE
 udfIniGroup2CsvVar() {
  [ -n "$2" ] || return 255
