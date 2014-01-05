@@ -1024,6 +1024,7 @@ _set() {
 #          переменной
 #    255 - Ошибка: аргумент отсутствует
 #  EXAMPLE
+#    # TODO добавить проверку "неименованных" значений
 #    local s="a=b;a=c;s=a b c d e f;" r                                         ##udfCheckCsv
 #    udfCheckCsv "$s" | grep '^a=b;a=c;s="a b c d e f";$'                       ##udfCheckCsv ? true
 #    udfCheckCsv "$s" r                                                         ##udfCheckCsv ? true

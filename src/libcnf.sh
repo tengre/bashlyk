@@ -60,7 +60,9 @@
 #    255 - Ошибка: аргумент отсутствует
 #  EXAMPLE
 #    local b conf d pid s0 s                                                    ##udfGetConfig
-#    conf=$(mktemp --tmpdir=. --suffix=.conf || tempfile -d . -s .test.conf)    ##udfGetConfig ? true
+#    # TODO тестовые блоки обертывать в отдельные функции
+#    # TODO "историческая" проверка в текущем каталоге временно убрана (.)
+#    conf=$(mktemp --tmpdir=/tmp --suffix=.conf || tempfile -d /tmp -s .test.conf)    ##udfGetConfig ? true
 #    udfSetConfig $conf "s0=$0;b=true;pid=$$;s=$(uname -a);$(date -R -r $0)"    ##udfGetConfig ? true
 #    udfGetConfig $conf                                                         ##udfGetConfig ? true
 #    test "$s0" = $0 -a "$b" = true -a "$pid" = $$ -a "$s" = "$(uname -a)"      ##udfGetConfig ? true
