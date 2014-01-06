@@ -57,12 +57,12 @@
 #    2 - Процесс с PID для проверяемой командной строки идентичен PID текущего
 #    процесса 
 #  EXAMPLE
-#    (sleep 8)&                                                                 ##udfCheckStarted
-#    local pid=$!                                                               ##udfCheckStarted
-#    ps -p $pid -o pid= -o args=                                                ##udfCheckStarted
-#    udfCheckStarted $pid sleep 8                                               ##udfCheckStarted ? true
-#    udfCheckStarted $pid sleep 88                                              ##udfCheckStarted ? false
-#    udfCheckStarted $$ $0                                                      ##udfCheckStarted ? 2
+#    (sleep 8)&                                                                 
+#    local pid=$!                                                               
+#    ps -p $pid -o pid= -o args=                                                
+#    udfCheckStarted $pid sleep 8                                               ## ? true
+#    udfCheckStarted $pid sleep 88                                              ## ? false
+#    udfCheckStarted $$ $0                                                      ## ? 2
 #  SOURCE
 udfCheckStarted() {
  [ -n "$*" ] || return 255
@@ -87,9 +87,9 @@ udfCheckStarted() {
 #    1   - PID file exist and command line process already started
 #    255 - PID file don't created. Error status
 #  EXAMPLE
-#    udfSetPid                                                                  ##udfSetPid ? true
-#    test -f $_bashlyk_fnPid                                                    ##udfSetPid ? true
-#    head -n 1 $_bashlyk_fnPid | grep -w $$                                     ##udfSetPid ? true
+#    udfSetPid                                                                  ## ? true
+#    test -f $_bashlyk_fnPid                                                    ## ? true
+#    head -n 1 $_bashlyk_fnPid | grep -w $$                                     ## ? true
 #  SOURCE
 udfSetPid() {
  local fnPid pid
@@ -125,7 +125,7 @@ udfSetPid() {
 #          current process stopped
 #    255 - PID file don't created. Error status - current process stopped
 #  EXAMPLE
-#    udfExitIfAlreadyStarted                                                    ##udfExitIfAlreadyStarted ? true
+#    udfExitIfAlreadyStarted                                                    ## ? true
 #  SOURCE
 udfExitIfAlreadyStarted() {
  udfSetPid || exit $?

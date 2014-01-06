@@ -1,29 +1,38 @@
 BEGIN {
- b = 0
- FS = "/"
+ FS = "\n"
+ b = 2
 }
 
 
 /^#\*\*\*\*f\* .*$/ {
- f=$NF"_test"
+ b = 0
+ i=split($0, a, "/")
+ f=a[i]"_test"
  print f"() {"
+ print "echo -- "f" testing start: >> $_bashlyk_TestUnit_fnLog 2>&1"
 }
 
 /^#  EXAMPLE/ {
- b = 1
+ b = b+1
  next
 }
 
 /^#  SOURCE/ {
- b = 0
+ if ( b != 1 ) next
+ print "echo -- "f" testing  done. >> $_bashlyk_TestUnit_fnLog 2>&1" 
  print "}"
  print f
+ b = 2
 }
 
 $1=$1 {
  if ( b == 1 ) { 
   sub(/^# *?/, "")
-  sub(/##.* \?/, " >>$_bashlyk_TestUnit_fnLog 2>\&1; udfTestUnitMsg")
+  if (match($0, /## \?/)) { 
+   sub(/## \?/, " >> $_bashlyk_TestUnit_fnLog 2>\&1; udfTestUnitMsg")
+  } else {
+   $0 = $0">> $_bashlyk_TestUnit_fnLog 2>&1" 
+  }
   print $0 
  }
 }
