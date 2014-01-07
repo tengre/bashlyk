@@ -1,3 +1,7 @@
+#
+# $Id$
+#
+
 BEGIN {
  b = 0; i = 0; csv="[];"; s="_bashlyk_ini_void_autoKey_"
 }

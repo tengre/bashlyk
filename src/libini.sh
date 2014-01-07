@@ -605,8 +605,8 @@ udfIniChange() {
 #  RETURN VALUE
 #     0  - Выполнено успешно
 #    255 - Ошибка: аргументы отсутствуют или файл конфигурации не найден
-#  #TODO подправить тестовую секцию
 #  EXAMPLE
+#    #TODO подправить тестовую секцию
 #    local sTxt="foo = bar" b=true iXo=1921 iYo=1080 ini iniChild test          
 #    local fmt="[test]\n\t%s\t=\t%s\n\t%s\t=\t%s\n\t%s\t=\t%s\n\t%s\t=\t%s\n"   
 #    ini=$(mktemp --suffix=.ini || tempfile -s .test.ini)                       #? true
@@ -647,7 +647,6 @@ udfIni() {
  done
  return 0
 }
-#******
 #******
 #****f* bashlyk/libini/udfGetIni
 #  SYNOPSIS
