@@ -60,18 +60,17 @@
 #    255 - Ошибка: аргумент отсутствует
 #  EXAMPLE
 #    local b conf d pid s0 s                                                    
-#    # TODO тестовые блоки обертывать в отдельные функции
 #    # TODO "историческая" проверка в текущем каталоге временно убрана (.)
-#    conf=$(mktemp --suffix=.conf || tempfile -d /tmp -s .test.conf)    ## ? true
-#    udfSetConfig $conf "s0=$0;b=true;pid=$$;s=$(uname -a);$(date -R -r $0)"    ## ? true
-#    udfGetConfig $conf                                                         ## ? true
-#    test "$s0" = $0 -a "$b" = true -a "$pid" = $$ -a "$s" = "$(uname -a)"      ## ? true
+#    conf=$(mktemp --suffix=.conf || tempfile -d /tmp -s .test.conf)    #? true
+#    udfSetConfig $conf "s0=$0;b=true;pid=$$;s=$(uname -a);$(date -R -r $0)"    #? true
+#    udfGetConfig $conf                                                         #? true
+#    test "$s0" = $0 -a "$b" = true -a "$pid" = $$ -a "$s" = "$(uname -a)"      #? true
 #    rm -f $conf                                                                
 #    b='' conf='' d='' pid='' s0='' sS=''                                       
-#    conf=$(mktemp --suffix=.conf || tempfile -s .test.conf)                    ## ? true
-#    udfSetConfig $conf "s0=$0;b=true;pid=$$;s=$(uname -a);$(date -R -r $0)"    ## ? true
-#    udfGetConfig $conf                                                         ## ? true
-#    test "$s0" = $0 -a "$b" = true -a "$pid" = $$ -a "$s" = "$(uname -a)"      ## ? true
+#    conf=$(mktemp --suffix=.conf || tempfile -s .test.conf)                    #? true
+#    udfSetConfig $conf "s0=$0;b=true;pid=$$;s=$(uname -a);$(date -R -r $0)"    #? true
+#    udfGetConfig $conf                                                         #? true
+#    test "$s0" = $0 -a "$b" = true -a "$pid" = $$ -a "$s" = "$(uname -a)"      #? true
 #    cat $conf                                                                  
 #    rm -f $conf                                                                
 #  SOURCE
@@ -123,15 +122,15 @@ udfGetConfig() {
 #     0  - Выполнено успешно
 #  EXAMPLE
 #    local b conf d pid s0 s                                                    
-#    conf=$(mktemp --suffix=.conf || tempfile -s .test.conf)                    ## ? true
-#    udfSetConfig $conf "s0=$0;b=true;pid=$$;s=$(uname -a);$(date -R -r $0)"    ## ? true
-#    grep "^s0=$0$" $conf                                                       ## ? true
-#    grep "^b=true$" $conf                                                      ## ? true
-#    grep "^pid=${$}$" $conf                                                    ## ? true
-#    grep "^s=\"$(uname -a)\"$" $conf                                           ## ? true
-#    grep "^$(_ sUnnamedKeyword).*=\"$(date -R -r $0)\"$" $conf                 ## ? true
-#    test -s $conf && . $conf                                                   ## ? true
-#    test "$s0" = $0 -a "$b" = true -a "$pid" = $$ -a "$s" = "$(uname -a)"      ## ? true
+#    conf=$(mktemp --suffix=.conf || tempfile -s .test.conf)                    #? true
+#    udfSetConfig $conf "s0=$0;b=true;pid=$$;s=$(uname -a);$(date -R -r $0)"    #? true
+#    grep "^s0=$0$" $conf                                                       #? true
+#    grep "^b=true$" $conf                                                      #? true
+#    grep "^pid=${$}$" $conf                                                    #? true
+#    grep "^s=\"$(uname -a)\"$" $conf                                           #? true
+#    grep "^$(_ sUnnamedKeyword).*=\"$(date -R -r $0)\"$" $conf                 #? true
+#    test -s $conf && . $conf                                                   #? true
+#    test "$s0" = $0 -a "$b" = true -a "$pid" = $$ -a "$s" = "$(uname -a)"      #? true
 #    rm -f $conf                                                                
 #  SOURCE
 udfSetConfig() {

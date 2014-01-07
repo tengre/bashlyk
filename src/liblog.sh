@@ -65,29 +65,29 @@
 #     * Вывод в системный журнал (syslog) и на консоль терминала
 #     * Вывод в системный журнал (syslog) и в файл $_bashlyk_fnLog
 #  EXAMPLE
-#    local fnExec=$(mktemp --suffix=.sh || tempfile -s .test.sh)                ##udfLogger ? true
-#    cat <<'EOF' > $fnExec                                                      #-udfLogger
-#    local fnLog=$(mktemp --suffix=.log || tempfile -s .test.log)               #-udfLogger
-#    _ fnLog $fnLog                                                             #-udfLogger
-#    _ bInteract 0                                                              #-udfLogger
-#    _ bNotUseLog 0                                                             #-udfLogger
-#    _ bTerminal 0                                                              #-udfLogger
-#    udfSetLogSocket                                                            #-udfLogger
-#    _ fnLog                                                                    #-udfLogger
-#    udfLogger test                                                             #-udfLogger
-#    date                                                                       #-udfLogger
-#    echo $_bashlyk_pidLogSock                                                  #-udfLogger
-#EOF                                                                            #-udfLogger
-#    . $fnExec                                                                  ##udfLogger
-#    kill $_bashlyk_pidLogSock                                                  ##udfLogger
-#    rm -f $_bashlyk_fnLogSock                                                  ##udfLogger
-#    sleep 0.6                                                                  ##udfLogger ? true
-#    sleep 0.6                                                                  ##udfLogger ? true
-#    sleep 0.6                                                                  ##udfLogger ? true
-#    sleep 0.6                                                                  ##udfLogger ? true
-#    sleep 0.6                                                                  ##udfLogger ? true
-#    cat $fnLog                                                                 ##udfLogger
-#    rm -f $fnExec $fnLog                                                       ##udfLogger
+#    local fnExec=$(mktemp --suffix=.sh || tempfile -s .test.sh)                #? true
+#    cat <<'EOF' > $fnExec                                                      #-
+#    local fnLog=$(mktemp --suffix=.log || tempfile -s .test.log)               #-
+#    _ fnLog $fnLog                                                             #-
+#    _ bInteract 0                                                              #-
+#    _ bNotUseLog 0                                                             #-
+#    _ bTerminal 0                                                              #-
+#    udfSetLogSocket                                                            #-
+#    _ fnLog                                                                    #-
+#    udfLogger test                                                             #-
+#    date                                                                       #-
+#    echo $_bashlyk_pidLogSock                                                  #-
+#EOF                                                                            #-
+#    . $fnExec                                                                  
+#    kill $_bashlyk_pidLogSock                                                  
+#    rm -f $_bashlyk_fnLogSock                                                  
+#    sleep 0.6                                                                  #? true
+#    sleep 0.6                                                                  #? true
+#    sleep 0.6                                                                  #? true
+#    sleep 0.6                                                                  #? true
+#    sleep 0.6                                                                  #? true
+#    cat $fnLog                                                                 
+#    rm -f $fnExec $fnLog                                                       
 #  SOURCE
 udfLogger() {
  local envLang envLC_TIME bSysLog bUseLog sTagLog
@@ -141,8 +141,8 @@ udfLogger() {
 #  OUTPUT
 #   Зависит от параметров вывода
 #  EXAMPLE
-#    echo test | udfLog - tag                                                   #-udfLog
-#    echo test | udfLog - tag                                                   ##udfLog
+#    echo test | udfLog - tag                                                   #-
+#    echo test | udfLog - tag                                                   
 #  SOURCE
 udfLog() {
  if [ "$1" = "-" ]; then
@@ -166,8 +166,8 @@ udfLog() {
 #    1 - "интерактивный" режим, перенаправление стандартных ввода и/или вывода
 #        не обнаружено
 #  EXAMPLE
-#    udfIsInteract                                                              ##udfIsInteract ? true
-#    udfIsInteract                                                              #-udfIsInteract ? false
+#    udfIsInteract                                                              #? true
+#    udfIsInteract                                                              #= false
 #  SOURCE
 udfIsInteract() {
  [ -t 1 -a -t 0 ] && [ -n "$TERM" ] && [ "$TERM" != "dumb" ] \
@@ -184,8 +184,8 @@ udfIsInteract() {
 #    0 - терминал отсутствует
 #    1 - терминал обнаружен
 #  EXAMPLE
-#    udfIsTerminal                                                              ##udfIsTerminal ? false
-#    udfIsTerminal                                                              #-udfIsTerminal ? false
+#    udfIsTerminal                                                              #? false
+#    udfIsTerminal                                                              #= false
 #  SOURCE
 udfIsTerminal() {
  tty > /dev/null 2>&1 && _bashlyk_bTerminal=1 || _bashlyk_bTerminal=0
@@ -201,8 +201,8 @@ udfIsTerminal() {
 #    0 - вести запись лог-файла
 #    1 - не требуется
 #  EXAMPLE
-#    udfCheck4LogUse                                                            ##udfCheck4LogUse ? true
-#    udfCheck4LogUse                                                            #-udfCheck4LogUse ? false
+#    udfCheck4LogUse                                                            #? true
+#    udfCheck4LogUse                                                            #= false
 #  SOURCE
 udfCheck4LogUse() {
  udfIsTerminal
@@ -227,7 +227,7 @@ udfCheck4LogUse() {
 #  INPUTS
 #    args - префикс для выводимого сообщения о прошедших секундах
 #  EXAMPLE
-#    udfUptime test | grep "test (.* sec)"                                      ##udfUptime ? true
+#    udfUptime test | grep "test (.* sec)"                                      #? true
 #  SOURCE
 udfUptime() {
  local iDiffTime=$(($(date "+%s")-${_bashlyk_iStartTimeStamp}))
@@ -242,7 +242,7 @@ udfUptime() {
 #  INPUTS
 #    args - префикс для выводимого сообщения о прошедших секундах
 #  EXAMPLE
-#    udfFinally test | grep "test (.* sec)"                                     ##udfFinally ? true
+#    udfFinally test | grep "test (.* sec)"                                     #? true
 #  SOURCE
 udfFinally() {
  udfUptime $*
@@ -261,11 +261,11 @@ udfFinally() {
 #           (без тегирования)
 #     255 - Каталог для сокета не существует и не может быть создан
 #  EXAMPLE
-#    local fnLog=$(mktemp --suffix=.log || tempfile -s .test.log)               ##udfSetLogSocket ? true
-#    _ fnLog $fnLog                                                             ##udfSetLogSocket ? true
-#    udfSetLogSocket                                                            ##udfSetLogSocket ? true
-#    ls -l $fnLog                                                               ##udfSetLogSocket ? true
-#    rm -f $fnLog                                                               ##udfSetLogSocket
+#    local fnLog=$(mktemp --suffix=.log || tempfile -s .test.log)               #? true
+#    _ fnLog $fnLog                                                             #? true
+#    udfSetLogSocket                                                            #? true
+#    ls -l $fnLog                                                               #? true
+#    rm -f $fnLog                                                               
 #  SOURCE
 udfSetLogSocket() {
  local fnSock
@@ -298,11 +298,11 @@ udfSetLogSocket() {
 #     0   - Выполнено
 #     255   - невозможно использовать файл лога, аварийное завершение сценария
 #  EXAMPLE
-#    local fnLog=$(mktemp --suffix=.log || tempfile -s .test.log)               ##udfSetLog ? true
-#    rm -f $fnLog                                                               ##udfSetLog
-#    udfSetLog $fnLog                                                           ##udfSetLog ? true
-#    ls -l $fnLog                                                               ##udfSetLog ? true
-#    rm -f $fnLog                                                               ##udfSetLog
+#    local fnLog=$(mktemp --suffix=.log || tempfile -s .test.log)               #? true
+#    rm -f $fnLog                                                               
+#    udfSetLog $fnLog                                                           #? true
+#    ls -l $fnLog                                                               #? true
+#    rm -f $fnLog                                                               
 #  SOURCE
 udfSetLog() {
  case "$1" in
@@ -329,11 +329,11 @@ udfSetLog() {
 #  OUTPUT
 #    Вывод значения переменной $_bashlyk_fnLog
 #  EXAMPLE
-#    local fnLog=$(mktemp --suffix=.log || tempfile -s .test.log)               ##_fnLog ? true
-#    rm -f $fnLog                                                               ##_fnLog
-#    _fnLog $fnLog                                                              ##_fnLog ? true
-#    ls -l $fnLog                                                               ##_fnLog ? true
-#    rm -f $fnLog                                                               ##_fnLog
+#    local fnLog=$(mktemp --suffix=.log || tempfile -s .test.log)               #? true
+#    rm -f $fnLog                                                               
+#    _fnLog $fnLog                                                              #? true
+#    ls -l $fnLog                                                               #? true
+#    rm -f $fnLog                                                               
 #  SOURCE
 _fnLog() {
  if [ -n "$1" ]; then 
@@ -361,14 +361,14 @@ _fnLog() {
 #    1 - уровень "level" больше значения глобальной переменной DEBUGLEVEL
 #    2 - аргументы отсутствуют
 #  EXAMPLE
-#    DEBUGLEVEL=0                                                               ##udfDebug
-#    udfDebug                                                                   ##udfDebug ? 2
-#    udfDebug 0 echo level 0                                                    ##udfDebug ? true
-#    udfDebug 1 silence level 0                                                 ##udfDebug ? 1
-#    DEBUGLEVEL=5                                                               ##udfDebug
-#    udfDebug 0 echo level 5                                                    ##udfDebug ? true
-#    udfDebug 6 echo 5                                                          ##udfDebug ? 1
-#    udfDebug non valid test level 5                                            ##udfDebug ? true
+#    DEBUGLEVEL=0                                                               
+#    udfDebug                                                                   #? 2
+#    udfDebug 0 echo level 0                                                    #? true
+#    udfDebug 1 silence level 0                                                 #? 1
+#    DEBUGLEVEL=5                                                               
+#    udfDebug 0 echo level 5                                                    #? true
+#    udfDebug 6 echo 5                                                          #? 1
+#    udfDebug non valid test level 5                                            #? true
 #  SOURCE
 udfDebug() {
  local i re='^[0-9]+$'

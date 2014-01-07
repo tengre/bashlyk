@@ -60,9 +60,9 @@
 #    (sleep 8)&                                                                 
 #    local pid=$!                                                               
 #    ps -p $pid -o pid= -o args=                                                
-#    udfCheckStarted $pid sleep 8                                               ## ? true
-#    udfCheckStarted $pid sleep 88                                              ## ? false
-#    udfCheckStarted $$ $0                                                      ## ? 2
+#    udfCheckStarted $pid sleep 8                                               #? true
+#    udfCheckStarted $pid sleep 88                                              #? false
+#    udfCheckStarted $$ $0                                                      #? 2
 #  SOURCE
 udfCheckStarted() {
  [ -n "$*" ] || return 255
@@ -87,9 +87,9 @@ udfCheckStarted() {
 #    1   - PID file exist and command line process already started
 #    255 - PID file don't created. Error status
 #  EXAMPLE
-#    udfSetPid                                                                  ## ? true
-#    test -f $_bashlyk_fnPid                                                    ## ? true
-#    head -n 1 $_bashlyk_fnPid | grep -w $$                                     ## ? true
+#    udfSetPid                                                                  #? true
+#    test -f $_bashlyk_fnPid                                                    #? true
+#    head -n 1 $_bashlyk_fnPid | grep -w $$                                     #? true
 #  SOURCE
 udfSetPid() {
  local fnPid pid
@@ -125,7 +125,7 @@ udfSetPid() {
 #          current process stopped
 #    255 - PID file don't created. Error status - current process stopped
 #  EXAMPLE
-#    udfExitIfAlreadyStarted                                                    ## ? true
+#    udfExitIfAlreadyStarted                                                    #? true
 #  SOURCE
 udfExitIfAlreadyStarted() {
  udfSetPid || exit $?

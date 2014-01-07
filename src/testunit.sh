@@ -75,7 +75,7 @@ udfMain() {
  . $_bashlyk_TestUnit_fnTmp
  if [ $_bashlyk_TestUnit_iCount -eq 0 ]; then
   echo " ok."
-  #rm -f $_bashlyk_TestUnit_fnTmp
+  rm -f $_bashlyk_TestUnit_fnTmp
  else
   echo " fail.."
   echo "found $_bashlyk_TestUnit_iCount errors. See \"[?]: status\" lines from $_bashlyk_TestUnit_fnLog"

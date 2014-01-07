@@ -55,7 +55,7 @@
 #  OUTPUT
 #   Ассоциативный массив в виде CSV строки
 #  EXAMPLE
-#    udfGetOptHash 'job:,force' --job main --force | grep "^;job=main;force=1;$" ## ? true
+#    udfGetOptHash 'job:,force' --job main --force | grep "^;job=main;force=1;$" #? true
 #  SOURCE
 udfGetOptHash() {
  [ -n "$*" ] || return -1
@@ -101,7 +101,7 @@ udfGetOptHash() {
 #  EXAMPLE
 #    local job bForce                                                           
 #    udfSetOptHash "job=main;bForce=1;"                                         
-#    echo "dbg $job :: $bForce" | grep "^dbg main :: 1$"                        ## ? true
+#    echo "dbg $job :: $bForce" | grep "^dbg main :: 1$"                        #? true
 #  SOURCE
 udfSetOptHash() {
  [ -n "$*" ] || return 255
@@ -132,7 +132,7 @@ udfSetOptHash() {
 #  EXAMPLE
 #    local job bForce
 #    udfGetOpt job:,bForce --job main --bForce
-#    echo "dbg $job :: $bForce" | grep "^dbg main :: 1$"                        ## ? true
+#    echo "dbg $job :: $bForce" | grep "^dbg main :: 1$"                        #? true
 #  SOURCE
 udfGetOpt() {
  udfSetOptHash $(udfGetOptHash $*)
@@ -152,7 +152,7 @@ udfGetOpt() {
 #    аргумент <hash> без подстрок ";<pair>;"
 #  EXAMPLE
 #    local s="job=main;bForce=1"                                                
-#    udfExcludePairFromHash 'save=1' "${s};save=1;" | grep "^${s}$"             ## ? true
+#    udfExcludePairFromHash 'save=1' "${s};save=1;" | grep "^${s}$"             #? true
 #  SOURCE
 udfExcludePairFromHash() {
  [ -n "$*" ] || return 1

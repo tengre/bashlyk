@@ -28,10 +28,19 @@ BEGIN {
 $1=$1 {
  if ( b == 1 ) { 
   sub(/^# *?/, "")
-  if (match($0, /## \?/)) { 
-   sub(/## \?/, " >> $_bashlyk_TestUnit_fnLog 2>\&1; udfTestUnitMsg")
+  if (match($0, /#\?/)) { 
+   sub(/#\?/, " >> $_bashlyk_TestUnit_fnLog 2>\&1; udfTestUnitMsg")
   } else {
-   $0 = $0">> $_bashlyk_TestUnit_fnLog 2>&1" 
+   if (match($0, /#=/)) { 
+    sub(/#=/, "; udfTestUnitMsg")
+   } else {
+    if (match($0, /#-/)) {
+     sub(/#-/, "")
+     gsub(/[ \t]+$/, "")
+    } else {
+     $0 = $0">> $_bashlyk_TestUnit_fnLog 2>&1"      
+    }
+   }
   }
   print $0 
  }
