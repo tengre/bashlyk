@@ -580,15 +580,16 @@ udfMakeTemp() {
 #      1 - ошибка идентификатора для временного объекта
 #      0 - Выполнено успешно
 #  EXAMPLE
-#    # TODO реализовать тестовый блок
-#    #udfMakeTempV pathTmp keepdir temp
-#    #присваивает значение вида "temp<8 символов>" переменной $pathTmp и создаёт 
-#    #соответствующий временный каталог, который не будет удаляться по завершении
-#    #сценария автоматически
-#    #udfMakeTempV fnTmp $(date +%s)-
-#    #присваивает значение вида "<секунды эпохи>-<8 симолов>" переменной $fnTmp и
-#    #создаёт соответствующий временный файл, который может быть удалён по 
-#    #завершении сценария автоматически
+#    # TODO префиксы не работают!
+#    local foTemp                                                               
+#    udfMakeTempV foTemp file                                                   #? true
+#    ls $foTemp
+#    ls $foTemp | grep "tmp"                                                    #? true
+#    udfMakeTempV foTemp dir                                                    #? true
+#    ls -ld $foTemp
+#    ls -ld $foTemp | grep "^drwx------.*${foTemp}$"                            #? true
+#    echo $(udfMakeTempV foTemp)                              
+#    test -f $foTemp                                                            #? false
 #  SOURCE
 udfMakeTempV() {
  [ -n "$1" ] || return 255
@@ -1031,11 +1032,12 @@ _set() {
 #          переменной
 #    255 - Ошибка: аргумент отсутствует
 #  EXAMPLE
-#    # TODO добавить проверку "неименованных" значений
-#    local s="a=b;a=c;s=a b c d e f;" r                                         
-#    udfCheckCsv "$s" | grep '^a=b;a=c;s="a b c d e f";$'                       #? true
+#    local s="a=b;a=c;s=a b c d e f;test value" r
+#    local csv='^a=b;a=c;s="a b c d e f";_bashlyk_unnamed_key_0="test value";$'
+#    udfCheckCsv "$s" 
+#    udfCheckCsv "$s" | grep "$csv"                                             #? true
 #    udfCheckCsv "$s" r                                                         #? true
-#    echo $r | grep '^a=b;a=c;s="a b c d e f";$'                                #? true
+#    echo $r | grep "$csv"                                                      #? true
 #  SOURCE
 udfCheckCsv() {
  [ -n "$1" ] || return 255

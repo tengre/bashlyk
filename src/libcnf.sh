@@ -61,7 +61,7 @@
 #  EXAMPLE
 #    local b conf d pid s0 s                                                    
 #    # TODO "историческая" проверка в текущем каталоге временно убрана (.)
-#    conf=$(mktemp --suffix=.conf || tempfile -d /tmp -s .test.conf)    #? true
+#    conf=$(mktemp --suffix=.conf || tempfile -d /tmp -s .test.conf)            #? true
 #    udfSetConfig $conf "s0=$0;b=true;pid=$$;s=$(uname -a);$(date -R -r $0)"    #? true
 #    udfGetConfig $conf                                                         #? true
 #    test "$s0" = $0 -a "$b" = true -a "$pid" = $$ -a "$s" = "$(uname -a)"      #? true
