@@ -61,19 +61,12 @@ udfMain() {
  [ -s $fn ] && . $fn || return 254
  mkdir -p $_bashlyk_pathLog || udfError "path $_bashlyk_pathLog not exist..."
  _bashlyk_TestUnit_fnLog=${_bashlyk_pathLog}/${1}.testunit.log
- a=$(eval echo '$_bashlyk_aExport_'"${1}")
- #{
- # for s in $a; do
- #  echo 'echo "-- '"${s}"' testing start:" >>$_bashlyk_TestUnit_fnLog'
- #  grep "^#.*#.${s}" $fn | grep -w "#.${s}" | sed -e "s/^#//" | sed -e "s/##${s}/>>\$_bashlyk_TestUnit_fnLog #2>\&1/" -e "s/#-${s}//"  -e "s/\? \(.*\)/; udfTestUnitMsg \1/" -e "s/[ ]\+$//"
- #  echo 'echo "-- '"${s}"' testing  done." >>$_bashlyk_TestUnit_fnLog'
- #  done
- #} >> $_bashlyk_TestUnit_fnTmp
+ #a=$(eval echo '$_bashlyk_aExport_'"${1}")
  awk -f testunit.awk -- $fn > $_bashlyk_TestUnit_fnTmp
  echo "testunit for $fn library" > $_bashlyk_TestUnit_fnLog
  echo -n "${fn}: "
  . $_bashlyk_TestUnit_fnTmp
- if [ $_bashlyk_TestUnit_iCount -eq 0 ]; then
+ if [ $? -eq 0 -a $_bashlyk_TestUnit_iCount -eq 0 ]; then
   echo " ok."
   rm -f $_bashlyk_TestUnit_fnTmp
  else

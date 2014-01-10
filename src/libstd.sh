@@ -580,11 +580,10 @@ udfMakeTemp() {
 #      1 - ошибка идентификатора для временного объекта
 #      0 - Выполнено успешно
 #  EXAMPLE
-#    # TODO префиксы не работают!
 #    local foTemp                                                               
-#    udfMakeTempV foTemp file                                                   #? true
+#    udfMakeTempV foTemp file testfile                                          #? true
 #    ls $foTemp
-#    ls $foTemp | grep "tmp"                                                    #? true
+#    ls $foTemp | grep "testfile"                                               #? true
 #    udfMakeTempV foTemp dir                                                    #? true
 #    ls -ld $foTemp
 #    ls -ld $foTemp | grep "^drwx------.*${foTemp}$"                            #? true
@@ -593,39 +592,20 @@ udfMakeTemp() {
 #  SOURCE
 udfMakeTempV() {
  [ -n "$1" ] || return 255
- udfIsValidVariable "$1" \
-  || udfThrow "Error: required valid variable name \"$1\""
-
- local bashlyk_foResult_bPfWZngu bashlyk_sDir_bPfWZngu bashlyk_bKeep_bPfWZngu
- local bashlyk_pathTmp_bPfWZngu bashlyk_sPrefix_bPfWZngu
+ udfIsValidVariable "$1" || udfThrow "Error: non valid variable name \"$1\""
  #
- bashlyk_sDir_bPfWZngu=''
- bashlyk_bKeep_bPfWZngu=0
+ local sKeep sType sPrefix
  #
- [ -n "$3" ] && bashlyk_sPrefix_bPfWZngu="$3"
+ [ -n "$3" ] && sPrefix="prefix=$3"
  case "$2" in 
-          dir) bashlyk_sDir_bPfWZngu='-d' ;;
-  keep|keepf*) bashlyk_bKeep_bPfWZngu=1;;
-       keepd*) bashlyk_bKeep_bPfWZngu=1; bashlyk_sDir_bPfWZngu="-d";;
-            *) bashlyk_sPrefix_bPfWZngu="$2";;
+          dir) sType="type=dir" ; sKeep="keep=false" ;;
+         file) sType="type=file"; sKeep="keep=false" ;;
+  keep|keepf*) sType="type=file"; sKeep="keep=true"  ;;
+       keepd*) sType="type=dir" ; sKeep="keep=true"  ;;
+           '') sType="type=file"; sKeep="keep=false" ;;
+            *) sPrefix="prefix=$2"                   ;;
  esac
- if [ -d "$bashlyk_sPrefix_bPfWZngu" ]; then
-  TMPDIR=$bashlyk_sPrefix_bPfWZngu
-  bashlyk_sPrefix_bPfWZngu=$(basename $bashlyk_sPrefix_bPfWZngu)
-  bashlyk_pathTmp_bPfWZngu=TMPDIR
- fi
- bashlyk_foResult_bPfWZngu=$(mktemp $bashlyk_sDir_bPfWZngu -q \
-  -t "${bashlyk_sPrefix_bPfWZngu}XXXXXXXX") || udfThrow \
-   "Error: temporary file object $bashlyk_foResult_bPfWZngu do not created..."
- TMPDIR=bashlyk_pathTmp_bPfWZngu
- if [ $bashlyk_bKeep_bPfWZngu -eq 0 ]; then
-  [ -f $bashlyk_foResult_bPfWZngu ] \
-   && udfAddFile2Clean $bashlyk_foResult_bPfWZngu
-  [ -d $bashlyk_foResult_bPfWZngu ] \
-   && udfAddPath2Clean $bashlyk_foResult_bPfWZngu
- fi
- eval 'export ${1}=${bashlyk_foResult_bPfWZngu}' 2>/dev/null
- return $?
+ udfMakeTemp $1 $sType $sKeep $sPrefix
 }
 #******
 #****f* bashlyk/libstd/udfPrepare2Exec
@@ -731,7 +711,9 @@ udfAddPath2Clean() {
 #  INPUTS
 #    args - идентификаторы заданий
 #  EXAMPLE
-#    # TODO реализовать тестовый блок
+#    sleep 99 &                                                                 
+#    udfAddJob2Clean "%1"                                                       #? true
+#    echo "$(_ ajobClean)" | grep -w "%1"                                       #? true
 #  SOURCE
 udfAddJob2Clean() {
  [ -n "$1" ] || return 0
@@ -748,7 +730,11 @@ udfAddJob2Clean() {
 #  INPUTS
 #    args - идентификаторы процессов
 #  EXAMPLE
-#    # TODO реализовать тестовый блок
+#    sleep 99 &                                                                
+#    local pid=$!
+#    test -n "$pid"                                                             #? true
+#    udfAddPid2Clean $pid                                                       #? true
+#    echo "$(_ apidClean)" | grep -w "$pid"                                     #? true
 #  SOURCE
 udfAddPid2Clean() {
  [ -n "$1" ] || return 0
@@ -763,8 +749,6 @@ udfAddPid2Clean() {
 #    Псевдоним для udfAddFile2Clean. (Устаревшее)
 #  INPUTS
 #    args - имена файлов
-#  EXAMPLE
-#    # TODO реализовать тестовый блок
 #  SOURCE
 udfCleanQueue() {
  udfAddFile2Clean $*

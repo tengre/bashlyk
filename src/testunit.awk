@@ -5,10 +5,16 @@
 BEGIN {
  FS = "\n"
  b = 2
+ f = ""
 }
 
 
 /^#\*\*\*\*f\* .*$/ {
+ if (b == 0) {
+  print "echo -- "f" testing  done. >> $_bashlyk_TestUnit_fnLog 2>&1"
+  print "}"
+ }
+
  b = 0
  i=split($0, a, "/")
  f=a[i]"_test"
@@ -50,4 +56,9 @@ $1=$1 {
  }
 }
 
-END   {  }
+END   {  
+ if (b == 0) {
+  print "echo -- "f" testing  done. >> $_bashlyk_TestUnit_fnLog 2>&1"
+  print "}"
+}
+}
