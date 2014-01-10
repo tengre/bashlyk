@@ -609,11 +609,30 @@ udfIniChange() {
 #    #TODO подправить тестовую секцию
 #    local sTxt="foo = bar" b=true iXo=1921 iYo=1080 ini iniChild test          
 #    local fmt="[test]\n\t%s\t=\t%s\n\t%s\t=\t%s\n\t%s\t=\t%s\n\t%s\t=\t%s\n"   
-#    ini=$(mktemp --suffix=.ini || tempfile -s .test.ini)                       #? true
+#    ini=$(mktemp --suffix=test.ini XXXXXXXX || tempfile -s .test.ini)          #? true
 #    iniChild="$(dirname $ini)/child.$(basename $ini)"                          
 #    printf "$fmt" sTxt foo b false "iXo Xo" 19 iYo 80 | tee $ini               
 #    echo "simple line" | tee -a $ini                                           
+
+#    cat <<'EOFini' > ${ini}.bak                                               #-
+#    [test]	                                                                #-
+#    sTxt	=	foo                                                     #-
+#    b		=	false                                                   #-
+#    iXo Xo	=	19                                                      #-
+#    iYo	=	80                                                      #-
+#    simple line                                                                #-
+#EOFini                                                                         #-
+
 #    printf "$fmt" sTxt "$sTxt" b "$b" iXo "$iXo" iYo "$iYo" | tee $iniChild    
+
+#    cat <<'EOFiniChild' > ${iniChild}.bak                                     #-
+#    [test]	                                                                #-
+#    sTxt	=	foo bar                                                 #-
+#    b		=	true                                                    #-
+#    iXo	=	1921                                                    #-
+#    iYo	=	1080                                                    #-
+#EOFiniChild                                                                    #-
+
 #    sTxt='';b='';iXo=''                                                        
 #    udfIni $iniChild 'test:sTxt;b;iXo' 'test:='                                #? true
 #    echo "${sTxt};${b};${iXo}" | grep -e "^foo = bar;true;1921$"               #? true
