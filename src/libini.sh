@@ -606,38 +606,33 @@ udfIniChange() {
 #     0  - Выполнено успешно
 #    255 - Ошибка: аргументы отсутствуют или файл конфигурации не найден
 #  EXAMPLE
-#    #TODO подправить тестовую секцию
-#    local sTxt="foo = bar" b=true iXo=1921 iYo=1080 ini iniChild test          
-#    local fmt="[test]\n\t%s\t=\t%s\n\t%s\t=\t%s\n\t%s\t=\t%s\n\t%s\t=\t%s\n"   
+#    local sTxt="foo = bar" b=true iXo=1921 iYo=1080 ini iniChild exec          
 #    ini=$(mktemp --suffix=test.ini XXXXXXXX || tempfile -s .test.ini)          #? true
 #    iniChild="$(dirname $ini)/child.$(basename $ini)"                          
-#    printf "$fmt" sTxt foo b false "iXo Xo" 19 iYo 80 | tee $ini               
-#    echo "simple line" | tee -a $ini                                           
-
-#    cat <<'EOFini' > ${ini}.bak                                               #-
-#    [test]	                                                                #-
+#    cat <<'EOFini' > ${ini}                                                    #-
+#[test]                                                                         #-
 #    sTxt	=	foo                                                     #-
 #    b		=	false                                                   #-
 #    iXo Xo	=	19                                                      #-
 #    iYo	=	80                                                      #-
 #    simple line                                                                #-
+#[exec]:                                                                        #-
+#    date                                                                       #-
+#    sUname="$(uname -a)"                                                       #-
+#:[exec]                                                                        #-
 #EOFini                                                                         #-
-
-#    printf "$fmt" sTxt "$sTxt" b "$b" iXo "$iXo" iYo "$iYo" | tee $iniChild    
-
-#    cat <<'EOFiniChild' > ${iniChild}.bak                                     #-
+#    cat <<'EOFiniChild' > ${iniChild}                                          #-
 #    [test]	                                                                #-
-#    sTxt	=	foo bar                                                 #-
+#    sTxt	=	foo = bar                                               #-
 #    b		=	true                                                    #-
 #    iXo	=	1921                                                    #-
 #    iYo	=	1080                                                    #-
 #EOFiniChild                                                                    #-
-
 #    sTxt='';b='';iXo=''                                                        
-#    udfIni $iniChild 'test:sTxt;b;iXo' 'test:='                                #? true
+#    udfIni $iniChild 'test:sTxt;b;iXo' 'exec:='                                #? true
 #    echo "${sTxt};${b};${iXo}" | grep -e "^foo = bar;true;1921$"               #? true
-#    echo "dbg $test"                                                           
-#    echo "$test" | grep -e '^b=true;"iXo Xo = 19";"simple line";iXo=1921;iYo=1080;sTxt="foo = bar";$' #? true
+#    echo "$exec"
+#    echo "$exec" | grep -e '^:;date;"sUname="$(uname -a)"";$'                  #? true
 #    rm -f $iniChild $ini                                                       
 #  SOURCE
 udfIni() {
@@ -657,13 +652,13 @@ udfIni() {
    ## TODO udfCsvOrder лишний вызов
    udfSetVarFromCsv "$bashlyk_udfIni_csvSection" $bashlyk_udfIni_aVar 
   else
-   ## TODO проработать инициализацию переменной для CSV "безымянных" значений
    bashlyk_udfIni_aVar="${bashlyk_udfIni_s#*:=}"   
    : ${bashlyk_udfIni_aVar:=$bashlyk_udfIni_sSection}
    udfIsValidVariable $bashlyk_udfIni_aVar || return 2
    eval 'export $bashlyk_udfIni_aVar="$(udfCsvHash2Raw "$bashlyk_udfIni_csvSection" "$bashlyk_udfIni_sSection")"'  
   fi
  done
+ ## TODO вложенные кавычки: " " ""
  return 0
 }
 #******
@@ -1063,16 +1058,23 @@ udfIniGroupSection2CsvVar() {
 #          переменной
 #    255 - Ошибка: аргумент отсутствует или файл конфигурации не найден
 #  EXAMPLE
-#    # TODO исправить тестовый блок
-#    local csv='sTxt="foo bar";b=true;iXo=1921;iYo=1080;_bashlyk_ini_test_autoKey_0="simple line";'
-#    local sTxt="foo bar" b=true iXo=1921 iYo=1080 ini iniChild csvResult       
-#    local fmt="[test]\n\t%s\t=\t%s\n\t%s\t=\t%s\n\t%s\t=\t%s\n\t%s\t=\t%s\n"   
-#    ini=$(mktemp --suffix=.ini || tempfile -s .test.ini)                       #? true
-#    printf "$fmt" "sTxt" "$sTxt" "b" "$b" "iXo" "$iXo" "iYo" "$iYo" | tee $ini 
-#    echo "simple line" | tee -a $ini                                           
-#    udfIniSection2Csv $ini test                                                #? true
-#    udfIniSection2Csv $ini test | grep "^${csv}$"                              #? true
-#    udfIniSection2CsvVar csvResult $ini test                                   #? true
+#    local csv='\[\];\[test\];sTxt=foo;b=false;_bashlyk_ini_test_autoKey_0="iXo Xo = 19";iYo=80;_bashlyk_ini_test_autoKey_1="simple line";\[exec\];:;_bashlyk_ini_exec_autoKey_0="sUname=$(uname -a)";_bashlyk_ini_exec_autoKey_1="_bashlyk_&#91_ -n "$sUname" _bashlyk_&#93_ && date";'
+#    ini=$(mktemp --suffix=test.ini XXXXXXXX || tempfile -s .test.ini)          #? true
+#    cat <<'EOFini' > ${ini}                                                    #-
+#[test]                                                                         #-
+#    sTxt	=	foo                                                     #-
+#    b		=	false                                                   #-
+#    iXo Xo	=	19                                                      #-
+#    iYo	=	80                                                      #-
+#    simple line                                                                #-
+#[exec]:                                                                        #-
+#    sUname=$(uname -a)                                                         #-
+#    [ -n "$sUname" ] && date                                                   #-
+#:[exec]                                                                        #-
+#EOFini                                                                         #-
+#    udfIni2Csv $ini                                                            #? true
+#    udfIni2Csv $ini | grep "^${csv}$"                                          #? true
+#    udfIni2CsvVar csvResult $ini                                               #? true
 #    echo "$csvResult" | grep "^${csv}$"                                        #? true
 #    rm -f $ini                                                                 
 #  SOURCE

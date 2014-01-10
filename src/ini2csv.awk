@@ -13,7 +13,8 @@ BEGIN {
   if (match($0, /\[.*\]:/)) { b = 1; gsub(":", "") } 
   sTag = $0; sub(/\]/, "", sTag); sub(/\[/, "", sTag); 
   if ( b == 1 ) { csv = csv"["sTag"];:;" } else { csv = csv"["sTag"];" }
-  s="_bashlyk_ini_"sTag"_autoKey_"
+  s = "_bashlyk_ini_"sTag"_autoKey_"
+  i = 0
   next 
  } else {
   if (match($0, /:\[.*\]/)) { b = 0; next }   
