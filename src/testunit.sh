@@ -62,7 +62,7 @@ udfMain() {
  mkdir -p $_bashlyk_pathLog || udfError "path $_bashlyk_pathLog not exist..."
  _bashlyk_TestUnit_fnLog=${_bashlyk_pathLog}/${1}.testunit.log
  #a=$(eval echo '$_bashlyk_aExport_'"${1}")
- awk -f testunit.awk -- $fn > $_bashlyk_TestUnit_fnTmp
+ awk -f ${_bashlyk_pathLib}/testunit.awk -- $fn > $_bashlyk_TestUnit_fnTmp
  echo "testunit for $fn library" > $_bashlyk_TestUnit_fnLog
  echo -n "${fn}: "
  . $_bashlyk_TestUnit_fnTmp
