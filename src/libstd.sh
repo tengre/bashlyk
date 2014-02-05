@@ -43,12 +43,22 @@
 : ${_bashlyk_bNotUseLog:=1}
 : ${_bashlyk_emailRcpt:=postmaster}
 : ${_bashlyk_emailSubj:="${_bashlyk_sUser}@${HOSTNAME}::${_bashlyk_s0}"}
-: ${_bashlyk_reMetaRules:='_bashlyk_\&#91_=>\[|_bashlyk_\&#93_=>\[|_bashlyk_\&#59_=>\;'}
-: ${_bashlyk_aRequiredCmd_std:="[ basename cat cut chgrp chmod chown date dir echo false file grep kill ls mail md5sum pwd mkdir mktemp printf ps rm rmdir sed sleep tee tempfile touch true w which xargs"}
-: ${_bashlyk_aExport_std:="udfBaseId udfDate udfEcho udfMail udfWarn udfThrow udfOnEmptyVariable udfThrowOnEmptyVariable udfWarnOnEmptyVariable udfShowVariable udfIsNumber udfIsValidVariable udfQuoteIfNeeded udfWSpace2Alias udfAlias2WSpace udfMakeTemp  udfMakeTempV udfShellExec udfAddFile2Clean udfAddPath2Clean udfAddJob2Clean udfAddPid2Clean udfCleanQueue udfOnTrap _ARGUMENTS _s0 _pathDat _ _gete _getv _set udfCheckCsv udfGetMd5 udfGetPathMd5 udfXml udfPrepare2Exec"}
+: ${_bashlyk_reMetaRules:=\         
+'_bashlyk_\&#91_=>\[|_bashlyk_\&#93_=>\[|_bashlyk_\&#59_=>\;'}
+: ${_bashlyk_aRequiredCmd_std:="[ basename cat cut chgrp chmod chown date dir  \
+ echo false file grep kill ls mail md5sum pwd mkdir mktemp printf ps rm rmdir  \
+ sed sleep tee tempfile touch true w which xargs"}
+: ${_bashlyk_aExport_std:="udfBaseId udfDate udfEcho udfMail udfWarn udfThrow  \
+ udfOnEmptyVariable udfThrowOnEmptyVariable udfWarnOnEmptyVariable             \
+ udfShowVariable udfIsNumber udfIsValidVariable udfQuoteIfNeeded               \
+ udfWSpace2Alias udfAlias2WSpace udfMakeTemp  udfMakeTempV udfShellExec        \ 
+ udfAddFile2Clean udfAddPath2Clean udfAddJob2Clean udfAddPid2Clean             \
+ udfCleanQueue udfOnTrap _ARGUMENTS _s0 _pathDat _ _gete _getv _set            \
+ udfCheckCsv udfGetMd5 udfGetPathMd5 udfXml udfPrepare2Exec"}
+
 if [ -n "$(which mail)" ]; then 
- _bashlyk_cmdMessage="mail -e -s "${_bashlyk_emailSubj}" ${_bashlyk_emailOptions} \
- ${_bashlyk_emailRcpt}" 
+ _bashlyk_cmdMessage="mail -e -s "${_bashlyk_emailSubj}"                       \
+ ${_bashlyk_emailOptions} ${_bashlyk_emailRcpt}" 
 else
  _bashlyk_cmdMessage="write ${_bashlyk_sUser}"
 fi
@@ -122,7 +132,7 @@ udfEcho() {
 #  EXAMPLE
 #    local emailOptions=$(_ emailOptions)                                       
 #    _ emailOptions '-v'                                                        
-#    date -R | udfMail - test                                                      #? true
+#    echo "bashlyk libstd udfMail" | udfMail - testing                          #? true
 #    _ emailOptions "$emailOptions"                                             
 #  SOURCE
 udfMail() {
