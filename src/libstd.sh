@@ -132,13 +132,13 @@ udfEcho() {
 #  EXAMPLE
 #    local emailOptions=$(_ emailOptions)                                       
 #    _ emailOptions '-v'                                                        
-#    echo "bashlyk libstd udfMail" | udfMail - testing                          #? true
+#    echo "message body" | udfMail - "subject (bashlyk testing purposes)"       #? true
 #    _ emailOptions "$emailOptions"                                             
 #  SOURCE
 udfMail() {
  local fnTmp rc
  udfMakeTemp fnTmp
- udfEcho $* | tee -a $fnTmp
+ udfEcho $* | tee -a $fnTmp | head -n 8
  cat $fnTmp | ${_bashlyk_cmdMessage}
  rc=$?
  rm -f $fnTmp
