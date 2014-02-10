@@ -1,10 +1,10 @@
 #
 # $Id$
 #
-#****h* libini
-#  DESCRIPTION
-#    bashlyk INI library
-#    Обработка конфигурационных файлов в стиле INI
+#****h* BASHLYK/libini
+#  DESCRIPTION  
+#    Управление пассивными конфигурационными файлов в стиле INI. Имеет 
+#    возможность подгрузки исполнимого контента
 #  AUTHOR
 #    Damir Sh. Yakupov <yds@bk.ru>
 #******
@@ -626,14 +626,14 @@ udfIniChange() {
 #    date                                                                       #-
 #    sUname="$(uname -a)"                                                       #-
 #:[exec]                                                                        #-
-#EOFini                                                                         #-
+#    EOFini                                                                     #-
 #    cat <<'EOFiniChild' > ${iniChild}                                          #-
 #    [test]	                                                                #-
 #    sTxt	=	foo = bar                                               #-
 #    b		=	true                                                    #-
 #    iXo	=	1921                                                    #-
 #    iYo	=	1080                                                    #-
-#EOFiniChild                                                                    #-
+#    EOFiniChild                                                                #-
 #    sTxt='';b='';iXo=''                                                        
 #    udfIni $iniChild 'test:sTxt;b;iXo' 'exec:='                                #? true
 #    echo "${sTxt};${b};${iXo}" | grep -e "^foo = bar;true;1921$"               #? true

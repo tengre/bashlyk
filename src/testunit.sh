@@ -1,9 +1,10 @@
 #
 # $Id$
 #
-#****h* testunit
+#****h* BASHLYK/testunit
 #  DESCRIPTION
-#    bashlyk test unit compiler
+#    компилятор сценария для запуска тестирования библиотеки, зависит от 
+#    awk-сценария testunit.awk
 #  AUTHOR
 #    Damir Sh. Yakupov <yds@bk.ru>
 #******

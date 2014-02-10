@@ -1,10 +1,10 @@
 #
 # $Id$
 #
-#****h* libpid
+#****h* BASHLYK/libpid
 #  DESCRIPTION
-#    bashlyk PID library
-#    Обслуживание процессов
+#    Контроль запуска рабочего сценария, возможность защиты от повторного 
+#    запуска
 #  AUTHOR
 #    Damir Sh. Yakupov <yds@bk.ru>
 #******
@@ -39,7 +39,7 @@
 : ${_bashlyk_pathRun:=/tmp}
 : ${_bashlyk_sArg:=$*}
 : ${_bashlyk_aRequiredCmd_pid:="[ echo file grep head mkdir ps rm rmdir w"}
-: ${_bashlyk_aExport_pid:="udfCheckStarted udfSetPid udfExitIfAlreadyStarted udfClean"}
+: ${_bashlyk_aExport_pid:="udfCheckStarted udfSetPid udfExitIfAlreadyStarted"}
 #******
 #****f* libpid/udfCheckStarted
 #  SYNOPSIS

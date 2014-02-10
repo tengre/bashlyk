@@ -1,10 +1,12 @@
 #
 # $Id$
 #
-#****h* libstd
+#****h* BASHLYK/libstd
 #  DESCRIPTION
-#    bashlyk Std library
-#    стандартный набор функций
+#    стандартный набор функций, включает автоматически управляемые функции 
+#    вывода сообщений, контроля корректности входных данных, создания временных
+#    объектов и автоматического их удаления после завершения сценария или 
+#    фонового процесса, обработки ошибок
 #  AUTHOR
 #    Damir Sh. Yakupov <yds@bk.ru>
 #******
@@ -132,7 +134,7 @@ udfEcho() {
 #  EXAMPLE
 #    local emailOptions=$(_ emailOptions)                                       
 #    _ emailOptions '-v'                                                        
-#    echo "message body" | udfMail - "subject (bashlyk testing purposes)"       #? true
+#    echo ">> message body <<" | udfMail - "subject (bashlyk testing purposes)" #? true
 #    _ emailOptions "$emailOptions"                                             
 #  SOURCE
 udfMail() {
@@ -159,6 +161,7 @@ udfMail() {
 #  OUTPUT
 #   Зависит от параметров вывода
 #  EXAMPLE
+#    # TODO требуется более точная проверка
 #    local bNotUseLog=$_bashlyk_bNotUseLog                                      
 #    _bashlyk_bNotUseLog=0 date | udfWarn - test                                #? true
 #    _bashlyk_bNotUseLog=1 date | udfWarn - test                                #? true
@@ -627,13 +630,15 @@ udfMakeTempV() {
 #  SYNOPSIS
 #    udfPrepare2Exec args
 #  DESCRIPTION
-#    Подготовка входных CSV; строк для выполнения в качестве сценария командной строки во внешнем временном файле
+#    Подготовка входных CSV; строк для выполнения в качестве сценария командной 
+#    строки во внешнем временном файле
 #    в текущей среде интерпретатора оболочки
 #  INPUTS
 #    args - командная строка
 #  OUTPUT
 #    Поток строк сценария
-#    в остальных случаях код возврата командной строки с учетом доступа к временному файлу
+#    в остальных случаях код возврата командной строки с учетом доступа к 
+#    временному файлу
 #  EXAMPLE
 #    local s='_bashlyk_&#91_ -n "$USER" _bashlyk_&#93__bashlyk_&#59_ true'      
 #    udfPrepare2Exec "$s"                                                       
@@ -645,7 +650,8 @@ udfPrepare2Exec() {
  IFS=';'
  for s in $*
  do
-  echo "$s" | sed -e "s/_bashlyk_\&#91_/\[/g" -e "s/_bashlyk_\&#92_/\\\/g" -e "s/_bashlyk_\&#93_/\]/g" -e "s/_bashlyk_\&#59_/\;/g" -e "s/^\"\(.*\)\"$/\1/"
+  echo "$s" | sed -e "s/_bashlyk_\&#91_/\[/g" -e "s/_bashlyk_\&#92_/\\\/g" -e  \
+  "s/_bashlyk_\&#93_/\]/g" -e "s/_bashlyk_\&#59_/\;/g" -e "s/^\"\(.*\)\"$/\1/"
  done
  IFS=$cIFS
  return 0
@@ -1005,7 +1011,7 @@ _set() {
  eval "_bashlyk_$1=$2"
 }
 #******
-#****f* libini/udfCheckCsv
+#****f* libstd/udfCheckCsv
 #  SYNOPSIS
 #    udfCheckCsv "<csv;>" [<varname>]
 #  DESCRIPTION
@@ -1049,7 +1055,8 @@ udfCheckCsv() {
  bashlyk_csvResult_Q1eiphgO=''
  #
  for bashlyk_s_Q1eiphgO in $1; do
-  bashlyk_s_Q1eiphgO=$(echo $bashlyk_s_Q1eiphgO | tr -d "'" | tr -d '"' | sed -e "s/^\[.*\];//")
+  bashlyk_s_Q1eiphgO=$(echo $bashlyk_s_Q1eiphgO | tr -d "'" | tr -d '"' | sed  \
+  -e "s/^\[.*\];//")
   bashlyk_k_Q1eiphgO="$(echo ${bashlyk_s_Q1eiphgO%%=*}|xargs)"
   bashlyk_v_Q1eiphgO="$(echo ${bashlyk_s_Q1eiphgO#*=}|xargs)"
   [ -n "$bashlyk_k_Q1eiphgO" ] || continue
@@ -1072,7 +1079,7 @@ udfCheckCsv() {
  return 0
 }
 #******
-#****f* libmd5/udfGetMd5
+#****f* libstd/udfGetMd5
 #  SYNOPSIS
 #    udfGetMd5 [-]|--file <filename>|<args>
 #  DESCRIPTION
@@ -1103,7 +1110,7 @@ udfGetMd5() {
  return 0
 }
 #******
-#****f* libmd5/udfGetPathMd5
+#****f* libstd/udfGetPathMd5
 #  SYNOPSIS
 #    udfGetPathMd5 <path>
 #  DESCRIPTION
@@ -1135,7 +1142,7 @@ udfGetPathMd5() {
  return 0
 }
 #******
-#****f* libxml/udfXml
+#****f* libstd/udfXml
 #  SYNOPSIS
 #    udfXml tag [property] data
 #  DESCRIPTION

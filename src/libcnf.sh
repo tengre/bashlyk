@@ -1,10 +1,9 @@
 #
 # $Id$
 #
-#****h* libcnf
+#****h* BASHLYK/libcnf
 #  DESCRIPTION
-#    bashlyk CNF library
-#    Чтение/запись файлов конфигураций
+#    Чтение/запись файлов активных конфигураций
 #  AUTHOR
 #    Damir Sh. Yakupov <yds@bk.ru>
 #******
