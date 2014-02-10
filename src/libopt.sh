@@ -1,7 +1,7 @@
 #
 # $Id$
 #
-#****h* bashlyk/libopt
+#****h* libopt
 #  DESCRIPTION
 #    bashlyk OPT library
 #    Обслуживание параметров командной строки
@@ -10,7 +10,7 @@
 #  AUTHOR
 #    Damir Sh. Yakupov <yds@bk.ru>
 #******
-#****d* bashlyk/libopt/Once required
+#****d* libopt/Once required
 #  DESCRIPTION
 #    Эта глобальная переменная обеспечивает
 #    защиту от повторного использования данного модуля
@@ -21,7 +21,7 @@
 [ -n "$BASH_VERSION" ] \
  || eval 'echo "bash interpreter for this script ($0) required ..."; exit 255'
 #******
-#****** bashlyk/libopt/External modules
+#****** libopt/External modules
 #  DESCRIPTION
 #    Using modules section
 #    Здесь указываются модули, код которых используется данной библиотекой
@@ -30,7 +30,7 @@
 [ -s "${_bashlyk_pathLib}/libstd.sh" ] && . "${_bashlyk_pathLib}/libstd.sh"
 [ -s "${_bashlyk_pathLib}/libcnf.sh" ] && . "${_bashlyk_pathLib}/libcnf.sh"
 #******
-#****v*  bashlyk/libopt/Init section
+#****v* libopt/Init section
 #  DESCRIPTION
 #    Блок инициализации глобальных переменных
 #    * $_bashlyk_sArg - аргументы командной строки вызова сценария
@@ -42,7 +42,7 @@
 : ${_bashlyk_aRequiredCmd_opt:="[ echo getopt grep rm sed tr"}
 : ${_bashlyk_aExport_opt:="udfGetOptHash udfSetOptHash udfGetOpt udfExcludePairFromHash"}
 #******
-#****f* bashlyk/libopt/udfGetOptHash
+#****f* libopt/udfGetOptHash
 #  SYNOPSIS
 #    udfGetOptHash <csvopt> <args>
 #  DESCRIPTION
@@ -85,7 +85,7 @@ udfGetOptHash() {
  return 0
 }
 #******
-#****f* bashlyk/libopt/udfSetOptHash
+#****f* libopt/udfSetOptHash
 #  SYNOPSIS
 #    udfSetOptHash <arg>
 #  DESCRIPTION
@@ -115,7 +115,7 @@ udfSetOptHash() {
  return $rc
 }
 #******
-#****f* bashlyk/libopt/udfGetOpt
+#****f* libopt/udfGetOpt
 #  SYNOPSIS
 #    udfGetOpt <csvopt> <args>
 #  DESCRIPTION
@@ -138,7 +138,7 @@ udfGetOpt() {
  udfSetOptHash $(udfGetOptHash $*)
 }
 #******
-#****f* bashlyk/libopt/udfExcludePairFromHash
+#****f* libopt/udfExcludePairFromHash
 #  SYNOPSIS
 #    udfExcludePairFromHash <pair> <hash>
 #  DESCRIPTION

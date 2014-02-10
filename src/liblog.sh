@@ -1,7 +1,7 @@
 #
 # $Id$
 #
-#****h* bashlyk/liblog
+#****h* liblog
 #  DESCRIPTION
 #    bashlyk Log library
 #    Функции определения режима вывода, ведения логов
@@ -9,7 +9,7 @@
 #  AUTHOR
 #    Damir Sh. Yakupov <yds@bk.ru>
 #******
-#****d* bashlyk/liblog/Once required
+#****d* liblog/Once required
 #  DESCRIPTION
 #    Эта глобальная переменная обеспечивает
 #    защиту от повторного использования данного модуля
@@ -20,7 +20,7 @@
 [ -n "$BASH_VERSION" ] \
  || eval 'echo "bash interpreter for this script ($0) required ..."; exit 255'
 #******
-#****** bashlyk/liblog/External modules
+#****** liblog/External modules
 #  DESCRIPTION
 #    Using modules section
 #    Здесь указываются модули, код которых используется данной библиотекой
@@ -28,7 +28,7 @@
 : ${_bashlyk_pathLib:=/usr/share/bashlyk}
 [ -s "${_bashlyk_pathLib}/libstd.sh" ] && . "${_bashlyk_pathLib}/libstd.sh"
 #******
-#****v*  bashlyk/liblog/Init section
+#****v* liblog/Init section
 #  DESCRIPTION
 #    Блок инициализации глобальных переменных
 #  SOURCE
@@ -51,7 +51,7 @@
 : ${_bashlyk_aRequiredCmd_log:="basename date echo hostname false printf logger mail mkfifo sleep tee true jobs ["}
 : ${_bashlyk_aExport_log:="udfLogger udfLog udfIsInteract udfIsTerminal udfCheck4LogUse udfUptime udfFinally udfSetLogSocket udfSetLog _fnLog udfDebug"}
 #******
-#****f* bashlyk/liblog/udfLogger
+#****f* liblog/udfLogger
 #  SYNOPSIS
 #    udfLogger args
 #  DESCRIPTION
@@ -128,7 +128,7 @@ udfLogger() {
  LC_TIME=$envLC_TIME
 }
 #******
-#****f* bashlyk/liblog/udfLog
+#****f* liblog/udfLog
 #  SYNOPSIS
 #    udfLog [-] args
 #  DESCRIPTION
@@ -155,7 +155,7 @@ udfLog() {
  fi
 }
 #******
-#****f* bashlyk/liblog/udfIsInteract
+#****f* liblog/udfIsInteract
 #  SYNOPSIS
 #    udfIsInteract
 #  DESCRIPTION
@@ -175,7 +175,7 @@ udfIsInteract() {
  return $_bashlyk_bInteract
 }
 #******
-#****f* bashlyk/liblog/udfIsTerminal
+#****f* liblog/udfIsTerminal
 #  SYNOPSIS
 #    udfIsTerminal
 #  DESCRIPTION
@@ -192,7 +192,7 @@ udfIsTerminal() {
  return $_bashlyk_bTerminal
 }
 #******
-#****f* bashlyk/liblog/udfCheck4LogUse
+#****f* liblog/udfCheck4LogUse
 #  SYNOPSIS
 #    udfCheck4LogUse
 #  DESCRIPTION
@@ -219,7 +219,7 @@ udfCheck4LogUse() {
  return $_bashlyk_bNotUseLog
 }
 #******
-#****f* bashlyk/liblog/udfUptime
+#****f* liblog/udfUptime
 #  SYNOPSIS
 #    udfUptime args
 #  DESCRIPTION
@@ -234,7 +234,7 @@ udfUptime() {
  [ -n "$1" ] && echo "$* ($iDiffTime sec)" || echo $iDiffTime
 }
 #******
-#****f* bashlyk/liblog/udfFinally
+#****f* liblog/udfFinally
 #  SYNOPSIS
 #    udfFinally args
 #  DESCRIPTION
@@ -248,7 +248,7 @@ udfFinally() {
  udfUptime $*
 }
 #******
-#****f* bashlyk/liblog/udfSetLogSocket
+#****f* liblog/udfSetLogSocket
 #  SYNOPSIS
 #    udfSetLogSocket
 #  DESCRIPTION
@@ -289,7 +289,7 @@ udfSetLogSocket() {
  return 0
 }
 #******
-#****f* bashlyk/liblog/udfSetLog
+#****f* liblog/udfSetLog
 #  SYNOPSIS
 #    udfSetLog [arg]
 #  DESCRIPTION
@@ -320,7 +320,7 @@ udfSetLog() {
  return 0
 }
 #******
-#****f* bashlyk/liblog/_fnLog
+#****f* liblog/_fnLog
 #  SYNOPSIS
 #    _fnLog
 #  DESCRIPTION
@@ -343,7 +343,7 @@ _fnLog() {
  fi
 }
 #******
-#****f* bashlyk/liblog/udfDebug
+#****f* liblog/udfDebug
 #  SYNOPSIS
 #    udfDebug level message
 #  DESCRIPTION

@@ -1,14 +1,14 @@
 #
 # $Id$
 #
-#****h* bashlyk/libcnf
+#****h* libcnf
 #  DESCRIPTION
 #    bashlyk CNF library
 #    Чтение/запись файлов конфигураций
 #  AUTHOR
 #    Damir Sh. Yakupov <yds@bk.ru>
 #******
-#****d* bashlyk/libcnf/Required Once
+#****d* libcnf/Required Once
 #  DESCRIPTION
 #    Глобальная переменная $_BASHLYK_LIBCNF обеспечивает
 #    защиту от повторного использования данного модуля.
@@ -19,7 +19,7 @@
 [ -n "$BASH_VERSION" ] \
  || eval 'echo "bash interpreter for this script ($0) required ..."; exit 255'
 #******
-#****** bashlyk/libcnf/External Modules
+#****** libcnf/External Modules
 # DESCRIPTION
 #   Using modules section
 #   Здесь указываются модули, код которых используется данной библиотекой
@@ -27,7 +27,7 @@
 : ${_bashlyk_pathLib:=/usr/share/bashlyk}
 [ -s "${_bashlyk_pathLib}/libstd.sh" ] && . "${_bashlyk_pathLib}/libstd.sh"
 #******
-#****v*  bashlyk/libcnf/Init section
+#****v* libcnf/Init section
 #  DESCRIPTION
 #    Блок инициализации глобальных переменных
 #  SOURCE
@@ -37,7 +37,7 @@
 : ${_bashlyk_aRequiredCmd_cnf:="[ awk date dirname echo mkdir printf pwd"}
 : ${_bashlyk_aExport_cnf:="udfGetConfig udfSetConfig"}
 #******
-#****f* bashlyk/libcnf/udfGetConfig
+#****f* libcnf/udfGetConfig
 #  SYNOPSIS
 #    udfGetConfig <file>
 #  DESCRIPTION
@@ -102,7 +102,7 @@ udfGetConfig() {
  return 0
 }
 #******
-#****f* bashlyk/libcnf/udfSetConfig
+#****f* libcnf/udfSetConfig
 #  SYNOPSIS
 #    udfSetConfig <file> "<csv;>"
 #  DESCRIPTION

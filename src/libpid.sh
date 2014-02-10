@@ -1,14 +1,14 @@
 #
 # $Id$
 #
-#****h* bashlyk/libpid
+#****h* libpid
 #  DESCRIPTION
 #    bashlyk PID library
 #    Обслуживание процессов
 #  AUTHOR
 #    Damir Sh. Yakupov <yds@bk.ru>
 #******
-#****d* bashlyk/libpid/Require Once
+#****d* libpid/Require Once
 #  DESCRIPTION
 #    Глобальная переменная $_BASHLYK_LIBPID обеспечивает
 #    защиту от повторного использования данного модуля
@@ -19,7 +19,7 @@
 [ -n "$BASH_VERSION" ] \
  || eval 'echo "bash interpreter for this script ($0) required ..."; exit 255'
 #******
-#****** bashlyk/libpid/External Modules
+#****** libpid/External Modules
 # DESCRIPTION
 #   Using modules section
 #   Здесь указываются модули, код которых используется данной библиотекой
@@ -27,7 +27,7 @@
 : ${_bashlyk_pathLib:=/usr/share/bashlyk}
 [ -s "${_bashlyk_pathLib}/libstd.sh" ] && . "${_bashlyk_pathLib}/libstd.sh"
 #******
-#****v*  bashlyk/libpid/Init section
+#****v* libpid/Init section
 #  DESCRIPTION
 #    Блок инициализации глобальных переменных
 #  SOURCE
@@ -41,7 +41,7 @@
 : ${_bashlyk_aRequiredCmd_pid:="[ echo file grep head mkdir ps rm rmdir w"}
 : ${_bashlyk_aExport_pid:="udfCheckStarted udfSetPid udfExitIfAlreadyStarted udfClean"}
 #******
-#****f* bashlyk/libpid/udfCheckStarted
+#****f* libpid/udfCheckStarted
 #  SYNOPSIS
 #    udfCheckStarted PID [command [args]]
 #  DESCRIPTION
@@ -72,7 +72,7 @@ udfCheckStarted() {
  ps -p $pid -o args= | grep "${*}$" >/dev/null 2>&1
 }
 #******
-#****f* bashlyk/libpid/udfSetPid
+#****f* libpid/udfSetPid
 #  SYNOPSIS
 #    udfSetPid
 #  DESCRIPTION
@@ -111,7 +111,7 @@ udfSetPid() {
  return 0
 }
 #******
-#****f* bashlyk/libpid/udfExitIfAlreadyStarted
+#****f* libpid/udfExitIfAlreadyStarted
 #  SYNOPSIS
 #    udfExitIfAlreadyStarted
 #  DESCRIPTION
@@ -132,7 +132,7 @@ udfExitIfAlreadyStarted() {
 }
 #******
 # TODO проверить на используемость
-#****f* bashlyk/libpid/udfClean
+#****f* libpid/udfClean
 #  SYNOPSIS
 #    udfClean
 #  DESCRIPTION

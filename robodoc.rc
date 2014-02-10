@@ -12,3 +12,5 @@ ignore files:
     .svn
     *~
     debian
+    autom4te.cache
+    

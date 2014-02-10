@@ -1,13 +1,13 @@
 #
 # $Id$
 #
-#****h* bashlyk/testunit
+#****h* testunit
 #  DESCRIPTION
 #    bashlyk test unit compiler
 #  AUTHOR
 #    Damir Sh. Yakupov <yds@bk.ru>
 #******
-#****** bashlyk/testunit/External Modules
+#****** testunit/External Modules
 # DESCRIPTION
 #   Using modules section
 #   Здесь указываются модули, код которых используется данной библиотекой
@@ -17,7 +17,7 @@
 : ${_bashlyk_TestUnit_iCount=0}
 : ${_bashlyk_TestUnit_fnTmp=$(mktemp 2>/dev/null || tempfile)}
 #******
-#****f* bashlyk/testunit/udfTestUnitMsg
+#****f* testunit/udfTestUnitMsg
 #  SYNOPSIS
 #    udfTestUnitMsg
 # DESCRIPTION
@@ -45,12 +45,19 @@ udfTestUnitMsg() {
  return 0
 } 
 #******
+#****f* testunit/udfError
+#  SYNOPSIS
+#   udfError <сообщение об ошибке>
+# DESCRIPTION
+#   Вывод указанного сообщения об ошибке c последующим завершением сценария
+#  SOURCE
 udfError() {
  local rc=$?
  echo "$*"
  exit $rc
 }
-#****f* bashlyk/testunit/udfMain
+#******
+#****f* testunit/udfMain
 # DESCRIPTION
 #   main function libraries test unit
 #  SOURCE

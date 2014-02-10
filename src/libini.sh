@@ -1,14 +1,14 @@
 #
 # $Id$
 #
-#****h* bashlyk/libini
+#****h* libini
 #  DESCRIPTION
 #    bashlyk INI library
 #    Обработка конфигурационных файлов в стиле INI
 #  AUTHOR
 #    Damir Sh. Yakupov <yds@bk.ru>
 #******
-#****d* bashlyk/libini/Required Once
+#****d* libini/Required Once
 #  DESCRIPTION
 #    Глобальная переменная $_BASHLYK_LIBINI обеспечивает
 #    защиту от повторного использования данного модуля
@@ -19,7 +19,7 @@
 [ -n "$BASH_VERSION" ] \
  || eval 'echo "bash interpreter for this script ($0) required ..."; exit 255'
 #******
-#****** bashlyk/libini/External Modules
+#****** libini/External Modules
 # DESCRIPTION
 #   Using modules section
 #   Здесь указываются модули, код которых используется данной библиотекой
@@ -27,18 +27,24 @@
 : ${_bashlyk_pathLib:=/usr/share/bashlyk}
 [ -s "${_bashlyk_pathLib}/libstd.sh" ] && . "${_bashlyk_pathLib}/libstd.sh"
 #******
-#****v*  bashlyk/libini/Init section
+#****v* libini/Init section
 #  DESCRIPTION
 #    Блок инициализации глобальных переменных
 #  SOURCE
 : ${_bashlyk_sArg:=$*}
 : ${_bashlyk_pathIni:=$(pwd)}
 : ${_bashlyk_sUnnamedKeyword:=_bashlyk_ini_void_autoKey_}
-: ${_bashlyk_aRequiredCmd_ini:="[ awk cat cut dirname echo false grep mv printf pwd rm sed sort touch tr true uniq w xargs"}
-: ${_bashlyk_aExport_ini:="udfGetIniSection udfReadIniSection udfReadIniSection2Var udfCsvOrder udfAssembly udfSetVarFromCsv udfSetVarFromIni udfCsvKeys udfIniWrite udfIniChange udfGetIni udfGetCsvSection udfGetCsvSection2Var udfGetIniSection2Var udfCsvOrder2Var udfCsvKeys2Var udfGetIni2Var udfSelectEnumFromCsvHash udfIniGroupSection2Csv udfIniGroupSection2CsvVar udfIni2Csv udfIni2CsvVar udfIniGroup2Csv udfIniGroup2CsvVar udfIni udfCsvHash2Raw"}
-#: ${_bashlyk_aExport_ini:="udfGetIniSection udfReadIniSection udfIniSection2Csv udfIniGroupSection2Csv"}
+: ${_bashlyk_aRequiredCmd_ini:="[ awk cat cut dirname echo false grep mv printf\
+  pwd rm sed sort touch tr true uniq w xargs"}
+: ${_bashlyk_aExport_ini:="udfGetIniSection udfReadIniSection                  \
+  udfReadIniSection2Var udfCsvOrder udfAssembly udfSetVarFromCsv               \
+  udfSetVarFromIni udfCsvKeys udfIniWrite udfIniChange udfGetIni               \
+  udfGetCsvSection udfGetCsvSection2Var udfGetIniSection2Var udfCsvOrder2Var   \
+  udfCsvKeys2Var udfGetIni2Var udfSelectEnumFromCsvHash udfIniGroupSection2Csv \
+  udfIniGroupSection2CsvVar udfIni2Csv udfIni2CsvVar udfIniGroup2Csv           \
+  udfIniGroup2CsvVar udfIni udfCsvHash2Raw"}
 #******
-#****f* bashlyk/libini/udfGetIniSection
+#****f* libini/udfGetIniSection
 #  SYNOPSIS
 #    udfGetIniSection <file> [<section>]
 #  DESCRIPTION
@@ -117,7 +123,7 @@ udfGetIniSection() {
  return 0
 }
 #******
-#****f* bashlyk/libini/udfGetIniSection2Var
+#****f* libini/udfGetIniSection2Var
 #  SYNOPSIS
 #    udfGetIniSection <varname> <file> [<section>]
 #  DESCRIPTION
@@ -145,7 +151,7 @@ udfGetIniSection2Var() {
  return 0
 }
 #******
-#****f* bashlyk/libini/udfReadIniSection
+#****f* libini/udfReadIniSection
 #  SYNOPSIS
 #    udfReadIniSection <file> [<section>]
 #  DESCRIPTION
@@ -221,7 +227,7 @@ udfReadIniSection() {
  return 0
 }
 #******
-#****f* bashlyk/libini/udfReadIniSection2Var
+#****f* libini/udfReadIniSection2Var
 #  SYNOPSIS
 #    udfReadIniSection2Var <varname> <file> [<section>]
 #  DESCRIPTION
@@ -250,7 +256,7 @@ udfReadIniSection2Var() {
  return 0
 }
 #******
-#****f* bashlyk/libini/udfCsvOrder
+#****f* libini/udfCsvOrder
 #  SYNOPSIS
 #    udfCsvOrder <csv;>
 #  DESCRIPTION
@@ -310,7 +316,7 @@ _CsvOrder_EOF
  return 0
 }
 #******
-#****f* bashlyk/libini/udfCsvOrder2Var
+#****f* libini/udfCsvOrder2Var
 #  SYNOPSIS
 #    udfCsvOrder2Var <varname> <csv;>
 #  DESCRIPTION
@@ -338,7 +344,7 @@ udfCsvOrder2Var() {
  return 0
 }
 #******
-#****f* bashlyk/libini/udfSetVarFromCsv
+#****f* libini/udfSetVarFromCsv
 #  SYNOPSIS
 #    udfSetVarFromCsv <csv;> <keys> ...
 #  DESCRIPTION
@@ -380,7 +386,7 @@ udfSetVarFromCsv() {
  return 0
 }
 #******
-#****f* bashlyk/libini/udfSetVarFromIni
+#****f* libini/udfSetVarFromIni
 #  SYNOPSIS
 #    udfSetVarFromIni <file> <section> <keys> ...
 #  DESCRIPTION
@@ -423,7 +429,7 @@ udfSetVarFromIni() {
  return 0
 }
 #******
-#****f* bashlyk/libini/udfCsvKeys
+#****f* libini/udfCsvKeys
 #  SYNOPSIS
 #    udfCsvKeys <csv;>
 #  DESCRIPTION
@@ -459,7 +465,7 @@ udfCsvKeys() {
  return 0
 }
 #******
-#****f* bashlyk/libini/udfCsvKeys2Var
+#****f* libini/udfCsvKeys2Var
 #  SYNOPSIS
 #    udfCsvKeys2Var <varname> <csv;>
 #  DESCRIPTION
@@ -485,7 +491,7 @@ udfCsvKeys2Var() {
  return 0
 }
 #******
-#****f* bashlyk/libini/udfIniWrite
+#****f* libini/udfIniWrite
 #  SYNOPSIS
 #    udfIniWrite <file> <csv;>
 #  DESCRIPTION
@@ -529,7 +535,7 @@ udfIniWrite() {
  return 0
 }
 #******
-#****f* bashlyk/libini/udfIniChange
+#****f* libini/udfIniChange
 #  SYNOPSIS
 #    udfIniChange <file> <csv;> [<section>]
 #  DESCRIPTION
@@ -586,7 +592,7 @@ udfIniChange() {
  return 0
 }
 #******
-#****f* bashlyk/libini/udfIni
+#****f* libini/udfIni
 #  SYNOPSIS
 #    udfIni <file> [<section>]:(=[<varname>])|<csv;> ...
 #  DESCRIPTION
@@ -662,7 +668,7 @@ udfIni() {
  return 0
 }
 #******
-#****f* bashlyk/libini/udfGetIni
+#****f* libini/udfGetIni
 #  SYNOPSIS
 #    udfGetIni <file> [<section>] ...
 #  DESCRIPTION
@@ -704,7 +710,7 @@ udfGetIni() {
  return 0
 }
 #******
-#****f* bashlyk/libini/udfGetIni2Var
+#****f* libini/udfGetIni2Var
 #  SYNOPSIS
 #    udfGetIni2Var <varname> <file> [<section>] ...
 #  DESCRIPTION
@@ -730,7 +736,7 @@ udfGetIni2Var() {
  return 0
 }
 #******
-#****f* bashlyk/libini/udfGetCsvSection
+#****f* libini/udfGetCsvSection
 #  SYNOPSIS
 #    udfGetCsvSection <csv> <tag>
 #  DESCRIPTION
@@ -753,7 +759,7 @@ udfGetCsvSection() {
  return 0
 }
 #******
-#****f* bashlyk/libini/udfGetCsvSection2Var
+#****f* libini/udfGetCsvSection2Var
 #  SYNOPSIS
 #    udfGetCsvSection <varname> <csv> [<tag>]
 #  DESCRIPTION
@@ -785,7 +791,7 @@ udfGetCsvSection2Var() {
  return 0
 }
 #******
-#****f* bashlyk/libini/udfSelectEnumFromCsvHash
+#****f* libini/udfSelectEnumFromCsvHash
 #  SYNOPSIS
 #    udfSelectEnumFromCsvHash <csv> [<tag>]
 #  DESCRIPTION
@@ -821,7 +827,7 @@ udfSelectEnumFromCsvHash() {
  echo "$csv"
 }
 #******
-#****f* bashlyk/libini/udfCsvHash2Raw
+#****f* libini/udfCsvHash2Raw
 #  SYNOPSIS
 #    udfCsvHash2Raw <csv> [<tag>]
 #  DESCRIPTION
@@ -858,7 +864,7 @@ udfCsvHash2Raw() {
  echo "$csv"
 }
 #******
-#****f* bashlyk/libini/udfIniSection2Csv
+#****f* libini/udfIniSection2Csv
 #  SYNOPSIS
 #    udfIniSection2Csv <file> [<section>]
 #  DESCRIPTION
@@ -898,7 +904,7 @@ udfIniSection2Csv() {
  return 0
 }
 #******
-#****f* bashlyk/libini/udfIniSection2CsvVar
+#****f* libini/udfIniSection2CsvVar
 #  SYNOPSIS
 #    udfIniSection2CsvVar <varname> <file> [<section>]
 #  DESCRIPTION
@@ -927,7 +933,7 @@ udfIniSection2CsvVar() {
  return 0
 }
 #******
-#****f* bashlyk/libini/udfIniGroupSection2Csv
+#****f* libini/udfIniGroupSection2Csv
 #  SYNOPSIS
 #    udfIniGroupSection2Csv <file> [<section>]
 #  DESCRIPTION
@@ -1007,7 +1013,7 @@ udfIniGroupSection2Csv() {
  return 0
 }
 #******
-#****f* bashlyk/libini/udfIniGroupSection2CsvVar
+#****f* libini/udfIniGroupSection2CsvVar
 #  SYNOPSIS
 #    udfIniGroupSection2CsvVar <varname> <file> [<section>] 
 #  DESCRIPTION
@@ -1036,7 +1042,7 @@ udfIniGroupSection2CsvVar() {
  return 0
 }
 #******
-#****f* bashlyk/libini/udfIni2Csv
+#****f* libini/udfIni2Csv
 #  SYNOPSIS
 #    udfIni2Csv <file>
 #  DESCRIPTION
@@ -1084,7 +1090,7 @@ udfIni2Csv() {
  return 0
 }
 #******
-#****f* bashlyk/libini/udfIni2CsvVar
+#****f* libini/udfIni2CsvVar
 #  SYNOPSIS
 #    udfIni2CsvVar <varname> <file>
 #  DESCRIPTION
@@ -1110,7 +1116,7 @@ udfIni2CsvVar() {
  return 0
 }
 #******
-#****f* bashlyk/libini/udfIniGroup2Csv
+#****f* libini/udfIniGroup2Csv
 #  SYNOPSIS
 #    udfIniGroup2Csv <file>
 #  DESCRIPTION
@@ -1202,7 +1208,7 @@ udfIniGroup2Csv() {
  return 0
 }
 #******
-#****f* bashlyk/libini/udfIniGroup2CsvVar
+#****f* libini/udfIniGroup2CsvVar
 #  SYNOPSIS
 #    udfIniGroup2CsvVar <varname> <file>
 #  DESCRIPTION

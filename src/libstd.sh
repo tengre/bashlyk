@@ -1,14 +1,14 @@
 #
 # $Id$
 #
-#****h* bashlyk/libstd
+#****h* libstd
 #  DESCRIPTION
 #    bashlyk Std library
 #    стандартный набор функций
 #  AUTHOR
 #    Damir Sh. Yakupov <yds@bk.ru>
 #******
-#****d* bashlyk/libstd/Once required
+#****d* libstd/Once required
 #  DESCRIPTION
 #    Эта глобальная переменная обеспечивает
 #    защиту от повторного использования данного модуля
@@ -19,7 +19,7 @@
 [ -n "$BASH_VERSION" ] \
  || eval 'echo "bash interpreter for this script ($0) required ..."; exit 255'
 #******
-#****v*  bashlyk/libstd/Init section
+#****v* libstd/Init section
 #  DESCRIPTION
 #    Блок инициализации глобальных переменных
 #    * $_bashlyk_sArg - аргументы командной строки вызова сценария
@@ -63,7 +63,7 @@ else
  _bashlyk_cmdMessage="write ${_bashlyk_sUser}"
 fi
 #******
-#****f* bashlyk/libstd/udfBaseId
+#****f* libstd/udfBaseId
 #  SYNOPSIS
 #    udfBaseId
 #  DESCRIPTION
@@ -77,7 +77,7 @@ udfBaseId() {
  basename $0 .sh
 }
 #******
-#****f* bashlyk/libstd/udfDate
+#****f* libstd/udfDate
 #  SYNOPSIS
 #    udfDate <args>
 #  DESCRIPTION
@@ -93,7 +93,7 @@ udfDate() {
  date "+%b %d %H:%M:%S $*"
 }
 #******
-#****f* bashlyk/libstd/udfEcho
+#****f* libstd/udfEcho
 #  SYNOPSIS
 #    udfEcho [-] args
 #  DESCRIPTION
@@ -119,7 +119,7 @@ udfEcho() {
  fi
 }
 #******
-#****f* bashlyk/libstd/udfMail
+#****f* libstd/udfMail
 #  SYNOPSIS
 #    udfMail [[-] args]
 #  DESCRIPTION
@@ -145,7 +145,7 @@ udfMail() {
  return $rc
 }
 #******
-#****f* bashlyk/libstd/udfWarn
+#****f* libstd/udfWarn
 #  SYNOPSIS
 #    udfWarn [-] args
 #  DESCRIPTION
@@ -168,7 +168,7 @@ udfWarn() {
  [ $_bashlyk_bNotUseLog -ne 0 ] && udfEcho $* || udfMail $*
 }
 #******
-#****f* bashlyk/libstd/udfThrow
+#****f* libstd/udfThrow
 #  SYNOPSIS
 #    udfThrow [-] args
 #  DESCRIPTION
@@ -189,7 +189,7 @@ udfThrow() {
  exit 255
 }
 #******
-#****f* bashlyk/libstd/udfOnEmptyVariable
+#****f* libstd/udfOnEmptyVariable
 #  SYNOPSIS
 #    udfOnEmptyVariable [Warn | Throw ] args
 #  DESCRIPTION
@@ -229,7 +229,7 @@ udfOnEmptyVariable() {
  return 0
 }
 #******
-#****f* bashlyk/libstd/udfThrowOnEmptyVariable
+#****f* libstd/udfThrowOnEmptyVariable
 #  SYNOPSIS
 #    udfThrowOnEmptyVariable args
 #  DESCRIPTION
@@ -252,7 +252,7 @@ udfThrowOnEmptyVariable() {
  udfOnEmptyVariable Throw $*
 }
 #******
-#****f* bashlyk/libstd/udfWarnOnEmptyVariable
+#****f* libstd/udfWarnOnEmptyVariable
 #  SYNOPSIS
 #    udfWarnOnEmptyVariable args
 #  DESCRIPTION
@@ -275,7 +275,7 @@ udfWarnOnEmptyVariable() {
  udfOnEmptyVariable Warn $*
 }
 #******
-#****f* bashlyk/libstd/udfShowVariable
+#****f* libstd/udfShowVariable
 #  SYNOPSIS
 #    udfShowVariable args
 #  DESCRIPTION
@@ -297,7 +297,7 @@ udfShowVariable() {
  return 0
 }
 #******
-#****f* bashlyk/libstd/udfIsNumber
+#****f* libstd/udfIsNumber
 #  SYNOPSIS
 #    udfIsNumber <number> [<tag>]
 #  DESCRIPTION
@@ -334,7 +334,7 @@ udfIsNumber() {
 # esac
 }
 #******
-#****f* bashlyk/libstd/udfIsValidVariable
+#****f* libstd/udfIsValidVariable
 #  SYNOPSIS
 #    udfIsVariable <arg>
 #  DESCRIPTION
@@ -357,7 +357,7 @@ udfIsValidVariable() {
  echo "$1" | grep -E '^[_a-zA-Z]+[_a-zA-Z0-9]+?$' >/dev/null 2>&1
 }
 #******
-#****f* bashlyk/libstd/udfQuoteIfNeeded
+#****f* libstd/udfQuoteIfNeeded
 #  SYNOPSIS
 #    udfQuoteIfNeeded <arg>
 #  DESCRIPTION
@@ -374,7 +374,7 @@ udfQuoteIfNeeded() {
  [ -n "$(echo "$*" | grep -e [[:space:]])" ] && echo "\"$*\"" || echo "$*"
 }
 #******
-#****f* bashlyk/libstd/udfWSpace2Alias
+#****f* libstd/udfWSpace2Alias
 #  SYNOPSIS
 #    udfWSpace2Alias -|<arg>
 #  DESCRIPTION
@@ -396,7 +396,7 @@ udfWSpace2Alias() {
  esac
 }
 #******
-#****f* bashlyk/libstd/udfAlias2WSpace
+#****f* libstd/udfAlias2WSpace
 #  SYNOPSIS
 #    udfAlias2WSpace -|<arg>
 #  DESCRIPTION
@@ -419,7 +419,7 @@ udfAlias2WSpace() {
  esac 
 }
 #******
-#****f* bashlyk/libstd/udfMakeTemp
+#****f* libstd/udfMakeTemp
 #  SYNOPSIS
 #    udfMakeTemp [varname] options...
 #  DESCRIPTION
@@ -576,7 +576,7 @@ udfMakeTemp() {
  return $?
 }
 #******
-#****f* bashlyk/libstd/udfMakeTempV
+#****f* libstd/udfMakeTempV
 #  SYNOPSIS
 #    udfMakeTempV <var> [file|dir|keep|keepf[ile*]|keepd[ir]] [<prefix>]
 #  DESCRIPTION
@@ -623,7 +623,7 @@ udfMakeTempV() {
  udfMakeTemp $1 $sType $sKeep $sPrefix
 }
 #******
-#****f* bashlyk/libstd/udfPrepare2Exec
+#****f* libstd/udfPrepare2Exec
 #  SYNOPSIS
 #    udfPrepare2Exec args
 #  DESCRIPTION
@@ -651,7 +651,7 @@ udfPrepare2Exec() {
  return 0
 }
 #******
-#****f* bashlyk/libstd/udfShellExec
+#****f* libstd/udfShellExec
 #  SYNOPSIS
 #    udfShellExec args
 #  DESCRIPTION
@@ -677,7 +677,7 @@ udfShellExec() {
  return $rc
 }
 #******
-#****f* bashlyk/libstd/udfAddFile2Clean
+#****f* libstd/udfAddFile2Clean
 #  SYNOPSIS
 #    udfAddFile2Clean args
 #  DESCRIPTION
@@ -697,7 +697,7 @@ udfAddFile2Clean() {
  trap "udfOnTrap" 0 1 2 5 15
 }
 #******
-#****f* bashlyk/libstd/udfAddPath2Clean
+#****f* libstd/udfAddPath2Clean
 #  SYNOPSIS
 #    udfAddPath2Clean args
 #  DESCRIPTION
@@ -717,7 +717,7 @@ udfAddPath2Clean() {
  trap "udfOnTrap" 0 1 2 5 15
 }
 #******
-#****f* bashlyk/libstd/udfAddJob2Clean
+#****f* libstd/udfAddJob2Clean
 #  SYNOPSIS
 #    udfAddJob2Clean args
 #  DESCRIPTION
@@ -736,7 +736,7 @@ udfAddJob2Clean() {
  trap "udfOnTrap" 0 1 2 5 15
 }
 #******
-#****f* bashlyk/libstd/udfAddPid2Clean
+#****f* libstd/udfAddPid2Clean
 #  SYNOPSIS
 #    udfAddPid2Clean args
 #  DESCRIPTION
@@ -757,7 +757,7 @@ udfAddPid2Clean() {
  trap "udfOnTrap" 0 1 2 5 15
 }
 #******
-#****f* bashlyk/libstd/udfCleanQueue
+#****f* libstd/udfCleanQueue
 #  SYNOPSIS
 #    udfCleanQueue args
 #  DESCRIPTION
@@ -769,7 +769,7 @@ udfCleanQueue() {
  udfAddFile2Clean $*
 }
 #******
-#****f* bashlyk/libstd/udfOnTrap
+#****f* libstd/udfOnTrap
 #  SYNOPSIS
 #    udfOnTrap
 #  DESCRIPTION
@@ -822,7 +822,7 @@ udfOnTrap() {
  }
 }
 #******
-#****f* bashlyk/libstd/_ARGUMENTS
+#****f* libstd/_ARGUMENTS
 #  SYNOPSIS
 #    _ARGUMENTS [args]
 #  DESCRIPTION
@@ -844,7 +844,7 @@ _ARGUMENTS() {
  [ -n "$1" ] && _bashlyk_sArg="$*" || echo ${_bashlyk_sArg}
 }
 #******
-#****f* bashlyk/libstd/_s0
+#****f* libstd/_s0
 #  SYNOPSIS
 #    _s0
 #  DESCRIPTION
@@ -864,7 +864,7 @@ _s0() {
  [ -n "$1" ] && _bashlyk_s0="$*" || echo ${_bashlyk_s0}
 }
 #******
-#****f* bashlyk/libstd/_pathDat
+#****f* libstd/_pathDat
 #  SYNOPSIS
 #    _pathDat
 #  DESCRIPTION
@@ -890,7 +890,7 @@ _pathDat() {
  fi
 }
 #******
-#****f* bashlyk/libstd/_
+#****f* libstd/_
 #  SYNOPSIS
 #    _ [[<get>]=]<subname> [<value>]
 #  DESCRIPTION
@@ -942,7 +942,7 @@ _(){
  return 0
 }
 #******
-#****f* bashlyk/libstd/_getv
+#****f* libstd/_getv
 #  SYNOPSIS
 #    _getv <subname> [<get>]
 #  DESCRIPTION
@@ -971,7 +971,7 @@ _getv() {
  return 0
 }
 #******
-#****f* bashlyk/libstd/_gete
+#****f* libstd/_gete
 #  SYNOPSIS
 #    _gete <subname>
 #  DESCRIPTION
@@ -986,7 +986,7 @@ _gete() {
  eval "echo "'$_bashlyk_'"${1}"
 }
 #******
-#****f* bashlyk/libstd/_set
+#****f* libstd/_set
 #  SYNOPSIS
 #    _set <subname> [<value>]
 #  DESCRIPTION
@@ -1005,7 +1005,7 @@ _set() {
  eval "_bashlyk_$1=$2"
 }
 #******
-#****f* bashlyk/libini/udfCheckCsv
+#****f* libini/udfCheckCsv
 #  SYNOPSIS
 #    udfCheckCsv "<csv;>" [<varname>]
 #  DESCRIPTION
@@ -1072,7 +1072,7 @@ udfCheckCsv() {
  return 0
 }
 #******
-#****f* bashlyk/libmd5/udfGetMd5
+#****f* libmd5/udfGetMd5
 #  SYNOPSIS
 #    udfGetMd5 [-]|--file <filename>|<args>
 #  DESCRIPTION
@@ -1103,7 +1103,7 @@ udfGetMd5() {
  return 0
 }
 #******
-#****f* bashlyk/libmd5/udfGetPathMd5
+#****f* libmd5/udfGetPathMd5
 #  SYNOPSIS
 #    udfGetPathMd5 <path>
 #  DESCRIPTION
@@ -1135,7 +1135,7 @@ udfGetPathMd5() {
  return 0
 }
 #******
-#****f* bashlyk/libxml/udfXml
+#****f* libxml/udfXml
 #  SYNOPSIS
 #    udfXml tag [property] data
 #  DESCRIPTION
