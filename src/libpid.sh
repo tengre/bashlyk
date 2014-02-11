@@ -89,7 +89,7 @@ udfCheckStarted() {
 #  EXAMPLE
 #    udfSetPid                                                                  #? true
 #    test -f $_bashlyk_fnPid                                                    #? true
-#    head -n 1 $_bashlyk_fnPid | grep -w $$                                     #? true
+#    head -n 1 $_bashlyk_fnPid >| grep -w $$                                    #? true
 #  SOURCE
 udfSetPid() {
  local fnPid pid

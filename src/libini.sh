@@ -3,7 +3,7 @@
 #
 #****h* BASHLYK/libini
 #  DESCRIPTION  
-#    Управление пассивными конфигурационными файлов в стиле INI. Имеет 
+#    Управление пассивными конфигурационными файлов в стиле INI. Имеется 
 #    возможность подгрузки исполнимого контента
 #  AUTHOR
 #    Damir Sh. Yakupov <yds@bk.ru>
@@ -81,8 +81,7 @@
 #    printf "$fmt" sTxt foo b false "iXo Xo" 19 iYo 80 | tee $ini               
 #    echo "simple line" | tee -a $ini                                           
 #    printf "$fmt" sTxt "$sTxt" b "$b" iXo "$iXo" iYo "$iYo" | tee $iniChild    
-#    udfGetIniSection $iniChild test                                            #? true
-#    udfGetIniSection $iniChild test | grep "^${csv}$"                          #? true
+#    udfGetIniSection $iniChild test >| grep "^${csv}$"                         #? true
 #    udfGetIniSection2Var csvResult $iniChild test                              #? true
 #    echo "$csvResult" | grep "^${csv}$"                                        #? true
 #    rm -f $iniChild $ini                                                       
@@ -103,11 +102,12 @@ udfGetIniSection() {
  [ -n "$2" ] && sTag="$2"
  #
  if [ -z "$pathIni" ]; then
-  [ -f "/etc/${_bashlyk_pathPrefix}/$1" ] && pathIni="/etc/${_bashlyk_pathPrefix}" || return 1
+  [ -f "/etc/${_bashlyk_pathPrefix}/$1" ] \
+   && pathIni="/etc/${_bashlyk_pathPrefix}" || return 1
  fi
  #
- aini=$(echo "${1##*/}" | awk 'BEGIN{FS="."} {for (i=NF;i>=1;i--) printf $i" "}')
-
+ aini=$(echo "${1##*/}"|awk 'BEGIN{FS="."} {for (i=NF;i>=1;i--) printf $i" "}')
+ 
  sGlobIgnore=$GLOBIGNORE
  GLOBIGNORE="*:?"
 
@@ -179,8 +179,7 @@ udfGetIniSection2Var() {
 #    ini=$(mktemp --suffix=.ini || tempfile -s .test.ini)                       #? true
 #    printf "$fmt" "sTxt" "$sTxt" "b" "$b" "iXo" "$iXo" "iYo" "$iYo" | tee $ini 
 #    echo "simple line" | tee -a $ini                                           
-#    udfReadIniSection $ini test                                                #? true
-#    udfReadIniSection $ini test | grep "^${csv}$"                              #? true
+#    udfReadIniSection $ini test >| grep "^${csv}$"                             #? true
 #    udfReadIniSection2Var csvResult $ini test                                  #? true
 #    echo "$csvResult" | grep "^${csv}$"                                        #? true
 #    rm -f $ini                                                                 
@@ -276,7 +275,7 @@ udfReadIniSection2Var() {
 #    local csv='sTxt=bar;b=false;iXo=21;iYo=1080;sTxt=foo bar;b=true;iXo=1920;' 
 #    local csvResult                                                            
 #    local csvTest='b=true;iXo=1920;iYo=1080;sTxt="foo bar";'                   
-#    udfCsvOrder "$csv" | grep "^${csvTest}$"                                   #? true
+#    udfCsvOrder "$csv" >| grep "^${csvTest}$"                                  #? true
 #    udfCsvOrder2Var csvResult "$csv"                                           #? true
 #    echo $csvResult | grep "^${csvTest}$"                                      #? true
 #  SOURCE
@@ -444,8 +443,7 @@ udfSetVarFromIni() {
 #    255 - Ошибка: аргумент отсутствует
 #  EXAMPLE
 #    local csv='sTxt="foo bar";b=true;iXo=1921;iYo=1080;' sResult               
-#    udfCsvKeys "$csv"                                                          #? true
-#    udfCsvKeys "$csv" | xargs | grep "^sTxt b iXo iYo$"                        #? true
+#    udfCsvKeys "$csv" | xargs >| grep "^sTxt b iXo iYo$"                       #? true
 #    udfCsvKeys2Var sResult "$csv"                                              #? true
 #    echo $sResult | grep "^sTxt b iXo iYo$"                                    #? true
 #  SOURCE
@@ -563,8 +561,7 @@ udfIniWrite() {
 #    echo "simple line" | tee -a $ini                                           
 #    printf "$fmt" 2 sTxt "$sTxt" b "$b" iXo "$iXo" iYo "$iYo" | tee -a $ini    
 #    udfIniChange $ini "$csv" sect1                                             #? true
-#    udfReadIniSection $ini sect1                                               #? true
-#    udfReadIniSection $ini sect1 | md5sum | grep "^${md5}.*-$"                 #? true
+#    udfReadIniSection $ini sect1 >| md5sum | grep "^${md5}.*-$"                #? true
 #    rm -f $ini ${ini}.bak                                                      
 #  SOURCE
 udfIniChange() {
@@ -636,9 +633,8 @@ udfIniChange() {
 #    EOFiniChild                                                                #-
 #    sTxt='';b='';iXo=''                                                        
 #    udfIni $iniChild 'test:sTxt;b;iXo' 'exec:='                                #? true
-#    echo "${sTxt};${b};${iXo}" | grep -e "^foo = bar;true;1921$"               #? true
-#    echo "$exec"
-#    echo "$exec" | grep -e '^:;date;"sUname="$(uname -a)"";$'                  #? true
+#    echo "${sTxt};${b};${iXo}" >| grep -e "^foo = bar;true;1921$"              #? true
+#    echo "$exec" >| grep -e '^:;date;"sUname="$(uname -a)"";$'                 #? true
 #    rm -f $iniChild $ini                                                       
 #  SOURCE
 udfIni() {
@@ -691,8 +687,7 @@ udfIni() {
 #    printf "$fmt" sTxt foo b false "iXo Xo" 19 iYo 80 | tee $ini               
 #    echo "simple line" | tee -a $ini                                           
 #    printf "$fmt" "sTxt" "$sTxt" "b" "$b" "iXo" "$iXo" "iYo" "$iYo" | tee $iniChild
-#    udfGetIni $iniChild test                                                   #? true
-#    udfGetIni $iniChild test | grep "^\[\];;\[test\];${csv}$"                  #? true
+#    udfGetIni $iniChild test >| grep "^\[\];;\[test\];${csv}$"                 #? true
 #    udfGetIni2Var csvResult $iniChild test                                     #? true
 #    echo "$csvResult" | grep "^\[\];;\[test\];${csv}$"                         #? true
 #    rm -f $iniChild $ini                                                       
@@ -750,9 +745,9 @@ udfGetIni2Var() {
 #    csv; строка без заголовка секции [tag]
 #  EXAMPLE
 #    local csv='[];a=b;c=d e;[s1];a=f;c=g h;[s2];a=k;c=l m;'                    
-#    udfGetCsvSection "$csv" | grep '^a=b;c=d e;$'                              #? true
-#    udfGetCsvSection "$csv" s1 | grep '^a=f;c=g h;$'                           #? true
-#    udfGetCsvSection "$csv" s2 | grep '^a=k;c=l m;$'                           #? true
+#    udfGetCsvSection "$csv"    >| grep '^a=b;c=d e;$'                          #? true
+#    udfGetCsvSection "$csv" s1 >| grep '^a=f;c=g h;$'                          #? true
+#    udfGetCsvSection "$csv" s2 >| grep '^a=k;c=l m;$'                          #? true
 #  SOURCE
 udfGetCsvSection() {
  echo "${1#*\[$2\];}" | cut -f1 -d'['
@@ -778,11 +773,11 @@ udfGetCsvSection() {
 #  EXAMPLE
 #    local csv='[];a=b;c=d e;[s1];a=f;c=g h;[s2];a=k;c=l m;' csvResult          
 #    udfGetCsvSection2Var csvResult "$csv"                                      
-#    echo $csvResult | grep '^a=b;c=d e;$'                                      #? true
+#    echo $csvResult >| grep '^a=b;c=d e;$'                                     #? true
 #    udfGetCsvSection2Var csvResult "$csv" s1                                   
-#    echo $csvResult | grep '^a=f;c=g h;$'                                      #? true
+#    echo $csvResult >| grep '^a=f;c=g h;$'                                     #? true
 #    udfGetCsvSection2Var csvResult "$csv" s2                                   
-#    echo $csvResult | grep '^a=k;c=l m;$'                                      #? true
+#    echo $csvResult >| grep '^a=k;c=l m;$'                                     #? true
 #  SOURCE
 udfGetCsvSection2Var() {
  [ -n "$2" ] || return 255
@@ -808,12 +803,9 @@ udfGetCsvSection2Var() {
 #     0  - Выполнено успешно
 #  EXAMPLE
 #    local csv='[];a=b;_bashlyk_ini_void_autoKey_0="d = e";[s1];_bashlyk_ini_s1_autoKey_0=f=0;c=g h;[s2];a=k;_bashlyk_ini_s2_autoKey_0=l m;'                                        
-#    udfSelectEnumFromCsvHash "$csv"                                            #? true
-#    udfSelectEnumFromCsvHash "$csv" | grep '^"d = e";$'                        #? true
-#    udfSelectEnumFromCsvHash "$csv" s1                                         #? true
-#    udfSelectEnumFromCsvHash "$csv" s1 | grep '^f=0;$'                         #? true
-#    udfSelectEnumFromCsvHash "$csv" s2                                         #? true
-#    udfSelectEnumFromCsvHash "$csv" s2 | grep '^l m;$'                         #? true
+#    udfSelectEnumFromCsvHash "$csv"    >| grep '^"d = e";$'                    #? true
+#    udfSelectEnumFromCsvHash "$csv" s1 >| grep '^f=0;$'                        #? true
+#    udfSelectEnumFromCsvHash "$csv" s2 >| grep '^l m;$'                        #? true
 #  SOURCE
 udfSelectEnumFromCsvHash() {
  local cIFS csv s sUnnamedKeyword="_bashlyk_ini_${2:-void}_autoKey_"
@@ -845,12 +837,9 @@ udfSelectEnumFromCsvHash() {
 #     0  - Выполнено успешно
 #  EXAMPLE
 #    local csv='[];a=b;_bashlyk_ini_void_autoKey_0="d = e";[s1];_bashlyk_ini_s1_autoKey_0=f=0;c=g h;[s2];a=k;_bashlyk_ini_s2_autoKey_0=l m;'                                        
-#    udfCsvHash2Raw "$csv"                                                      #? true
-#    udfCsvHash2Raw "$csv" | grep '^a=b;"d = e";$'                              #? true
-#    udfCsvHash2Raw "$csv" s1                                                   #? true
-#    udfCsvHash2Raw "$csv" s1 | grep '^f=0;c=g h;$'                             #? true
-#    udfCsvHash2Raw "$csv" s2                                                   #? true
-#    udfCsvHash2Raw "$csv" s2 | grep '^a=k;l m;$'                               #? true
+#    udfCsvHash2Raw "$csv"    >| grep '^a=b;"d = e";$'                          #? true
+#    udfCsvHash2Raw "$csv" s1 >| grep '^f=0;c=g h;$'                            #? true
+#    udfCsvHash2Raw "$csv" s2 >| grep '^a=k;l m;$'                              #? true
 #  SOURCE
 udfCsvHash2Raw() {
  local cIFS csv s sUnnamedKeyword="_bashlyk_ini_${2:-void}_autoKey_"
@@ -892,10 +881,9 @@ udfCsvHash2Raw() {
 #    ini=$(mktemp --suffix=.ini || tempfile -s .test.ini)                       #? true
 #    printf "$fmt" "sTxt" "$sTxt" "b" "$b" "iXo" "$iXo" "iYo" "$iYo" | tee $ini 
 #    echo "simple line" | tee -a $ini                                           
-#    udfIniSection2Csv $ini test                                                #? true
-#    udfIniSection2Csv $ini test | grep "^${csv}$"                              #? true
+#    udfIniSection2Csv $ini test >| grep "^${csv}$"                             #? true
 #    udfIniSection2CsvVar csvResult $ini test                                   #? true
-#    echo "$csvResult" | grep "^${csv}$"                                        #? true
+#    echo "$csvResult"           >| grep "^${csv}$"                             #? true
 #    rm -f $ini                                                                 
 #  SOURCE
 udfIniSection2Csv() {
@@ -970,10 +958,9 @@ udfIniSection2CsvVar() {
 #    printf "$fmt" sTxt foo b false "iXo Xo" 19 iYo 80 | tee $ini               
 #    echo "simple line" | tee -a $ini                                           
 #    printf "$fmt" sTxt "$sTxt" b "$b" iXo "$iXo" iYo "$iYo" | tee $iniChild    
-#    udfIniGroupSection2Csv $iniChild test                                      #? true
-#    udfIniGroupSection2Csv $iniChild test | grep "^${csv}$"                    #? true
+#    udfIniGroupSection2Csv $iniChild test >| grep "^${csv}$"                   #? true
 #    udfIniGroupSection2CsvVar csvResult $iniChild test                         #? true
-#    echo "$csvResult" | grep "^${csv}$"                                        #? true
+#    echo "$csvResult"                     >| grep "^${csv}$"                   #? true
 #    rm -f $iniChild $ini                                                       
 #  SOURCE
 udfIniGroupSection2Csv() {
@@ -1078,10 +1065,9 @@ udfIniGroupSection2CsvVar() {
 #    [ -n "$sUname" ] && date                                                   #-
 #:[exec]                                                                        #-
 #EOFini                                                                         #-
-#    udfIni2Csv $ini                                                            #? true
-#    udfIni2Csv $ini | grep "^${csv}$"                                          #? true
+#    udfIni2Csv $ini   >| grep "^${csv}$"                                       #? true
 #    udfIni2CsvVar csvResult $ini                                               #? true
-#    echo "$csvResult" | grep "^${csv}$"                                        #? true
+#    echo "$csvResult" >| grep "^${csv}$"                                       #? true
 #    rm -f $ini                                                                 
 #  SOURCE
 udfIni2Csv() {
@@ -1150,11 +1136,9 @@ udfIni2CsvVar() {
 #    printf "$fmt" sTxt foo b false "iXo Xo" 19 iYo 80 | tee $ini               
 #    echo "simple line" | tee -a $ini                                           
 #    printf "$fmt" sTxt "$sTxt" b "$b" iXo "$iXo" iYo "$iYo" | tee $iniChild    
-#    udfIniGroup2Csv $iniChild                                                  #? true
-#    udfIniGroup2Csv $iniChild | grep "^${csv}$"                                #? true
+#    udfIniGroup2Csv $iniChild >| grep "^${csv}$"                               #? true
 #    udfIniGroup2CsvVar csvResult $iniChild                                     #? true
-#    echo "$csvResult"                                                          #? true
-#    echo "$csvResult" | grep "^${csv}$"                                        #? true
+#    echo "$csvResult" >| grep "^${csv}$"                                       #? true
 #    rm -f $iniChild $ini                                                       
 #  SOURCE
 udfIniGroup2Csv() {

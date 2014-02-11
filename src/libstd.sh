@@ -73,7 +73,7 @@ fi
 #  OUTPUT
 #    Короткое имя запущенного сценария без расширения ".sh"
 #  EXAMPLE
-#    udfBaseId | grep -w "^$(basename $0 .sh)$"                                 #? true 
+#    udfBaseId >| grep -w "^$(basename $0 .sh)$"                                #? true 
 #  SOURCE
 udfBaseId() {
  basename $0 .sh
@@ -89,7 +89,7 @@ udfBaseId() {
 #  OUTPUT
 #    текущая дата с возможным суффиксом
 #  EXAMPLE
-#    udfDate 'test' | grep -E ".* [[:digit:]]+:[[:digit:]]+:[[:digit:]]+ test"  #? true 
+#    udfDate 'test' >| grep -E ".* [[:digit:]]+:[[:digit:]]+:[[:digit:]]+ test" #? true 
 #  SOURCE
 udfDate() {
  date "+%b %d %H:%M:%S $*"
@@ -108,8 +108,8 @@ udfDate() {
 #  OUTPUT
 #   Зависит от параметров вывода
 #  EXAMPLE
-#    udfEcho 'test' | grep -w 'test'                                            #? true 
-#    echo body | udfEcho - subject | tr -d '\n' | grep -w "^subject----body$"   #? true
+#    udfEcho 'test' >| grep -w 'test'                                           #? true 
+#    echo body | udfEcho - subject | tr -d '\n' >| grep -w "^subject----body$"  #? true
 #  SOURCE
 udfEcho() {
  if [ "$1" = "-" ]; then
@@ -289,7 +289,7 @@ udfWarnOnEmptyVariable() {
 #    Имя переменной и значение в виде <Имя>=<Значение>
 #  EXAMPLE
 #    local sTest='test'                                                         
-#    udfShowVariable sTest | grep -w 'sTest=test'                               #? true
+#    udfShowVariable sTest >| grep -w 'sTest=test'                              #? true
 #  SOURCE
 udfShowVariable() {
  local bashlyk_aSE10yGYS4AwxLJA_a bashlyk_G9WOnrBkEFSt9oKw_s
@@ -370,8 +370,8 @@ udfIsValidVariable() {
 #  OUTPUT
 #    аргумент с кавычками, если есть пробелы
 #  EXAMPLE
-#    udfQuoteIfNeeded "word" | grep '^word$'                                    #? true 
-#    udfQuoteIfNeeded two words | grep '^".*"$'                                 #? true 
+#    udfQuoteIfNeeded "word" >| grep '^word$'                                   #? true 
+#    udfQuoteIfNeeded two words >| grep '^".*"$'                                #? true 
 #  SOURCE
 udfQuoteIfNeeded() {
  [ -n "$(echo "$*" | grep -e [[:space:]])" ] && echo "\"$*\"" || echo "$*"
@@ -389,8 +389,8 @@ udfQuoteIfNeeded() {
 #  OUTPUT
 #   Аргумент с заменой пробелов на специальную последовательность символов
 #  EXAMPLE
-#    udfWSpace2Alias 'a b  cd' | grep  '^a___b______cd$'                        #? true 
-#    echo 'a b  cd' | udfWSpace2Alias - | grep '^a___b______cd$'                #? true 
+#    udfWSpace2Alias 'a b  cd' >| grep  '^a___b______cd$'                       #? true 
+#    echo 'a b  cd' | udfWSpace2Alias - >| grep '^a___b______cd$'               #? true 
 #  SOURCE
 udfWSpace2Alias() {
  case "$1" in
@@ -412,8 +412,8 @@ udfWSpace2Alias() {
 #  OUTPUT
 #    Аргумент с заменой специальной последовательности символов на пробел
 #  EXAMPLE
-#    udfAlias2WSpace a___b______cd | grep '^"a b  cd"$'                         #? true
-#    echo a___b______cd | udfAlias2WSpace - | grep '^a b  cd$'                  #? true
+#    udfAlias2WSpace a___b______cd >| grep '^"a b  cd"$'                        #? true
+#    echo a___b______cd | udfAlias2WSpace - >| grep '^a b  cd$'                 #? true
 #  SOURCE
 udfAlias2WSpace() {
  case "$1" in
@@ -454,11 +454,11 @@ udfAlias2WSpace() {
 #  EXAMPLE
 #    local foTemp                                                               
 #    udfMakeTemp foTemp path=$HOME prefix=pre. suffix=.suf                      
-#    ls $foTemp | grep -w "$HOME/pre\.........\.suf"                            #? true
+#    ls $foTemp >| grep -w "$HOME/pre\.........\.suf"                           #? true
 #    udfMakeTemp foTemp type=dir mode=0751                                      
-#    ls -ld $foTemp | grep "^drwxr-x--x.*${foTemp}$"                            #? true
+#    ls -ld $foTemp >| grep "^drwxr-x--x.*${foTemp}$"                           #? true
 #    foTemp=$(udfMakeTemp prefix=pre. suffix=.suf)                              
-#    ls $foTemp | grep "pre\.........\.suf$"                                    #? true
+#    ls $foTemp >| grep "pre\.........\.suf$"                                   #? true
 #    rm -f $foTemp                                                              
 #    $(udfMakeTemp foTemp prefix=pre. suffix=.suf)                              
 #    test -f $foTemp                                                            #? false
@@ -600,11 +600,9 @@ udfMakeTemp() {
 #  EXAMPLE
 #    local foTemp                                                               
 #    udfMakeTempV foTemp file testfile                                          #? true
-#    ls $foTemp
-#    ls $foTemp | grep "testfile"                                               #? true
+#    ls $foTemp >| grep "testfile"                                              #? true
 #    udfMakeTempV foTemp dir                                                    #? true
-#    ls -ld $foTemp
-#    ls -ld $foTemp | grep "^drwx------.*${foTemp}$"                            #? true
+#    ls -ld $foTemp >| grep "^drwx------.*${foTemp}$"                           #? true
 #    echo $(udfMakeTempV foTemp)                              
 #    test -f $foTemp                                                            #? false
 #  SOURCE
@@ -641,8 +639,7 @@ udfMakeTempV() {
 #    временному файлу
 #  EXAMPLE
 #    local s='_bashlyk_&#91_ -n "$USER" _bashlyk_&#93__bashlyk_&#59_ true'      
-#    udfPrepare2Exec "$s"                                                       
-#    udfPrepare2Exec "$s" | grep -e '^\[ -n "$USER" \]; true$'                  #? true
+#    udfPrepare2Exec "$s" >| grep -e '^\[ -n "$USER" \]; true$'                 #? true
 #  SOURCE
 udfPrepare2Exec() {
  local s cIFS
@@ -755,7 +752,7 @@ udfAddJob2Clean() {
 #    local pid=$!
 #    test -n "$pid"                                                             #? true
 #    udfAddPid2Clean $pid                                                       #? true
-#    echo "$(_ apidClean)" | grep -w "$pid"                                     #? true
+#    echo "$(_ apidClean)" >| grep -w "$pid"                                    #? true
 #  SOURCE
 udfAddPid2Clean() {
  [ -n "$1" ] || return 0
@@ -796,7 +793,7 @@ udfCleanQueue() {
 #    udfOnTrap                                                                  
 #    test -f $fnTemp                                                            #? false
 #    test -d $pathTemp                                                          #? false
-#    ps -p $pid -o pid= | grep -w $pid                                          #? false
+#    ps -p $pid -o pid= >| grep -w $pid                                         #? false
 #  SOURCE
 udfOnTrap() {
  local i s
@@ -841,9 +838,9 @@ udfOnTrap() {
 #    Вывод значения переменной $_bashlyk_sArg
 #  EXAMPLE
 #    local ARGUMENTS=$(_ARGUMENTS)                                              
-#    _ARGUMENTS | grep "^${_bashlyk_sArg}$"                                     #? true
+#    _ARGUMENTS >| grep "^${_bashlyk_sArg}$"                                    #? true
 #    _ARGUMENTS "test"                                                          
-#    _ARGUMENTS | grep -w "^test$"                                              #? true
+#    _ARGUMENTS >| grep -w "^test$"                                             #? true
 #    _ARGUMENTS $ARGUMENTS                                                      
 #  SOURCE
 _ARGUMENTS() {
@@ -861,9 +858,9 @@ _ARGUMENTS() {
 #    Вывод значения переменной $_bashlyk_s0
 #  EXAMPLE
 #    local s0=$(_s0)                                                            
-#    _s0 | grep -w "^${_bashlyk_s0}$"                                           #? true
+#    _s0 >| grep -w "^${_bashlyk_s0}$"                                          #? true
 #    _s0 "test"                                                                 
-#    _s0 | grep -w "^test$"                                                     #? true
+#    _s0 >| grep -w "^test$"                                                    #? true
 #    _s0 $s0                                                                    
 #  SOURCE
 _s0() {
@@ -881,9 +878,9 @@ _s0() {
 #    Вывод значения переменной $_bashlyk_pathDat
 #  EXAMPLE
 #    local pathDat=$(_pathDat)                                                  
-#    _pathDat | grep -w "^${_bashlyk_pathDat}$"                                 #? true
+#    _pathDat >| grep -w "^${_bashlyk_pathDat}$"                                #? true
 #    _pathDat "/tmp/testdat.$$"                                                 
-#    _pathDat | grep -w "^/tmp/testdat.${$}$"                                   #? true
+#    _pathDat >| grep -w "^/tmp/testdat.${$}$"                                  #? true
 #    rmdir $(_pathDat)                                                          #? true
 #    _pathDat $pathDat                                                          
 #  SOURCE
@@ -918,14 +915,14 @@ _pathDat() {
 #  EXAMPLE
 #    local sS sWSpaceAlias                                                      
 #    _ sS=sWSpaceAlias                                                          
-#    echo "$sS" | grep "^${_bashlyk_sWSpaceAlias}$"                             #? true
+#    echo "$sS" >| grep "^${_bashlyk_sWSpaceAlias}$"                            #? true
 #    _ =sWSpaceAlias                                                            
-#    echo "$sWSpaceAlias" | grep "^${_bashlyk_sWSpaceAlias}$"                   #? true
-#    _ sWSpaceAlias | grep "^${_bashlyk_sWSpaceAlias}$"                         #? true
+#    echo "$sWSpaceAlias" >| grep "^${_bashlyk_sWSpaceAlias}$"                  #? true
+#    _ sWSpaceAlias >| grep "^${_bashlyk_sWSpaceAlias}$"                        #? true
 #    _ sWSpaceAlias _-_                                                         
-#    _ sWSpaceAlias | grep "^_-_$"                                              #? true
+#    _ sWSpaceAlias >| grep "^_-_$"                                             #? true
 #    _ sWSpaceAlias ""                                                          
-#    _ sWSpaceAlias | grep "^$"                                                 #? true
+#    _ sWSpaceAlias >| grep "^$"                                                #? true
 #    _ sWSpaceAlias "$sWSpaceAlias"                                             
 #  SOURCE
 _(){
@@ -962,9 +959,9 @@ _(){
 #  EXAMPLE
 #    local sS sWSpaceAlias                                                      
 #    _getv sWSpaceAlias sS                                                      
-#    echo "$sS" | grep "^${_bashlyk_sWSpaceAlias}$"                             #? true
+#    echo "$sS" >| grep "^${_bashlyk_sWSpaceAlias}$"                            #? true
 #    _getv sWSpaceAlias                                                         
-#    echo "$sWSpaceAlias" | grep "^${_bashlyk_sWSpaceAlias}$"                   #? true
+#    echo "$sWSpaceAlias" >| grep "^${_bashlyk_sWSpaceAlias}$"                  #? true
 #  SOURCE
 _getv() {
  if [ -n "$2" ]; then
@@ -985,7 +982,7 @@ _getv() {
 #  INPUTS
 #    <subname> - содержательная часть глобальной имени ${_bashlyk_<subname>}
 #  EXAMPLE
-#    _gete sWSpaceAlias | grep "^${_bashlyk_sWSpaceAlias}$"                     #? true
+#    _gete sWSpaceAlias >| grep "^${_bashlyk_sWSpaceAlias}$"                    #? true
 #  SOURCE
 _gete() {
  [ -n "$1" ] || return 255
@@ -1003,7 +1000,7 @@ _gete() {
 #  EXAMPLE
 #    local sWSpaceAlias=$(_ sWSpaceAlias)                                       
 #    _set sWSpaceAlias _-_                                                      
-#    _ sWSpaceAlias | grep "^_-_$"                                              #? true
+#    _ sWSpaceAlias >| grep "^_-_$"                                             #? true
 #    _set sWSpaceAlias $sWSpaceAlias                                            
 #  SOURCE
 _set() {
@@ -1039,10 +1036,9 @@ _set() {
 #  EXAMPLE
 #    local s="a=b;a=c;s=a b c d e f;test value" r
 #    local csv='^a=b;a=c;s="a b c d e f";_bashlyk_unnamed_key_0="test value";$'
-#    udfCheckCsv "$s" 
-#    udfCheckCsv "$s" | grep "$csv"                                             #? true
+#    udfCheckCsv "$s" >| grep "$csv"                                            #? true
 #    udfCheckCsv "$s" r                                                         #? true
-#    echo $r | grep "$csv"                                                      #? true
+#    echo $r >| grep "$csv"                                                     #? true
 #  SOURCE
 udfCheckCsv() {
  [ -n "$1" ] || return 255
@@ -1091,7 +1087,7 @@ udfCheckCsv() {
 #  OUTPUT
 #    Дайджест MD5
 #  EXAMPLE
-#    udfGetMd5 "test" | grep -w 'd8e8fca2dc0f896fd7cb4cb0031ba249'              #? true
+#    udfGetMd5 "test" >| grep -w 'd8e8fca2dc0f896fd7cb4cb0031ba249'             #? true
 #  SOURCE
 udfGetMd5() {
  {
@@ -1123,6 +1119,7 @@ udfGetMd5() {
 #    255 - аргумент не указан или это не каталог
 #     0  - выполнено
 #  EXAMPLE  
+#    # TODO требуется более точная проверка 
 #    local path=$(udfMakeTemp type=dir)                                         
 #    touch ${path}/testfile                                                     
 #    udfAddFile2Clean ${path}/testfile                                          
@@ -1156,7 +1153,7 @@ udfGetPathMd5() {
 #  EXAMPLE
 #    local sTag='date TO="+0400" TZ="MSK"' sContent='Mon, 22 Apr 2013 15:55:50' 
 #    local sXml='<date TO="+0400" TZ="MSK">Mon, 22 Apr 2013 15:55:50</date>'    
-#    udfXml "$sTag" "$sContent" | grep "^${sXml}$"                              #? true
+#    udfXml "$sTag" "$sContent" >| grep "^${sXml}$"                             #? true
 #  SOURCE
 udfXml() {
  [ -n "$1" ] || return 1

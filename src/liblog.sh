@@ -48,8 +48,10 @@
 : ${_bashlyk_bUseSyslog:=0}
 : ${_bashlyk_bNotUseLog:=1}
 : ${_bashlyk_sCond4Log:=redirect}
-: ${_bashlyk_aRequiredCmd_log:="basename date echo hostname false printf logger mail mkfifo sleep tee true jobs ["}
-: ${_bashlyk_aExport_log:="udfLogger udfLog udfIsInteract udfIsTerminal udfCheck4LogUse udfUptime udfFinally udfSetLogSocket udfSetLog _fnLog udfDebug"}
+: ${_bashlyk_aRequiredCmd_log:="basename date echo hostname false printf logger\
+  mail mkfifo sleep tee true jobs ["}
+: ${_bashlyk_aExport_log:="udfLogger udfLog udfIsInteract udfIsTerminal _fnLog \
+  udfCheck4LogUse udfFinally udfSetLogSocket udfSetLog  udfUptime udfDebug"}
 #******
 #****f* liblog/udfLogger
 #  SYNOPSIS
@@ -65,6 +67,11 @@
 #     * Вывод в системный журнал (syslog) и на консоль терминала
 #     * Вывод в системный журнал (syslog) и в файл $_bashlyk_fnLog
 #  EXAMPLE
+#    # TODO восстанавливать значения системных переменных _bashlyk_*
+#    local bInteract bNotUseLog bTerminal
+#    _ =bInteract
+#    _ =bNotUseLog
+#    _ =bTerminal
 #    local fnExec=$(mktemp --suffix=.sh || tempfile -s .test.sh)                #? true
 #    cat <<'EOF' > $fnExec                                                      #-
 #    local fnLog=$(mktemp --suffix=.log || tempfile -s .test.log)               #-
@@ -77,17 +84,20 @@
 #    udfLogger test                                                             #-
 #    date                                                                       #-
 #    echo $_bashlyk_pidLogSock                                                  #-
-#EOF                                                                            #-
+#    EOF                                                                        #-
 #    . $fnExec                                                                  
 #    kill $_bashlyk_pidLogSock                                                  
 #    rm -f $_bashlyk_fnLogSock                                                  
-#    sleep 0.6                                                                  #? true
-#    sleep 0.6                                                                  #? true
-#    sleep 0.6                                                                  #? true
-#    sleep 0.6                                                                  #? true
-#    sleep 0.6                                                                  #? true
+#    sleep 0.5                                                                  #? true
+#    sleep 0.4                                                                  #? true
+#    sleep 0.3                                                                  #? true
+#    sleep 0.2                                                                  #? true
+#    sleep 0.1                                                                  #? true
 #    cat $fnLog                                                                 
 #    rm -f $fnExec $fnLog                                                       
+#    _ bInteract "$bInteract"
+#    _ bNotUseLog "$bNotUseLog"
+#    _ bTerminal "$bTerminal"
 #  SOURCE
 udfLogger() {
  local envLang envLC_TIME bSysLog bUseLog sTagLog
@@ -141,8 +151,9 @@ udfLogger() {
 #  OUTPUT
 #   Зависит от параметров вывода
 #  EXAMPLE
-#    echo test | udfLog - tag                                                   #-
-#    echo test | udfLog - tag                                                   
+#    # TODO улучшить тест
+#    echo -n . | udfLog -                                                       #-
+#    echo test | udfLog - tag >| grep "tag test"                                #? true                  
 #  SOURCE
 udfLog() {
  if [ "$1" = "-" ]; then
@@ -227,7 +238,7 @@ udfCheck4LogUse() {
 #  INPUTS
 #    args - префикс для выводимого сообщения о прошедших секундах
 #  EXAMPLE
-#    udfUptime test | grep "test (.* sec)"                                      #? true
+#    udfUptime test >| grep "test (.* sec)"                                     #? true
 #  SOURCE
 udfUptime() {
  local iDiffTime=$(($(date "+%s")-${_bashlyk_iStartTimeStamp}))
@@ -242,7 +253,7 @@ udfUptime() {
 #  INPUTS
 #    args - префикс для выводимого сообщения о прошедших секундах
 #  EXAMPLE
-#    udfFinally test | grep "test (.* sec)"                                     #? true
+#    udfFinally test >| grep "test (.* sec)"                                    #? true
 #  SOURCE
 udfFinally() {
  udfUptime $*

@@ -38,6 +38,7 @@ BEGIN {
 $1=$1 {
  if ( b == 1 ) { 
   sub(/^# *?/, "")
+  sub(/>\|/, " | tee -a $_bashlyk_TestUnit_fnLog | ")
   if (match($0, /#\?/)) { 
    sub(/#\?/, " >> $_bashlyk_TestUnit_fnLog 2>\&1; udfTestUnitMsg")
   } else {
