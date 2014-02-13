@@ -1141,7 +1141,7 @@ udfGetPathMd5() {
 #******
 #****f* libstd/udfXml
 #  SYNOPSIS
-#    udfXml tag [property] data
+#    udfXml tag[=property] data
 #  DESCRIPTION
 #    Generate XML code to stdout
 #  INPUTS
