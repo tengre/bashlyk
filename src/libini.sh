@@ -34,8 +34,8 @@
 : ${_bashlyk_sArg:=$*}
 : ${_bashlyk_pathIni:=$(pwd)}
 : ${_bashlyk_sUnnamedKeyword:=_bashlyk_ini_void_autoKey_}
-: ${_bashlyk_aRequiredCmd_ini:="[ awk cat cut dirname echo false grep mv printf\
-  pwd rm sed sort touch tr true uniq w xargs"}
+: ${_bashlyk_aRequiredCmd_ini:="[ awk cat cut dirname echo false grep mawk mv  \
+  printf pwd rm sed sort touch tr true uniq w xargs"}
 : ${_bashlyk_aExport_ini:="udfGetIniSection udfReadIniSection                  \
   udfReadIniSection2Var udfCsvOrder udfAssembly udfSetVarFromCsv               \
   udfSetVarFromIni udfCsvKeys udfIniWrite udfIniChange udfGetIni               \
@@ -888,7 +888,7 @@ udfCsvHash2Raw() {
 #  SOURCE
 udfIniSection2Csv() {
  [ -n "$1" -a -f "$1" ] || return 255
- awk -f ${_bashlyk_pathLib}/inisection2csv.awk -v "sTag=$2" -- $1
+ mawk -f ${_bashlyk_pathLib}/inisection2csv.awk -v "sTag=$2" -- $1
  return 0
 }
 #******
@@ -1072,7 +1072,7 @@ udfIniGroupSection2CsvVar() {
 #  SOURCE
 udfIni2Csv() {
  [ -n "$1" -a -f "$1" ] || return 255
- awk -f ${_bashlyk_pathLib}/ini2csv.awk -- $1
+ mawk -f ${_bashlyk_pathLib}/ini2csv.awk -- $1
  return 0
 }
 #******
