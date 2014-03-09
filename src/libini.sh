@@ -610,7 +610,7 @@ udfIniChange() {
 #    255 - Ошибка: аргументы отсутствуют или файл конфигурации не найден
 #  EXAMPLE
 #    local sTxt="foo = bar" b=true iXo=1921 iYo=1080 ini iniChild exec          
-#    ini=$(mktemp --suffix=test.ini XXXXXXXX || tempfile -s .test.ini)          #? true
+#    ini=$(mktemp --suffix=test.ini || tempfile -s .test.ini)                   #? true
 #    iniChild="$(dirname $ini)/child.$(basename $ini)"                          
 #    cat <<'EOFini' > ${ini}                                                    #-
 #[test]                                                                         #-
@@ -1052,7 +1052,7 @@ udfIniGroupSection2CsvVar() {
 #    255 - Ошибка: аргумент отсутствует или файл конфигурации не найден
 #  EXAMPLE
 #    local csv='\[\];\[test\];sTxt=foo;b=false;_bashlyk_ini_test_autoKey_0="iXo Xo = 19";iYo=80;_bashlyk_ini_test_autoKey_1="simple line";\[exec\];:;_bashlyk_ini_exec_autoKey_0="sUname=$(uname -a)";_bashlyk_ini_exec_autoKey_1="_bashlyk_&#91_ -n "$sUname" _bashlyk_&#93_ && date";'
-#    ini=$(mktemp --suffix=test.ini XXXXXXXX || tempfile -s .test.ini)          #? true
+#    ini=$(mktemp --suffix=test.ini || tempfile -s .test.ini)                   #? true
 #    cat <<'EOFini' > ${ini}                                                    #-
 #[test]                                                                         #-
 #    sTxt	=	foo                                                     #-
