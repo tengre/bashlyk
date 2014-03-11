@@ -642,10 +642,10 @@ udfMakeTempV() {
 #    udfPrepare2Exec "$s" >| grep -e '^\[ -n "$USER" \]; true$'                 #? true
 #  SOURCE
 udfPrepare2Exec() {
- local s cIFS
+ local s cIFS cmd="$*"
  cIFS=$IFS
  IFS=';'
- for s in $*
+ for s in $cmd
  do
   echo "$s" | sed -e "s/_bashlyk_\&#91_/\[/g" -e "s/_bashlyk_\&#92_/\\\/g" -e  \
   "s/_bashlyk_\&#93_/\]/g" -e "s/_bashlyk_\&#59_/\;/g" -e "s/^\"\(.*\)\"$/\1/"
@@ -1141,7 +1141,7 @@ udfGetPathMd5() {
 #******
 #****f* libstd/udfXml
 #  SYNOPSIS
-#    udfXml tag[=property] data
+#    udfXml tag [property] data
 #  DESCRIPTION
 #    Generate XML code to stdout
 #  INPUTS
