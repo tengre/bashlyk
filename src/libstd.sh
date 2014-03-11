@@ -639,7 +639,7 @@ udfMakeTempV() {
 #    временному файлу
 #  EXAMPLE
 #    local s='_bashlyk_&#91_ -n "$USER" _bashlyk_&#93__bashlyk_&#59_ true'      
-#    udfPrepare2Exec "$s" >| grep -e '^\[ -n "$USER" \]; true$'                 #? true
+#    udfPrepare2Exec $s >| grep -e '^\[ -n "$USER" \]; true$'                 #? true
 #  SOURCE
 udfPrepare2Exec() {
  local s cIFS cmd="$*"
