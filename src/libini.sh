@@ -94,7 +94,7 @@ udfGetIniSection() {
  local sTag sGlobIgnore
  #
  ini=''
- pathIni="$_pathIni"
+ pathIni="$_bashlyk_pathIni"
  #
  [ "$1"  = "${1##*/}" -a -f ${pathIni}/$1 ] || pathIni=
  [ "$1"  = "${1##*/}" -a -f $1 ] && pathIni=$(pwd)
@@ -638,7 +638,7 @@ udfIniChange() {
 #    rm -f $iniChild $ini
 #  SOURCE
 udfIni() {
- [ -n "$1" -a -f "$1" ] || return 255
+ [ -n "$1" ] || return 255
  #
  local bashlyk_udfIni_csv bashlyk_udfIni_s bashlyk_udfIni_sSection
  local bashlyk_udfIni_csvSection bashlyk_udfIni_csvVar
@@ -971,7 +971,7 @@ udfIniGroupSection2Csv() {
  local sTag sGlobIgnore
  #
  ini=''
- pathIni="$_pathIni"
+ pathIni="$_bashlyk_pathIni"
  #
  [ "$1"  = "${1##*/}" -a -f ${pathIni}/$1 ] \
   || pathIni=
@@ -1147,7 +1147,7 @@ udfIniGroup2Csv() {
  local aini csvIni csvResult ini pathIni s sTag sGlobIgnore aTag sS sF sT sR 
  #
  ini=''
- pathIni="$_pathIni"
+ pathIni="$_bashlyk_pathIni"
  #
  [ "$1"  = "${1##*/}" -a -f ${pathIni}/$1 ] || pathIni=
  [ "$1"  = "${1##*/}" -a -f $1 ] && pathIni=$(pwd)

@@ -56,6 +56,7 @@ udfInit() {
  case $_bashlyk_sUser in
   'root')
    _bashlyk_pathCnf="/etc/${_bashlyk_pathPrefix}"
+   _bashlyk_pathIni="/etc/${_bashlyk_pathPrefix}"
    _bashlyk_pathRun="/var/run/${_bashlyk_pathPrefix}"
    _bashlyk_pathLog="/var/log/${_bashlyk_pathPrefix}"
    _bashlyk_pathDat="/var/lib/${_bashlyk_pathPrefix}"
@@ -74,6 +75,7 @@ udfInit() {
    _bashlyk_pathLog="${sHome}/.local/share/${_bashlyk_pathPrefix}/log"
    _bashlyk_pathDat="${sHome}/.local/share/${_bashlyk_pathPrefix}/lib"
    _bashlyk_pathCnf="${sHome}/.config/${_bashlyk_pathPrefix}"
+   _bashlyk_pathIni="${sHome}/.config/${_bashlyk_pathPrefix}"
    [ -s ${sHome}/.config/bashlyk/bashlyk.conf ] && \
     . ${sHome}/.config/bashlyk/bashlyk.conf
    [ -s ${sHome}/.config/${_bashlyk_pathPrefix}/bashlyk.conf ] && \
