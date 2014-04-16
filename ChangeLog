@@ -1,3 +1,18 @@
+Wed, 16 Apr 2014 13:03:58 +0400
+	Fix bugs
+	Version 1.76
+ Исправлена обработка ini конфигурационного файла по короткому имени
+ bashlyk:
+ - инициализация глобальной переменной _bashlyk_pathIni
+ libini.sh:
+ - исправлена ошибка инициализации локальной переменной pathIni в функциях
+   udfGetIniSection, udfIniGroupSection2Csv, udfIniGroup2Csv
+ - функция udfIni - первый аргумент не должен проверяться как имя файлового
+   объекта, исправлена robodoc-документация
+ debian/control:
+ - добавлена зависимость от пакета docbook-xsl в секции build-depends
+
+ - libini.sh
 Tue, 11 Mar 2014 23:31:14 +0400
 	Fix bugs
 	Version 1.75
