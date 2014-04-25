@@ -12,7 +12,6 @@ Wed, 16 Apr 2014 13:03:58 +0400
  debian/control:
  - добавлена зависимость от пакета docbook-xsl в секции build-depends
 
- - libini.sh
 Tue, 11 Mar 2014 23:31:14 +0400
 	Fix bugs
 	Version 1.75
