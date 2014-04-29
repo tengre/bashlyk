@@ -20,7 +20,7 @@ $1=$1 {
  gsub("\[", "_bashlyk_\&#91_")
  gsub("\\", "_bashlyk_\&#92_")
  gsub("\]", "_bashlyk_\&#93_")
-  
+
  if ( b == 0 ) { next }
  s0 = $0
  if ( match(s0, /= *.*$/) < 2 ) {

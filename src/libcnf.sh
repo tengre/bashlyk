@@ -40,13 +40,13 @@
 #  SYNOPSIS
 #    udfGetConfig <file>
 #  DESCRIPTION
-#    Найти и выполнить <file> и предварительно все другие файлы, от которых он 
-#    зависит. Такие файлы должны находится в том же каталоге. То есть, если 
+#    Найти и выполнить <file> и предварительно все другие файлы, от которых он
+#    зависит. Такие файлы должны находится в том же каталоге. То есть, если
 #    <file> это "a.b.c.conf", то вначале применяются файлы "conf" "c.conf",
 #    "b.c.conf" если таковые существуют.
 #    Поиск выполняется по следующим критериям:
 #     1. Если имя файла -это неполный путь, то
-#     в начале проверяется текущий каталог, затем каталог конфигураций по 
+#     в начале проверяется текущий каталог, затем каталог конфигураций по
 #     умолчанию
 #     2. Если имя файла - полный путь, то каталог в котором он расположен
 #     3. Последняя попытка - найти файл в каталоге /etc
@@ -58,20 +58,20 @@
 #     1  - Ошибка: файл конфигурации не найден
 #    255 - Ошибка: аргумент отсутствует
 #  EXAMPLE
-#    local b conf d pid s0 s                                                    
+#    local b conf d pid s0 s
 #    # TODO "историческая" проверка в текущем каталоге временно убрана (.)
 #    conf=$(mktemp --suffix=.conf || tempfile -d /tmp -s .test.conf)            #? true
 #    udfSetConfig $conf "s0=$0;b=true;pid=$$;s=$(uname -a);$(date -R -r $0)"    #? true
 #    udfGetConfig $conf                                                         #? true
 #    test "$s0" = $0 -a "$b" = true -a "$pid" = $$ -a "$s" = "$(uname -a)"      #? true
-#    rm -f $conf                                                                
-#    b='' conf='' d='' pid='' s0='' sS=''                                       
+#    rm -f $conf
+#    b='' conf='' d='' pid='' s0='' sS=''
 #    conf=$(mktemp --suffix=.conf || tempfile -s .test.conf)                    #? true
 #    udfSetConfig $conf "s0=$0;b=true;pid=$$;s=$(uname -a);$(date -R -r $0)"    #? true
 #    udfGetConfig $conf                                                         #? true
 #    test "$s0" = $0 -a "$b" = true -a "$pid" = $$ -a "$s" = "$(uname -a)"      #? true
-#    cat $conf                                                                  
-#    rm -f $conf                                                                
+#    cat $conf
+#    rm -f $conf
 #  SOURCE
 udfGetConfig() {
  [ -n "$1" ] || return 255
@@ -120,7 +120,7 @@ udfGetConfig() {
 #    254 - Ошибка: нет каталога для файла конфигурации и его невозможно создать
 #     0  - Выполнено успешно
 #  EXAMPLE
-#    local b conf d pid s0 s                                                    
+#    local b conf d pid s0 s
 #    conf=$(mktemp --suffix=.conf || tempfile -s .test.conf)                    #? true
 #    udfSetConfig $conf "s0=$0;b=true;pid=$$;s=$(uname -a);$(date -R -r $0)"    #? true
 #    grep "^s0=$0$" $conf                                                       #? true
@@ -130,7 +130,7 @@ udfGetConfig() {
 #    grep "^$(_ sUnnamedKeyword).*=\"$(date -R -r $0)\"$" $conf                 #? true
 #    test -s $conf && . $conf                                                   #? true
 #    test "$s0" = $0 -a "$b" = true -a "$pid" = $$ -a "$s" = "$(uname -a)"      #? true
-#    rm -f $conf                                                                
+#    rm -f $conf
 #  SOURCE
 udfSetConfig() {
  [ -n "$1" -a -n "$2" ] || return 255

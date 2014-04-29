@@ -3,8 +3,8 @@
 #
 #****h* BASHLYK/libopt
 #  DESCRIPTION
-#    Анализ параметров командной строки, сериализация и инициализация 
-#    соответствующих переменных с именами опций и значениями согласно опций 
+#    Анализ параметров командной строки, сериализация и инициализация
+#    соответствующих переменных с именами опций и значениями согласно опций
 #    командной строки
 #  AUTHOR
 #    Damir Sh. Yakupov <yds@bk.ru>
@@ -45,8 +45,8 @@
 #  SYNOPSIS
 #    udfGetOptHash <csvopt> <args>
 #  DESCRIPTION
-#    Разбор строки аргументов в формате "longoptions" и 
-#    формирование ассоциативного массива в виде CSV строки с 
+#    Разбор строки аргументов в формате "longoptions" и
+#    формирование ассоциативного массива в виде CSV строки с
 #    парами "ключ=значение", разделенные символом ";"
 #  INPUTS
 #    csvopt - список ожидаемых опций
@@ -98,7 +98,7 @@ udfGetOptHash() {
 #    1  - Ошибка, переменные не сформированы
 #   255 - Ошибка, отсутствует аргумент
 #  EXAMPLE
-#    local job bForce                                                           
+#    local job bForce
 #    udfSetOptHash "job=main;bForce=1;"                                         #? true
 #    echo "dbg $job :: $bForce" >| grep "^dbg main :: 1$"                       #? true
 #  SOURCE
@@ -118,8 +118,8 @@ udfSetOptHash() {
 #  SYNOPSIS
 #    udfGetOpt <csvopt> <args>
 #  DESCRIPTION
-#    Разбор строки аргументов в формате "longoptions" и 
-#    формирование соответствующих опциям переменных 
+#    Разбор строки аргументов в формате "longoptions" и
+#    формирование соответствующих опциям переменных
 #    с установленными значениями.
 #  INPUTS
 #    csvopt - список ожидаемых опций
@@ -150,7 +150,7 @@ udfGetOpt() {
 #  OUTPUT
 #    аргумент <hash> без подстрок ";<pair>;"
 #  EXAMPLE
-#    local s="job=main;bForce=1"                                                
+#    local s="job=main;bForce=1"
 #    udfExcludePairFromHash 'save=1' "${s};save=1;" >| grep "^${s}$"            #? true
 #  SOURCE
 udfExcludePairFromHash() {

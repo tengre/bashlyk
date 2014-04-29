@@ -3,7 +3,7 @@
 #
 #****h* BASHLYK/libpid
 #  DESCRIPTION
-#    Контроль запуска рабочего сценария, возможность защиты от повторного 
+#    Контроль запуска рабочего сценария, возможность защиты от повторного
 #    запуска
 #  AUTHOR
 #    Damir Sh. Yakupov <yds@bk.ru>
@@ -55,11 +55,11 @@
 #    0 - Процесс с PID существует для указанной командной строки (command args)
 #    1 - Процесс с PID для проверяемой командной строки не обнаружен.
 #    2 - Процесс с PID для проверяемой командной строки идентичен PID текущего
-#    процесса 
+#    процесса
 #  EXAMPLE
-#    (sleep 8)&                                                                 
-#    local pid=$!                                                               
-#    ps -p $pid -o pid= -o args=                                                
+#    (sleep 8)&
+#    local pid=$!
+#    ps -p $pid -o pid= -o args=
 #    udfCheckStarted $pid sleep 8                                               #? true
 #    udfCheckStarted $pid sleep 88                                              #? false
 #    udfCheckStarted $$ $0                                                      #? 2
@@ -139,7 +139,7 @@ udfExitIfAlreadyStarted() {
 #    Remove files and folder listed on the variables
 #    $_bashlyk_afnClean and  $_bashlyk_apathClean
 #  RETURN VALUE
-#    Last delete operation status 
+#    Last delete operation status
 #  EXAMPLE
 #    udfClean
 #  SOURCE
@@ -147,7 +147,7 @@ udfClean() {
  local fn
  local a="${_bashlyk_afnClean} ${_bashlyk_apathClean} $*"
  for fn in $a
- do 
+ do
   [ -n "$fn" -a -f "$fn" ] && rm -f $1 "$fn"
   [ -n "$fn" -a -d "$fn" ] && rmdir "$fn" >/dev/null 2>&1
  done

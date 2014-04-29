@@ -2,8 +2,8 @@
 # $Id$
 #
 #****h* BASHLYK/liblog
-#  DESCRIPTION    
-#    Функции определения или задания режима работы рабочего сценария, 
+#  DESCRIPTION
+#    Функции определения или задания режима работы рабочего сценария,
 #    автоматического создания журнала для сохранения потоков вывода сообщений,
 #    управление уровнем вывода сообщений.
 #  AUTHOR
@@ -85,16 +85,16 @@
 #    date                                                                       #-
 #    echo $_bashlyk_pidLogSock                                                  #-
 #    EOF                                                                        #-
-#    . $fnExec                                                                  
-#    kill $_bashlyk_pidLogSock                                                  
-#    rm -f $_bashlyk_fnLogSock                                                  
+#    . $fnExec
+#    kill $_bashlyk_pidLogSock
+#    rm -f $_bashlyk_fnLogSock
 #    sleep 0.5                                                                  #? true
 #    sleep 0.4                                                                  #? true
 #    sleep 0.3                                                                  #? true
 #    sleep 0.2                                                                  #? true
 #    sleep 0.1                                                                  #? true
-#    cat $fnLog                                                                 
-#    rm -f $fnExec $fnLog                                                       
+#    cat $fnLog
+#    rm -f $fnExec $fnLog
 #    _ bInteract "$bInteract"
 #    _ bNotUseLog "$bNotUseLog"
 #    _ bTerminal "$bTerminal"
@@ -153,7 +153,7 @@ udfLogger() {
 #  EXAMPLE
 #    # TODO улучшить тест
 #    echo -n . | udfLog -                                                       #-
-#    echo test | udfLog - tag >| grep "tag test"                                #? true                  
+#    echo test | udfLog - tag >| grep "tag test"                                #? true
 #  SOURCE
 udfLog() {
  if [ "$1" = "-" ]; then
@@ -268,7 +268,7 @@ udfFinally() {
 #    журнала.
 #  Return VALUE
 #     0   - Выполнено
-#     1   - Сокет не создан, но стандартный вывод перенаправляется в файл лога 
+#     1   - Сокет не создан, но стандартный вывод перенаправляется в файл лога
 #           (без тегирования)
 #     255 - Каталог для сокета не существует и не может быть создан
 #  EXAMPLE
@@ -276,7 +276,7 @@ udfFinally() {
 #    _ fnLog $fnLog                                                             #? true
 #    udfSetLogSocket                                                            #? true
 #    ls -l $fnLog                                                               #? true
-#    rm -f $fnLog                                                               
+#    rm -f $fnLog
 #  SOURCE
 udfSetLogSocket() {
  local fnSock
@@ -310,10 +310,10 @@ udfSetLogSocket() {
 #     255   - невозможно использовать файл лога, аварийное завершение сценария
 #  EXAMPLE
 #    local fnLog=$(mktemp --suffix=.log || tempfile -s .test.log)               #? true
-#    rm -f $fnLog                                                               
+#    rm -f $fnLog
 #    udfSetLog $fnLog                                                           #? true
 #    ls -l $fnLog                                                               #? true
-#    rm -f $fnLog                                                               
+#    rm -f $fnLog
 #  SOURCE
 udfSetLog() {
  case "$1" in
@@ -341,13 +341,13 @@ udfSetLog() {
 #    Вывод значения переменной $_bashlyk_fnLog
 #  EXAMPLE
 #    local fnLog=$(mktemp --suffix=.log || tempfile -s .test.log)               #? true
-#    rm -f $fnLog                                                               
+#    rm -f $fnLog
 #    _fnLog $fnLog                                                              #? true
 #    ls -l $fnLog                                                               #? true
-#    rm -f $fnLog                                                               
+#    rm -f $fnLog
 #  SOURCE
 _fnLog() {
- if [ -n "$1" ]; then 
+ if [ -n "$1" ]; then
   udfSetLog "$1"
  else
   echo ${_bashlyk_fnLog}
@@ -358,25 +358,25 @@ _fnLog() {
 #  SYNOPSIS
 #    udfDebug level message
 #  DESCRIPTION
-#    Позволяет выводить сообщение, если его уровень не больше значения 
+#    Позволяет выводить сообщение, если его уровень не больше значения
 #    глобальной переменной DEBUGLEVEL
 #  INPUTS
-#    level   - уровень отладочных сообщений, десятичное число, если неправильно 
+#    level   - уровень отладочных сообщений, десятичное число, если неправильно
 #    задан, то принимается значение 0
 #    message - текст отладочного сообщения
 #  OUTPUT
-#    Текст отладочного сообщения (аргумент "message"), если его уровень 
+#    Текст отладочного сообщения (аргумент "message"), если его уровень
 #    (аргумент "level") не больше заданного для сценария переменной DEBUGLEVEL
 #  RETURN VALUE
 #    0 - уровень "level" не больше значения глобальной переменной DEBUGLEVEL
 #    1 - уровень "level" больше значения глобальной переменной DEBUGLEVEL
 #    2 - аргументы отсутствуют
 #  EXAMPLE
-#    DEBUGLEVEL=0                                                               
+#    DEBUGLEVEL=0
 #    udfDebug                                                                   #? 2
 #    udfDebug 0 echo level 0                                                    #? true
 #    udfDebug 1 silence level 0                                                 #? 1
-#    DEBUGLEVEL=5                                                               
+#    DEBUGLEVEL=5
 #    udfDebug 0 echo level 5                                                    #? true
 #    udfDebug 6 echo 5                                                          #? 1
 #    udfDebug non valid test level 5                                            #? true

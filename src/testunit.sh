@@ -3,7 +3,7 @@
 #
 #****h* BASHLYK/testunit
 #  DESCRIPTION
-#    компилятор сценария для запуска тестирования библиотеки, зависит от 
+#    компилятор сценария для запуска тестирования библиотеки, зависит от
 #    awk-сценария testunit.awk
 #  AUTHOR
 #    Damir Sh. Yakupov <yds@bk.ru>
@@ -40,11 +40,11 @@ udfTestUnitMsg() {
    echo "--[?]: status $rc0 ( must have $rc1 ) - ${BASH_SOURCE[1]} (line ${BASH_LINENO[0]}):"
    head -n ${BASH_LINENO[0]} ${BASH_SOURCE[1]} | tail -n 1
   else
-   echo "-- ok" 
+   echo "-- ok"
   fi
  } >> $_bashlyk_TestUnit_fnLog
  return 0
-} 
+}
 #******
 #****f* testunit/udfError
 #  SYNOPSIS
