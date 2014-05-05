@@ -647,8 +647,9 @@ udfPrepare2Exec() {
  IFS=';'
  for s in $cmd
  do
-  echo "$s" | sed -e "s/_bashlyk_\&#91_/\[/g" -e "s/_bashlyk_\&#92_/\\\/g" -e  \
-  "s/_bashlyk_\&#93_/\]/g" -e "s/_bashlyk_\&#59_/\;/g" -e "s/^\"\(.*\)\"$/\1/"
+  echo "$s" | sed -e "s/_bashlyk_\&#91_/\[/g" -e "s/_bashlyk_\&#92_/\\\/g"     \
+  -e "s/_bashlyk_\&#93_/\]/g" -e "s/_bashlyk_\&#59_/\;/g"                      \
+  -e "s/_bashlyk_\&#40_/\(/g" -e "s/_bashlyk_\&#41_/\)/g" -e "s/^\"\(.*\)\"$/\1/"
  done
  IFS=$cIFS
  return 0

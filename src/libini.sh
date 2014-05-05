@@ -634,7 +634,7 @@ udfIniChange() {
 #    sTxt='';b='';iXo=''
 #    udfIni $iniChild 'test:sTxt;b;iXo' 'exec:='                                #? true
 #    echo "${sTxt};${b};${iXo}" >| grep -e "^foo = bar;true;1921$"              #? true
-#    echo "$exec" >| grep -e '^:;date;"sUname="$(uname -a)"";$'                 #? true
+#    echo "$exec" >| grep -e '^:;date;"sUname="$_bashlyk_&#40_uname -a_bashlyk_&#41_"";$'                 #? true
 #    rm -f $iniChild $ini
 #  SOURCE
 udfIni() {
@@ -1051,7 +1051,7 @@ udfIniGroupSection2CsvVar() {
 #          переменной
 #    255 - Ошибка: аргумент отсутствует или файл конфигурации не найден
 #  EXAMPLE
-#    local csv='\[\];\[test\];sTxt=foo;b=false;_bashlyk_ini_test_autoKey_0="iXo Xo = 19";iYo=80;_bashlyk_ini_test_autoKey_1="simple line";\[exec\];:;_bashlyk_ini_exec_autoKey_0="sUname=$(uname -a)";_bashlyk_ini_exec_autoKey_1="_bashlyk_&#91_ -n "$sUname" _bashlyk_&#93_ && date";'
+#    local csv='\[\];\[test\];sTxt=foo;b=false;_bashlyk_ini_test_autoKey_0="iXo Xo = 19";iYo=80;_bashlyk_ini_test_autoKey_1="simple line";\[exec\];:;_bashlyk_ini_exec_autoKey_0="sUname=$_bashlyk_&#40_uname -a_bashlyk_&#41_";_bashlyk_ini_exec_autoKey_1="_bashlyk_&#91_ -n "$sUname" _bashlyk_&#93_ && date";'
 #    ini=$(mktemp --suffix=test.ini || tempfile -s .test.ini)                   #? true
 #    cat <<'EOFini' > ${ini}                                                    #-
 #[test]                                                                         #-

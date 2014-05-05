@@ -49,7 +49,7 @@ $1=$1 {
      sub(/#-/, "")
      gsub(/[ \t]+$/, "")
     } else {
-     $0 = $0">> $_bashlyk_TestUnit_fnLog 2>&1"
+     $0 = $0" >> $_bashlyk_TestUnit_fnLog 2>&1"
     }
    }
   }

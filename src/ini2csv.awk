@@ -22,6 +22,8 @@ BEGIN {
 }
 
 $1=$1 {
+ gsub("\(", "_bashlyk_\&#40_")
+ gsub("\)", "_bashlyk_\&#41_")
  gsub(";",  "_bashlyk_\&#59_")
  gsub("\[", "_bashlyk_\&#91_")
  gsub("\\", "_bashlyk_\&#92_")
