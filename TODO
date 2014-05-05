@@ -10,7 +10,7 @@
   сценария: журналирование и т.п.
 ? . bashlyk args
 + fhs ++
-+ {xml,md5} -> std 
++ {xml,md5} -> std
 + subproc for test throw & log func
 + job test udfOnTrap (libstd)
 + use csv functions from libini for libcnf
@@ -37,3 +37,5 @@ Mon, 14 Apr 2014 09:55:20 +0400
   c ';' и ','
 Mon, 28 Apr 2014 14:23:24 +0400
 - Заменить макрос ">|" так как уже используется в bash (noclobber)
+Mon, 05 May 2014 16:02:18 +0400
+- сбой mawk если секция с кодом содержит выражение вида $(... =text )
