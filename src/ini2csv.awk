@@ -6,12 +6,12 @@ BEGIN {
  b = 0; i = 0; csv="[];"; s="_bashlyk_ini_void_autoKey_"
 }
 
-/^#|^$/ { next }
+/^ *#|^$/ { next }
 
-/\[/ {
+/\[.*\]:?$/ {
  if ( b == 0 ) {
   if (match($0, /\[.*\]:/)) { b = 1; gsub(":", "") }
-  sTag = $0; sub(/\]/, "", sTag); sub(/\[/, "", sTag);
+  sTag = $0; sub(/\].*/, "", sTag); sub(/.*\[/, "", sTag); gsub(/ /, "_", sTag);
   if ( b == 1 ) { csv = csv"["sTag"];:;" } else { csv = csv"["sTag"];" }
   s = "_bashlyk_ini_"sTag"_autoKey_"
   i = 0
