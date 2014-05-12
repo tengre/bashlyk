@@ -527,7 +527,7 @@ udfIniWrite() {
  [ -s "$ini" ] && mv -f "$ini" "${ini}.bak"
  echo "$csv" | sed -e "s/[;]\+/;/g" -e "s/\[/;\[/g" | tr ';' '\n' \
   | sed -e "s/_bashlyk_ini_.*_autoKey_[0-9]\+=//g" \
-   -e "s/\(.*\)=/\t\1\t=\t/g" | tr -d '"' > "$ini"
+   -e "s/\(.*\)=/\t\1\t=\t/g" | udfPrepare2Exec "-" | tr -d '"' > "$ini"
  #
  return 0
 }

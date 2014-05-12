@@ -639,18 +639,20 @@ udfMakeTempV() {
 #    временному файлу
 #  EXAMPLE
 #    local s='_bashlyk_&#91_ -n "$USER" _bashlyk_&#93__bashlyk_&#59_ true'
-#    udfPrepare2Exec $s >| grep -e '^\[ -n "$USER" \]; true$'                 #? true
+#    udfPrepare2Exec $s >| grep -e '^\[ -n "$USER" \]; true$'                   #? true
 #  SOURCE
 udfPrepare2Exec() {
- local s cIFS cmd="$*"
- cIFS=$IFS
- IFS=';'
- for s in $cmd
- do
-  echo "$s" | sed -e "s/_bashlyk_\&#91_/\[/g" -e "s/_bashlyk_\&#92_/\\\/g"     \
-  -e "s/_bashlyk_\&#93_/\]/g" -e "s/_bashlyk_\&#59_/\;/g"                      \
-  -e "s/_bashlyk_\&#40_/\(/g" -e "s/_bashlyk_\&#41_/\)/g" -e "s/^\"\(.*\)\"$/\1/"
- done
+ local s cIFS cmd="$*" cmdSed=''
+ if [ "$1" = "-" ]; then
+  sed -e "s/_bashlyk_\&#91_/\[/g" -e "s/_bashlyk_\&#92_/\\\/g" -e "s/_bashlyk_\&#93_/\]/g" -e "s/_bashlyk_\&#59_/\;/g" -e "s/_bashlyk_\&#40_/\(/g" -e "s/_bashlyk_\&#41_/\)/g" -e "s/^\"\(.*\)\"$/\1/"
+ else
+  cIFS=$IFS
+  IFS=';'
+  for s in $cmd
+  do
+   echo "$s" | sed -e "s/_bashlyk_\&#91_/\[/g" -e "s/_bashlyk_\&#92_/\\\/g" -e "s/_bashlyk_\&#93_/\]/g" -e "s/_bashlyk_\&#59_/\;/g" -e "s/_bashlyk_\&#40_/\(/g" -e "s/_bashlyk_\&#41_/\)/g" -e "s/^\"\(.*\)\"$/\1/"
+  done
+ fi
  IFS=$cIFS
  return 0
 }
