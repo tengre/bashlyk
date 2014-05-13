@@ -29,7 +29,9 @@
 #    * $_bashlyk_aRequiredCmd_opt - список используемых в данном модуле внешних
 #    утилит
 #  SOURCE
-_bashlyk_iErrorNonValidVariable=100
+_bashlyk_iErrorEmptyOrMissingArgument=255
+_bashlyk_iErrorNonValidArgument=250
+_bashlyk_iErrorNonValidVariable=200
 #
 : ${_bashlyk_iLastError:=0}
 : ${_bashlyk_sLastError:=}
@@ -58,9 +60,9 @@ _bashlyk_iErrorNonValidVariable=100
  udfOnEmptyVariable udfThrowOnEmptyVariable udfWarnOnEmptyVariable             \
  udfShowVariable udfIsNumber udfIsValidVariable udfQuoteIfNeeded               \
  udfWSpace2Alias udfAlias2WSpace udfMakeTemp  udfMakeTempV udfShellExec        \
- udfAddFile2Clean udfAddPath2Clean udfAddJob2Clean udfAddPid2Clean             \
+ udfAddFile2Clean udfAddPath2Clean udfAddJob2Clean udfAddPid2Clean udfCheckCsv \
  udfCleanQueue udfOnTrap _ARGUMENTS _s0 _pathDat _ _gete _getv _set            \
- udfCheckCsv udfGetMd5 udfGetPathMd5 udfXml udfPrepare2Exec udfSerialize"}
+ udfGetMd5 udfGetPathMd5 udfXml udfPrepare2Exec udfSerialize udfSetLastError"}
 
 if [ -n "$(which mail)" ]; then
  _bashlyk_cmdMessage="mail -e -s "${_bashlyk_emailSubj}"                       \
@@ -1172,9 +1174,9 @@ udfXml() {
  echo "<${s[*]}>${*}</${s[0]}>"
 }
 #******
-#****f* libstd/udfLastError
+#****f* libstd/udfSetLastError
 #  SYNOPSIS
-#    udfLastError iError sError
+#    udfSetLastError iError sError
 #  DESCRIPTION
 #    Save in global variables _bashlyk_iLastError _bashlyk_sLastError error states
 #  INPUTS
@@ -1183,18 +1185,18 @@ udfXml() {
 #  RETURN VALUE
 ## TODO
 #  EXAMPLE
-#    udfLastError iErrorNonValidVariable "12NonValid Variable"                  #? true
+#    udfSetLastError iErrorNonValidVariable "12NonValid Variable"               #? $_bashlyk_iErrorNonValidVariable
 #    _ iLastError >| grep -w "$_bashlyk_iErrorNonValidVariable"                 #? true
 #    _ sLastError >| grep "^12NonValid Variable$"                               #? true
 #  SOURCE
-udfLastError() {
- [ -n "$1" ] || return 255
+udfSetLastError() {
+ [ -n "$1" ] || return $(_ iErrorEmptyOrMissingArgument)
  local i=$(_ $1)
- udfIsNumber "$i" || return 1
+ udfIsNumber "$i" || return $(_ iErrorNonValidArgument)
  shift
  _ iLastError $i
  _ sLastError "$*"
- return 0
+ return $i
 }
 #******
 #****f* libstd/udfSerialize
@@ -1215,9 +1217,8 @@ udfSerialize() {
  local s csv
  for s in $*; do
   udfIsValidVariable "$s" && csv+="${s}=${!s};" || \
-   udfLastError iErrorNonValidVariable "$s"
+   udfSetLastError iErrorNonValidVariable "$s"
  done
  echo "$csv"
 }
 #******
-

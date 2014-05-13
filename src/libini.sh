@@ -656,7 +656,10 @@ udfIni() {
   else
    bashlyk_udfIni_aVar="${bashlyk_udfIni_s#*:=}"
    : ${bashlyk_udfIni_aVar:=$bashlyk_udfIni_sSection}
-   udfIsValidVariable $bashlyk_udfIni_aVar || return 2
+   udfIsValidVariable $bashlyk_udfIni_aVar || {
+    udfSetLastError iErrorNonValidVariable "$bashlyk_udfIni_aVar"
+    return $?
+   }
    eval 'export $bashlyk_udfIni_aVar="$(udfCsvHash2Raw "$bashlyk_udfIni_csvSection" "$bashlyk_udfIni_sSection")"'
   fi
  done
