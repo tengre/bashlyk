@@ -29,6 +29,10 @@
 #    * $_bashlyk_aRequiredCmd_opt - список используемых в данном модуле внешних
 #    утилит
 #  SOURCE
+_bashlyk_iErrorNonValidVariable=100
+#
+: ${_bashlyk_iLastError:=0}
+: ${_bashlyk_sLastError:=}
 : ${_bashlyk_sArg:=$*}
 : ${_bashlyk_pathDat:=/tmp}
 : ${_bashlyk_sWSpaceAlias:=___}
@@ -56,7 +60,7 @@
  udfWSpace2Alias udfAlias2WSpace udfMakeTemp  udfMakeTempV udfShellExec        \
  udfAddFile2Clean udfAddPath2Clean udfAddJob2Clean udfAddPid2Clean             \
  udfCleanQueue udfOnTrap _ARGUMENTS _s0 _pathDat _ _gete _getv _set            \
- udfCheckCsv udfGetMd5 udfGetPathMd5 udfXml udfPrepare2Exec"}
+ udfCheckCsv udfGetMd5 udfGetPathMd5 udfXml udfPrepare2Exec udfSerialize"}
 
 if [ -n "$(which mail)" ]; then
  _bashlyk_cmdMessage="mail -e -s "${_bashlyk_emailSubj}"                       \
@@ -339,7 +343,7 @@ udfIsNumber() {
 #******
 #****f* libstd/udfIsValidVariable
 #  SYNOPSIS
-#    udfIsVariable <arg>
+#    udfIsValidVariable <arg>
 #  DESCRIPTION
 #    Проверка аргумента на то, что он может быть валидным идентификатором
 #    переменной
@@ -926,12 +930,15 @@ _pathDat() {
 #    _ sWSpaceAlias >| grep "^_-_$"                                             #? true
 #    _ sWSpaceAlias ""
 #    _ sWSpaceAlias >| grep "^$"                                                #? true
+#    _ sWSpaceAlias "two words"
+#    _ sWSpaceAlias >| grep "^two words$"                                       #? true
 #    _ sWSpaceAlias "$sWSpaceAlias"
+#    _ sWSpaceAlias
 #  SOURCE
 _(){
  [ -n "$1" ] || return 255
  if [ $# -gt 1 ]; then
-  eval "_bashlyk_${1##*=}=${2}"
+  eval "_bashlyk_${1##*=}=\"${2}\""
  else
   case "$1" in
    *=*)
@@ -1165,3 +1172,52 @@ udfXml() {
  echo "<${s[*]}>${*}</${s[0]}>"
 }
 #******
+#****f* libstd/udfLastError
+#  SYNOPSIS
+#    udfLastError iError sError
+#  DESCRIPTION
+#    Save in global variables _bashlyk_iLastError _bashlyk_sLastError error states
+#  INPUTS
+#    iError - Error Number
+#    sError - Error text
+#  RETURN VALUE
+## TODO
+#  EXAMPLE
+#    udfLastError iErrorNonValidVariable "12NonValid Variable"                  #? true
+#    _ iLastError >| grep -w "$_bashlyk_iErrorNonValidVariable"                 #? true
+#    _ sLastError >| grep "^12NonValid Variable$"                               #? true
+#  SOURCE
+udfLastError() {
+ [ -n "$1" ] || return 255
+ local i=$(_ $1)
+ udfIsNumber "$i" || return 1
+ shift
+ _ iLastError $i
+ _ sLastError "$*"
+ return 0
+}
+#******
+#****f* libstd/udfSerialize
+#  SYNOPSIS
+#    udfSerialize variables
+#  DESCRIPTION
+#    Generate csv string from variable list
+#  INPUTS
+#    variables - list of variables
+#  OUTPUT
+#    Show csv string
+#  EXAMPLE
+#    local sUname="$(uname -a)" sDate="" i=100
+#    udfSerialize sUname sDate i >| grep "^sUname=.*i=100;$"                    #? true
+#  SOURCE
+udfSerialize() {
+ [ -n "$1" ] || return 1
+ local s csv
+ for s in $*; do
+  udfIsValidVariable "$s" && csv+="${s}=${!s};" || \
+   udfLastError iErrorNonValidVariable "$s"
+ done
+ echo "$csv"
+}
+#******
+

@@ -50,4 +50,4 @@ $1=$1 {
  }
 }
 
-END   { print csv }
+END { print csv }
