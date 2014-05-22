@@ -1155,7 +1155,6 @@ udfIniGroup2Csv() {
  [ "$1"  = "${1##*/}" -a -f ${pathIni}/$1 ] || pathIni=
  [ "$1"  = "${1##*/}" -a -f $1 ] && pathIni=$(pwd)
  [ "$1" != "${1##*/}" -a -f $1 ] && pathIni=$(dirname $1)
- [ -n "$2" ] && sTag="$2"
  #
  if [ -z "$pathIni" ]; then
   [ -f "/etc/${_bashlyk_pathPrefix}/$1" ] \
@@ -1171,7 +1170,7 @@ udfIniGroup2Csv() {
  for s in $aini; do
   [ -n "$s" ] || continue
   [ -n "$ini" ] && ini="${s}.${ini}" || ini="$s"
-  [ -s "${pathIni}/${ini}" ] && csvIni+=";$(udfIni2Csv "${pathIni}/${ini}" "$sTag" | tr -d '\\');"
+  [ -s "${pathIni}/${ini}" ] && csvIni+=";$(udfIni2Csv "${pathIni}/${ini}" | tr -d '\\');"
  done
 
  aTag=$(echo $csvIni | tr ';' '\n' | grep -oE '\[.*\]' | sort | uniq | tr -d '[]' | tr '\n' ' ')

@@ -97,7 +97,7 @@ udfGetOptHash() {
 #  OUTPUT
 #   Ассоциативный массив в виде CSV строки
 #  EXAMPLE
-#   udfGetOptHashIni '[];verbose:,print;[test];job:,force;' --job main --force >| grep "^;job=main;force=1;$" #? true
+#   udfGetOptHashIni '[];verbose:;print;[test];job:,force;' --job main --force >| grep "^;job=main;force=1;$" #? true
 #  SOURCE
 udfGetOptHashIni() {
  [ -n "$*" ] || return -1
