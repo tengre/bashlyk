@@ -84,53 +84,6 @@ udfGetOptHash() {
  return 0
 }
 #******
-#****f* libopt/udfGetOptHashIni
-#  SYNOPSIS
-#    udfGetOptHashIni <csvopt> <args>
-#  DESCRIPTION
-#    Разбор строки аргументов в формате "longoptions" и
-#    формирование ассоциативного массива в виде CSV строки с
-#    парами "ключ=значение", разделенные символом ";"
-#  INPUTS
-#    csvopt - список ожидаемых опций
-#    args   - опции с аргументами
-#  OUTPUT
-#   Ассоциативный массив в виде CSV строки
-#  EXAMPLE
-#   udfGetOptHashIni '[];verbose:;print;[test];job:,force;' --job main --force >| grep "^;job=main;force=1;$" #? true
-#  SOURCE
-udfGetOptHashIni() {
- [ -n "$*" ] || return -1
- local k v csvKeys csvHash=';' sOpt bFound
- csvKeys="$1"
- shift
- sOpt="$(getopt -l $csvKeys -n $0 -- $0 $@)" || return 1
- eval set -- "$sOpt"
- IFS=';'
- for  in $csvKeys; do
-  for s in $*; do
-
- while true; do
-  [ -n "$1" ] || break
-  bFound=
-  for k in $(echo $csvKeys | tr ',' ' '); do
-   v=$(echo $k | tr -d ':')
-   [ "--$v" = "$1" ] && bFound=1 || continue
-   if [ -n "$(echo $k | grep ':$')" ]; then
-    csvHash+="$v=$(udfAlias2WSpace $2);"
-    shift 2
-   else
-    csvHash+="$v=1;"
-    shift
-   fi
-  done
-  [ -z "$bFound" ] && shift
- done
- shift
- echo "$csvHash"
- return 0
-}
-#******
 #****f* libopt/udfSetOptHash
 #  SYNOPSIS
 #    udfSetOptHash <arg>
