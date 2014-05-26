@@ -525,11 +525,10 @@ udfIniWrite() {
  #
  ini="$1"
  csv="$2"
- #  -e "s/\(.*\)=/\t\1\t=\t/g" | udfPrepare2Exec "-" | tr -d '"' > "$ini"
+ #  -e "s/\(.*\)=/\t\1\t=\t/g"
  #
  [ -s "$ini" ] && mv -f "$ini" "${ini}.bak"
- echo "$csv" | sed -e "s/[;]\+/;/g" -e "s/\[/;\[/g" | tr ';' '\n' \
-  | sed -e "s/_bashlyk_ini_.*_autoKey_[0-9]\+=//g" | udfPrepare2Exec "-" | tr -d '"' > "$ini"
+ echo "$csv" | sed -e "s/[;]\+/;/g" -e "s/:\[/;:\[/g" -e "s/;\[/;;;\[/g" -e "s/\[\]//g" -e "s/_bashlyk_ini_.*_autoKey_[0-9]\+=//g" | udfPrepare2Exec "-"| tr -d '"' | tr ';' '\n' > "$ini"
  #
  return 0
 }
@@ -1178,7 +1177,9 @@ udfIniGroup2Csv() {
  [ -n "$_bashlyk_csvOptions2Ini" ] && {
   udfMakeTemp fnOpt
   udfIniWrite $fnOpt "$_bashlyk_csvOptions2Ini"
+  cat $fnOpt > /tmp/fnopt.log
   csvIni+="$(udfIni2Csv $fnOpt | tr -d '\\');"
+  echo $csvIni > /tmp/csvini.log
  }
 
  aTag=$(echo $csvIni | tr ';' '\n' | grep -oE '\[.*\]' | sort | uniq | tr -d '[]' | tr '\n' ' ')
@@ -1194,7 +1195,7 @@ udfIniGroup2Csv() {
    csvIni=$(echo ${csvIni/${sS};${sF}/})
    sT+=";"${sF}
   done
-  [ -z "${sF/:;*/}" ] && sF="${sT}" || sF="$(udfCsvOrder "${sT}")"
+  sF="${sT}"
   sR+="[${s}];${sF};"
  done
  GLOBIGNORE=$sGlobIgnore
@@ -1229,13 +1230,15 @@ udfIniGroup2CsvVar() {
 #******
 #****f* libini/udfOptions2Ini
 #  SYNOPSIS
-#    udfOptions2Ini <LongOptions> <IniStruct>
+#    udfOptions2Ini  [<section>]:(=[<varname>])|<csv;> ...
 #  DESCRIPTION
-#    Получить опции командной строки, подготовить их к совмещению c данными
-#    ini-конфигурационных файлов
+#    подготовить csv-поток из уже инициализированных переменных, например, опций
+#    командной строки согласно распределению этих переменных по указанным
+#    cекциям <section> (см. udfIni) для совмещения с соответствующими данными
+#    ini-конфигурационных файлов. Результат помещается в глобальную переменную
+#    _bashlyk_csvOptions2Ini
 #  INPUTS
-#    LongOptions - опции командной строки
-#    IniStruct   - описание структуры конфигурационного файла
+#    распределение переменных по указанным секциям (см. udfIni)
 #  RETURN VALUE
 #     0  - Выполнено успешно
 #    255 - Ошибка: аргумент отсутствует
@@ -1246,9 +1249,7 @@ udfOptions2Ini() {
   udfSetLastError $(_ iErrorEmptyOrMissingArgument)
   return 255
  }
- local cIFS csvOut k s sClass sData sIni sRules sSection
- udfSetOptHash $(udfGetOptHash "$1" $(_ sArg))
- shift
+ local cIFS csv k s sClass sData sIni sRules sSection
  for s in $*; do
   sSection="${s%:*}"
   sData="${s/$sSection/}"
@@ -1256,7 +1257,7 @@ udfOptions2Ini() {
   sData=${sData/:/}
   sData=${sData/[=+\!]/}
   [ "$sClass" = "$sData" ] && sClass=
-  csvOut=""
+  csv=""
   cIFS=$IFS
   IFS=';'
   [ -n "$sClass" ] && [ -n "$sData" ] && {
@@ -1264,18 +1265,18 @@ udfOptions2Ini() {
    continue
   }
   if [ -z "$sData" ]; then
-   [ -n "${!sSection}" ] && csvOut+="${!sSection/,/;};"
+   [ -n "${!sSection}" ] && csv+="$(echo "${!sSection}" | tr ',' ';')"
   else
    for k in $sData; do
-    [ -n "${!k}" ] && csvOut+="$k=${!k};"
+    [ -n "${!k}" ] && csv+="$k=${!k};"
    done
   fi
-  #echo "debug1 тип - $sClass :: секция - $sSection :: данные - $sData"
   IFS=$cIFS
-  [ -n "$csvOut" ] || continue
-  [ "$sClass" = "!" ] && s="[$sSection]:;$csvOut;:[$sSection]" || s="[$sSection];$csvOut"
+  [ -n "$csv" ] || continue
+  [ "$sClass" = "!" ] && s="[$sSection]:;$csv;:[$sSection]" || s="[$sSection];$csv"
   sIni+=$s
  done
  _bashlyk_csvOptions2Ini="$sIni"
+ _ csvOptions2Ini > /tmp/csvOptions2Ini.log
 }
 #******
