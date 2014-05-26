@@ -44,7 +44,7 @@
   udfGetCsvSection udfGetCsvSection2Var udfGetIniSection2Var udfCsvOrder2Var   \
   udfCsvKeys2Var udfGetIni2Var udfSelectEnumFromCsvHash udfIniGroupSection2Csv \
   udfIniGroupSection2CsvVar udfIni2Csv udfIni2CsvVar udfIniGroup2Csv           \
-  udfIniGroup2CsvVar udfIni udfCsvHash2Raw"}
+  udfIniGroup2CsvVar udfIni udfCsvHash2Raw udfOptions2Ini"}
 #******
 #****f* libini/udfGetIniSection
 #  SYNOPSIS
@@ -528,7 +528,7 @@ udfIniWrite() {
  #  -e "s/\(.*\)=/\t\1\t=\t/g"
  #
  [ -s "$ini" ] && mv -f "$ini" "${ini}.bak"
- echo "$csv" | sed -e "s/[;]\+/;/g" -e "s/:\[/;:\[/g" -e "s/;\[/;;;\[/g" -e "s/\[\]//g" -e "s/_bashlyk_ini_.*_autoKey_[0-9]\+=//g" | udfPrepare2Exec "-"| tr -d '"' | tr ';' '\n' > "$ini"
+ echo "$csv" | sed -e "s/[;]\+/;/g" -e "s/\(:\?\[\)/;;;\1/g" -e "s/\[\]//g" -e "s/_bashlyk_ini_.*_autoKey_[0-9]\+=//g" | udfPrepare2Exec "-" | tr -d '"' | tr ';' '\n' > "$ini"
  #
  return 0
 }
@@ -1265,7 +1265,7 @@ udfOptions2Ini() {
    continue
   }
   if [ -z "$sData" ]; then
-   [ -n "${!sSection}" ] && csv+="$(echo "${!sSection}" | tr ',' ';')"
+   [ -n "${!sSection}" ] && csv+="$(echo "${!sSection}" | tr ',' ';');"
   else
    for k in $sData; do
     [ -n "${!k}" ] && csv+="$k=${!k};"
@@ -1273,7 +1273,7 @@ udfOptions2Ini() {
   fi
   IFS=$cIFS
   [ -n "$csv" ] || continue
-  [ "$sClass" = "!" ] && s="[$sSection]:;$csv;:[$sSection]" || s="[$sSection];$csv"
+  [ "$sClass" = "!" ] && s="[$sSection]:;$csv;:[$sSection]" || s="[$sSection];$csv;"
   sIni+=$s
  done
  _bashlyk_csvOptions2Ini="$sIni"
