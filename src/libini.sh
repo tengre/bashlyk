@@ -527,8 +527,10 @@ udfIniWrite() {
  csv="$2"
  #  -e "s/\(.*\)=/\t\1\t=\t/g"
  #
+ mkdir -p $(dirname $ini) || \
+  udfSetLastError $(_ iErrorNotExistNotCreated) "$ini"
  [ -s "$ini" ] && mv -f "$ini" "${ini}.bak"
- echo "$csv" | sed -e "s/[;]\+/;/g" -e "s/\(:\?\[\)/;;;\1/g" -e "s/\[\]//g" -e "s/_bashlyk_ini_.*_autoKey_[0-9]\+=//g" | udfPrepare2Exec "-" | tr -d '"' | tr ';' '\n' > "$ini"
+ echo "$csv" | sed -e "s/[;]\+/;/g" -e "s/\(:\?\[\)/;;\1/g" -e "s/\[\]//g" -e "s/_bashlyk_ini_.*_autoKey_[0-9]\+=//g" | udfPrepare2Exec "-" | tr -d '"' | tr ';' '\n' > "$ini"
  #
  return 0
 }

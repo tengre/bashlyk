@@ -32,6 +32,7 @@
 _bashlyk_iErrorEmptyOrMissingArgument=255
 _bashlyk_iErrorNonValidArgument=250
 _bashlyk_iErrorNonValidVariable=200
+_bashlyk_iErrorNotExistNotCreated=190
 #
 : ${_bashlyk_iLastError:=0}
 : ${_bashlyk_sLastError:=}
