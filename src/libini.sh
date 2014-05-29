@@ -530,7 +530,7 @@ udfIniWrite() {
  mkdir -p $(dirname $ini) || \
   udfSetLastError $(_ iErrorNotExistNotCreated) "$ini"
  [ -s "$ini" ] && mv -f "$ini" "${ini}.bak"
- echo "$csv" | sed -e "s/[;]\+/;/g" -e "s/\(:\?\[\)/;;\1/g" -e "s/\[\]//g" -e "s/_bashlyk_ini_.*_autoKey_[0-9]\+=//g" | udfPrepare2Exec "-" | tr -d '"' | tr ';' '\n' > "$ini"
+ echo "$csv" | sed -e "s/[;]\+/;/g" -e "s/\(:\?\[\)/;;\1/g" -e "s/\[\]//g" -e "s/_bashlyk_ini_.*_autoKey_[0-9]\+=//g" | udfPrepare2Exec "-" | tr -d '"' | tr ';' '\n' | sed  -e "s/\(.*\)=/\t\1\t=\t/g" > "$ini"
  #
  return 0
 }
@@ -557,7 +557,7 @@ udfIniWrite() {
 #    local csv='sTxt="foo bar";b=true;iXo=1921;iYo=999;' csvResult
 #    local sTxt="bar foo" b=true iXo=1234 iYo=4321 ini
 #    local fmt="[sect%s]\n\t%s\t=\t%s\n\t%s\t=\t%s\n\t%s\t=\t%s\n\t%s\t=\t%s\n"
-#    local md5='c48c02c5744053a7dbf14dc775730e8c'
+#    local md5='a0e4879ea58a1cb5f1889c2de949f485'
 #    ini=$(mktemp --suffix=.ini || tempfile -s .test.ini)                       #? true
 #    printf "$fmt" 1 sTxt foo '' value iXo 720 "non valid key" value | tee $ini
 #    echo "simple line" | tee -a $ini
@@ -1134,17 +1134,17 @@ udfIni2CsvVar() {
 #     1  - файл конфигурации не найден
 #    255 - Ошибка: аргумент отсутствует
 #  EXAMPLE
-#    local csv='\[\];\[test\];b=true;_bashlyk_ini_test_autoKey_0="iXo Xo = 19";_bashlyk_ini_test_autoKey_1="simple line";iXo=1921;iYo=1080;sTxt="foo bar";'
-#    local sTxt="foo bar" b=true iXo=1921 iYo=1080 ini iniChild
+#    local sMD5=3f6444e0bcec4bfb52c1d2fb253851e6
+#    local sTxt=foo b=false iXo=1921 iYo=80 ini iniChild
 #    local fmt="[test]\n\t%s\t=\t%s\n\t%s\t=\t%s\n\t%s\t=\t%s\n\t%s\t=\t%s\n"
 #    ini=$(mktemp --suffix=.ini || tempfile -s .test.ini)                       #? true
 #    iniChild="$(dirname $ini)/child.$(basename $ini)"
-#    printf "$fmt" sTxt foo b false "iXo Xo" 19 iYo 80 | tee $ini
+#    printf "$fmt" sTxt $sTxt b $b "iXo Xo" 19 iYo $iYo | tee $ini
 #    echo "simple line" | tee -a $ini
-#    printf "$fmt" sTxt "$sTxt" b "$b" iXo "$iXo" iYo "$iYo" | tee $iniChild
-#    udfIniGroup2Csv $iniChild >| grep "^${csv}$"                               #? true
+#    printf "$fmt" sTxt "foo bar" b "true" iXo "1920" iYo "1080" | tee $iniChild
+#    udfIniGroup2Csv $iniChild | md5sum - >| grep "${sMD5}"                     #? true
 #    udfIniGroup2CsvVar csvResult $iniChild                                     #? true
-#    echo "$csvResult" >| grep "^${csv}$"                                       #? true
+#    echo "$csvResult" | md5sum - >| grep "${sMD5}"                             #? true
 #    rm -f $iniChild $ini
 #  SOURCE
 udfIniGroup2Csv() {
@@ -1179,9 +1179,9 @@ udfIniGroup2Csv() {
  [ -n "$_bashlyk_csvOptions2Ini" ] && {
   udfMakeTemp fnOpt
   udfIniWrite $fnOpt "$_bashlyk_csvOptions2Ini"
-  cat $fnOpt > /tmp/fnopt.log
+  #cat $fnOpt > /tmp/fnopt.log
   csvIni+="$(udfIni2Csv $fnOpt | tr -d '\\');"
-  echo $csvIni > /tmp/csvini.log
+  #echo $csvIni > /tmp/csvini.log
  }
 
  aTag=$(echo $csvIni | tr ';' '\n' | grep -oE '\[.*\]' | sort | uniq | tr -d '[]' | tr '\n' ' ')
@@ -1245,6 +1245,17 @@ udfIniGroup2CsvVar() {
 #     0  - Выполнено успешно
 #    255 - Ошибка: аргумент отсутствует
 #  EXAMPLE
+#   local sVoid="verbose;direct;log;" sMain="source;destination"
+#   local Exclude="*.tmp,*~,*.bak" preExec="sUname=$(uname -a),date -R"
+#   local sMD5='1160bbe4b2a5709fbb7e13a855f356ca'
+#   local sRules=":${sVoid} Exclude:= preExec:! main:${sMain}"
+#   local verbose="yes foo" direct="false" log="/var/log/test.log" source="last"
+#   local destination="/tmp/last.txt"
+#   udfOptions2Ini $sRules							#? true
+#   _ csvOptions2Ini | md5sum >| grep "^${sMD5}"                                #? true
+#   #udfIniWrite /tmp/${$}.test.ini "$(_ csvOptions2Ini)"
+#   #udfIni /tmp/${$}.test.ini preExec:=
+#   #udfPrepare2Exec $preExec
 #  SOURCE
 udfOptions2Ini() {
  [ -n "$1" ] || {
@@ -1278,7 +1289,9 @@ udfOptions2Ini() {
   [ "$sClass" = "!" ] && s="[$sSection]:;$csv;:[$sSection]" || s="[$sSection];$csv;"
   sIni+=$s
  done
+ #_bashlyk_csvOptions2Ini=$(udfAlias2WSpace "$sIni")
  _bashlyk_csvOptions2Ini="$sIni"
  _ csvOptions2Ini > /tmp/csvOptions2Ini.log
+ return 0
 }
 #******
