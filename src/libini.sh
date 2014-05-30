@@ -1244,8 +1244,9 @@ udfIniGroup2CsvVar() {
 #    255 - Ошибка: аргумент отсутствует
 #  EXAMPLE
 #   local sVoid="verbose;direct;log;" sMain="source;destination"
-#   local Exclude="*.tmp,*~,*.bak" preExec="sUname=$(uname -a),date -R"
-#   local sMD5='1160bbe4b2a5709fbb7e13a855f356ca'
+#   local Exclude="*.tmp,*~,*.bak"
+#   local preExec="sUname=$(TZ=UTC date -R --date='@12345678'),date -R"
+#   local sMD5='23b46c4d89a6503669c50d2668c8a814'
 #   local sRules=":${sVoid} Exclude:= preExec:! main:${sMain}"
 #   local verbose="yes foo" direct="false" log="/var/log/test.log" source="last"
 #   local destination="/tmp/last.txt"
