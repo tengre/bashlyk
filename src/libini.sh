@@ -1179,9 +1179,7 @@ udfIniGroup2Csv() {
  [ -n "$_bashlyk_csvOptions2Ini" ] && {
   udfMakeTemp fnOpt
   udfIniWrite $fnOpt "$_bashlyk_csvOptions2Ini"
-  #cat $fnOpt > /tmp/fnopt.log
   csvIni+="$(udfIni2Csv $fnOpt | tr -d '\\');"
-  #echo $csvIni > /tmp/csvini.log
  }
 
  aTag=$(echo $csvIni | tr ';' '\n' | grep -oE '\[.*\]' | sort | uniq | tr -d '[]' | tr '\n' ' ')
@@ -1238,7 +1236,7 @@ udfIniGroup2CsvVar() {
 #    командной строки согласно распределению этих переменных по указанным
 #    cекциям <section> (см. udfIni) для совмещения с соответствующими данными
 #    ini-конфигурационных файлов. Результат помещается в глобальную переменную
-#    _bashlyk_csvOptions2Ini
+#    _bashlyk_csvOptions2Ini для использования в udfIni
 #  INPUTS
 #    распределение переменных по указанным секциям (см. udfIni)
 #  RETURN VALUE
@@ -1251,7 +1249,7 @@ udfIniGroup2CsvVar() {
 #   local sRules=":${sVoid} Exclude:= preExec:! main:${sMain}"
 #   local verbose="yes foo" direct="false" log="/var/log/test.log" source="last"
 #   local destination="/tmp/last.txt"
-#   udfOptions2Ini $sRules							#? true
+#   udfOptions2Ini $sRules                                                      #? true
 #   _ csvOptions2Ini | md5sum >| grep "^${sMD5}"                                #? true
 #   #udfIniWrite /tmp/${$}.test.ini "$(_ csvOptions2Ini)"
 #   #udfIni /tmp/${$}.test.ini preExec:=
@@ -1291,7 +1289,6 @@ udfOptions2Ini() {
  done
  #_bashlyk_csvOptions2Ini=$(udfAlias2WSpace "$sIni")
  _bashlyk_csvOptions2Ini="$sIni"
- _ csvOptions2Ini > /tmp/csvOptions2Ini.log
  return 0
 }
 #******
