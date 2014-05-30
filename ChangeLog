@@ -1,3 +1,36 @@
+Fri, 30 May 2014 23:03:47 +0400
+	Fix bugs
+	Version 1.78
+ libstd.sh:
+ - fix error on the "_" function - set escaped double quote for second argument
+ - add new functions:
+    udfSerialize
+    udfSetLastError
+    udfCompuleReplaceCommand
+ - udfPrepare2Exec читает может читать входной поток (-)
+   added error constants:
+    _bashlyk_iErrorEmptyOrMissingArgument
+    _bashlyk_iErrorNonValidArgument
+    _bashlyk_iErrorNonValidVariable
+    _bashlyk_iErrorNotExistNotCreated
+   add variable for save last error state:
+    _bashlyk_iLastError:=0 _bashlyk_sLastError
+ libini.sh:
+ - udfIni add udfSetLastError Call
+ - udfIni set command line options with ini options
+ - udfIniWrite - добавлена в конвейер преобразования вызов udfPrepare2Exec
+ - udfIniWrite - исправлено форматирование создаваемого ini-файла
+ - udfIniWrite - tab formatting included
+ - udfIniWrite - use mkdir for check and create path to ini-file.
+   Used udfSetLastError for error handle
+ - new function udfOptions2Ini
+ - udfOptions2Ini - корректное формирование csv-строки
+ - udfOptions2Ini - test unit implemented,
+ - дополнена документация udfOptions2Ini
+ - udfIniGroup2Csv remove excess arg
+ - udfIniGroup2Csv - "безымянные" строки корректно накапливаются
+ - udfReadIniSection, udfIniGroup2Csv - fixed test unit after logic modification
+
 Tue, 06 May 2014 15:30:35 +0400
 	Fix bugs
 	Version 1.77
