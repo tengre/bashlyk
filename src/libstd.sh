@@ -63,7 +63,8 @@ _bashlyk_iErrorNotExistNotCreated=190
  udfWSpace2Alias udfAlias2WSpace udfMakeTemp  udfMakeTempV udfShellExec        \
  udfAddFile2Clean udfAddPath2Clean udfAddJob2Clean udfAddPid2Clean udfCheckCsv \
  udfCleanQueue udfOnTrap _ARGUMENTS _s0 _pathDat _ _gete _getv _set            \
- udfGetMd5 udfGetPathMd5 udfXml udfPrepare2Exec udfSerialize udfSetLastError"}
+ udfGetMd5 udfGetPathMd5 udfXml udfPrepare2Exec udfSerialize udfSetLastError   \
+ udfCompileReplaceCommand"}
 
 if [ -n "$(which mail)" ]; then
  _bashlyk_cmdMessage="mail -e -s "${_bashlyk_emailSubj}"                       \
@@ -651,13 +652,13 @@ udfMakeTempV() {
 udfPrepare2Exec() {
  local s cIFS cmd="$*" cmdSed=''
  if [ "$1" = "-" ]; then
-  sed -e "s/_bashlyk_\&#91_/\[/g" -e "s/_bashlyk_\&#92_/\\\/g" -e "s/_bashlyk_\&#93_/\]/g" -e "s/_bashlyk_\&#59_/\;/g" -e "s/_bashlyk_\&#40_/\(/g" -e "s/_bashlyk_\&#41_/\)/g" -e "s/^\"\(.*\)\"$/\1/"
+  udfCompileReplaceCommand
  else
   cIFS=$IFS
   IFS=';'
   for s in $cmd
   do
-   echo "$s" | sed -e "s/_bashlyk_\&#91_/\[/g" -e "s/_bashlyk_\&#92_/\\\/g" -e "s/_bashlyk_\&#93_/\]/g" -e "s/_bashlyk_\&#59_/\;/g" -e "s/_bashlyk_\&#40_/\(/g" -e "s/_bashlyk_\&#41_/\)/g" -e "s/^\"\(.*\)\"$/\1/"
+   echo "$s" | udfCompileReplaceCommand
   done
  fi
  IFS=$cIFS
@@ -1221,5 +1222,25 @@ udfSerialize() {
    udfSetLastError iErrorNonValidVariable "$s"
  done
  echo "$csv"
+}
+#******
+#****f* libstd/udfCompileReplaceCommand
+#  SYNOPSIS
+#    udfCompileReplaceCommand
+#  DESCRIPTION
+#    Generate and execute sed command for replace "quotes" _bashlyk_&#XX_
+#  EXAMPLE
+#    local s="_bashlyk_&#91_ _bashlyk_&#92_ _bashlyk_&#93_ _bashlyk_&#59_ _bashlyk_&#40_ _bashlyk_&#41_"
+#    local sMD5='b639502f470da3f4be15987ffdba97a3'
+#    echo $s | udfCompileReplaceCommand >| md5sum | grep "^${sMD5}"             #? true
+#  SOURCE
+udfCompileReplaceCommand() {
+ local a cmd="sed" i
+ declare -A a=( [91]='\[' [92]='\\\' [93]='\]' [59]='\;' [40]='\(' [41]='\)' )
+ for i in "${!a[@]}"; do
+  cmd+=" -e \"s/_bashlyk_\&#${i}_/${a[$i]}/g\""
+ done
+ cmd+=' -e "s/^\"\(.*\)\"$/\1/"'
+ eval "$cmd"
 }
 #******
