@@ -34,6 +34,7 @@
 #  SOURCE
 : ${_bashlyk_sArg:=$*}
 : ${_bashlyk_pathIni:=$(pwd)}
+: ${_bashlyk_bSetOptions:=}
 : ${_bashlyk_csvOptions2Ini:=}
 : ${_bashlyk_sUnnamedKeyword:=_bashlyk_ini_void_autoKey_}
 : ${_bashlyk_aRequiredCmd_ini:="[ awk cat cut dirname echo false grep mawk mv  \
@@ -507,6 +508,7 @@ udfCsvKeys2Var() {
 #     0  - Выполнено успешно
 #    255 - Ошибка: аргументы отсутствуют
 #  EXAMPLE
+#    ## TODO дополнить тесты по второму аргументу
 #    local csv='[test];sTxt="foo bar";b=true;iXo=1921;iYo=1080;' ini s
 #    ini=$(mktemp --suffix=.ini || tempfile -s .test.ini)                       #? true
 #    udfIniWrite $ini "$csv"                                                    #? true
@@ -519,13 +521,21 @@ udfCsvKeys2Var() {
 #     rm -f $ini ${ini}.bak
 #  SOURCE
 udfIniWrite() {
- [ -n "$1" -a -n "$2" ] || return 255
+ [ -n "$1" ] || return $(udfSetLastError $(_ iErrorEmptyOrMissingArgument) "\$1")
  #
  local ini csv
  #
  ini="$1"
- csv="$2"
- #  -e "s/\(.*\)=/\t\1\t=\t/g"
+ if [ -n "$2" ]; then
+  csv="$2"
+ else
+  if [ -n "$(_ csvOptions2Ini)" ]; then
+   csv="$(_ csvOptions2Ini)"
+  else
+   udfSetLastError $(_ iErrorEmptyOrMissingArgument) "\$2 _ csvOptions2Ini"
+   return $?
+  fi
+ fi
  #
  mkdir -p $(dirname $ini) || \
   udfSetLastError $(_ iErrorNotExistNotCreated) "$ini"
@@ -595,6 +605,7 @@ udfIniChange() {
 #  SYNOPSIS
 #    udfIni <file> [<section>]:(=[<varname>])|<csv;> ...
 #  DESCRIPTION
+#    ## TODO дополнить по обработке опций командной строки
 #    получить данные указанных секций <section> ini-файла <file> ( и ему
 #    родственных) через инициализацию перечисленных в "CSV;"-строке валидных
 #    идентификаторов переменных, идентичных соответствующим ключам секции
@@ -644,10 +655,14 @@ udfIni() {
  [ -n "$1" ] || return 255
  #
  local bashlyk_udfIni_csv bashlyk_udfIni_s bashlyk_udfIni_sSection
- local bashlyk_udfIni_csvSection bashlyk_udfIni_csvVar
+ local bashlyk_udfIni_csvSection bashlyk_udfIni_csvVar bashlyk_udfIni_ini
  #
- bashlyk_udfIni_csv=$(udfIniGroup2Csv "$1")
+ bashlyk_udfIni_ini="$1"
  shift
+ #
+ [ "$_bashlyk_bSetOptions" = "1" ] && udfOptions2Ini $*
+ #
+ bashlyk_udfIni_csv=$(udfIniGroup2Csv "$bashlyk_udfIni_ini")
  #
  for bashlyk_udfIni_s in $*; do
   bashlyk_udfIni_sSection=${bashlyk_udfIni_s%:*}

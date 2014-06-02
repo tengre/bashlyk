@@ -38,6 +38,7 @@
 #    утилит
 #  SOURCE
 : ${_bashlyk_sArg:=$*}
+: ${_bashlyk_bSetOptions:=}
 : ${_bashlyk_aRequiredCmd_opt:="[ echo getopt grep rm sed tr"}
 : ${_bashlyk_aExport_opt:="udfGetOptHash udfSetOptHash udfGetOpt udfExcludePairFromHash"}
 #******
@@ -135,6 +136,7 @@ udfSetOptHash() {
 #  SOURCE
 udfGetOpt() {
  udfSetOptHash $(udfGetOptHash $*)
+ _bashlyk_bSetOptions=1
 }
 #******
 #****f* libopt/udfExcludePairFromHash
