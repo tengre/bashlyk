@@ -1,58 +1,77 @@
 Fri, 30 May 2014 23:03:47 +0400
 	New upstream release
 	Version 1.78
- - Реализована возможность обработки опций командной строки в режиме отображения
- опций по секциям используемых ini-файлов. Функция libini::udfOptions2Ini
- позволяет согласовать любые инициализированные переменные (в том числе, из
- опций комадной строки) созданием сериализированного образа ini-файла, который
- применяется после обработки прикрепленных к рабочему сценарию реальных ini
- файлов. Это дает возможность реализовать изменение или создание
- конфигурационных ini-файлов. Для согласования опций комадной строки c опциями
- файлов конфигураций в стиле ini функция udfOptions2Ini вызывается из udfIni,
- если обрабатывались опции командной строки (вызов libopt::udfGetOpt), схема
- вызовов:
+ - По аналогии c libcnf в libini реализовано сопряжение опций командной строки с
+ опциями используемых ini-файлов c учетом наличия различных секций. Функция
+ libini::udfOptions2Ini создаёт виртуальный образ ini-файла из опций командной
+ строки, который обрабатывается функцией udfIniGroup2Csv после прикрепленных к
+ рабочему сценарию ini-файлов, тем самым позволяя переопределять опции из
+ конфигурационных файлов или их дополнять. Это позволяет также вносить изменения
+ или создавать вновь ini-файлы из опций командной строки. Для согласования опций
+ командной строки c опциями ini-файлов, функция udfOptions2Ini вызывается из
+ udfIni только если опции командной строки обрабатывались вызовом
+ libopt::udfGetOpt. Схема вызовов:
 
- # получить опции командной строки в соответствующие переменные, при этом
- # разрешается использовать udfOptions2Ini в udfIni (за счет установки
- глобальной переменной _bashlyk_bSetOptions)
  udfGetOpt "<'длинные' опции>" <аргументы командной строки>
+ # получить опции командной строки в соответствующие переменные, при этом будет
+ # разрешено использовать udfOptions2Ini в udfIni (за счет установки глобальной
+ # переменной _bashlyk_bSetOptions)
 
  # получить данные ini-файла в опции согласно структуры, при этом если
  # переменная _bashlyk_csvOptions2Ini определена происходит попытка инициализации
  # переменных из него, как образа "последнего" ini конфигурационного файла.
- udfIni "<ini файл>" <структура ini>
 
- Секции, содержащие "сырые" или "активные" данные не переопределяются, а
- дополняются данными из таких опций командной строки.
+ Особенности, которые надо учитывать в данной версии при обработке ini-файлов и
+ опций командной строки:
+  * Секции, содержащие "безымянные" строки или "активные" сценарии не
+    переопределяются, а дополняются
+  * Нельзя инициализировать значениями по умолчанию переменные-опции до вызова
+    udfIni - это может замаскировать установленные опции из конфигурационных
+    файлов если обрабатывались опции командной строки!
+  * При изменении или создании ini-файла в активных секциях знак "=" будёт
+    обрамляться знаками табуляции, но они будут удалены при использовании
+    функции udfShellExec <сериализация активной секции>
+
+ libopt.sh:
+ - добавлена глобальная переменная-флаг _bashlyk_bSetOptions, которая взводится
+   после вызова udfGetOpt как сигнал о необходимости учета опций командной
+   строки в udfIni
  libstd.sh:
- - fix error on the "_" function - set escaped double quote for second argument
- - add new functions:
-    udfSerialize
-    udfSetLastError
-    udfCompuleReplaceCommand
- - udfPrepare2Exec читает может читать входной поток (-)
-   added error constants:
-    _bashlyk_iErrorEmptyOrMissingArgument
-    _bashlyk_iErrorNonValidArgument
-    _bashlyk_iErrorNonValidVariable
-    _bashlyk_iErrorNotExistNotCreated
-   add variable for save last error state:
-    _bashlyk_iLastError:=0 _bashlyk_sLastError
+ - добавлены новые константы и глобальные переменные:
+   _bashlyk_iErrorEmptyOrMissingArgument
+   _bashlyk_iErrorNonValidArgument
+   _bashlyk_iErrorNonValidVariable
+   _bashlyk_iErrorNotExistNotCreated
+   _bashlyk_iLastError
+   _bashlyk_sLastError
+ - добавлены новые функции c описаниями и тестовыми модулями:
+   * udfSetLastError - установить код ошибки ( _bashlyk_iError... ) и текст
+     детализации. Используется для обработки ошибок в udfIni, udfIniWrite,
+     udfOptions2Ini, udfSerialize
+   * udfSerialize - получить сериализацию переменных в виде CSV; строки
+   * udfCompileReplaceCommand - вспомогательная для udfPrepare2Exec функция
+ - udfPrepare2Exec - теперь может читать входной поток (-)
+ - исправление ошибки в get/set функции "_"  - используются двойные кавычки для
+   второго аргумента на случай если он содержит пробелы
  libini.sh:
- - udfIni add udfSetLastError Call
- - udfIni set command line options with ini options
- - udfIniWrite - добавлена в конвейер преобразования вызов udfPrepare2Exec
- - udfIniWrite - исправлено форматирование создаваемого ini-файла
- - udfIniWrite - tab formatting included
- - udfIniWrite - use mkdir for check and create path to ini-file.
-   Used udfSetLastError for error handle
- - new function udfOptions2Ini
- - udfOptions2Ini - корректное формирование csv-строки
- - udfOptions2Ini - test unit implemented,
- - дополнена документация udfOptions2Ini
- - udfIniGroup2Csv remove excess arg
- - udfIniGroup2Csv - "безымянные" строки корректно накапливаются
- - udfReadIniSection, udfIniGroup2Csv - fixed test unit after logic modification
+ - добавлена глобальная переменная _bashlyk_bSetOptions
+ - добавлена новая функция udfOptions2Ini - создание виртуального ini-файла из
+   опций командной строки (хотя туда могут попасть значения по умолчанию!),
+   создано описание и тестовый модуль
+ - udfIni - если _bashlyk_bSetOptions установлена, то выполняется udfOptions2Ini
+ - udfIniWrite:
+   * если отсутствует второй аргумент, то выполняется попытка обращения к
+     $_bashlyk_csvOptions2Ini - виртуальному образу ini-файла
+   * добавлен в конвейер преобразований входного потока вызов udfPrepare2Exec
+   * улучшено форматирование создаваемого ini-файла, используется табуляция
+   * если пути к создаваемому ini-файлу не существует, то выполняется попытка
+     его создания (mkdir -p)
+ - udfIniGroup2Csv:
+   * "безымянные" и "активные" строки накапливаются после обработки
+     последовательности ini-файлов, а не заменяются по номерам строк.
+   * удалена обработка лишнего аргумента
+ - udfReadIniSection, udfIniGroup2Csv - скорректированы тестовые модули после
+   модификации логики обработки "безымянных" и "активных" строк
 
 Tue, 06 May 2014 15:30:35 +0400
 	Fix bugs
