@@ -603,21 +603,27 @@ udfIniChange() {
 #******
 #****f* libini/udfIni
 #  SYNOPSIS
-#    udfIni <file> [<section>]:(=[<varname>])|<csv;> ...
+#    udfIni <file> [<section>]:[<csv;>]|[(=|-|+|!)] ...
 #  DESCRIPTION
-#    ## TODO дополнить по обработке опций командной строки
-#    получить данные указанных секций <section> ini-файла <file> ( и ему
-#    родственных) через инициализацию перечисленных в "CSV;"-строке валидных
-#    идентификаторов переменных, идентичных соответствующим ключам секции
-#    или "сырую" сериализацию всех данных секции в <varname>
+#    получить данные указанных секций <section> ini-файла <file> (и, возможно,
+#    ему родственных, а также, опций командной строки, предварительно полученных
+#    функцией udfGetOpt) через инициализацию перечисленных в "csv;"-строке
+#    валидных идентификаторов переменных, идентичных соответствующим ключам
+#    секции или "сырую" сериализацию всех данных секции в переменную c именем
+#    секции
 #  INPUTS
-#     file    - файл конфигурации формата "*.ini".
+#     file    - файл конфигурации в стиле ini
 #     section - имена секций. Пустое значение для "безымянной" секции
 #     csv;    - список валидных переменных для приема соответствующих значений
-#               строк вида "<key>=<value>" секции
-#     varname - валидный идентификатор переменной для сериализации в CSV-строку
-#               всех данных секции. Если идентификатор опущен, то приемником
-#               будет являться переменная с идентификатором имени секции section
+#               строк вида "<ключ>=<значение>" секции section, в случае
+#               повторения ключей, актуальной становится последняя пара
+#     =-+!    - сериализация всех данных секции в переменную c именем секции,
+#               модификаторы "=-+!" задают стратегию обработки "сырых" данных:
+#     =       - накапливание данные с последующей унификацией
+#     -       - замена данных
+#     +       - накопление данных
+#     !       - замена данных (активная секция)
+#
 #  RETURN VALUE
 #     0  - Выполнено успешно
 #     2  - невалидный идентификатор переменной для приема значения
@@ -648,7 +654,7 @@ udfIniChange() {
 #    sTxt='';b='';iXo=''
 #    udfIni $iniChild 'test:sTxt;b;iXo' 'exec:!'                                #? true
 #    echo "${sTxt};${b};${iXo}" >| grep -e "^foo = bar;true;1921$"              #? true
-#    echo "$exec" >| grep -e '^:;date;"sUname="$_bashlyk_&#40_uname -a_bashlyk_&#41_"";$'                 #? true
+#    echo "$exec" >| grep -e ';date;"sUname="$.*&#40_uname -a.*&#41_"";$'       #? true
 #    rm -f $iniChild $ini
 #  SOURCE
 udfIni() {
@@ -656,6 +662,7 @@ udfIni() {
  #
  local bashlyk_udfIni_csv bashlyk_udfIni_s bashlyk_udfIni_sSection
  local bashlyk_udfIni_csvSection bashlyk_udfIni_csvVar bashlyk_udfIni_ini
+ local bashlyk_udfIni_cClass
  #
  bashlyk_udfIni_ini="$1"
  shift
@@ -664,21 +671,26 @@ udfIni() {
  #
  bashlyk_udfIni_csv=$(udfIniGroup2Csv "$bashlyk_udfIni_ini")
  #
+ rm -f /tmp/ss.log
+ rm -f /tmp/raw.log
+ #
  for bashlyk_udfIni_s in $*; do
   bashlyk_udfIni_sSection=${bashlyk_udfIni_s%:*}
   bashlyk_udfIni_csvSection=$(udfGetCsvSection "$bashlyk_udfIni_csv" "$bashlyk_udfIni_sSection")
-  if [ $bashlyk_udfIni_s = "${bashlyk_udfIni_s%:[=+\!]*}" ]; then
+  if [ $bashlyk_udfIni_s = "${bashlyk_udfIni_s%:[=\-+\!]*}" ]; then
    bashlyk_udfIni_aVar="$(echo ${bashlyk_udfIni_s#*:}  | tr ';' ' ')"
-   ## TODO udfCsvOrder лишний вызов
+   echo "$bashlyk_udfIni_sSection :: $bashlyk_udfIni_csvSection :: $bashlyk_udfIni_aVar" >> /tmp/ss.log
    udfSetVarFromCsv "$bashlyk_udfIni_csvSection" $bashlyk_udfIni_aVar
   else
-   bashlyk_udfIni_aVar="${bashlyk_udfIni_s#*:[=+\!]}"
-   : ${bashlyk_udfIni_aVar:=$bashlyk_udfIni_sSection}
-   udfIsValidVariable $bashlyk_udfIni_aVar || {
+   bashlyk_udfIni_cClass="${bashlyk_udfIni_s#*:}"
+   echo $bashlyk_udfIni_cClass >> /tmp/raw.log
+   udfIsValidVariable $bashlyk_udfIni_sSection || {
     udfSetLastError iErrorNonValidVariable "$bashlyk_udfIni_aVar"
     return $?
    }
-   eval 'export $bashlyk_udfIni_aVar="$(udfCsvHash2Raw "$bashlyk_udfIni_csvSection" "$bashlyk_udfIni_sSection")"'
+   ## TODO реализация стратегии обработки "сырых данных"
+   udfCsvHash2Raw "$bashlyk_udfIni_csvSection" "$bashlyk_udfIni_sSection" >> /tmp/raw.log
+   eval 'export $bashlyk_udfIni_sSection="$(udfCsvHash2Raw "$bashlyk_udfIni_csvSection" "$bashlyk_udfIni_sSection")"'
   fi
  done
  ## TODO вложенные кавычки: " " ""
@@ -1149,7 +1161,7 @@ udfIni2CsvVar() {
 #     1  - файл конфигурации не найден
 #    255 - Ошибка: аргумент отсутствует
 #  EXAMPLE
-#    local sMD5=3f6444e0bcec4bfb52c1d2fb253851e6
+#    local sMD5=961e2631e2c08c3319c5e427bdb88006
 #    local sTxt=foo b=false iXo=1921 iYo=80 ini iniChild
 #    local fmt="[test]\n\t%s\t=\t%s\n\t%s\t=\t%s\n\t%s\t=\t%s\n\t%s\t=\t%s\n"
 #    ini=$(mktemp --suffix=.ini || tempfile -s .test.ini)                       #? true
@@ -1165,8 +1177,8 @@ udfIni2CsvVar() {
 udfIniGroup2Csv() {
  [ -n "$1" ] || return 255
  #
- local aini csvIni csvResult ini pathIni s sTag sGlobIgnore aTag sS sF sT sR fnOpt
- #
+ local a aini cIFS csvIni i ini pathIni s sTag sGlobIgnore aTag csvOut fnOpt
+ #sS sF sT
  ini=''
  pathIni="$_bashlyk_pathIni"
  #
@@ -1197,24 +1209,23 @@ udfIniGroup2Csv() {
   csvIni+="$(udfIni2Csv $fnOpt | tr -d '\\');"
  }
 
- aTag=$(echo $csvIni | tr ';' '\n' | grep -oE '\[.*\]' | sort | uniq | tr -d '[]' | tr '\n' ' ')
-
- sR=''
- for s in "" $aTag; do
-  sT=''
-  sS='\['${s}'\]'
-  ## TODO защита от зацикливания
-  while [ true ]; do
-   [ -n "$(echo $csvIni | grep -oE $sS)" ] || break
-   sF=$(echo "${csvIni#*${sS};}" | cut -f1 -d'[')
-   csvIni=$(echo ${csvIni/${sS};${sF}/})
-   sT+=";"${sF}
-  done
-  sF="${sT}"
-  sR+="[${s}];${sF};"
+ declare -A a
+ cIFS=$IFS
+ IFS='['
+ i=0
+ for s in $csvIni; do
+  sTag=${s%%]*}
+  [ -z "$sTag" ] && sTag=" "
+  [ "$sTag" = ";" ] && continue
+  a[$sTag]+="_bashlyk_record=${i};${s#*]};"
+  i=$((i+1))
  done
+ for s in "${!a[@]}"; do
+  csvOut+=";[${s/ /}];${a[$s]};"
+ done
+ IFS=$cIFS
  GLOBIGNORE=$sGlobIgnore
- echo ${sR} | sed -e "s/;\+/;/g"
+ echo ${csvOut} | sed -e "s/;\+/;/g"
  return 0
 }
 #******
@@ -1259,21 +1270,21 @@ udfIniGroup2CsvVar() {
 #    255 - Ошибка: аргумент отсутствует
 #  EXAMPLE
 #   local sVoid="verbose;direct;log;" sMain="source;destination"
-#   local Exclude="*.tmp,*~,*.bak"
+#   local unify="*.tmp,*~,*.bak" replace="replace" unify="unify" acc="acc"
 #   local preExec="sUname=$(TZ=UTC date -R --date='@12345678'),date -R"
-#   local sMD5='23b46c4d89a6503669c50d2668c8a814'
-#   local sRules=":${sVoid} Exclude:= preExec:! main:${sMain}"
+#   local sMD5='efb1fa3bc5c848bf15bb3fff154d4aa8'
+#   local sRules=":${sVoid} preExec:! main:${sMain} replace:- unify:= acc:+"
 #   local verbose="yes foo" direct="false" log="/var/log/test.log" source="last"
 #   local destination="/tmp/last.txt"
 #   udfOptions2Ini $sRules                                                      #? true
-#   _ csvOptions2Ini | md5sum >| grep "^${sMD5}"                                #? true
+#   _ csvOptions2Ini | md5sum >| grep ^${sMD5}                                  #? true
 #   #udfIniWrite /tmp/${$}.test.ini "$(_ csvOptions2Ini)"
 #   #udfIni /tmp/${$}.test.ini preExec:=
 #   #udfPrepare2Exec $preExec
 #  SOURCE
 udfOptions2Ini() {
  [ -n "$1" ] || {
-  udfSetLastError $(_ iErrorEmptyOrMissingArgument)
+  udfSetLastError iErrorEmptyOrMissingArgument
   return 255
  }
  local cIFS csv k s sClass sData sIni sRules sSection
@@ -1282,13 +1293,13 @@ udfOptions2Ini() {
   sData="${s/$sSection/}"
   sClass="${s#*:}"
   sData=${sData/:/}
-  sData=${sData/[=+\!]/}
+  sData=${sData/[=\-+\!]/}
   [ "$sClass" = "$sData" ] && sClass=
   csv=""
   cIFS=$IFS
   IFS=';'
   [ -n "$sClass" ] && [ -n "$sData" ] && {
-   udfSetLastError $(_ iErrorFormatError) "$sClass"
+   udfSetLastError iErrorFormatError "$sClass"
    continue
   }
   if [ -z "$sData" ]; then
@@ -1299,8 +1310,9 @@ udfOptions2Ini() {
    done
   fi
   IFS=$cIFS
-  [ -n "$csv" ] || continue
-  [ "$sClass" = "!" ] && s="[$sSection]:;$csv;:[$sSection]" || s="[$sSection];$csv;"
+  [ -n "$csv	" ] || continue
+  [ -n "$sClass" ] && csv="_bashlyk_raw_data_method=${sClass};$csv"
+  [ "$sClass" = "!" ] && s="[${sSection}]:;${csv};:[${sSection}]" || s="[${sSection}];${csv};"
   sIni+=$s
  done
  #_bashlyk_csvOptions2Ini=$(udfAlias2WSpace "$sIni")
