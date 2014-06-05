@@ -64,7 +64,7 @@ _bashlyk_iErrorNotExistNotCreated=190
  udfAddFile2Clean udfAddPath2Clean udfAddJob2Clean udfAddPid2Clean udfCheckCsv \
  udfCleanQueue udfOnTrap _ARGUMENTS _s0 _pathDat _ _gete _getv _set            \
  udfGetMd5 udfGetPathMd5 udfXml udfPrepare2Exec udfSerialize udfSetLastError   \
- udfCompileReplaceCommand"}
+ udfBashlykUnquote"}
 
 if [ -n "$(which mail)" ]; then
  _bashlyk_cmdMessage="mail -e -s "${_bashlyk_emailSubj}"                       \
@@ -634,31 +634,33 @@ udfMakeTempV() {
 #******
 #****f* libstd/udfPrepare2Exec
 #  SYNOPSIS
-#    udfPrepare2Exec args
+#    udfPrepare2Exec - | args
 #  DESCRIPTION
-#    Подготовка входных CSV; строк для выполнения в качестве сценария командной
-#    строки во внешнем временном файле
-#    в текущей среде интерпретатора оболочки
+#    ## TODO STDIN ? ';' : '\n'
+#    Преобразование при необходимости метапоследовательностей _bashlyk_&#XX_
+#    из "csv;"-потока со стандартного входа или аргументов командной строки
+#    в символы '[]()=;\'
 #  INPUTS
 #    args - командная строка
+#       - - данные поступают со стандартного входа
 #  OUTPUT
-#    Поток строк сценария
-#    в остальных случаях код возврата командной строки с учетом доступа к
-#    временному файлу
+#    Если данные поступают со стандартного входа, то csv;-строка, иначе поток
+#    строк - каждое поле входной csv;-строки - отдельная строка
 #  EXAMPLE
-#    local s='_bashlyk_&#91_ -n "$USER" _bashlyk_&#93__bashlyk_&#59_ true'
-#    udfPrepare2Exec $s >| grep -e '^\[ -n "$USER" \]; true$'                   #? true
+#    local s="_bashlyk_&#91__bashlyk_&#93__bashlyk_&#59__bashlyk_&#40__bashlyk_&#41__bashlyk_&#61_"
+#    echo $s | udfPrepare2Exec -                                                #? true
+#    udfPrepare2Exec $s | grep -e '\[\];()='                                    #? true
 #  SOURCE
 udfPrepare2Exec() {
  local s cIFS cmd="$*" cmdSed=''
  if [ "$1" = "-" ]; then
-  udfCompileReplaceCommand
+  udfBashlykUnquote
  else
   cIFS=$IFS
   IFS=';'
   for s in $cmd
   do
-   echo "$s" | udfCompileReplaceCommand
+   echo "$s" | udfBashlykUnquote
   done
  fi
  IFS=$cIFS
@@ -1224,19 +1226,20 @@ udfSerialize() {
  echo "$csv"
 }
 #******
-#****f* libstd/udfCompileReplaceCommand
+#****f* libstd/udfBashlykUnquote
 #  SYNOPSIS
-#    udfCompileReplaceCommand
+#    udfBashlykUnquote
 #  DESCRIPTION
+#    ## TODO откорректировать!
 #    Generate and execute sed command for replace "quotes" _bashlyk_&#XX_
 #  EXAMPLE
-#    local s="_bashlyk_&#91_ _bashlyk_&#92_ _bashlyk_&#93_ _bashlyk_&#59_ _bashlyk_&#40_ _bashlyk_&#41_"
-#    local sMD5='b639502f470da3f4be15987ffdba97a3'
-#    echo $s | udfCompileReplaceCommand >| md5sum | grep "^${sMD5}"             #? true
+#    local s="_bashlyk_&#91__bashlyk_&#93__bashlyk_&#59__bashlyk_&#40__bashlyk_&#41__bashlyk_&#61_"
+#    echo $s | udfBashlykUnquote
+#    echo $s | udfBashlykUnquote | grep -e '\[\];()='                        #? true
 #  SOURCE
-udfCompileReplaceCommand() {
+udfBashlykUnquote() {
  local a cmd="sed" i
- declare -A a=( [91]='\[' [92]='\\\' [93]='\]' [59]='\;' [40]='\(' [41]='\)' )
+ declare -A a=( [91]='\[' [92]='\\\' [93]='\]' [59]='\;' [40]='\(' [41]='\)' [61]='\=' )
  for i in "${!a[@]}"; do
   cmd+=" -e \"s/_bashlyk_\&#${i}_/${a[$i]}/g\""
  done

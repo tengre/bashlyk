@@ -629,32 +629,64 @@ udfIniChange() {
 #     2  - невалидный идентификатор переменной для приема значения
 #    255 - Ошибка: аргументы отсутствуют
 #  EXAMPLE
-#    local sTxt="foo = bar" b=true iXo=1921 iYo=1080 ini iniChild exec
+#    local sTxt="foo = bar" b=true iXo=1921 iYo=1080 ini iniChild
+#    local exec replace unify acc sVoid=void sMain='sTxt;b;iXo'
+#    local sRules=":${sVoid} exec:! main:${sMain} replace:- unify:= acc:+"
+#
 #    ini=$(mktemp --suffix=test.ini || tempfile -s .test.ini)                   #? true
 #    iniChild="$(dirname $ini)/child.$(basename $ini)"
+#
 #    cat <<'EOFini' > ${ini}                                                    #-
-#[test]                                                                         #-
+#    void	=	1                                                       #-
+#[exec]:                                                                        #-
+#    TZ=UTC date -R --date='@12345678'                                          #-
+#    sUname="$(uname -a)"                                                       #-
+#:[exec]                                                                        #-
+#[main]                                                                         #-
 #    sTxt	=	foo                                                     #-
 #    b		=	false                                                   #-
 #    iXo Xo	=	19                                                      #-
 #    iYo	=	80                                                      #-
 #    simple line                                                                #-
-#[exec]:                                                                        #-
-#    date                                                                       #-
-#    sUname="$(uname -a)"                                                       #-
-#:[exec]                                                                        #-
+#[replace]                                                                      #-
+#    before replacing                                                           #-
+#[unify]                                                                        #-
+#    *.bak                                                                      #-
+#    *.tmp                                                                      #-
+#[acc]                                                                          #-
+#    *.bak                                                                      #-
+#    *.tmp                                                                      #-
+#                                                                               #-
 #    EOFini                                                                     #-
 #    cat <<'EOFiniChild' > ${iniChild}                                          #-
-#    [test]	                                                                #-
+#    void	=	0                                                       #-
+#    [main]	                                                                #-
 #    sTxt	=	foo = bar                                               #-
 #    b		=	true                                                    #-
 #    iXo	=	1921                                                    #-
 #    iYo	=	1080                                                    #-
+#[exec]:                                                                        #-
+#    TZ=UTC date -R --date='@12345679'                                          #-
+#    sUname="$(uname)"                                                          #-
+#:[exec]                                                                        #-
+#[replace]                                                                      #-
+#    after replacing                                                            #-
+#[unify]                                                                        #-
+#    *.bak                                                                      #-
+#    *.tmp                                                                      #-
+#    *~                                                                         #-
+#[acc]                                                                          #-
+#    *.bak                                                                      #-
+#    *.tmp                                                                      #-
+#    *~                                                                         #-
+#                                                                               #-
 #    EOFiniChild                                                                #-
-#    sTxt='';b='';iXo=''
-#    udfIni $iniChild 'test:sTxt;b;iXo' 'exec:!'                                #? true
+#    udfIni $iniChild $sRules                                                   #? true
 #    echo "${sTxt};${b};${iXo}" >| grep -e "^foo = bar;true;1921$"              #? true
-#    echo "$exec" >| grep -e ';date;"sUname="$.*&#40_uname -a.*&#41_"";$'       #? true
+#    echo "$exec"  | udfPrepare2Exec - >| grep 'TZ=UTC.*@12345679.*$(uname)'     #? true
+#    echo "$replace"
+#    echo "$unify"
+#    echo "$acc"
 #    rm -f $iniChild $ini
 #  SOURCE
 udfIni() {
@@ -689,6 +721,13 @@ udfIni() {
     return $?
    }
    ## TODO реализация стратегии обработки "сырых данных"
+   case "$bashlyk_udfIni_cClass" in
+    !|-) bashlyk_udfIni_csvSection="${bashlyk_udfIni_csvSection##*_bashlyk_ini_section=new;}" ;;
+      +) bashlyk_udfIni_csvSection="$(echo "$bashlyk_udfIni_csvSection" | sed -e "s/_bashlyk_ini_section=new;//g")" ;;
+      =)
+         bashlyk_udfIni_csvSection="$(echo "$bashlyk_udfIni_csvSection" | tr ';' '\n' | sort | uniq | tr '\n' ';')"
+         ;;
+   esac
    udfCsvHash2Raw "$bashlyk_udfIni_csvSection" "$bashlyk_udfIni_sSection" >> /tmp/raw.log
    eval 'export $bashlyk_udfIni_sSection="$(udfCsvHash2Raw "$bashlyk_udfIni_csvSection" "$bashlyk_udfIni_sSection")"'
   fi
@@ -1084,7 +1123,7 @@ udfIniGroupSection2CsvVar() {
 #          переменной
 #    255 - Ошибка: аргумент отсутствует или файл конфигурации не найден
 #  EXAMPLE
-#    local csv='\[\];\[test\];sTxt=foo;b=false;_bashlyk_ini_test_autoKey_0="iXo Xo = 19";iYo=80;_bashlyk_ini_test_autoKey_1="simple line";\[exec\];:;_bashlyk_ini_exec_autoKey_0="sUname=$_bashlyk_&#40_uname -a_bashlyk_&#41_";_bashlyk_ini_exec_autoKey_1="_bashlyk_&#91_ -n "$sUname" _bashlyk_&#93_ && date";'
+#    local ini re='^[];[test].*[exec].*sUname=$(uname -a).*[ -n "$sUname" ] &.*'
 #    ini=$(mktemp --suffix=test.ini || tempfile -s .test.ini)                   #? true
 #    cat <<'EOFini' > ${ini}                                                    #-
 #[test]                                                                         #-
@@ -1098,9 +1137,9 @@ udfIniGroupSection2CsvVar() {
 #    [ -n "$sUname" ] && date                                                   #-
 #:[exec]                                                                        #-
 #EOFini                                                                         #-
-#    udfIni2Csv $ini   >| grep "^${csv}$"                                       #? true
+#    udfIni2Csv $ini | udfPrepare2Exec - | grep "$csv"                          #? true
 #    udfIni2CsvVar csvResult $ini                                               #? true
-#    echo "$csvResult" >| grep "^${csv}$"                                       #? true
+#    echo "$csvResult" | udfPrepare2Exec - | grep "$csv"                        #? true
 #    rm -f $ini
 #  SOURCE
 udfIni2Csv() {
@@ -1169,15 +1208,15 @@ udfIni2CsvVar() {
 #    printf "$fmt" sTxt $sTxt b $b "iXo Xo" 19 iYo $iYo | tee $ini
 #    echo "simple line" | tee -a $ini
 #    printf "$fmt" sTxt "foo bar" b "true" iXo "1920" iYo "1080" | tee $iniChild
-#    udfIniGroup2Csv $iniChild | md5sum - >| grep "${sMD5}"                     #? true
+#    udfIniGroup2Csv $iniChild >| grep ';[].*section=new;[test].*;iYo=1080;'    #? true
 #    udfIniGroup2CsvVar csvResult $iniChild                                     #? true
-#    echo "$csvResult" | md5sum - >| grep "${sMD5}"                             #? true
+#    echo "$csvResult" >| grep ';[].*section=new;[test].*;iYo=1080;'            #? true
 #    rm -f $iniChild $ini
 #  SOURCE
 udfIniGroup2Csv() {
  [ -n "$1" ] || return 255
  #
- local a aini cIFS csvIni i ini pathIni s sTag sGlobIgnore aTag csvOut fnOpt
+ local a aini cIFS csvIni ini pathIni s sTag sGlobIgnore aTag csvOut fnOpt
  #sS sF sT
  ini=''
  pathIni="$_bashlyk_pathIni"
@@ -1212,13 +1251,12 @@ udfIniGroup2Csv() {
  declare -A a
  cIFS=$IFS
  IFS='['
- i=0
  for s in $csvIni; do
   sTag=${s%%]*}
   [ -z "$sTag" ] && sTag=" "
   [ "$sTag" = ";" ] && continue
-  a[$sTag]+="_bashlyk_record=${i};${s#*]};"
-  i=$((i+1))
+  ## TODO продумать использование метапоследовательности _bashlyk_&#XX_
+  a[$sTag]+="_bashlyk_ini_section=new;${s#*]};"
  done
  for s in "${!a[@]}"; do
   csvOut+=";[${s/ /}];${a[$s]};"

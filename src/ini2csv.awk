@@ -22,12 +22,16 @@ BEGIN {
 }
 
 $1=$1 {
- gsub("\(", "_bashlyk_\&#40_")
- gsub("\)", "_bashlyk_\&#41_")
- gsub(";",  "_bashlyk_\&#59_")
- gsub("\[", "_bashlyk_\&#91_")
- gsub("\\", "_bashlyk_\&#92_")
- gsub("\]", "_bashlyk_\&#93_")
+
+ if ( b == 1) {
+  gsub("\(", "_bashlyk_\&#40_")
+  gsub("\)", "_bashlyk_\&#41_")
+  gsub(";",  "_bashlyk_\&#59_")
+  gsub("\[", "_bashlyk_\&#91_")
+  gsub("\\", "_bashlyk_\&#92_")
+  gsub("\]", "_bashlyk_\&#93_")
+  gsub("=",  "_bashlyk_\&#61_")
+ }
 
  s0 = $0
 
