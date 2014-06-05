@@ -1234,8 +1234,7 @@ udfSerialize() {
 #    Generate and execute sed command for replace "quotes" _bashlyk_&#XX_
 #  EXAMPLE
 #    local s="_bashlyk_&#91__bashlyk_&#93__bashlyk_&#59__bashlyk_&#40__bashlyk_&#41__bashlyk_&#61_"
-#    echo $s | udfBashlykUnquote
-#    echo $s | udfBashlykUnquote | grep -e '\[\];()='                        #? true
+#    echo $s | udfBashlykUnquote >| grep -e '\[\];()='                          #? true
 #  SOURCE
 udfBashlykUnquote() {
  local a cmd="sed" i
