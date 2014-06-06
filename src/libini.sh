@@ -509,14 +509,14 @@ udfCsvKeys2Var() {
 #    255 - Ошибка: аргументы отсутствуют
 #  EXAMPLE
 #    ## TODO дополнить тесты по второму аргументу
-#    local csv='[test];sTxt="foo bar";b=true;iXo=1921;iYo=1080;' ini s
+#    local ini csv='[];void=0;;[exec]:;:;"TZ_bashlyk_&#61_UTC date -R --date_bashlyk_&#61_'@12345679'";sUname_bashlyk_&#61_"$_bashlyk_&#40_uname_bashlyk_&#41_";;;:[exec][main];sTxt="foo = bar";b=true;iXo=1921;;[replace];"after replacing";;;[unify];;;*.bak;*.tmp;*~;;;[acc];;*.bak;*.tmp;;*.bak;*.tmp;*~;;;'
 #    ini=$(mktemp --suffix=.ini || tempfile -s .test.ini)                       #? true
 #    udfIniWrite $ini "$csv"                                                    #? true
-#    grep -E '^\[test\]$'        $ini                                           #? true
-#    grep -E 'sTxt.*=.*foo bar$' $ini                                           #? true
-#    grep -E 'b.*=.*true$'       $ini                                           #? true
-#    grep -E 'iXo.*=.*1921$'     $ini                                           #? true
-#    grep -E 'iYo.*=.*1080$'     $ini                                           #? true
+#    grep -E '^\[unify\]$'                      $ini                            #? true
+#    grep -E 'sTxt.*=.*foo.*=.*bar$'            $ini                            #? true
+#    grep -E 'b.*=.*true$'                      $ini                            #? true
+#    grep -E 'iXo.*=.*1921$'                    $ini                            #? true
+#    grep -E 'TZ=UTC date -R --date=@12345679$' $ini                            #? true
 #    cat $ini
 #    rm -f $ini ${ini}.bak
 #  SOURCE
@@ -533,6 +533,7 @@ udfIniWrite() {
  mkdir -p $(dirname $ini) || udfSetLastError iErrorNotExistNotCreated "$ini"
  [ -s "$ini" ] && mv -f "$ini" "${ini}.bak"
  ## TODO продумать перенос уничтожения автоключей в udfBashlykUnquote
+ ## TODO проблема при нескольких "=" в поле CSV из-за "жадности" поиска sed
  echo "$s" | sed -e "s/[;]\+/;/g" -e "s/\(:\?\[\)/;;\1/g" -e "s/\[\]//g" -e "s/_bashlyk_ini_.*_autoKey_[0-9]\+=//g" | tr -d '"' | tr ';' '\n' | sed  -e "s/\(.*\)=/\t\1\t=\t/g" | udfBashlykUnquote > "$ini"
  #
  return 0
@@ -1118,15 +1119,16 @@ udfIniGroupSection2CsvVar() {
 #    b		=	false                                                   #-
 #    iXo Xo	=	19                                                      #-
 #    iYo	=	80                                                      #-
+#    test	=	line = to = line                                        #-
 #    simple line                                                                #-
 #[exec]:                                                                        #-
 #    sUname=$(uname -a)                                                         #-
 #    [ -n "$sUname" ] && date                                                   #-
 #:[exec]                                                                        #-
 #EOFini                                                                         #-
-#    udfIni2Csv $ini | udfPrepare2Exec - | grep "$csv"                          #? true
+#    udfIni2Csv $ini | udfBashlykUnquote >| grep "$re"                          #? true
 #    udfIni2CsvVar csvResult $ini                                               #? true
-#    echo "$csvResult" | udfPrepare2Exec - | grep "$csv"                        #? true
+#    echo "$csvResult" | udfBashlykUnquote >| grep "$re"                        #? true
 #    rm -f $ini
 #  SOURCE
 udfIni2Csv() {
@@ -1232,6 +1234,7 @@ udfIniGroup2Csv() {
  [ -n "$_bashlyk_csvOptions2Ini" ] && {
   udfMakeTemp fnOpt
   udfIniWrite $fnOpt "$_bashlyk_csvOptions2Ini"
+  _bashlyk_csvOptions2Ini=
   csvIni+="$(udfIni2Csv $fnOpt | tr -d '\\');"
  }
 
@@ -1296,7 +1299,7 @@ udfIniGroup2CsvVar() {
 #   local sVoid="verbose;direct;log;" sMain="source;destination"
 #   local unify="*.tmp,*~,*.bak" replace="replace" unify="unify" acc="acc"
 #   local preExec="sUname=$(TZ=UTC date -R --date='@12345678'),date -R"
-#   local sMD5='efb1fa3bc5c848bf15bb3fff154d4aa8'
+#   local sMD5='592dbbd3a17e18e14b828c75898437e4'
 #   local sRules=":${sVoid} preExec:! main:${sMain} replace:- unify:= acc:+"
 #   local verbose="yes foo" direct="false" log="/var/log/test.log" source="last"
 #   local destination="/tmp/last.txt"
@@ -1335,11 +1338,9 @@ udfOptions2Ini() {
   fi
   IFS=$cIFS
   [ -n "$csv	" ] || continue
-  [ -n "$sClass" ] && csv="_bashlyk_raw_data_method=${sClass};$csv"
   [ "$sClass" = "!" ] && s="[${sSection}]:;${csv};:[${sSection}]" || s="[${sSection}];${csv};"
   sIni+=$s
  done
- #_bashlyk_csvOptions2Ini=$(udfAlias2WSpace "$sIni")
  _bashlyk_csvOptions2Ini="$sIni"
  return 0
 }
