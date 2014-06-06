@@ -1187,7 +1187,7 @@ udfXml() {
 #    iError - Error Number
 #    sError - Error text
 #  RETURN VALUE
-## TODO
+#    last error code
 #  EXAMPLE
 #    udfSetLastError iErrorNonValidVariable "12NonValid Variable"               #? $_bashlyk_iErrorNonValidVariable
 #    _ iLastError >| grep -w "$_bashlyk_iErrorNonValidVariable"                 #? true
@@ -1230,8 +1230,8 @@ udfSerialize() {
 #  SYNOPSIS
 #    udfBashlykUnquote
 #  DESCRIPTION
-#    ## TODO откорректировать!
-#    Generate and execute sed command for replace "quotes" _bashlyk_&#XX_
+#    Преобразование при необходимости метапоследовательностей _bashlyk_&#XX_
+#    из "csv;"-потока со стандартного входа в символы '[]()=;\'
 #  EXAMPLE
 #    local s="_bashlyk_&#91__bashlyk_&#93__bashlyk_&#59__bashlyk_&#40__bashlyk_&#41__bashlyk_&#61_"
 #    echo $s | udfBashlykUnquote >| grep -e '\[\];()='                          #? true
@@ -1242,6 +1242,7 @@ udfBashlykUnquote() {
  for i in "${!a[@]}"; do
   cmd+=" -e \"s/_bashlyk_\&#${i}_/${a[$i]}/g\""
  done
+ ## TODO продумать команды для удаления "_bashlyk_csv_record=" и автоматических ключей
  cmd+=' -e "s/^\"\(.*\)\"$/\1/"'
  eval "$cmd"
 }

@@ -500,7 +500,7 @@ udfCsvKeys2Var() {
 #    производится с форматированием строк, разделитель ";" заменяется на перевод
 #    строки
 #  INPUTS
-#    file - файл конфигурации формата "*.ini". Если он не пустой, то сохраняется
+#    file - файл конфигурации в стиле "ini". Если он не пустой, то сохраняется
 #           в виде копии "<file>.bak"
 #    csv; - CSV-строка, разделённая ";", поля которой содержат данные вида
 #           "[<section>];<key>=<value>;..."
@@ -512,35 +512,28 @@ udfCsvKeys2Var() {
 #    local csv='[test];sTxt="foo bar";b=true;iXo=1921;iYo=1080;' ini s
 #    ini=$(mktemp --suffix=.ini || tempfile -s .test.ini)                       #? true
 #    udfIniWrite $ini "$csv"                                                    #? true
-#     grep -E '^\[test\]$'        $ini                                          #? true
-#     grep -E 'sTxt.*=.*foo bar$' $ini                                          #? true
-#     grep -E 'b.*=.*true$'       $ini                                          #? true
-#     grep -E 'iXo.*=.*1921$'     $ini                                          #? true
-#     grep -E 'iYo.*=.*1080$'     $ini                                          #? true
-#     cat $ini
-#     rm -f $ini ${ini}.bak
+#    grep -E '^\[test\]$'        $ini                                           #? true
+#    grep -E 'sTxt.*=.*foo bar$' $ini                                           #? true
+#    grep -E 'b.*=.*true$'       $ini                                           #? true
+#    grep -E 'iXo.*=.*1921$'     $ini                                           #? true
+#    grep -E 'iYo.*=.*1080$'     $ini                                           #? true
+#    cat $ini
+#    rm -f $ini ${ini}.bak
 #  SOURCE
 udfIniWrite() {
- [ -n "$1" ] || return $(udfSetLastError $(_ iErrorEmptyOrMissingArgument) "\$1")
+ [ -n "$1" ] || return $(udfSetLastError iErrorEmptyOrMissingArgument "\$1")
  #
- local ini csv
+ local ini s
  #
  ini="$1"
- if [ -n "$2" ]; then
-  csv="$2"
- else
-  if [ -n "$(_ csvOptions2Ini)" ]; then
-   csv="$(_ csvOptions2Ini)"
-  else
-   udfSetLastError $(_ iErrorEmptyOrMissingArgument) "\$2 _ csvOptions2Ini"
-   return $?
-  fi
- fi
+ [ -n "$2" ] && s="$2" || s="$(_ csvOptions2Ini)"
+ [ -n "$s" ] || \
+  return $(udfSetLastError iErrorEmptyOrMissingArgument "\$2 _ csvOptions2Ini")
  #
- mkdir -p $(dirname $ini) || \
-  udfSetLastError $(_ iErrorNotExistNotCreated) "$ini"
+ mkdir -p $(dirname $ini) || udfSetLastError iErrorNotExistNotCreated "$ini"
  [ -s "$ini" ] && mv -f "$ini" "${ini}.bak"
- echo "$csv" | sed -e "s/[;]\+/;/g" -e "s/\(:\?\[\)/;;\1/g" -e "s/\[\]//g" -e "s/_bashlyk_ini_.*_autoKey_[0-9]\+=//g" | udfPrepare2Exec "-" | tr -d '"' | tr ';' '\n' | sed  -e "s/\(.*\)=/\t\1\t=\t/g" > "$ini"
+ ## TODO продумать перенос уничтожения автоключей в udfBashlykUnquote
+ echo "$s" | sed -e "s/[;]\+/;/g" -e "s/\(:\?\[\)/;;\1/g" -e "s/\[\]//g" -e "s/_bashlyk_ini_.*_autoKey_[0-9]\+=//g" | tr -d '"' | tr ';' '\n' | sed  -e "s/\(.*\)=/\t\1\t=\t/g" | udfBashlykUnquote > "$ini"
  #
  return 0
 }
@@ -683,10 +676,10 @@ udfIniChange() {
 #    EOFiniChild                                                                #-
 #    udfIni $iniChild $sRules                                                   #? true
 #    echo "${sTxt};${b};${iXo}" >| grep -e "^foo = bar;true;1921$"              #? true
-#    echo "$exec"  | udfPrepare2Exec - >| grep 'TZ=UTC.*@12345679.*$(uname)'     #? true
-#    echo "$replace"
-#    echo "$unify"
-#    echo "$acc"
+#    echo "$exec"     | udfBashlykUnquote >| grep 'TZ=UTC.*@12345679.*$(uname)' #? true
+#    echo "$replace" >| grep '"after replacing";$'                              #? true
+#    echo "$unify"   >| grep '^;;\*\.bak;\*\.tmp;\*~;$'                         #? true
+#    echo "$acc"     >| grep '^;\*\.bak;\*\.tmp;;\*\.bak;\*\.tmp;\*~;$'         #? true
 #    rm -f $iniChild $ini
 #  SOURCE
 udfIni() {
@@ -703,32 +696,23 @@ udfIni() {
  #
  bashlyk_udfIni_csv=$(udfIniGroup2Csv "$bashlyk_udfIni_ini")
  #
- rm -f /tmp/ss.log
- rm -f /tmp/raw.log
- #
  for bashlyk_udfIni_s in $*; do
   bashlyk_udfIni_sSection=${bashlyk_udfIni_s%:*}
   bashlyk_udfIni_csvSection=$(udfGetCsvSection "$bashlyk_udfIni_csv" "$bashlyk_udfIni_sSection")
   if [ $bashlyk_udfIni_s = "${bashlyk_udfIni_s%:[=\-+\!]*}" ]; then
    bashlyk_udfIni_aVar="$(echo ${bashlyk_udfIni_s#*:}  | tr ';' ' ')"
-   echo "$bashlyk_udfIni_sSection :: $bashlyk_udfIni_csvSection :: $bashlyk_udfIni_aVar" >> /tmp/ss.log
    udfSetVarFromCsv "$bashlyk_udfIni_csvSection" $bashlyk_udfIni_aVar
   else
    bashlyk_udfIni_cClass="${bashlyk_udfIni_s#*:}"
-   echo $bashlyk_udfIni_cClass >> /tmp/raw.log
    udfIsValidVariable $bashlyk_udfIni_sSection || {
     udfSetLastError iErrorNonValidVariable "$bashlyk_udfIni_aVar"
     return $?
    }
-   ## TODO реализация стратегии обработки "сырых данных"
    case "$bashlyk_udfIni_cClass" in
-    !|-) bashlyk_udfIni_csvSection="${bashlyk_udfIni_csvSection##*_bashlyk_ini_section=new;}" ;;
-      +) bashlyk_udfIni_csvSection="$(echo "$bashlyk_udfIni_csvSection" | sed -e "s/_bashlyk_ini_section=new;//g")" ;;
-      =)
-         bashlyk_udfIni_csvSection="$(echo "$bashlyk_udfIni_csvSection" | tr ';' '\n' | sort | uniq | tr '\n' ';')"
-         ;;
+    !|-) bashlyk_udfIni_csvSection="${bashlyk_udfIni_csvSection##*_bashlyk_csv_record=;}" ;;
+      #+) bashlyk_udfIni_csvSection="$(echo "$bashlyk_udfIni_csvSection" | sed -e "s/_bashlyk_csv_record=;//g")" ;;
+      =) bashlyk_udfIni_csvSection="$(echo "$bashlyk_udfIni_csvSection" | tr ';' '\n' | sort | uniq | tr '\n' ';')" ;;
    esac
-   udfCsvHash2Raw "$bashlyk_udfIni_csvSection" "$bashlyk_udfIni_sSection" >> /tmp/raw.log
    eval 'export $bashlyk_udfIni_sSection="$(udfCsvHash2Raw "$bashlyk_udfIni_csvSection" "$bashlyk_udfIni_sSection")"'
   fi
  done
@@ -897,7 +881,8 @@ udfSelectEnumFromCsvHash() {
 #  DESCRIPTION
 #    подготовить CSV;-строку для выполнения в качестве сценария, поля которого
 #    рассматриваются как строки команд. При этом автоматические ключи вида
-#    "_bashlyk_ini_<секция>_autoKey_<номер>" будут убраны. Поля вида
+#    "_bashlyk_ini_<секция>_autoKey_<номер>" и поля-разделители записей разных
+#    источников данных "_bashlyk_csv_record=" будут убраны. Поля вида
 #    "ключ=значение" становятся командами присвоения значения переменной.
 #    Предполагается, что входная <csv> строка является сериализацией ini-файла.
 #  INPUTS
@@ -908,8 +893,8 @@ udfSelectEnumFromCsvHash() {
 #  RETURN VALUE
 #     0  - Выполнено успешно
 #  EXAMPLE
-#    local csv='[];a=b;_bashlyk_ini_void_autoKey_0="d = e";[s1];_bashlyk_ini_s1_autoKey_0=f=0;c=g h;[s2];a=k;_bashlyk_ini_s2_autoKey_0=l m;'
-#    udfCsvHash2Raw "$csv"    >| grep '^a=b;"d = e";$'                          #? true
+#    local csv='[];_bashlyk_csv_record=;a=b;_bashlyk_ini_void_autoKey_0="d = e";[s1];_bashlyk_ini_s1_autoKey_0=f=0;c=g h;[s2];a=k;_bashlyk_ini_s2_autoKey_0=l m;'
+#    udfCsvHash2Raw "$csv"    >| grep '^;a=b;"d = e";$'                         #? true
 #    udfCsvHash2Raw "$csv" s1 >| grep '^f=0;c=g h;$'                            #? true
 #    udfCsvHash2Raw "$csv" s2 >| grep '^a=k;l m;$'                              #? true
 #  SOURCE
@@ -919,7 +904,9 @@ udfCsvHash2Raw() {
  IFS=';'
  for s in $(echo "${1#*\[$2\];}" | cut -f1 -d'[')
  do
-  csv+="${s#${sUnnamedKeyword}[0-9]*=};"
+  s="${s#${sUnnamedKeyword}[0-9]*=}"
+  s="${s##*_bashlyk_csv_record=}"
+  csv+="${s};"
  done
  IFS=$cIFS
  echo "$csv"
@@ -1255,8 +1242,7 @@ udfIniGroup2Csv() {
   sTag=${s%%]*}
   [ -z "$sTag" ] && sTag=" "
   [ "$sTag" = ";" ] && continue
-  ## TODO продумать использование метапоследовательности _bashlyk_&#XX_
-  a[$sTag]+="_bashlyk_ini_section=new;${s#*]};"
+  a[$sTag]+="_bashlyk_csv_record=;${s#*]};"
  done
  for s in "${!a[@]}"; do
   csvOut+=";[${s/ /}];${a[$s]};"
