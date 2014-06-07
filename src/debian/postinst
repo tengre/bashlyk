@@ -21,6 +21,10 @@ set -e
 case "$1" in
     configure)
      [ -f /usr/share/bashlyk/testunit.sh ] && chmod +x /usr/share/bashlyk/testunit.sh
+     if [ -x /usr/bin/bashlyk ]; then
+      echo "BASHLYK library tests:"
+      /usr/bin/bashlyk --bashlyk-test
+     fi
     ;;
 
     abort-upgrade|abort-remove|abort-deconfigure)
