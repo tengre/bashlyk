@@ -664,7 +664,7 @@ udfIniChange() {
 #    sUname="$(uname)"                                                          #-
 #:[exec]                                                                        #-
 #[replace]                                                                      #-
-#    after replacing                                                            #-
+#	after replacing                                                         #-
 #[unify]                                                                        #-
 #    *.bak                                                                      #-
 #    *.tmp                                                                      #-
@@ -700,6 +700,7 @@ udfIni() {
  for bashlyk_udfIni_s in $*; do
   bashlyk_udfIni_sSection=${bashlyk_udfIni_s%:*}
   bashlyk_udfIni_csvSection=$(udfGetCsvSection "$bashlyk_udfIni_csv" "$bashlyk_udfIni_sSection")
+  echo "$bashlyk_udfIni_sSection -> $bashlyk_udfIni_csvSection" >> /tmp/s.log
   if [ $bashlyk_udfIni_s = "${bashlyk_udfIni_s%:[=\-+\!]*}" ]; then
    bashlyk_udfIni_aVar="$(echo ${bashlyk_udfIni_s#*:}  | tr ';' ' ')"
    udfSetVarFromCsv "$bashlyk_udfIni_csvSection" $bashlyk_udfIni_aVar
@@ -1244,7 +1245,9 @@ udfIniGroup2Csv() {
  for s in $csvIni; do
   sTag=${s%%]*}
   [ -z "$sTag" ] && sTag=" "
-  [ "$sTag" = ";" ] && continue
+  [ "$sTag" = ";"   ] && continue
+  [ "${s#*]}" = ";" ] && continue
+  echo "$sTag -> _bashlyk_csv_record=;${s#*]}; :: ${s#*]}" >> /tmp/dd.log
   a[$sTag]+="_bashlyk_csv_record=;${s#*]};"
  done
  for s in "${!a[@]}"; do
