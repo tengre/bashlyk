@@ -509,7 +509,7 @@ udfCsvKeys2Var() {
 #    255 - Ошибка: аргументы отсутствуют
 #  EXAMPLE
 #    ## TODO дополнить тесты по второму аргументу
-#    local ini csv='[];void=0;;[exec]:;:;"TZ_bashlyk_&#61_UTC date -R --date_bashlyk_&#61_'@12345679'";sUname_bashlyk_&#61_"$_bashlyk_&#40_uname_bashlyk_&#41_";;;:[exec][main];sTxt="foo = bar";b=true;iXo=1921;;[replace];"after replacing";;;[unify];;;*.bak;*.tmp;*~;;;[acc];;*.bak;*.tmp;;*.bak;*.tmp;*~;;;'
+#    local ini csv='[];void=0;[exec]:;"TZ_bashlyk_&#61_UTC date -R --date_bashlyk_&#61_'@12345679'";sUname_bashlyk_&#61_"$_bashlyk_&#40_uname_bashlyk_&#41_";:[exec][main];sTxt="foo = bar";b=true;iXo=1921;[replace];"after replacing";[unify];*.bak;*.tmp;*~;[acc];;*.bak;*.tmp;;*.bak;*.tmp;*~;'
 #    ini=$(mktemp --suffix=.ini || tempfile -s .test.ini)                       #? true
 #    udfIniWrite $ini "$csv"                                                    #? true
 #    grep -E '^\[unify\]$'                      $ini                            #? true
@@ -523,7 +523,7 @@ udfCsvKeys2Var() {
 udfIniWrite() {
  [ -n "$1" ] || return $(udfSetLastError iErrorEmptyOrMissingArgument "\$1")
  #
- local ini s
+ local ini s csv cIFS
  #
  ini="$1"
  [ -n "$2" ] && s="$2" || s="$(_ csvOptions2Ini)"
@@ -532,9 +532,15 @@ udfIniWrite() {
  #
  mkdir -p $(dirname $ini) || udfSetLastError iErrorNotExistNotCreated "$ini"
  [ -s "$ini" ] && mv -f "$ini" "${ini}.bak"
+ csv="$(echo "$s" | sed -e "s/[;]\+/;/g" -e "s/\(:\?\[\)/;;\1/g" -e "s/\[\]//g" | tr -d '"')"
+ cIFS=$IFS; IFS=';'
+ for s in $csv; do
+  k="${s%%=*}"
+  v="${s#*=}"
+  [ "$k" = "$v" ] && echo "$v" || printf "\t${k}\t=\t${v}\n"
  ## TODO продумать перенос уничтожения автоключей в udfBashlykUnquote
- ## TODO проблема при нескольких "=" в поле CSV из-за "жадности" поиска sed
- echo "$s" | sed -e "s/[;]\+/;/g" -e "s/\(:\?\[\)/;;\1/g" -e "s/\[\]//g" -e "s/_bashlyk_ini_.*_autoKey_[0-9]\+=//g" | tr -d '"' | tr ';' '\n' | sed  -e "s/\(.*\)=/\t\1\t=\t/g" | udfBashlykUnquote > "$ini"
+ done | sed -e "s/\t\?_bashlyk_ini_.*_autoKey_[0-9]\+\t\?=\t\?//g" | udfBashlykUnquote > "$ini"
+ IFS=$cIFS
  #
  return 0
 }
@@ -559,6 +565,7 @@ udfIniWrite() {
 #    255 - Ошибка: аргументы отсутствуют
 #  EXAMPLE
 #    local csv='sTxt="foo bar";b=true;iXo=1921;iYo=999;' csvResult
+#    local re='b=.*;_b.*auto.*0="= value".*auto.*1=.*key = value".*sTxt=".*ar";'
 #    local sTxt="bar foo" b=true iXo=1234 iYo=4321 ini
 #    local fmt="[sect%s]\n\t%s\t=\t%s\n\t%s\t=\t%s\n\t%s\t=\t%s\n\t%s\t=\t%s\n"
 #    local md5='a0e4879ea58a1cb5f1889c2de949f485'
@@ -567,7 +574,8 @@ udfIniWrite() {
 #    echo "simple line" | tee -a $ini
 #    printf "$fmt" 2 sTxt "$sTxt" b "$b" iXo "$iXo" iYo "$iYo" | tee -a $ini
 #    udfIniChange $ini "$csv" sect1                                             #? true
-#    udfReadIniSection $ini sect1 >| md5sum | grep "^${md5}.*-$"                #? true
+#    udfReadIniSection $ini sect1 >| grep "$re"                                 #? true
+#    cat $ini
 #    rm -f $ini ${ini}.bak
 #  SOURCE
 udfIniChange() {
@@ -584,13 +592,11 @@ udfIniChange() {
  [ -n "$sTag" ] && echo "$aTag" | grep -w "$sTag" >/dev/null || aTag+=" $sTag"
  for s in "" $aTag; do
   csv=$(udfIniSection2Csv $ini $s)
-  #udfIniSection2CsvVar csv $ini $s
   if [ "$s" = "$sTag" ]; then
    csv=$(udfCsvOrder "${csv};${csvNew}")
   fi
   a+=";[${s}];$csv;"
  done
- a="$(echo "$a" | sed -e "s/\[\]//")"
  udfIniWrite $ini "$a"
  return 0
 }
@@ -1112,7 +1118,7 @@ udfIniGroupSection2CsvVar() {
 #          переменной
 #    255 - Ошибка: аргумент отсутствует или файл конфигурации не найден
 #  EXAMPLE
-#    local ini re='^[];[test].*[exec].*sUname=$(uname -a).*[ -n "$sUname" ] &.*'
+#    local ini re='^\[\];\[test\].*\[exec\].*sUname=$(uname -a).*\[ -n "$sUname" \] &.*'
 #    ini=$(mktemp --suffix=test.ini || tempfile -s .test.ini)                   #? true
 #    cat <<'EOFini' > ${ini}                                                    #-
 #[test]                                                                         #-

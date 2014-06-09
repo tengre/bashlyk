@@ -1243,6 +1243,7 @@ udfBashlykUnquote() {
   cmd+=" -e \"s/_bashlyk_\&#${i}_/${a[$i]}/g\""
  done
  ## TODO продумать команды для удаления "_bashlyk_csv_record=" и автоматических ключей
+ #cmd+=" -e \"s/\t\?_bashlyk_ini_.*_autoKey_[0-9]\+\t\?=\t\?//g\""
  cmd+=' -e "s/^\"\(.*\)\"$/\1/"'
  eval "$cmd"
 }
