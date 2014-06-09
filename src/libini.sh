@@ -679,8 +679,8 @@ udfIniChange() {
 #    echo "${sTxt};${b};${iXo}" >| grep -e "^foo = bar;true;1921$"              #? true
 #    echo "$exec"     | udfBashlykUnquote >| grep 'TZ=UTC.*@12345679.*$(uname)' #? true
 #    echo "$replace" >| grep '"after replacing";$'                              #? true
-#    echo "$unify"   >| grep '^;;\*\.bak;\*\.tmp;\*~;$'                         #? true
-#    echo "$acc"     >| grep '^;\*\.bak;\*\.tmp;;\*\.bak;\*\.tmp;\*~;$'         #? true
+#    echo "$unify"   >| grep '^\*\.bak;\*\.tmp;\*~;$'                           #? true
+#    echo "$acc"     >| grep '^\*\.bak;\*\.tmp;\*\.bak;\*\.tmp;\*~;$'           #? true
 #    rm -f $iniChild $ini
 #  SOURCE
 udfIni() {
@@ -700,7 +700,7 @@ udfIni() {
  for bashlyk_udfIni_s in $*; do
   bashlyk_udfIni_sSection=${bashlyk_udfIni_s%:*}
   bashlyk_udfIni_csvSection=$(udfGetCsvSection "$bashlyk_udfIni_csv" "$bashlyk_udfIni_sSection")
-  echo "$bashlyk_udfIni_sSection -> $bashlyk_udfIni_csvSection" >> /tmp/s.log
+  #echo "$bashlyk_udfIni_sSection -> $bashlyk_udfIni_csvSection" >> /tmp/s.log
   if [ $bashlyk_udfIni_s = "${bashlyk_udfIni_s%:[=\-+\!]*}" ]; then
    bashlyk_udfIni_aVar="$(echo ${bashlyk_udfIni_s#*:}  | tr ';' ' ')"
    udfSetVarFromCsv "$bashlyk_udfIni_csvSection" $bashlyk_udfIni_aVar
@@ -896,7 +896,7 @@ udfSelectEnumFromCsvHash() {
 #     0  - Выполнено успешно
 #  EXAMPLE
 #    local csv='[];_bashlyk_csv_record=;a=b;_bashlyk_ini_void_autoKey_0="d = e";[s1];_bashlyk_ini_s1_autoKey_0=f=0;c=g h;[s2];a=k;_bashlyk_ini_s2_autoKey_0=l m;'
-#    udfCsvHash2Raw "$csv"    >| grep '^;a=b;"d = e";$'                         #? true
+#    udfCsvHash2Raw "$csv"    >| grep '^a=b;"d = e";$'                          #? true
 #    udfCsvHash2Raw "$csv" s1 >| grep '^f=0;c=g h;$'                            #? true
 #    udfCsvHash2Raw "$csv" s2 >| grep '^a=k;l m;$'                              #? true
 #  SOURCE
@@ -908,6 +908,7 @@ udfCsvHash2Raw() {
  do
   s="${s#${sUnnamedKeyword}[0-9]*=}"
   s="${s##*_bashlyk_csv_record=}"
+  [ -n "$s" ] || continue
   csv+="${s};"
  done
  IFS=$cIFS
@@ -1246,12 +1247,11 @@ udfIniGroup2Csv() {
   sTag=${s%%]*}
   [ -z "$sTag" ] && sTag=" "
   [ "$sTag" = ";"   ] && continue
-  [ "${s#*]}" = ";" ] && continue
-  echo "$sTag -> _bashlyk_csv_record=;${s#*]}; :: ${s#*]}" >> /tmp/dd.log
-  a[$sTag]+="_bashlyk_csv_record=;${s#*]};"
+  [ -z "$(echo "${s#*]}" | tr -d ';:')" ] && continue
+  a[$sTag]+="_bashlyk_csv_record=${s#*]}"
  done
  for s in "${!a[@]}"; do
-  csvOut+=";[${s/ /}];${a[$s]};"
+  csvOut+="[${s/ /}];${a[$s]}"
  done
  IFS=$cIFS
  GLOBIGNORE=$sGlobIgnore
