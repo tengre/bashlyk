@@ -534,7 +534,7 @@ udfIniWrite() {
  [ -s "$ini" ] && mv -f "$ini" "${ini}.bak"
  ## TODO продумать перенос уничтожения автоключей в udfBashlykUnquote
  ## TODO проблема при нескольких "=" в поле CSV из-за "жадности" поиска sed
- echo "$s" | sed -e "s/[;]\+/;/g" -e "s/\(:\?\[\)/;;\1/g" -e "s/\[\]//g" -e "s/_bashlyk_ini_.*_autoKey_[0-9]\+=//g" | tr -d '"' | tr ';' '\n' | sed  -e "s/\(.*\)=/\t\1\t=\t/g" | udfBashlykUnquote > "$ini"
+ echo "$s" | sed -e "s/\]:;:;/\]:;/g" -e "s/[;]\+/;/g" -e "s/\(:\?\[\)/;;\1/g" -e "s/\[\]//g" -e "s/_bashlyk_ini_.*_autoKey_[0-9]\+=//g" | tr -d '"' | tr ';' '\n' | sed  -e "s/\(.*\)=/\t\1\t=\t/g" | udfBashlykUnquote > "$ini"
  #
  return 0
 }
