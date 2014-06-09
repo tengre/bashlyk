@@ -1190,17 +1190,18 @@ udfIni2CsvVar() {
 #     1  - файл конфигурации не найден
 #    255 - Ошибка: аргумент отсутствует
 #  EXAMPLE
-#    local sMD5=961e2631e2c08c3319c5e427bdb88006
-#    local sTxt=foo b=false iXo=1921 iYo=80 ini iniChild
+#    local re='\[test\];_b.*d=;sTxt=foo;.*autoKey_0=.*_b.*d=;.*foo bar.*o=1080;'
+#    local sTxt=foo b=false iXo=1921 iYo=80 ini iniChild csvResult
 #    local fmt="[test]\n\t%s\t=\t%s\n\t%s\t=\t%s\n\t%s\t=\t%s\n\t%s\t=\t%s\n"
+#
 #    ini=$(mktemp --suffix=.ini || tempfile -s .test.ini)                       #? true
 #    iniChild="$(dirname $ini)/child.$(basename $ini)"
 #    printf "$fmt" sTxt $sTxt b $b "iXo Xo" 19 iYo $iYo | tee $ini
 #    echo "simple line" | tee -a $ini
 #    printf "$fmt" sTxt "foo bar" b "true" iXo "1920" iYo "1080" | tee $iniChild
-#    udfIniGroup2Csv $iniChild >| grep ';[].*section=new;[test].*;iYo=1080;'    #? true
+#    udfIniGroup2Csv $iniChild >| grep "$re"                                    #? true
 #    udfIniGroup2CsvVar csvResult $iniChild                                     #? true
-#    echo "$csvResult" >| grep ';[].*section=new;[test].*;iYo=1080;'            #? true
+#    echo "$csvResult" >| grep "$re"                                            #? true
 #    rm -f $iniChild $ini
 #  SOURCE
 udfIniGroup2Csv() {
