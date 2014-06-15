@@ -1214,7 +1214,6 @@ udfIniGroup2Csv() {
  [ -n "$1" ] || return 255
  #
  local a aini cIFS csvIni ini pathIni s sTag sGlobIgnore aTag csvOut fnOpt
- #sS sF sT
  ini=''
  pathIni="$_bashlyk_pathIni"
  #
@@ -1236,14 +1235,14 @@ udfIniGroup2Csv() {
  for s in $aini; do
   [ -n "$s" ] || continue
   [ -n "$ini" ] && ini="${s}.${ini}" || ini="$s"
-  [ -s "${pathIni}/${ini}" ] && csvIni+=";$(udfIni2Csv "${pathIni}/${ini}" | tr -d '\\');"
+  [ -s "${pathIni}/${ini}" ] && csvIni+="$(udfIni2Csv "${pathIni}/${ini}" | tr -d '\\')"
  done
 
  [ -n "$_bashlyk_csvOptions2Ini" ] && {
   udfMakeTemp fnOpt
   udfIniWrite $fnOpt "$_bashlyk_csvOptions2Ini"
   _bashlyk_csvOptions2Ini=
-  csvIni+="$(udfIni2Csv $fnOpt | tr -d '\\');"
+  csvIni+="$(udfIni2Csv $fnOpt | tr -d '\\')"
  }
 
  declare -A a
