@@ -31,6 +31,9 @@ $1=$1 {
   gsub("\\", "_bashlyk_\&#92_")
   gsub("\]", "_bashlyk_\&#93_")
   gsub("=",  "_bashlyk_\&#61_")
+ } else {
+  gsub("\$\(", "-S-(")
+  gsub("\`"  , "_^_")
  }
 
  s0 = $0

@@ -643,11 +643,11 @@ udfIniChange() {
 #    sUname="$(uname -a)"                                                       #-
 #:[exec]                                                                        #-
 #[main]                                                                         #-
-#    sTxt	=	foo                                                     #-
+#    sTxt	=	$(date -R)                                              #-
 #    b		=	false                                                   #-
 #    iXo Xo	=	19                                                      #-
 #    iYo	=	80                                                      #-
-#    simple line                                                                #-
+#    `simple line`                                                              #-
 #[replace]                                                                      #-
 #    before replacing                                                           #-
 #[unify]                                                                        #-
@@ -1122,12 +1122,12 @@ udfIniGroupSection2CsvVar() {
 #    ini=$(mktemp --suffix=test.ini || tempfile -s .test.ini)                   #? true
 #    cat <<'EOFini' > ${ini}                                                    #-
 #[test]                                                                         #-
-#    sTxt	=	foo                                                     #-
+#    sTxt	=	date                                                    #-
 #    b		=	false                                                   #-
 #    iXo Xo	=	19                                                      #-
 #    iYo	=	80                                                      #-
 #    test	=	line = to = line                                        #-
-#    simple line                                                                #-
+#    `simple line`                                                              #-
 #[exec]:                                                                        #-
 #    sUname=$(uname -a)                                                         #-
 #    [ -n "$sUname" ] && date                                                   #-
@@ -1238,10 +1238,11 @@ udfIniGroup2Csv() {
   [ -s "${pathIni}/${ini}" ] && csvIni+="$(udfIni2Csv "${pathIni}/${ini}" | tr -d '\\')"
  done
 
- [ -n "$_bashlyk_csvOptions2Ini" ] && {
+ [ "$_bashlyk_bSetOptions" = "1" -a -n "$_bashlyk_csvOptions2Ini" ] && {
   udfMakeTemp fnOpt
   udfIniWrite $fnOpt "$_bashlyk_csvOptions2Ini"
-  _bashlyk_csvOptions2Ini=
+  _bashlyk_csvOptions2Ini=''
+  _bashlyk_bSetOptions=0
   csvIni+="$(udfIni2Csv $fnOpt | tr -d '\\')"
  }
 
