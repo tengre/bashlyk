@@ -43,9 +43,8 @@ $1=$1 {
   csv = csv""s""i++"="s0";"
  } else {
   v = substr($0, RSTART+1, RLENGTH)
-  sub("="v, "")
-  sub(/ *$/, "")
-  k = $0
+  k = substr($0, 1, RSTART-1)
+  sub(/ *$/, "", k)
   if ( match(k, /[ ]/) ) {
    if ( match(s0, /[ =]/) ) { s0 = "\""s0"\"" }
    csv = csv""s""i++"="s0";"

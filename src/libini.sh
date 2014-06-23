@@ -1122,7 +1122,7 @@ udfIniGroupSection2CsvVar() {
 #    ini=$(mktemp --suffix=test.ini || tempfile -s .test.ini)                   #? true
 #    cat <<'EOFini' > ${ini}                                                    #-
 #[test]                                                                         #-
-#    sTxt	=	date                                                    #-
+#    sTxt	=	$(date -R) a                                            #-
 #    b		=	false                                                   #-
 #    iXo Xo	=	19                                                      #-
 #    iYo	=	80                                                      #-
