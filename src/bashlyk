@@ -51,7 +51,6 @@ udfInit() {
   || _bashlyk_pathPrefix=bashlyk
 
  [ -n "$SUDO_UID" ] && _bashlyk_sLogin=$(getent passwd $SUDO_UID|cut -f 1 -d':')
- : ${_bashlyk_sLogin:=$LOGNAME}
 
  _bashlyk_sUser=$(ps -p $$ -o user=)
  _bashlyk_sGroup=$(ps -p $$ -o group=)

@@ -48,7 +48,7 @@ _bashlyk_iErrorNotExistNotCreated=190
 : ${_bashlyk_apidClean:=}
 : ${_bashlyk_pidLogSock:=}
 : ${_bashlyk_sUser:=$USER}
-: ${_bashlyk_sLogin:=$(who | head -n 1 | cut -f 1 -d' ')}
+: ${_bashlyk_sLogin:=$LOGNAME}
 : ${HOSTNAME:=$(hostname)}
 : ${_bashlyk_bNotUseLog:=1}
 : ${_bashlyk_emailRcpt:=postmaster}
@@ -139,15 +139,16 @@ udfEcho() {
 #    _ emailOptions "$emailOptions"
 #  SOURCE
 udfMail() {
- local cmd fnTmp rc
+ local cmd fnTmp rc sTo=$_bashlyk_sLogin
 
  udfMakeTemp fnTmp
 
  if [ "$_bashlyk_bUseMail" = "1" ]; then
-  cmd="mail -e -s \"$(_ emailSubj)\" $(_ emailOptions) $(_ sLogin)"
+  [ -n "$_sTo" ] || sTo=$_bashlyk_sUser
+  [ -n "$_sTo" ] || sTo=postmaster
+  cmd="mail -e -s \"${_bashlyk_emailSubj}\" $_bashlyk_emailOptions $sTo"
  else
-  ## TODO проверять наличие значения $(_ sLogin)
-  cmd="write $(_ sLogin)"
+  [ -n "$sTo" ] && cmd="write $sTo" || cmd=true
  fi
 
  udfEcho $* | tee -a $fnTmp | head -n 8
