@@ -1118,7 +1118,8 @@ udfIniGroupSection2CsvVar() {
 #          переменной
 #    255 - Ошибка: аргумент отсутствует или файл конфигурации не найден
 #  EXAMPLE
-#    local ini re='^\[\];\[test\].*\[exec\].*sUname=$(uname -a).*\[ -n "$sUname" \] &.*'
+#    local ini re
+#    re='sTxt="-S-(da.*-R).*y_1="^_s.*e^_";\[exec\].*=$(.*\[ -n "$sUname" \] .*'
 #    ini=$(mktemp --suffix=test.ini || tempfile -s .test.ini)                   #? true
 #    cat <<'EOFini' > ${ini}                                                    #-
 #[test]                                                                         #-

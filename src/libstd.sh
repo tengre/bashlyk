@@ -40,20 +40,20 @@ _bashlyk_iErrorNotExistNotCreated=190
 : ${_bashlyk_pathDat:=/tmp}
 : ${_bashlyk_sWSpaceAlias:=___}
 : ${_bashlyk_sUnnamedKeyword:=_bashlyk_unnamed_key_}
-: ${_bashlyk_s0:=$(basename $0)}
-: ${_bashlyk_sId:=$(basename $0 .sh)}
+: ${_bashlyk_s0:=${0##*/}}
+: ${_bashlyk_sId:=${_bashlyk_s0%.sh}}
 : ${_bashlyk_afnClean:=}
 : ${_bashlyk_apathClean:=}
 : ${_bashlyk_ajobClean:=}
 : ${_bashlyk_apidClean:=}
 : ${_bashlyk_pidLogSock:=}
 : ${_bashlyk_sUser:=$USER}
+: ${_bashlyk_sLogin:=$(who | head -n 1 | cut -f 1 -d' ')}
 : ${HOSTNAME:=$(hostname)}
 : ${_bashlyk_bNotUseLog:=1}
 : ${_bashlyk_emailRcpt:=postmaster}
 : ${_bashlyk_emailSubj:="${_bashlyk_sUser}@${HOSTNAME}::${_bashlyk_s0}"}
-: ${_bashlyk_reMetaRules:=\
-'_bashlyk_\&#91_=>\[|_bashlyk_\&#93_=>\[|_bashlyk_\&#59_=>\;'}
+: ${_bashlyk_reMetaRules:="40=(:41=):59=;:91=[:92=\\:93=]:61=="}
 : ${_bashlyk_aRequiredCmd_std:="[ basename cat cut chgrp chmod chown date dir  \
  echo false file grep kill ls mail md5sum pwd mkdir mktemp printf ps rm rmdir  \
  sed sleep tee tempfile touch true w which xargs"}
@@ -65,13 +65,6 @@ _bashlyk_iErrorNotExistNotCreated=190
  udfCleanQueue udfOnTrap _ARGUMENTS _s0 _pathDat _ _gete _getv _set            \
  udfGetMd5 udfGetPathMd5 udfXml udfPrepare2Exec udfSerialize udfSetLastError   \
  udfBashlykUnquote"}
-
-if [ -n "$(which mail)" ]; then
- _bashlyk_cmdMessage="mail -e -s "${_bashlyk_emailSubj}"                       \
- ${_bashlyk_emailOptions} ${_bashlyk_emailRcpt}"
-else
- _bashlyk_cmdMessage="write ${_bashlyk_sUser}"
-fi
 #******
 #****f* libstd/udfBaseId
 #  SYNOPSIS
@@ -142,14 +135,23 @@ udfEcho() {
 #  EXAMPLE
 #    local emailOptions=$(_ emailOptions)
 #    _ emailOptions '-v'
-#    echo ">> message body <<" | udfMail - "subject (bashlyk testing purposes)" #? true
+#    date -R | udfMail - "message testing"                          #? true
 #    _ emailOptions "$emailOptions"
 #  SOURCE
 udfMail() {
- local fnTmp rc
+ local cmd fnTmp rc
+
  udfMakeTemp fnTmp
+
+ if [ "$_bashlyk_bUseMail" = "1" ]; then
+  cmd="mail -e -s \"$(_ emailSubj)\" $(_ emailOptions) $(_ sLogin)"
+ else
+  ## TODO проверять наличие значения $(_ sLogin)
+  cmd="write $(_ sLogin)"
+ fi
+
  udfEcho $* | tee -a $fnTmp | head -n 8
- cat $fnTmp | ${_bashlyk_cmdMessage}
+ cat $fnTmp | $cmd
  rc=$?
  rm -f $fnTmp
  return $rc

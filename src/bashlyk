@@ -4,8 +4,8 @@
 #
 #****h* BASHLYK/bashlyk
 #  DESCRIPTION
-#    bashlyk - загрузчик BASHLYK-библиотек. Готовит структуру служебных 
-#    каталогов и файлов, определяет интерактивность запущенного сценария, 
+#    bashlyk - загрузчик BASHLYK-библиотек. Готовит структуру служебных
+#    каталогов и файлов, определяет интерактивность запущенного сценария,
 #    позволяет выполнить тестовый модуль библиотек
 #  AUTHOR
 #    Damir Sh. Yakupov <yds@bk.ru>
@@ -34,7 +34,7 @@
 #  SYNOPSIS
 #    udfInit
 #  DESCRIPTION
-#    Подготовка к запуску сценария, определение условий его работы (каталоги 
+#    Подготовка к запуску сценария, определение условий его работы (каталоги
 #    расположения создаваемых файлов, наличие терминала, перенаправления и т.п.)
 #    Если запуск выполняется от "root", то каталоги располагаются глобально,
 #    согласно стандарта FHS, иначе - в каталогах согласно XDG Base Directory
@@ -50,8 +50,13 @@ udfInit() {
  [ -n "$_bashlyk" ] && _bashlyk_pathPrefix="${_bashlyk}" \
   || _bashlyk_pathPrefix=bashlyk
 
+ [ -n "$SUDO_UID" ] && _bashlyk_sLogin=$(getent passwd $SUDO_UID|cut -f 1 -d':')
+ : ${_bashlyk_sLogin:=$LOGNAME}
+
  _bashlyk_sUser=$(ps -p $$ -o user=)
  _bashlyk_sGroup=$(ps -p $$ -o group=)
+
+ [ -n "$(which mail)" ] && _bashlyk_bUseMail=1 || _bashlyk_bUseMail=0
 
  case $_bashlyk_sUser in
   'root')
@@ -92,6 +97,7 @@ udfInit() {
   [ -n "$_bashlyk_aUnit" ] || _bashlyk_aUnit="$(echo ${_bashlyk_aLib} | tr ',' ' ')"
   _bashlyk_sMode='test'
   export _bashlyk_pathCnf _bashlyk_pathRun _bashlyk_pathDat _bashlyk_pathLog
+  export _bashlyk_sLogin _bashlyk_bUseMail _bashlyk_sUser _bashlyk_sGroup
  else
   _bashlyk_sMode='lib'
  fi
