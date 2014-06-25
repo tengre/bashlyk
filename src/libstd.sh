@@ -64,33 +64,53 @@ _bashlyk_iErrorNotExistNotCreated=190
  udfAddFile2Clean udfAddPath2Clean udfAddJob2Clean udfAddPid2Clean udfCheckCsv \
  udfCleanQueue udfOnTrap _ARGUMENTS _s0 _pathDat _ _gete _getv _set            \
  udfGetMd5 udfGetPathMd5 udfXml udfPrepare2Exec udfSerialize udfSetLastError   \
- udfBashlykUnquote"}
+ udfBashlykUnquote udfTimeStamp"}
 #******
 #****f* libstd/udfBaseId
 #  SYNOPSIS
 #    udfBaseId
 #  DESCRIPTION
-#    Alias для команды basename
+#    получить имя сценария без расширения .sh
+#    устаревшая - заменяется "_ sId"
 #  OUTPUT
 #    Короткое имя запущенного сценария без расширения ".sh"
 #  EXAMPLE
 #    udfBaseId >| grep -w "^$(basename $0 .sh)$"                                #? true
 #  SOURCE
 udfBaseId() {
- basename $0 .sh
+ _ sId
+}
+#******
+#****f* libstd/udfTimeStamp
+#  SYNOPSIS
+#    udfTimeStamp <args>
+#  DESCRIPTION
+#    сформировать строку c заголовком в виде текущего времени в формате
+#    'Jun 25 14:52:56' (LANG=C LC_TIME=C)
+#  INPUTS
+#    <args> - суффикс к заголовку
+#  OUTPUT
+#    строка с заголовком в виде "штампа времени"
+#  EXAMPLE
+#    local re="[a-zA-Z]+ [0-9]+ [0-9]+:[0-9]+:[[:digit:]]+ foo bar"
+#    udfTimeStamp foo bar >| grep -E "$re"                                           #? true
+#  SOURCE
+udfTimeStamp() {
+ LANG=C LC_TIME=C date "+%b %d %H:%M:%S $*"
 }
 #******
 #****f* libstd/udfDate
 #  SYNOPSIS
 #    udfDate <args>
 #  DESCRIPTION
-#    Alias для команды date
+#    сформировать строку c заголовком в виде текущего времени
 #  INPUTS
-#    <args> - суффикс к форматной строке текущей даты
+#    <args> - суффикс к заголовку
 #  OUTPUT
-#    текущая дата с возможным суффиксом
+#    строка с заголовком в виде "штампа времени"
 #  EXAMPLE
-#    udfDate 'test' >| grep -E ".* [[:digit:]]+:[[:digit:]]+:[[:digit:]]+ test" #? true
+#    local re="[[:alpha:]]+ [0-9]+ [0-9]+:[0-9]+:[[:digit:]]+ foo bar"
+#    udfDate foo bar >| grep -E "$re"                                           #? true
 #  SOURCE
 udfDate() {
  date "+%b %d %H:%M:%S $*"

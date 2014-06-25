@@ -100,11 +100,7 @@
 #    _ bTerminal "$bTerminal"
 #  SOURCE
 udfLogger() {
- local envLang envLC_TIME bSysLog bUseLog sTagLog
- envLang=$LANG
- LANG=C
- envLC_TIME=$LC_TIME
- LC_TIME=C
+ local bSysLog bUseLog sTagLog
  bSysLog=0
  bUseLog=0
  sTagLog="${_bashlyk_s0}[$(printf "%05d" $$)]"
@@ -123,19 +119,17 @@ udfLogger() {
    echo "$*"
   ;;
   01)
-   echo "$(udfDate "$HOSTNAME $sTagLog: $*")" >> ${_bashlyk_fnLog}
+   udfTimeStamp "$HOSTNAME $sTagLog: $*" >> ${_bashlyk_fnLog}
   ;;
   10)
    echo "$*"
    logger -s -t "$sTagLog" "$*" 2>/dev/null
   ;;
   11)
-   echo "$(udfDate "$HOSTNAME $sTagLog: $*")" >> ${_bashlyk_fnLog}
+   udfTimeStamp "$HOSTNAME $sTagLog: $*" >> ${_bashlyk_fnLog}
    logger -s -t "$sTagLog" "$*" 2>/dev/null
   ;;
  esac
- LANG=$envLang
- LC_TIME=$envLC_TIME
 }
 #******
 #****f* liblog/udfLog
