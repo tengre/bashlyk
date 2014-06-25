@@ -1134,6 +1134,7 @@ udfIniGroupSection2CsvVar() {
 #    [ -n "$sUname" ] && date                                                   #-
 #:[exec]                                                                        #-
 #EOFini                                                                         #-
+#    udfIni2Csv $ini | grep -o "_bashlyk_&#.._" >| wc -l | grep '^7$'           #? true
 #    udfIni2Csv $ini | udfBashlykUnquote >| grep "$re"                          #? true
 #    udfIni2CsvVar csvResult $ini                                               #? true
 #    echo "$csvResult" | udfBashlykUnquote >| grep "$re"                        #? true

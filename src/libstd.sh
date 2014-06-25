@@ -53,7 +53,7 @@ _bashlyk_iErrorNotExistNotCreated=190
 : ${_bashlyk_bNotUseLog:=1}
 : ${_bashlyk_emailRcpt:=postmaster}
 : ${_bashlyk_emailSubj:="${_bashlyk_sUser}@${HOSTNAME}::${_bashlyk_s0}"}
-: ${_bashlyk_reMetaRules:="40=(:41=):59=;:91=[:92=\\:93=]:61=="}
+: ${_bashlyk_reMetaRules:='34=":40=(:41=):59=;:91=[:92=\\:93=]:61=='}
 : ${_bashlyk_aRequiredCmd_std:="[ basename cat cut chgrp chmod chown date dir  \
  echo false file grep kill ls mail md5sum pwd mkdir mktemp printf ps rm rmdir  \
  sed sleep tee tempfile touch true w which xargs"}
@@ -1234,14 +1234,14 @@ udfSerialize() {
 #    udfBashlykUnquote
 #  DESCRIPTION
 #    Преобразование при необходимости метапоследовательностей _bashlyk_&#XX_
-#    из "csv;"-потока со стандартного входа в символы '[]()=;\'
+#    из "csv;"-потока со стандартного входа в символы '"[]()=;\'
 #  EXAMPLE
-#    local s="_bashlyk_&#91__bashlyk_&#93__bashlyk_&#59__bashlyk_&#40__bashlyk_&#41__bashlyk_&#61_"
-#    echo $s | udfBashlykUnquote >| grep -e '\[\];()='                          #? true
+#    local s="_bashlyk_&#34__bashlyk_&#91__bashlyk_&#93__bashlyk_&#59__bashlyk_&#40__bashlyk_&#41__bashlyk_&#61_"
+#    echo $s | udfBashlykUnquote >| grep -e '\"\[\];()='                          #? true
 #  SOURCE
 udfBashlykUnquote() {
  local a cmd="sed" i
- declare -A a=( [91]='\[' [92]='\\\' [93]='\]' [59]='\;' [40]='\(' [41]='\)' [61]='\=' )
+ declare -A a=( [34]='\"' [40]='\(' [41]='\)' [59]='\;' [61]='\=' [91]='\[' [92]='\\\' [93]='\]' )
  for i in "${!a[@]}"; do
   cmd+=" -e \"s/_bashlyk_\&#${i}_/${a[$i]}/g\""
  done
