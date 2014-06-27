@@ -48,7 +48,7 @@ _bashlyk_iErrorNotExistNotCreated=190
 : ${_bashlyk_apidClean:=}
 : ${_bashlyk_pidLogSock:=}
 : ${_bashlyk_sUser:=$USER}
-: ${_bashlyk_sLogin:=$LOGNAME}
+: ${_bashlyk_sLogin:=$(logname)}
 : ${HOSTNAME:=$(hostname)}
 : ${_bashlyk_bNotUseLog:=1}
 : ${_bashlyk_emailRcpt:=postmaster}
@@ -153,26 +153,39 @@ udfEcho() {
 #           "-", то эта строка выводится заголовком для данных
 #           из стандартного ввода
 #  EXAMPLE
+#    ## TODO напрямую проверить работу утилит оповещения (notify-send и т.п.)
 #    local emailOptions=$(_ emailOptions)
 #    _ emailOptions '-v'
-#    date -R | udfMail - "message testing"                          #? true
+#    echo "notification testing" | udfMail - "bashlyk::libstd::udfMail"         #? true
 #    _ emailOptions "$emailOptions"
 #  SOURCE
 udfMail() {
  local cmd fnTmp rc sTo=$_bashlyk_sLogin
 
  udfMakeTemp fnTmp
+ udfEcho $* | tee -a $fnTmp | head -n 8
 
- if [ "$_bashlyk_bUseMail" = "1" ]; then
+ if [ -n "$(which mail)" ]; then
   [ -n "$_sTo" ] || sTo=$_bashlyk_sUser
   [ -n "$_sTo" ] || sTo=postmaster
-  cmd="mail -e -s \"${_bashlyk_emailSubj}\" $_bashlyk_emailOptions $sTo"
+  cat $fnTmp | mail -e -s "${_bashlyk_emailSubj}" $_bashlyk_emailOptions $sTo
+ elif [ -n "$DISPLAY" ]; then
+  if   [ -n "$(which notify-send)" ]; then
+   notify-send -t 8 ${_bashlyk_emailSubj} "$(cat $fnTmp)"
+  elif [ -n "$(which kdialog)"     ]; then
+   kdialog --title ${_bashlyk_emailSubj} --passivepopup "$(cat $fnTmp)" 8
+  elif [ -n "$(which zenity)"      ]; then
+   zenity --notification --timeout 1 --text "$(cat $fnTmp)"
+   # ## TODO check [ "$?" = "5" ] && true
+   true
+  elif [ -n "$(which xmessage)"     ]; then
+   xmessage -center -timeout 8 -file $fnTmp
+  else
+   true
+  fi
  else
-  [ -n "$sTo" ] && cmd="write $sTo" || cmd=true
+  [ -n "$sTo" ] && cat $fnTmp | write $sTo
  fi
-
- udfEcho $* | tee -a $fnTmp | head -n 8
- cat $fnTmp | $cmd
  rc=$?
  rm -f $fnTmp
  return $rc
