@@ -7,10 +7,10 @@ Standards-Version: 3.7.2
 
 Package: bashlyk
 Architecture: all
-Depends: ${shlibs:Depends}, ${misc:Depends}, bash (>= 2.0), bsdutils (>= 1:2.13.1.1-1), coreutils (>= 6.10-6), grep (>= 2.5.4~), hostname (>= 2.95), procps(>= 1:3.2.7-11), sed (>= 4.1.5-6), util-linux (>= 2.13.1.1-1), mawk
-Suggests: nullmailer | default-mta | mail-transport-agent, bsd-mailx (>= 8.1.2-0.20071201cvs)
+Depends: ${shlibs:Depends}, ${misc:Depends}, bash (>= 4.1), bsdutils (>= 1:2.13.1.1-1), coreutils (>= 6.10-6), grep (>= 2.5.4~), hostname (>= 2.95), procps(>= 1:3.2.7-11), sed (>= 4.1.5-6), util-linux (>= 2.13.1.1-1), mawk
+Suggests: nullmailer | default-mta | mail-transport-agent, bsd-mailx (>= 8.1.2-0.20071201cvs), libnotify-bin | kdialog | zenity | x11-utils | bsdmainutils
 Description: Library for BASH command language interpreter
- This package includes various function for BASH scripting.
+ This package includes various functions for BASH scripting.
 
 
 
