@@ -178,8 +178,8 @@ udfMail() {
    zenity --notification --timeout 1 --text "$(cat $fnTmp)"
    # ## TODO check [ "$?" = "5" ] && true
    true
-  elif [ -n "$(which xmessage)"     ]; then
-   xmessage -center -timeout 8 -file $fnTmp
+  elif [ -n "$(which xmessage)"    ]; then
+   xmessage -center -timeout 8 -file $fnTmp 2>/dev/null
   else
    true
   fi
