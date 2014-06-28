@@ -170,16 +170,16 @@ udfMail() {
   [ -n "$_sTo" ] || sTo=postmaster
   cat $fnTmp | mail -e -s "${_bashlyk_emailSubj}" $_bashlyk_emailOptions $sTo
  elif [ -n "$DISPLAY" ]; then
-  if   [ -n "$(which notify-send)" ]; then
-   notify-send -t 8 ${_bashlyk_emailSubj} "$(cat $fnTmp)"
-  elif [ -n "$(which kdialog)"     ]; then
-   kdialog --title ${_bashlyk_emailSubj} --passivepopup "$(cat $fnTmp)" 8
-  elif [ -n "$(which zenity)"      ]; then
-   zenity --notification --timeout 1 --text "$(cat $fnTmp)"
-   # ## TODO check [ "$?" = "5" ] && true
-   true
+  if   [ -n "$(which kdialog)"     ]; then
+   kdialog --title kdialog::${_bashlyk_emailSubj} --passivepopup "$(cat $fnTmp)" 8
   elif [ -n "$(which xmessage)"    ]; then
    xmessage -center -timeout 8 -file $fnTmp 2>/dev/null
+  elif [ -n "$(which notify-send)" ]; then
+   notify-send -t 8 notify-send::${_bashlyk_emailSubj} "$(cat $fnTmp)"
+  elif [ -n "$(which zenity)"      ]; then
+   zenity --notification --timeout 1 --text "zenity::$(cat $fnTmp)"
+   # ## TODO check [ "$?" = "5" ] && true
+   true
   else
    true
   fi
