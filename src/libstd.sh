@@ -168,7 +168,7 @@ udfEcho() {
 udfMessage() {
  local fnTmp i=$(_ iMaxOutputLines)
 
- udfIsNumber $i || rc=9999
+ udfIsNumber $i || i=9999
 
  udfMakeTemp fnTmp
  udfEcho $* | tee -a $fnTmp | head -n $i
@@ -199,7 +199,8 @@ udfMessage() {
 ##  TODO уточнить по каждому варианту
 #    local emailOptions=$(_ emailOptions)
 #    _ emailOptions '-v'
-#    echo "notification testing" | udfMail - "bashlyk::libstd::udfMail"         #? true
+#    echo "notification testing" | udfMail - "bashlyk::libstd::udfMail"
+#    [ $? -eq $(_ iErrorCommandNotFound) -o $? -eq 0 ] && true                  #? true
 #    _ emailOptions "$emailOptions"
 #  SOURCE
 udfMail() {
@@ -209,7 +210,7 @@ udfMail() {
  local sTo=$_bashlyk_sLogin
 
  [ -n "$(which mail)" ] || \
-  return $(udfSetLastError _iErrorCommandNotFound "mail")
+  return $(udfSetLastError iErrorCommandNotFound "mail")
 
  [ -n "$_sTo" ] || sTo=$_bashlyk_sUser
  [ -n "$_sTo" ] || sTo=postmaster
@@ -217,7 +218,6 @@ udfMail() {
  {
   case "$1" in
    -)
-     shift
      udfEcho $*
      ;;
    *)
@@ -245,7 +245,8 @@ udfMail() {
 #    iErrorXsessionNotFound       - X-сессия не обнаружена
 #  EXAMPLE
 #    ## TODO напрямую проверить работу утилит оповещения (notify-send и т.п.)
-#    udfNotify2X "bashlyk::libstd::udfNotify2X\n----\nnotification testing\n"   #? true
+#    udfNotify2X "bashlyk::libstd::udfNotify2X\n----\nnotification testing\n"
+#    [ $? -eq $(_ iErrorXsessionNotFound) -o $? -eq 0 ] && true                 #? true
 #  SOURCE
 udfNotify2X() {
  [ -n "$1"   ] || \
@@ -254,7 +255,7 @@ udfNotify2X() {
  local s fnTmp rc userX iTimeout=8
  #
  [ -s "$*" ] && s="$(cat "$*")" || s="$(echo "$*")"
- userX=$(w -hs | grep $(ps -o tty= -C Xorg) | cut -f 1 -d' ')
+ userX=$(w -hs | awk '{ print $1" "$2 }' | grep ":.\|$(ps -o tty= -C Xorg)" | cut -f 1 -d' ')
  #[ "$userX" = "$_bashlyk_sUser" ] || return $(_ iErrorUserXsessionNotFound)
  [ -n "$userX"   ] || return $(_ iErrorXsessionNotFound)
  [ -n "$DISPLAY" ] || export DISPLAY=:0
