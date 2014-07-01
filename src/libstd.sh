@@ -33,6 +33,11 @@ _bashlyk_iErrorEmptyOrMissingArgument=255
 _bashlyk_iErrorNonValidArgument=250
 _bashlyk_iErrorNonValidVariable=200
 _bashlyk_iErrorNotExistNotCreated=190
+_bashlyk_iErrorCommandNotFound=180
+_bashlyk_iErrorXsessionNotFound=170
+_bashlyk_iErrorUserXsessionNotFound=171
+#
+_bashlyk_iMaxOutputLines=1000
 #
 : ${_bashlyk_iLastError:=0}
 : ${_bashlyk_sLastError:=}
@@ -64,7 +69,7 @@ _bashlyk_iErrorNotExistNotCreated=190
  udfAddFile2Clean udfAddPath2Clean udfAddJob2Clean udfAddPid2Clean udfCheckCsv \
  udfCleanQueue udfOnTrap _ARGUMENTS _s0 _pathDat _ _gete _getv _set            \
  udfGetMd5 udfGetPathMd5 udfXml udfPrepare2Exec udfSerialize udfSetLastError   \
- udfBashlykUnquote udfTimeStamp"}
+ udfBashlykUnquote udfTimeStamp udfMessage udfNotify2X"}
 #******
 #****f* libstd/udfBaseId
 #  SYNOPSIS
@@ -93,7 +98,7 @@ udfBaseId() {
 #    строка с заголовком в виде "штампа времени"
 #  EXAMPLE
 #    local re="[a-zA-Z]+ [0-9]+ [0-9]+:[0-9]+:[[:digit:]]+ foo bar"
-#    udfTimeStamp foo bar >| grep -E "$re"                                           #? true
+#    udfTimeStamp foo bar >| grep -E "$re"                                      #? true
 #  SOURCE
 udfTimeStamp() {
  LANG=C LC_TIME=C date "+%b %d %H:%M:%S $*"
@@ -142,61 +147,141 @@ udfEcho() {
  fi
 }
 #******
-#****f* libstd/udfMail
+#****f* libstd/udfMessage
 #  SYNOPSIS
-#    udfMail [[-] args]
+#    udfMessage [[-] args]
 #  DESCRIPTION
-#    Передача сообщения по почте
+#    Передача сообщения владельцу процесса по одному из доступных способов:
+#    службы уведомлений рабочего стола X-Window, почты или утилитой write
 #  INPUTS
 #    -    - данные читаются из стандартного ввода
 #    args - строка для вывода. Если имеется в качестве первого аргумента
 #           "-", то эта строка выводится заголовком для данных
 #           из стандартного ввода
+#  RETURN VALUE
+#    0   - сообщение успешно отправлено (передано выбранному транспорту)
+#    iErrorEmptyOrMissingArgument - аргумент не задан
+#    iErrorCommandNotFound - команда не найдена
 #  EXAMPLE
-#    ## TODO напрямую проверить работу утилит оповещения (notify-send и т.п.)
+#    echo "notification testing" | udfMessage - "bashlyk::libstd::udfMessage"   #? true
+#  SOURCE
+udfMessage() {
+ local fnTmp i=$(_ iMaxOutputLines)
+
+ udfIsNumber $i || rc=9999
+
+ udfMakeTemp fnTmp
+ udfEcho $* | tee -a $fnTmp | head -n $i
+
+ udfNotify2X $fnTmp || udfMail $fnTmp || {
+  [ -n "$_bashlyk_sLogin" ] && cat $fnTmp | write $sTo
+ }
+ i=$?
+ rm -f $fnTmp
+ return $i
+}
+#******
+#****f* libstd/udfMail
+#  SYNOPSIS
+#    udfMail [[-] arg]
+#  DESCRIPTION
+#    Передача сообщения по почте
+#  INPUTS
+#    arg -  Если это имя непустого существующего файла, то выполняется попытка
+#           чтения из него, иначе строка аргументов воспринимается как текст
+#           сообщения
+#    -   -  данные читаются из стандартного ввода
+#  RETURN VALUE
+#    0   - сообщение успешно отправлено
+#    iErrorEmptyOrMissingArgument - аргумент не задан
+#    iErrorCommandNotFound - команда не найдена
+#  EXAMPLE
+##  TODO уточнить по каждому варианту
 #    local emailOptions=$(_ emailOptions)
 #    _ emailOptions '-v'
 #    echo "notification testing" | udfMail - "bashlyk::libstd::udfMail"         #? true
 #    _ emailOptions "$emailOptions"
 #  SOURCE
 udfMail() {
- local cmd fnTmp rc sTo=$_bashlyk_sLogin
+ [ -n "$1"   ] || \
+  return $(udfSetLastError iErrorEmptyOrMissingArgument "udfMail")
+ #
+ local sTo=$_bashlyk_sLogin
 
- udfMakeTemp fnTmp
- udfEcho $* | tee -a $fnTmp | head -n 8
+ [ -n "$(which mail)" ] || \
+  return $(udfSetLastError _iErrorCommandNotFound "mail")
 
- if [ -n "$(which mail)" ]; then
-  [ -n "$_sTo" ] || sTo=$_bashlyk_sUser
-  [ -n "$_sTo" ] || sTo=postmaster
-  cat $fnTmp | mail -e -s "${_bashlyk_emailSubj}" $_bashlyk_emailOptions $sTo
- elif [ -n "$DISPLAY" ]; then
-  if   [ -n "$(which kdialog)"     ]; then
-   kdialog --title kdialog::${_bashlyk_emailSubj} --passivepopup "$(cat $fnTmp)" 8
-  elif [ -n "$(which xmessage)"    ]; then
-   xmessage -center -timeout 8 -file $fnTmp 2>/dev/null
-  elif [ -n "$(which notify-send)" ]; then
-   notify-send -t 8 notify-send::${_bashlyk_emailSubj} "$(cat $fnTmp)"
-  elif [ -n "$(which zenity)"      ]; then
-   zenity --notification --timeout 1 --text "zenity::$(cat $fnTmp)"
-   # ## TODO check [ "$?" = "5" ] && true
-   true
-  else
-   true
-  fi
+ [ -n "$_sTo" ] || sTo=$_bashlyk_sUser
+ [ -n "$_sTo" ] || sTo=postmaster
+
+ {
+  case "$1" in
+   -)
+     shift
+     udfEcho $*
+     ;;
+   *)
+     [ -s "$*" ] && cat "$*" || echo "$*"
+     ;;
+  esac
+ } | mail -e -s "${_bashlyk_emailSubj}" $_bashlyk_emailOptions $sTo
+
+ return $?
+}
+#******
+#****f* libstd/udfNotify2X
+#  SYNOPSIS
+#    udfNotify2X arg
+#  DESCRIPTION
+#    Передача сообщения через службы уведомления, основанные на X-Window
+#  INPUTS
+#    arg -  Если это имя непустого существующего файла, то выполняется попытка
+#           чтения из него, иначе строка аргументов воспринимается как текст
+#           сообщения
+#  RETURN VALUE
+#    0                            - сообщение успешно отправлено
+#    iErrorEmptyOrMissingArgument - аргумент не задан
+#    iErrorCommandNotFound        - команда не найдена
+#    iErrorXsessionNotFound       - X-сессия не обнаружена
+#  EXAMPLE
+#    ## TODO напрямую проверить работу утилит оповещения (notify-send и т.п.)
+#    udfNotify2X "bashlyk::libstd::udfNotify2X\n----\nnotification testing\n"   #? true
+#  SOURCE
+udfNotify2X() {
+ [ -n "$1"   ] || \
+  return $(udfSetLastError iErrorEmptyOrMissingArgument "udfNotify2X")
+ #
+ local s fnTmp rc userX iTimeout=8
+ #
+ [ -s "$*" ] && s="$(cat "$*")" || s="$(echo "$*")"
+ userX=$(w -hs | grep $(ps -o tty= -C Xorg) | cut -f 1 -d' ')
+ #[ "$userX" = "$_bashlyk_sUser" ] || return $(_ iErrorUserXsessionNotFound)
+ [ -n "$userX"   ] || return $(_ iErrorXsessionNotFound)
+ [ -n "$DISPLAY" ] || export DISPLAY=:0
+
+ if   [ -n "$(which notify-send)" ]; then
+  notify-send -t $iTimeout notify-send::${_bashlyk_emailSubj} "$s"
+ elif [ -n "$(which kdialog)"     ]; then
+  kdialog --title kdialog::${_bashlyk_emailSubj} --passivepopup "$s" $iTimeout
+ elif [ -n "$(which zenity)"      ]; then
+  zenity --notification --timeout $iTimeout --text "zenity::$s"
+  # ## TODO check [ "$?" = "5" ] && true
+  true
+ elif [ -n "$(which xmessage)"    ]; then
+  xmessage -center -timeout $iTimeout "$s" 2>/dev/null
  else
-  [ -n "$sTo" ] && cat $fnTmp | write $sTo
+  udfSetLastError iErrorCommandNotFound "notify-send,kdialog,zenity,xmessage"
+  false
  fi
- rc=$?
- rm -f $fnTmp
- return $rc
+ return $?
 }
 #******
 #****f* libstd/udfWarn
 #  SYNOPSIS
 #    udfWarn [-] args
 #  DESCRIPTION
-#    Вывод предупреждающего сообщения. Если терминал отсутствует, то
-#    сообщение передается по почте.
+#    Вывод предупреждающего сообщения. Если терминал отсутствует, то сообщение
+#    передается функции udfMessage.
 #  INPUTS
 #    -    - данные читаются из стандартного ввода
 #    args - строка для вывода. Если имеется в качестве первого аргумента
@@ -207,12 +292,12 @@ udfMail() {
 #  EXAMPLE
 #    # TODO требуется более точная проверка
 #    local bNotUseLog=$_bashlyk_bNotUseLog
-#    _bashlyk_bNotUseLog=0 date | udfWarn - test                                #? true
-#    _bashlyk_bNotUseLog=1 date | udfWarn - test                                #? true
+#    _bashlyk_bNotUseLog=0 date | udfWarn - "udfWarn test log"                  #? true
+#    _bashlyk_bNotUseLog=1 date | udfWarn - "udfWarn test int"                  #? true
 #    _bashlyk_bNotUseLog=$bNotUseLog
 #  SOURCE
 udfWarn() {
- [ $_bashlyk_bNotUseLog -ne 0 ] && udfEcho $* || udfMail $*
+ [ $_bashlyk_bNotUseLog -ne 0 ] && udfEcho $* || udfMessage $*
 }
 #******
 #****f* libstd/udfThrow
