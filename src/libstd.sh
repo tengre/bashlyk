@@ -259,6 +259,8 @@ udfNotify2X() {
  [ -n "$userX"   ] || return $(_ iErrorXsessionNotFound)
  [ -n "$DISPLAY" ] || export DISPLAY=:0
 
+ ## TODO if _bashlyk_sUser = root then xmessage first
+
  if   [ -n "$(which notify-send)" ]; then
   notify-send -t $iTimeout notify-send::${_bashlyk_emailSubj} "$s"
  elif [ -n "$(which kdialog)"     ]; then
