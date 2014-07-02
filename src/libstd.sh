@@ -252,18 +252,34 @@ udfNotify2X() {
  [ -n "$1"   ] || \
   return $(udfSetLastError iErrorEmptyOrMissingArgument "udfNotify2X")
  #
- local s fnTmp rc userX iTimeout=8
+ local a s fnTmp rc userD userP userS userX iTimeout=8 kv aEnv="DISPLAY XAUTHORITY DBUS_SESSION_BUS_ADDRESS"
  #
  [ -s "$*" ] && s="$(cat "$*")" || s="$(echo "$*")"
- userX=$(w -hs | awk '{ print $1" "$2 }' | grep ":.\|$(ps -o tty= -C Xorg)" | cut -f 1 -d' ')
+
+ a="$(LANG=C who -u | grep "^[^ ]\+[ ]\+:.\|$(ps -o tty= -C Xorg)" | awk '{print $1" "$7" "$2}')"
+ [ -n "$a"     ] || return $(_ iErrorEmptyOrMissingArgument)
+ userX=$(echo "$a" | cut -f 1 -d' ')
+ [ -n "$userX" ] || return return $(_ iErrorXsessionNotFound)
+ [ "$userS" = "$userX" -o "$userS" = "root" ] || return $(_ iErrorEmptyOrMissingArgument)
+ userP=$(echo "$a" | cut -f 2 -d' ')
+ [ -n "$userP" ] || return $(_ iErrorEmptyOrMissingArgument)
+ userD=$(echo "$a" | cut -f 3 -d' ')
+ [ -n "$userD" ] || return $(_ iErrorEmptyOrMissingArgument)
+
+ for s in $aEnv
+ do
+  unset $s
+  kv=$(grep -az ^$s= /proc/${userP}/environ)
+  [ -n "$kv" ] && export "$kv"
+ done
+
  #[ "$userX" = "$_bashlyk_sUser" ] || return $(_ iErrorUserXsessionNotFound)
  [ -n "$userX"   ] || return $(_ iErrorXsessionNotFound)
- [ -n "$DISPLAY" ] || export DISPLAY=:0
 
  ## TODO if _bashlyk_sUser = root then xmessage first
 
- if   [ -n "$(which notify-send)" ]; then
-  notify-send -t $iTimeout notify-send::${_bashlyk_emailSubj} "$s"
+ if   [ -n "$(which notify-send1)" ]; then
+  sudo -u $userX notify-send -t $iTimeout notify-send::${_bashlyk_emailSubj} "$s"
  elif [ -n "$(which kdialog)"     ]; then
   kdialog --title kdialog::${_bashlyk_emailSubj} --passivepopup "$s" $iTimeout
  elif [ -n "$(which zenity)"      ]; then
