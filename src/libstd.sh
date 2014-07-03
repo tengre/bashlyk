@@ -31,6 +31,7 @@
 #  SOURCE
 _bashlyk_iErrorEmptyOrMissingArgument=255
 _bashlyk_iErrorNonValidArgument=250
+_bashlyk_iErrorNonApplicableArgument=240
 _bashlyk_iErrorNonValidVariable=200
 _bashlyk_iErrorNotExistNotCreated=190
 _bashlyk_iErrorCommandNotFound=180
@@ -229,6 +230,60 @@ udfMail() {
  return $?
 }
 #******
+#****f* libstd/udfNotifyCommand
+#  SYNOPSIS
+#    udfNotifyCommand command title text timeout user
+#  DESCRIPTION
+#    Передача сообщения через службы уведомления, основанные на X-Window
+#  INPUTS
+#    command - утилита для выдачи уведомления, в данной версии это одно из
+#              notify-send kdialog zenity xmessage
+#      title - заголовок сообщения
+#       text - текст сообщения
+#    timeout - время показа окна сообщения
+#       user - получатель сообщения
+#  RETURN VALUE
+#    0                            - сообщение успешно отправлено
+#    iErrorEmptyOrMissingArgument - аргументы не заданы
+#  EXAMPLE
+#   local title="bashlyk::libstd::udfNotifyCommand" body="notification testing"
+#    sleep 2
+#    udfNotifyCommand notify-send $title "$body" 8 $USER
+#    echo $? >| grep "$(_ iErrorCommandNotFound)\|0"                            #? true
+#    sleep 2
+#    udfNotifyCommand kdialog     $title "$body" 8 $USER
+#    echo $? >| grep "$(_ iErrorCommandNotFound)\|0"                            #? true
+#    sleep 2
+#    udfNotifyCommand zenity      $title "$body" 8 $USER
+#    echo $? >| grep "$(_ iErrorCommandNotFound)\|0"                            #? true
+#    udfNotifyCommand xmessage    $title "$body" 8 $USER
+#    echo $? >| grep "$(_ iErrorCommandNotFound)\|0"                            #? true
+#  SOURCE
+udfNotifyCommand() {
+ [ -n "$5" ] || return $(udfSetLastError iErrorEmptyOrMissingArgument "udfNotifyCommand")
+ #
+ local h t rc
+ udfIsNumber "$4" && t=$4 || t=8
+ #
+ declare -A h=(                                                                                        \
+  [notify-send]="sudo -u $5 $1 -t $t \"$2 via $1\" \"$(printf "$3")\""                                 \
+  [kdialog]="sudo -u $5 $1 --title \"$2 via $1\" --passivepopup \"$(printf "$3")\" $t"                 \
+  [zenity]="sudo -u $5 $1 --notification --timeout $(($t/2)) --text \"$(printf "$2 via $1\n\n$3\n")\"" \
+  [xmessage]="sudo -u $5 $1 -center -timeout $t \"$(printf "$2 via $1\n\n$3\n")\" 2>/dev/null"         \
+ )
+
+ if [ -x "$(which "$1")" ]; then
+  eval "${h[$1]}"
+  rc=$?
+  [[ $1 = zenity && $rc = 5 ]] && rc=0
+ else
+  rc=$(_ iErrorCommandNotFound)
+  udfSetLastError $rc "$1"
+ fi
+
+ return $rc
+}
+#******
 #****f* libstd/udfNotify2X
 #  SYNOPSIS
 #    udfNotify2X arg
@@ -244,54 +299,44 @@ udfMail() {
 #    iErrorCommandNotFound        - команда не найдена
 #    iErrorXsessionNotFound       - X-сессия не обнаружена
 #  EXAMPLE
-#    ## TODO напрямую проверить работу утилит оповещения (notify-send и т.п.)
 #    udfNotify2X "bashlyk::libstd::udfNotify2X\n----\nnotification testing\n"
-#    [ $? -eq $(_ iErrorXsessionNotFound) -o $? -eq 0 ] && true                 #? true
+#    echo "$?" >| grep "$(_ iErrorNonApplicableArgument)\|$(_ iErrorXsessionNotFound)\|0" #? true
 #  SOURCE
 udfNotify2X() {
  [ -n "$1"   ] || \
   return $(udfSetLastError iErrorEmptyOrMissingArgument "udfNotify2X")
  #
- local a s fnTmp rc userD userP userS userX iTimeout=8 kv aEnv="DISPLAY XAUTHORITY DBUS_SESSION_BUS_ADDRESS"
+ local a  aEnv pid rc tty user iTimeout s sEnv
  #
- [ -s "$*" ] && s="$(cat "$*")" || s="$(echo "$*")"
-
+ aEnv="DISPLAY XAUTHORITY DBUS_SESSION_BUS_ADDRESS"
+ iTimeout=8
+ #
  a="$(LANG=C who -u | grep "^[^ ]\+[ ]\+:.\|$(ps -o tty= -C Xorg)" | awk '{print $1" "$7" "$2}')"
- [ -n "$a"     ] || return $(_ iErrorEmptyOrMissingArgument)
- userX=$(echo "$a" | cut -f 1 -d' ')
- [ -n "$userX" ] || return return $(_ iErrorXsessionNotFound)
- [ "$userS" = "$userX" -o "$userS" = "root" ] || return $(_ iErrorEmptyOrMissingArgument)
- userP=$(echo "$a" | cut -f 2 -d' ')
- [ -n "$userP" ] || return $(_ iErrorEmptyOrMissingArgument)
- userD=$(echo "$a" | cut -f 3 -d' ')
- [ -n "$userD" ] || return $(_ iErrorEmptyOrMissingArgument)
 
- for s in $aEnv
- do
+ [ -n "$a"     ] || return 1 $(_ iErrorEmptyOrMissingArgument)
+
+ user=$(echo "$a" | cut -f 1 -d' ')
+ [ -n "$user" ] || return $(_ iErrorXsessionNotFound)
+ [[ "$(_ sUser)" = $user || "$(_ sUser)" = root ]] || return $(_ iErrorNonApplicableArgument)
+
+ pid=$(echo "$a" | cut -f 2 -d' ')
+ [ -n "$pid" ] || return $(_ iErrorEmptyOrMissingArgument)
+
+ #tty=$(echo "$a" | cut -f 3 -d' ')
+ #[ -n "$tty" ] || return $(_ iErrorEmptyOrMissingArgument)
+
+ for s in ${aEnv}; do
   unset $s
-  kv=$(grep -az ^$s= /proc/${userP}/environ)
-  [ -n "$kv" ] && export "$kv"
+  sEnv=$(grep -az ^$s= /proc/${pid}/environ)
+  [ -n "$sEnv" ] && export "$sEnv"
  done
 
- #[ "$userX" = "$_bashlyk_sUser" ] || return $(_ iErrorUserXsessionNotFound)
- [ -n "$userX"   ] || return $(_ iErrorXsessionNotFound)
+ [ -s "$*" ] && s="$(cat "$*")" || s="$(echo -e "$*")"
 
- ## TODO if _bashlyk_sUser = root then xmessage first
-
- if   [ -n "$(which notify-send1)" ]; then
-  sudo -u $userX notify-send -t $iTimeout notify-send::${_bashlyk_emailSubj} "$s"
- elif [ -n "$(which kdialog)"     ]; then
-  kdialog --title kdialog::${_bashlyk_emailSubj} --passivepopup "$s" $iTimeout
- elif [ -n "$(which zenity)"      ]; then
-  zenity --notification --timeout $iTimeout --text "zenity::$s"
-  # ## TODO check [ "$?" = "5" ] && true
-  true
- elif [ -n "$(which xmessage)"    ]; then
-  xmessage -center -timeout $iTimeout "$s" 2>/dev/null
- else
-  udfSetLastError iErrorCommandNotFound "notify-send,kdialog,zenity,xmessage"
-  false
- fi
+ for cmd in notify-send kdialog zenity xmessage; do
+  udfNotifyCommand $cmd "$(_ emailSubj)" "$s" "$iTimeout" $user && break
+ done
+ [[ $? = 0 ]] || udfSetLastError iErrorCommandNotFound "udfNotifyCommand"
  return $?
 }
 #******
@@ -1335,7 +1380,8 @@ udfXml() {
 #  SOURCE
 udfSetLastError() {
  [ -n "$1" ] || return $(_ iErrorEmptyOrMissingArgument)
- local i=$(_ $1)
+ local i
+ udfIsNumber $1 && i=$1 || i=$(_ $1)
  udfIsNumber "$i" || return $(_ iErrorNonValidArgument)
  shift
  _ iLastError $i
