@@ -254,9 +254,9 @@ udfMail() {
 #    udfNotifyCommand kdialog     $title "$body" 8 $USER
 #    echo $? >| grep "$(_ iErrorCommandNotFound)\|0"                            #? true
 #    sleep 2
-#    udfNotifyCommand zenity      $title "$body" 8 $USER
+#    udfNotifyCommand zenity      $title "$body" 2 $USER
 #    echo $? >| grep "$(_ iErrorCommandNotFound)\|0"                            #? true
-#    udfNotifyCommand xmessage    $title "$body" 8 $USER
+#    udfNotifyCommand xmessage    $title "$body" 4 $USER
 #    echo $? >| grep "$(_ iErrorCommandNotFound)\|0"                            #? true
 #  SOURCE
 udfNotifyCommand() {
