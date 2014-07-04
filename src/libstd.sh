@@ -317,8 +317,8 @@ udfSetXSessionEnv() {
  [[ -n ${hX[pid]}    ]] || return $(_ iErrorEmptyOrMissingArgument)
  [[ -n ${hX[device]} ]] || return $(_ iErrorEmptyOrMissingArgument)
 
+ unset $_bashlyk_envXSession
  for s in ${aEnv}; do
-  unset $_bashlyk_envXSession
   sEnv=$(grep -az ^$s= /proc/${pid}/environ)
   [ -n "$sEnv" ] && _bashlyk_envXSession+=" $sEnv"
  done
@@ -377,6 +377,7 @@ udfNotify2X() {
  for s in ${aEnv}; do
   unset $s
   sEnv=$(grep -az ^$s= /proc/${pid}/environ)
+  echo "$sEnv" >> /tmp/env.txt
   [ -n "$sEnv" ] && export "$sEnv"
  done
 
