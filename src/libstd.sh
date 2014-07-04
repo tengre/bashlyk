@@ -60,6 +60,7 @@ _bashlyk_iMaxOutputLines=1000
 : ${_bashlyk_emailRcpt:=postmaster}
 : ${_bashlyk_emailSubj:="${_bashlyk_sUser}@${HOSTNAME}::${_bashlyk_s0}"}
 : ${_bashlyk_reMetaRules:='34=":40=(:41=):59=;:91=[:92=\\:93=]:61=='}
+: ${_bashlyk_envXSession:=}
 : ${_bashlyk_aRequiredCmd_std:="[ basename cat cut chgrp chmod chown date dir  \
  echo false file grep kill ls mail md5sum pwd mkdir mktemp printf ps rm rmdir  \
  sed sleep tee tempfile touch true w which xargs"}
@@ -70,7 +71,7 @@ _bashlyk_iMaxOutputLines=1000
  udfAddFile2Clean udfAddPath2Clean udfAddJob2Clean udfAddPid2Clean udfCheckCsv \
  udfCleanQueue udfOnTrap _ARGUMENTS _s0 _pathDat _ _gete _getv _set            \
  udfGetMd5 udfGetPathMd5 udfXml udfPrepare2Exec udfSerialize udfSetLastError   \
- udfBashlykUnquote udfTimeStamp udfMessage udfNotify2X"}
+ udfBashlykUnquote udfTimeStamp udfMessage udfNotify2X udfNotifyCommand udfSetXSessionEnv"}
 #******
 #****f* libstd/udfBaseId
 #  SYNOPSIS
@@ -271,9 +272,12 @@ udfNotifyCommand() {
   [zenity]="sudo -u $5 $1 --notification --timeout $(($t/2)) --text \"$(printf "$2 via $1\n\n$3\n")\"" \
   [xmessage]="sudo -u $5 $1 -center -timeout $t \"$(printf "$2 via $1\n\n$3\n")\" 2>/dev/null"         \
  )
+ #[ -n "$(_ envXSession)" ] ||
+ udfSetXSessionEnv
 
  if [ -x "$(which "$1")" ]; then
-  eval "${h[$1]}"
+  echo "$_bashlyk_envXSession ${h[$1]}" >> /tmp/envXSession.eval
+  eval "$_bashlyk_envXSession ${h[$1]}"
   rc=$?
   [[ $1 = zenity && $rc = 5 ]] && rc=0
  else
@@ -282,6 +286,51 @@ udfNotifyCommand() {
  fi
 
  return $rc
+}
+#******
+#****f* libstd/udfSetXSessionEnv
+#  SYNOPSIS
+#    udfSetXSessionEnv
+#  DESCRIPTION
+#    установить некоторые переменные среды первой локальной X-сессии
+#  INPUTS
+#  RETURN VALUE
+#    0                            - сообщение успешно отправлено
+#    iErrorEmptyOrMissingArgument - аргумент не задан
+#    iErrorCommandNotFound        - команда не найдена
+#    iErrorXsessionNotFound       - X-сессия не обнаружена
+#  EXAMPLE
+#    udfSetXSessionEnv
+#  SOURCE
+udfSetXSessionEnv() {
+ #
+ local csv aEnv rc user=$(_ sUser) home s sEnv hX
+ #
+ aEnv="DISPLAY XAUTHORITY DBUS_SESSION_BUS_ADDRESS"
+ #
+ eval "$(LANG=C who -u | grep "^[^ ]\+[ ]\+:.\|$(ps -o tty= -C Xorg)" | awk '{print "declare -A hX=([user]="$1" [pid]="$7" [device]="$2" )"}')"
+
+ #[ -n "$csv"    ] || return 1 $(_ iErrorEmptyOrMissingArgument)
+ #udfSetVarFromCsv $csv
+ [[ -n ${hX[user]}   ]] || return $(_ iErrorXsessionNotFound)
+ [[ $user = ${hX[user]} || $user = root ]] || return $(_ iErrorNonApplicableArgument)
+ [[ -n ${hX[pid]}    ]] || return $(_ iErrorEmptyOrMissingArgument)
+ [[ -n ${hX[device]} ]] || return $(_ iErrorEmptyOrMissingArgument)
+
+ for s in ${aEnv}; do
+  unset $_bashlyk_envXSession
+  sEnv=$(grep -az ^$s= /proc/${pid}/environ)
+  [ -n "$sEnv" ] && _bashlyk_envXSession+=" $sEnv"
+ done
+
+ if [ -z "$(_ envXSession | grep "DBUS_SESSION_BUS_ADDRESS=.*")" ]; then
+  home="$(grep -az ^HOME= /proc/${pid}/environ | cut -f 2 -d'=')"
+  [ -d ${home}/.dbus/session-bus ] && \
+   sEnv="$(grep -rh 'DBUS_SESSION_BUS_ADDRESS=' ${home}/.dbus/session-bus | head -n 1)"
+   [ -n "$sEnv" ] && _bashlyk_envXSession+=" $sEnv"
+ fi
+ _ envXSession >> /tmp/envXSession.log
+ return 0
 }
 #******
 #****f* libstd/udfNotify2X
@@ -306,7 +355,7 @@ udfNotify2X() {
  [ -n "$1"   ] || \
   return $(udfSetLastError iErrorEmptyOrMissingArgument "udfNotify2X")
  #
- local a  aEnv pid rc tty user iTimeout s sEnv
+ local a  aEnv pid rc tty user home iTimeout s sEnv
  #
  aEnv="DISPLAY XAUTHORITY DBUS_SESSION_BUS_ADDRESS"
  iTimeout=8
@@ -330,6 +379,13 @@ udfNotify2X() {
   sEnv=$(grep -az ^$s= /proc/${pid}/environ)
   [ -n "$sEnv" ] && export "$sEnv"
  done
+
+ if [ -z "$DBUS_SESSION_BUS_ADDRESS" ]; then
+  home="$(grep -az ^HOME= /proc/${pid}/environ | cut -f 2 -d'=')"
+  [ -d ${home}/.dbus/session-bus ] && \
+   sEnv="$(grep -rh 'DBUS_SESSION_BUS_ADDRESS=' ${home}/.dbus/session-bus | head -n 1)"
+   [ -n "$sEnv" ] && export "$sEnv"
+ fi
 
  [ -s "$*" ] && s="$(cat "$*")" || s="$(echo -e "$*")"
 
