@@ -31,7 +31,7 @@
 #  SOURCE
 _bashlyk_iErrorEmptyOrMissingArgument=255
 _bashlyk_iErrorNonValidArgument=250
-_bashlyk_iErrorNonApplicableArgument=240
+_bashlyk_iErrorNotPermitted=240
 _bashlyk_iErrorNonValidVariable=200
 _bashlyk_iErrorNotExistNotCreated=190
 _bashlyk_iErrorCommandNotFound=180
@@ -149,40 +149,6 @@ udfEcho() {
  fi
 }
 #******
-#****f* libstd/udfMessage
-#  SYNOPSIS
-#    udfMessage [[-] args]
-#  DESCRIPTION
-#    Передача сообщения владельцу процесса по одному из доступных способов:
-#    службы уведомлений рабочего стола X-Window, почты или утилитой write
-#  INPUTS
-#    -    - данные читаются из стандартного ввода
-#    args - строка для вывода. Если имеется в качестве первого аргумента
-#           "-", то эта строка выводится заголовком для данных
-#           из стандартного ввода
-#  RETURN VALUE
-#    0   - сообщение успешно отправлено (передано выбранному транспорту)
-#    iErrorEmptyOrMissingArgument - аргумент не задан
-#    iErrorCommandNotFound - команда не найдена
-#  EXAMPLE
-#    echo "notification testing" | udfMessage - "bashlyk::libstd::udfMessage"   #? true
-#  SOURCE
-udfMessage() {
- local fnTmp i=$(_ iMaxOutputLines)
-
- udfIsNumber $i || i=9999
-
- udfMakeTemp fnTmp
- udfEcho $* | tee -a $fnTmp | head -n $i
-
- udfNotify2X $fnTmp || udfMail $fnTmp || {
-  [ -n "$_bashlyk_sLogin" ] && cat $fnTmp | write $sTo
- }
- i=$?
- rm -f $fnTmp
- return $i
-}
-#******
 #****f* libstd/udfMail
 #  SYNOPSIS
 #    udfMail [[-] arg]
@@ -231,106 +197,39 @@ udfMail() {
  return $?
 }
 #******
-#****f* libstd/udfNotifyCommand
+#****f* libstd/udfMessage
 #  SYNOPSIS
-#    udfNotifyCommand command title text timeout user
+#    udfMessage [[-] args]
 #  DESCRIPTION
-#    Передача сообщения через службы уведомления, основанные на X-Window
+#    Передача сообщения владельцу процесса по одному из доступных способов:
+#    службы уведомлений рабочего стола X-Window, почты или утилитой write
 #  INPUTS
-#    command - утилита для выдачи уведомления, в данной версии это одно из
-#              notify-send kdialog zenity xmessage
-#      title - заголовок сообщения
-#       text - текст сообщения
-#    timeout - время показа окна сообщения
-#       user - получатель сообщения
+#    -    - данные читаются из стандартного ввода
+#    args - строка для вывода. Если имеется в качестве первого аргумента
+#           "-", то эта строка выводится заголовком для данных
+#           из стандартного ввода
 #  RETURN VALUE
-#    0                            - сообщение успешно отправлено
-#    iErrorEmptyOrMissingArgument - аргументы не заданы
-#  EXAMPLE
-#   local title="bashlyk::libstd::udfNotifyCommand" body="notification testing"
-#    sleep 2
-#    udfNotifyCommand notify-send $title "$body" 8 $USER
-#    echo $? >| grep "$(_ iErrorCommandNotFound)\|0"                            #? true
-#    sleep 2
-#    udfNotifyCommand kdialog     $title "$body" 8 $USER
-#    echo $? >| grep "$(_ iErrorCommandNotFound)\|0"                            #? true
-#    sleep 2
-#    udfNotifyCommand zenity      $title "$body" 2 $USER
-#    echo $? >| grep "$(_ iErrorCommandNotFound)\|0"                            #? true
-#    udfNotifyCommand xmessage    $title "$body" 4 $USER
-#    echo $? >| grep "$(_ iErrorCommandNotFound)\|0"                            #? true
-#  SOURCE
-udfNotifyCommand() {
- [ -n "$5" ] || return $(udfSetLastError iErrorEmptyOrMissingArgument "udfNotifyCommand")
- #
- local h t rc
- udfIsNumber "$4" && t=$4 || t=8
- #
- declare -A h=(                                                                                        \
-  [notify-send]="sudo -u $5 $1 -t $t \"$2 via $1\" \"$(printf "$3")\""                                 \
-  [kdialog]="sudo -u $5 $1 --title \"$2 via $1\" --passivepopup \"$(printf "$3")\" $t"                 \
-  [zenity]="sudo -u $5 $1 --notification --timeout $(($t/2)) --text \"$(printf "$2 via $1\n\n$3\n")\"" \
-  [xmessage]="sudo -u $5 $1 -center -timeout $t \"$(printf "$2 via $1\n\n$3\n")\" 2>/dev/null"         \
- )
- #[ -n "$(_ envXSession)" ] ||
- udfSetXSessionEnv
-
- if [ -x "$(which "$1")" ]; then
-  echo "$_bashlyk_envXSession ${h[$1]}" >> /tmp/envXSession.eval
-  eval "$_bashlyk_envXSession ${h[$1]}"
-  rc=$?
-  [[ $1 = zenity && $rc = 5 ]] && rc=0
- else
-  rc=$(_ iErrorCommandNotFound)
-  udfSetLastError $rc "$1"
- fi
-
- return $rc
-}
-#******
-#****f* libstd/udfSetXSessionEnv
-#  SYNOPSIS
-#    udfSetXSessionEnv
-#  DESCRIPTION
-#    установить некоторые переменные среды первой локальной X-сессии
-#  INPUTS
-#  RETURN VALUE
-#    0                            - сообщение успешно отправлено
+#    0   - сообщение успешно отправлено (передано выбранному транспорту)
 #    iErrorEmptyOrMissingArgument - аргумент не задан
-#    iErrorCommandNotFound        - команда не найдена
-#    iErrorXsessionNotFound       - X-сессия не обнаружена
+#    iErrorCommandNotFound - команда не найдена
 #  EXAMPLE
-#    udfSetXSessionEnv
+#    echo "notification testing" | udfMessage - "bashlyk::libstd::udfMessage"   #? true
+#    sleep 2
 #  SOURCE
-udfSetXSessionEnv() {
- #
- local csv aEnv rc user=$(_ sUser) home s sEnv hX
- #
- aEnv="DISPLAY XAUTHORITY DBUS_SESSION_BUS_ADDRESS"
- #
- eval "$(LANG=C who -u | grep "^[^ ]\+[ ]\+:.\|$(ps -o tty= -C Xorg)" | awk '{print "declare -A hX=([user]="$1" [pid]="$7" [device]="$2" )"}')"
+udfMessage() {
+ local fnTmp i=$(_ iMaxOutputLines)
 
- #[ -n "$csv"    ] || return 1 $(_ iErrorEmptyOrMissingArgument)
- #udfSetVarFromCsv $csv
- [[ -n ${hX[user]}   ]] || return $(_ iErrorXsessionNotFound)
- [[ $user = ${hX[user]} || $user = root ]] || return $(_ iErrorNonApplicableArgument)
- [[ -n ${hX[pid]}    ]] || return $(_ iErrorEmptyOrMissingArgument)
- [[ -n ${hX[device]} ]] || return $(_ iErrorEmptyOrMissingArgument)
+ udfIsNumber $i || i=9999
 
- unset $_bashlyk_envXSession
- for s in ${aEnv}; do
-  sEnv=$(grep -az ^$s= /proc/${pid}/environ)
-  [ -n "$sEnv" ] && _bashlyk_envXSession+=" $sEnv"
- done
+ udfMakeTemp fnTmp
+ udfEcho $* | tee -a $fnTmp | head -n $i
 
- if [ -z "$(_ envXSession | grep "DBUS_SESSION_BUS_ADDRESS=.*")" ]; then
-  home="$(grep -az ^HOME= /proc/${pid}/environ | cut -f 2 -d'=')"
-  [ -d ${home}/.dbus/session-bus ] && \
-   sEnv="$(grep -rh 'DBUS_SESSION_BUS_ADDRESS=' ${home}/.dbus/session-bus | head -n 1)"
-   [ -n "$sEnv" ] && _bashlyk_envXSession+=" $sEnv"
- fi
- _ envXSession >> /tmp/envXSession.log
- return 0
+ udfNotify2X $fnTmp || udfMail $fnTmp || {
+  [ -n "$_bashlyk_sLogin" ] && cat $fnTmp | write $sTo
+ }
+ i=$?
+ rm -f $fnTmp
+ return $i
 }
 #******
 #****f* libstd/udfNotify2X
@@ -347,54 +246,117 @@ udfSetXSessionEnv() {
 #    iErrorEmptyOrMissingArgument - аргумент не задан
 #    iErrorCommandNotFound        - команда не найдена
 #    iErrorXsessionNotFound       - X-сессия не обнаружена
+#    iErrorNotPermitted           - не разрешено
 #  EXAMPLE
 #    udfNotify2X "bashlyk::libstd::udfNotify2X\n----\nnotification testing\n"
-#    echo "$?" >| grep "$(_ iErrorNonApplicableArgument)\|$(_ iErrorXsessionNotFound)\|0" #? true
+#    echo "$?" >| grep "$(_ iErrorNotPermitted)\|$(_ iErrorXsessionNotFound)\|0" #? true
+#    sleep 2
 #  SOURCE
 udfNotify2X() {
  [ -n "$1"   ] || \
   return $(udfSetLastError iErrorEmptyOrMissingArgument "udfNotify2X")
  #
- local a  aEnv pid rc tty user home iTimeout s sEnv
- #
- aEnv="DISPLAY XAUTHORITY DBUS_SESSION_BUS_ADDRESS"
- iTimeout=8
- #
- a="$(LANG=C who -u | grep "^[^ ]\+[ ]\+:.\|$(ps -o tty= -C Xorg)" | awk '{print $1" "$7" "$2}')"
-
- [ -n "$a"     ] || return 1 $(_ iErrorEmptyOrMissingArgument)
-
- user=$(echo "$a" | cut -f 1 -d' ')
- [ -n "$user" ] || return $(_ iErrorXsessionNotFound)
- [[ "$(_ sUser)" = $user || "$(_ sUser)" = root ]] || return $(_ iErrorNonApplicableArgument)
-
- pid=$(echo "$a" | cut -f 2 -d' ')
- [ -n "$pid" ] || return $(_ iErrorEmptyOrMissingArgument)
-
- #tty=$(echo "$a" | cut -f 3 -d' ')
- #[ -n "$tty" ] || return $(_ iErrorEmptyOrMissingArgument)
-
- for s in ${aEnv}; do
-  unset $s
-  sEnv=$(grep -az ^$s= /proc/${pid}/environ)
-  echo "$sEnv" >> /tmp/env.txt
-  [ -n "$sEnv" ] && export "$sEnv"
- done
-
- if [ -z "$DBUS_SESSION_BUS_ADDRESS" ]; then
-  home="$(grep -az ^HOME= /proc/${pid}/environ | cut -f 2 -d'=')"
-  [ -d ${home}/.dbus/session-bus ] && \
-   sEnv="$(grep -rh 'DBUS_SESSION_BUS_ADDRESS=' ${home}/.dbus/session-bus | head -n 1)"
-   [ -n "$sEnv" ] && export "$sEnv"
- fi
+ local iTimeout=8 s
 
  [ -s "$*" ] && s="$(cat "$*")" || s="$(echo -e "$*")"
 
  for cmd in notify-send kdialog zenity xmessage; do
-  udfNotifyCommand $cmd "$(_ emailSubj)" "$s" "$iTimeout" $user && break
+  udfNotifyCommand $cmd "$(_ emailSubj)" "$s" "$iTimeout" && break
  done
  [[ $? = 0 ]] || udfSetLastError iErrorCommandNotFound "udfNotifyCommand"
  return $?
+}
+#******
+#****f* libstd/udfGetXSessionProperties
+#  SYNOPSIS
+#    udfGetXSessionProperties
+#  DESCRIPTION
+#    установить некоторые переменные среды первой локальной X-сессии
+#  RETURN VALUE
+#    0                            - сообщение успешно отправлено
+#    iErrorCommandNotFound        - команда не найдена
+#    iErrorXsessionNotFound       - X-сессия не обнаружена
+#    iErrorNotPermitted           - не разрешено
+#  EXAMPLE
+#    udfGetXSessionProperties
+#  SOURCE
+udfGetXSessionProperties() {
+ #
+ local hX pid sB sD sX user=$(_ sUser)
+ #
+ eval "$(LANG=C who -u | grep "^[^ ]\+[ ]\+:.\|$(ps -o tty= -C Xorg)" | awk '{print "declare -A hX=([user]="$1" [pid]="$7" [device]="$2" )"}')"
+
+ [[ -n ${hX[user]}   ]] || return $(_ iErrorXsessionNotFound)
+ [[ $user = ${hX[user]} || $user = root ]] || return $(_ iErrorNotPermitted)
+ [[ -n ${hX[pid]}    ]] || return $(_ iErrorEmptyOrMissingArgument)
+ #[[ -n ${hX[device]} ]] || return $(_ iErrorEmptyOrMissingArgument)
+ for pid in $(ps -o pid= --ppid  ${hX[pid]}); do
+  sB+="$(grep -az DBUS_SESSION_BUS_ADDRESS= /proc/${pid}/environ) "
+  sD+="$(grep -az DISPLAY= /proc/${pid}/environ) "
+  sX+="$(grep -az XAUTHORITY= /proc/${pid}/environ) "
+ done
+ sB=$(echo $sB | tr ' ' '\n' | sort | uniq -c | head -n 1 | xargs | cut -f2 -d' ')
+ sD=$(echo $sD | tr ' ' '\n' | sort | uniq -c | head -n 1 | xargs | cut -f2 -d' ')
+ sX=$(echo $sX | tr ' ' '\n' | sort | uniq -c | head -n 1 | xargs | cut -f2 -d' ')
+ _ sXSessionProp "${hX[user]} $sD $sX $sB"
+ ## TODO on empty $sD $sB $sX return non zero
+ return 0
+}
+#******
+#****f* libstd/udfNotifyCommand
+#  SYNOPSIS
+#    udfNotifyCommand command title text timeout
+#  DESCRIPTION
+#    Передача сообщения через службы уведомления, основанные на X-Window
+#  INPUTS
+#    command - утилита для выдачи уведомления, в данной версии это одно из
+#              notify-send kdialog zenity xmessage
+#      title - заголовок сообщения
+#       text - текст сообщения
+#    timeout - время показа окна сообщения
+#       user - получатель сообщения
+#  RETURN VALUE
+#    0                            - сообщение успешно отправлено
+#    iErrorEmptyOrMissingArgument - аргументы не заданы
+#  EXAMPLE
+#    local title="bashlyk::libstd::udfNotifyCommand" body="notification testing"
+#    sleep 2
+#    udfNotifyCommand notify-send $title "$body" 8
+#    echo $? >| grep "$(_ iErrorCommandNotFound)\|0"                            #? true
+#    sleep 2
+#    udfNotifyCommand kdialog     $title "$body" 8
+#    echo $? >| grep "$(_ iErrorCommandNotFound)\|0"                            #? true
+#    sleep 2
+#    udfNotifyCommand zenity      $title "$body" 2
+#    echo $? >| grep "$(_ iErrorCommandNotFound)\|0"                            #? true
+#    udfNotifyCommand xmessage    $title "$body" 4
+#    echo $? >| grep "$(_ iErrorCommandNotFound)\|0"                            #? true
+#  SOURCE
+udfNotifyCommand() {
+ [ -n "$4" ] || return $(udfSetLastError iErrorEmptyOrMissingArgument "udfNotifyCommand")
+ #
+ local h t rc X
+ udfIsNumber "$4" && t=$4 || t=8
+ [ -n "$(_ sXSessionProp)" ] || udfGetXSessionProperties || return $?
+ X=$(_ sXSessionProp)
+ #
+ declare -A h=(                                                                                        \
+  [notify-send]="sudo -u $X $1 -t $t \"$2 via $1\" \"$(printf "$3")\""                                 \
+  [kdialog]="sudo -u $X $1 --title \"$2 via $1\" --passivepopup \"$(printf "$3")\" $t"                 \
+  [zenity]="sudo -u $X $1 --notification --timeout $(($t/2)) --text \"$(printf "$2 via $1\n\n$3\n")\"" \
+  [xmessage]="sudo -u $X $1 -center -timeout $t \"$(printf "$2 via $1\n\n$3\n")\" 2>/dev/null"         \
+ )
+
+ if [ -x "$(which "$1")" ]; then
+  eval "${h[$1]}"
+  rc=$?
+  [[ $1 = zenity && $rc = 5 ]] && rc=0
+ else
+  rc=$(_ iErrorCommandNotFound)
+  udfSetLastError $rc "$1"
+ fi
+
+ return $rc
 }
 #******
 #****f* libstd/udfWarn
