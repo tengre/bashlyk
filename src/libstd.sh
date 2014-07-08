@@ -281,10 +281,25 @@ udfNotify2X() {
 #    udfGetXSessionProperties
 #  SOURCE
 udfGetXSessionProperties() {
- #
+ ## TODO извлекать id пользователя из /proc/<pid> в цикле до выполнения условий
+ ## -n $DBUS_SESSION_BUS_ADDRESS && userX=(_ sUser || SUDO_USER)
+ ##
  local hX pid sB sD sX user=$(_ sUser)
  #
- eval "$(LANG=C who -u | grep "^[^ ]\+[ ]\+:.\|$(ps -o tty= -C Xorg)" | awk '{print "declare -A hX=([user]="$1" [pid]="$7" [device]="$2" )"}')"
+ #eval "$(LANG=C who -u | grep "^[^ ]\+[ ]\+:.\|$(ps -o tty= -C Xorg)" | awk '{print "declare -A hX=([user]="$1" [pid]="$7" [device]="$2" )"}')"
+
+ hX="$(LANG=C who -u | grep "^[^ ]\+[ ]\+:.\|$(ps -o tty= -C Xorg)" | awk '{print "declare -A hX=([user]="$1" [pid]="$7" [device]="$2" )"}')"
+
+ if [ -n "$hX" ]; then
+  eval "$hX"
+ else
+  #for sX in gnome-session openbox startkde; do
+  # for pid in $(pidof $sX); do
+  #
+  # done
+  #done
+  true
+ fi
 
  [[ -n ${hX[user]}   ]] || return $(_ iErrorXsessionNotFound)
  [[ $user = ${hX[user]} || $user = root ]] || return $(_ iErrorNotPermitted)
