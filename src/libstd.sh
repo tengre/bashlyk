@@ -226,7 +226,7 @@ udfMessage() {
  udfEcho $* | tee -a $fnTmp | head -n $i
 
  udfNotify2X $fnTmp || udfMail $fnTmp || {
-  [ -n "$_bashlyk_sLogin" ] && cat $fnTmp | write $sTo
+  [ -n "$_bashlyk_sLogin" ] && cat $fnTmp | write $_bashlyk_sLogin
  }
  i=$?
  rm -f $fnTmp
