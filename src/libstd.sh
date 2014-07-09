@@ -281,40 +281,27 @@ udfNotify2X() {
 #    udfGetXSessionProperties
 #  SOURCE
 udfGetXSessionProperties() {
- ## TODO извлекать id пользователя из /proc/<pid> в цикле до выполнения условий
- ## -n $DBUS_SESSION_BUS_ADDRESS && userX=(_ sUser || SUDO_USER)
- ##
- local hX pid sB sD sX user=$(_ sUser)
+ local pid s sB sD sX user=$(_ sUser) userX
  #
- #eval "$(LANG=C who -u | grep "^[^ ]\+[ ]\+:.\|$(ps -o tty= -C Xorg)" | awk '{print "declare -A hX=([user]="$1" [pid]="$7" [device]="$2" )"}')"
+ [[ $user = root && -n "$SUDO_USER" ]] && user=$SUDO_USER
 
- hX="$(LANG=C who -u | grep "^[^ ]\+[ ]\+:.\|$(ps -o tty= -C Xorg)" | awk '{print "declare -A hX=([user]="$1" [pid]="$7" [device]="$2" )"}')"
-
- if [ -n "$hX" ]; then
-  eval "$hX"
- else
-  #for sX in gnome-session openbox startkde; do
-  # for pid in $(pidof $sX); do
-  #
-  # done
-  #done
-  true
- fi
-
- [[ -n ${hX[user]}   ]] || return $(_ iErrorXsessionNotFound)
- [[ $user = ${hX[user]} || $user = root ]] || return $(_ iErrorNotPermitted)
- [[ -n ${hX[pid]}    ]] || return $(_ iErrorEmptyOrMissingArgument)
- #[[ -n ${hX[device]} ]] || return $(_ iErrorEmptyOrMissingArgument)
- for pid in $(ps -o pid= --ppid  ${hX[pid]}); do
-  sB+="$(grep -az DBUS_SESSION_BUS_ADDRESS= /proc/${pid}/environ) "
-  sD+="$(grep -az DISPLAY= /proc/${pid}/environ) "
-  sX+="$(grep -az XAUTHORITY= /proc/${pid}/environ) "
+ for s in $(grep "Exec=.*" /usr/share/xsessions/*.desktop 2>/dev/null | cut -f 2 -d"=" | sort | uniq ); do
+  for pid in $(pgrep ${s##*/}); do
+   userX=$(stat -c %U /proc/$pid)
+   [[ -n      $userX ]] || continue
+   [[ $user = $userX ]] || continue
+   sB="$(grep -az DBUS_SESSION_BUS_ADDRESS= /proc/${pid}/environ)"
+   [[ -n "$sB"       ]] || continue
+   sD="$(grep -az DISPLAY= /proc/${pid}/environ)"
+   sX="$(grep -az XAUTHORITY= /proc/${pid}/environ)"
+   [[ -n $sB && -n $sD && -n $sX ]] && break 2
+  done
  done
- sB=$(echo $sB | tr ' ' '\n' | sort | uniq -c | head -n 1 | xargs | cut -f2 -d' ')
- sD=$(echo $sD | tr ' ' '\n' | sort | uniq -c | head -n 1 | xargs | cut -f2 -d' ')
- sX=$(echo $sX | tr ' ' '\n' | sort | uniq -c | head -n 1 | xargs | cut -f2 -d' ')
- _ sXSessionProp "${hX[user]} $sD $sX $sB"
- ## TODO on empty $sD $sB $sX return non zero
+
+ [[      -n $userX ]] || return $(_ iErrorXsessionNotFound)
+ [[ $user = $userX ]] || return $(_ iErrorNotPermitted)
+ [[ -n $sB && -n $sD && -n $sX ]] || return $(_ iErrorEmptyOrMissingArgument)
+ _ sXSessionProp "$userX $sD $sX $sB"
  return 0
 }
 #******
