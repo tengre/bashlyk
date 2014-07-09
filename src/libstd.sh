@@ -214,8 +214,9 @@ udfMail() {
 #    iErrorEmptyOrMissingArgument - аргумент не задан
 #    iErrorCommandNotFound - команда не найдена
 #  EXAMPLE
-#    echo "notification testing" | udfMessage - "bashlyk::libstd::udfMessage"   #? true
-#    sleep 2
+#    local sBody="notification testing" sSubj="bashlyk::libstd::udfMessage"
+#    echo "$sBody" | udfMessage - "$sSubj"                                      #? true
+#    [ $? -eq 0 ] && sleep 2
 #  SOURCE
 udfMessage() {
  local fnTmp i=$(_ iMaxOutputLines)
@@ -249,9 +250,11 @@ udfMessage() {
 #    iErrorXsessionNotFound       - X-сессия не обнаружена
 #    iErrorNotPermitted           - не разрешено
 #  EXAMPLE
-#    udfNotify2X "bashlyk::libstd::udfNotify2X\n----\nnotification testing\n"
+#    local sBody="notification testing" sSubj="bashlyk::libstd::udfNotify2X" rc
+#    udfNotify2X "${sSubj}\n----\n${sBody}\n"
+#    rc=$?
 #    echo "$?" >| grep "$(_ iErrorNotPermitted)\|$(_ iErrorXsessionNotFound)\|0" #? true
-#    sleep 2
+#    [ $rc -eq 0 ] && sleep 2
 #  SOURCE
 udfNotify2X() {
  [ -n "$1"   ] || \
@@ -326,17 +329,23 @@ udfGetXSessionProperties() {
 #    iErrorEmptyOrMissingArgument - аргументы не заданы
 #  EXAMPLE
 #    local title="bashlyk::libstd::udfNotifyCommand" body="notification testing"
-#    sleep 2
+#    local rc
 #    udfNotifyCommand notify-send $title "$body" 8
+#    rc=$?
 #    echo $? >| grep "$(_ iErrorCommandNotFound)\|0"                            #? true
-#    sleep 2
+#    [ $rc -eq 0 ] && sleep 2
 #    udfNotifyCommand kdialog     $title "$body" 8
+#    rc=$?
 #    echo $? >| grep "$(_ iErrorCommandNotFound)\|0"                            #? true
-#    sleep 2
+#    [ $rc -eq 0 ] && sleep 2
 #    udfNotifyCommand zenity      $title "$body" 2
+#    rc=$?
 #    echo $? >| grep "$(_ iErrorCommandNotFound)\|0"                            #? true
+#    [ $rc -eq 0 ] && sleep 2
 #    udfNotifyCommand xmessage    $title "$body" 4
+#    rc=$?
 #    echo $? >| grep "$(_ iErrorCommandNotFound)\|0"                            #? true
+#    [ $rc -eq 0 ] && sleep 2
 #  SOURCE
 udfNotifyCommand() {
  [ -n "$4" ] || return $(udfSetLastError iErrorEmptyOrMissingArgument "udfNotifyCommand")
