@@ -71,7 +71,8 @@ _bashlyk_iMaxOutputLines=1000
  udfAddFile2Clean udfAddPath2Clean udfAddJob2Clean udfAddPid2Clean udfCheckCsv \
  udfCleanQueue udfOnTrap _ARGUMENTS _s0 _pathDat _ _gete _getv _set            \
  udfGetMd5 udfGetPathMd5 udfXml udfPrepare2Exec udfSerialize udfSetLastError   \
- udfBashlykUnquote udfTimeStamp udfMessage udfNotify2X udfNotifyCommand udfSetXSessionEnv"}
+ udfBashlykUnquote udfTimeStamp udfMessage udfNotify2X udfNotifyCommand        \
+ udfGetXSessionProperties"}
 #******
 #****f* libstd/udfBaseId
 #  SYNOPSIS
@@ -281,12 +282,14 @@ udfNotify2X() {
 #    udfGetXSessionProperties
 #  SOURCE
 udfGetXSessionProperties() {
- local pid s sB sD sX user=$(_ sUser) userX
+ local a="x-session-manager" pid s sB sD sX sudo user=$(_ sUser) userX
  #
  [[ $user = root && -n "$SUDO_USER" ]] && user=$SUDO_USER
 
- for s in $(grep "Exec=.*" /usr/share/xsessions/*.desktop 2>/dev/null | cut -f 2 -d"=" | sort | uniq ); do
-  for pid in $(pgrep ${s##*/}); do
+ a+=" $(grep "Exec=.*" /usr/share/xsessions/*.desktop 2>/dev/null | cut -f 2 -d"=" | sort | uniq )"
+
+ for s in $a; do
+  for pid in $(ps -C ${s##*/} -o pid=); do
    userX=$(stat -c %U /proc/$pid)
    [[ -n      $userX ]] || continue
    [[ $user = $userX ]] || continue
@@ -298,10 +301,11 @@ udfGetXSessionProperties() {
   done
  done
 
- [[      -n $userX ]] || return $(_ iErrorXsessionNotFound)
+ [[ -n $userX ]] || return $(_ iErrorXsessionNotFound)
  [[ $user = $userX ]] || return $(_ iErrorNotPermitted)
  [[ -n $sB && -n $sD && -n $sX ]] || return $(_ iErrorEmptyOrMissingArgument)
- _ sXSessionProp "$userX $sD $sX $sB"
+ [[ "$(_ sUser)" = root ]] && sudo="sudo -u $userX" || sudo=''
+ _ sXSessionProp "$sudo $sD $sX $sB"
  return 0
 }
 #******
@@ -343,10 +347,10 @@ udfNotifyCommand() {
  X=$(_ sXSessionProp)
  #
  declare -A h=(                                                                                        \
-  [notify-send]="sudo -u $X $1 -t $t \"$2 via $1\" \"$(printf "$3")\""                                 \
-  [kdialog]="sudo -u $X $1 --title \"$2 via $1\" --passivepopup \"$(printf "$3")\" $t"                 \
-  [zenity]="sudo -u $X $1 --notification --timeout $(($t/2)) --text \"$(printf "$2 via $1\n\n$3\n")\"" \
-  [xmessage]="sudo -u $X $1 -center -timeout $t \"$(printf "$2 via $1\n\n$3\n")\" 2>/dev/null"         \
+  [notify-send]="$X $1 -t $t \"$2 via $1\" \"$(printf "$3")\""                                 \
+  [kdialog]="$X $1 --title \"$2 via $1\" --passivepopup \"$(printf "$3")\" $t"                 \
+  [zenity]="$X $1 --notification --timeout $(($t/2)) --text \"$(printf "$2 via $1\n\n$3\n")\"" \
+  [xmessage]="$X $1 -center -timeout $t \"$(printf "$2 via $1\n\n$3\n")\" 2>/dev/null"         \
  )
 
  if [ -x "$(which "$1")" ]; then
