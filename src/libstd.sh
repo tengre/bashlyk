@@ -297,7 +297,6 @@ udfGetXSessionProperties() {
    [[ -n      $userX ]] || continue
    [[ $user = $userX ]] || continue
    sB="$(grep -az DBUS_SESSION_BUS_ADDRESS= /proc/${pid}/environ)"
-   [[ -n "$sB"       ]] || continue
    sD="$(grep -az DISPLAY= /proc/${pid}/environ)"
    sX="$(grep -az XAUTHORITY= /proc/${pid}/environ)"
    [[ -n $sB && -n $sD && -n $sX ]] && break 2
@@ -305,7 +304,7 @@ udfGetXSessionProperties() {
  done
 
  [[ -n $userX ]] || return $(_ iErrorXsessionNotFound)
- [[ $user = $userX ]] || return $(_ iErrorNotPermitted)
+ [[ $user = $userX || $user = root ]] || return $(_ iErrorNotPermitted)
  [[ -n $sB && -n $sD && -n $sX ]] || return $(_ iErrorEmptyOrMissingArgument)
  [[ "$(_ sUser)" = root ]] && sudo="sudo -u $userX" || sudo=''
  _ sXSessionProp "$sudo $sD $sX $sB"
