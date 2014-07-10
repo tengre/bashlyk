@@ -344,7 +344,6 @@ udfGetXSessionProperties() {
 #    udfNotifyCommand xmessage    $title "$body" 4
 #    rc=$?
 #    echo $? >| grep "$(_ iErrorCommandNotFound)\|0"                            #? true
-#    [ $rc -eq 0 ] && sleep 2
 #  SOURCE
 udfNotifyCommand() {
  [ -n "$4" ] || return $(udfSetLastError iErrorEmptyOrMissingArgument "udfNotifyCommand")
@@ -354,7 +353,7 @@ udfNotifyCommand() {
  [ -n "$(_ sXSessionProp)" ] || udfGetXSessionProperties || return $?
  X=$(_ sXSessionProp)
  #
- declare -A h=(                                                                                        \
+ declare -A h=(                                                                                \
   [notify-send]="$X $1 -t $t \"$2 via $1\" \"$(printf "$3")\""                                 \
   [kdialog]="$X $1 --title \"$2 via $1\" --passivepopup \"$(printf "$3")\" $t"                 \
   [zenity]="$X $1 --notification --timeout $(($t/2)) --text \"$(printf "$2 via $1\n\n$3\n")\"" \
