@@ -295,7 +295,8 @@ udfGetXSessionProperties() {
   for pid in $(ps -C ${s##*/} -o pid=); do
    userX=$(stat -c %U /proc/$pid)
    [[ -n      $userX ]] || continue
-   [[ $user = $userX ]] || continue
+   [[ $user = $userX || $user = root ]] || continue
+   ## TODO если много X-сессий - позволить rootу выбирать оптимальный
    sB="$(grep -az DBUS_SESSION_BUS_ADDRESS= /proc/${pid}/environ)"
    sD="$(grep -az DISPLAY= /proc/${pid}/environ)"
    sX="$(grep -az XAUTHORITY= /proc/${pid}/environ)"
