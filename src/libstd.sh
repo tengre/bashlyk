@@ -285,7 +285,10 @@ udfNotify2X() {
 #    udfGetXSessionProperties
 #  SOURCE
 udfGetXSessionProperties() {
- local a="x-session-manager" pid s sB sD sX sudo user=$(_ sUser) userX
+ local a pid s sB sD sX sudo user userX
+ #
+ a="x-session-manager lxsession openbox"
+ user=$(_ sUser)
  #
  [[ $user = root && -n "$SUDO_USER" ]] && user=$SUDO_USER
 
