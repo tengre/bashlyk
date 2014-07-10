@@ -181,8 +181,8 @@ udfMail() {
  [ -n "$(which mail)" ] || \
   return $(udfSetLastError iErrorCommandNotFound "mail")
 
- [ -n "$_sTo" ] || sTo=$_bashlyk_sUser
- [ -n "$_sTo" ] || sTo=postmaster
+ [ -n "$sTo" ] || sTo=$_bashlyk_sUser
+ [ -n "$sTo" ] || sTo=postmaster
 
  {
   case "$1" in
