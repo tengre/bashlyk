@@ -287,7 +287,7 @@ udfNotify2X() {
 udfGetXSessionProperties() {
  local a pid s sB sD sX sudo user userX
  #
- a="x-session-manager lxsession openbox"
+ a="x-session-manager gnome-session gnome-session-flashback lxsession mate-session-manager openbox razorqt-session xfce4-session"
  user=$(_ sUser)
  #
  [[ $user = root && -n "$SUDO_USER" ]] && user=$SUDO_USER
