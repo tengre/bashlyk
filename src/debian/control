@@ -11,12 +11,15 @@ Depends: ${shlibs:Depends}, ${misc:Depends}, bash (>= 4.1), bsdutils (>= 1:2.13.
 Suggests: nullmailer | default-mta | mail-transport-agent, bsd-mailx (>= 8.1.2-0.20071201cvs), libnotify-bin | kdialog | zenity | x11-utils | bsdmainutils
 Description: Library for BASH command language interpreter
  This package extends basic functionality of the BASH command interpreter,
- simplifies scripting. Supports:
- - automatic logging in not interactive mode,
- - the mechanism of notification messages
- - automatic cleaning of script temporary objects
- - files of configurations in conf or ini style (read/write), their coordination
-   with options of command line.
+ simplifies scripting, supports: automatic logging in not interactive mode,
+ the mechanism of notification messages, automatic cleaning of script
+ temporary objects, files of configurations in conf or ini style
+ (read/write), their coordination with options of command line.
  Includes documentation and test modules.
 
-
+ This package extends functionality of the BASH command interpreter,
+ simplifies scripting, supports automatic logging in not an interactive mode,
+ mechanism of notification messages, automatic cleaning
+ temporary objects, files of configurations in conf or ini style (read/write),
+ their coordination with options of command line.
+ Includes test modules and documentation.

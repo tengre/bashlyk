@@ -23,7 +23,7 @@ case "$1" in
      [ -f /usr/share/bashlyk/testunit.sh ] && chmod +x /usr/share/bashlyk/testunit.sh
      if [ -x /usr/bin/bashlyk ]; then
       echo "BASHLYK library tests:"
-      /usr/bin/bashlyk --bashlyk-test
+      bashlyk --bashlyk-test
      fi
     ;;
 
