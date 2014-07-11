@@ -10,13 +10,6 @@ Architecture: all
 Depends: ${shlibs:Depends}, ${misc:Depends}, bash (>= 4.1), bsdutils (>= 1:2.13.1.1-1), coreutils (>= 6.10-6), grep (>= 2.5.4~), hostname (>= 2.95), procps(>= 1:3.2.7-11), sed (>= 4.1.5-6), util-linux (>= 2.13.1.1-1), mawk, sudo
 Suggests: nullmailer | default-mta | mail-transport-agent, bsd-mailx (>= 8.1.2-0.20071201cvs), libnotify-bin | kdialog | zenity | x11-utils | bsdmainutils
 Description: Library for BASH command language interpreter
- This package extends basic functionality of the BASH command interpreter,
- simplifies scripting, supports: automatic logging in not interactive mode,
- the mechanism of notification messages, automatic cleaning of script
- temporary objects, files of configurations in conf or ini style
- (read/write), their coordination with options of command line.
- Includes documentation and test modules.
-
  This package extends functionality of the BASH command interpreter,
  simplifies scripting, supports automatic logging in not an interactive mode,
  mechanism of notification messages, automatic cleaning
