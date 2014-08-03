@@ -708,6 +708,7 @@ udfIni() {
   bashlyk_udfIni_csvSection=$(udfGetCsvSection "$bashlyk_udfIni_csv" "$bashlyk_udfIni_sSection")
   if [ $bashlyk_udfIni_s = "${bashlyk_udfIni_s%:[=\-+\!]*}" ]; then
    bashlyk_udfIni_aVar="$(echo ${bashlyk_udfIni_s#*:}  | tr ';' ' ')"
+   ## TODO продумать расширение имен переменных до вида "имяСекции_переменная"
    udfSetVarFromCsv "$bashlyk_udfIni_csvSection" $bashlyk_udfIni_aVar
   else
    bashlyk_udfIni_cClass="${bashlyk_udfIni_s#*:}"
