@@ -100,7 +100,7 @@ udfBaseId() {
 #  OUTPUT
 #    строка с заголовком в виде "штампа времени"
 #  EXAMPLE
-#    local re="[a-zA-Z]+ [0-9]+ [0-9]+:[0-9]+:[[:digit:]]+ foo bar"
+#    local re="[[:graph:]]+ [0-9]+ [0-9]+:[0-9]+:[[:digit:]]+ foo bar"
 #    udfTimeStamp foo bar >| grep -E "$re"                                      #? true
 #  SOURCE
 udfTimeStamp() {
@@ -117,7 +117,7 @@ udfTimeStamp() {
 #  OUTPUT
 #    строка с заголовком в виде "штампа времени"
 #  EXAMPLE
-#    local re="[[:alpha:]]+ [0-9]+ [0-9]+:[0-9]+:[[:digit:]]+ foo bar"
+#    local re="[[:graph:]]+ [0-9]+ [0-9]+:[0-9]+:[[:digit:]]+ foo bar"
 #    udfDate foo bar >| grep -E "$re"                                           #? true
 #  SOURCE
 udfDate() {
