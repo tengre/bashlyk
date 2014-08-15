@@ -702,6 +702,8 @@ udfIni() {
  [ "$_bashlyk_bSetOptions" = "1" ] && udfOptions2Ini $*
  #
  bashlyk_udfIni_csv=$(udfIniGroup2Csv "$bashlyk_udfIni_ini")
+ ## TODO обработка исключения
+ [ $? = 1 ] && return 1
  #
  for bashlyk_udfIni_s in $*; do
   bashlyk_udfIni_sSection=${bashlyk_udfIni_s%:*}
@@ -1220,13 +1222,15 @@ udfIniGroup2Csv() {
  ini=''
  pathIni="$_bashlyk_pathIni"
  #
+ ## TODO встроить защиту от подстановки конфигурационного файла
+ #
  [ "$1"  = "${1##*/}" -a -f ${pathIni}/$1 ] || pathIni=
  [ "$1"  = "${1##*/}" -a -f $1 ] && pathIni=$(pwd)
  [ "$1" != "${1##*/}" -a -f $1 ] && pathIni=$(dirname $1)
  #
  if [ -z "$pathIni" ]; then
   [ -f "/etc/${_bashlyk_pathPrefix}/$1" ] \
-   && pathIni="/etc/${_bashlyk_pathPrefix}" || return 1
+   && pathIni="/etc/${_bashlyk_pathPrefix}" || pathIni=/dev/null
  fi
  #
  aini=$(echo "${1##*/}" |\
@@ -1235,11 +1239,13 @@ udfIniGroup2Csv() {
  sGlobIgnore=$GLOBIGNORE
  GLOBIGNORE="*:?"
 
- for s in $aini; do
-  [ -n "$s" ] || continue
-  [ -n "$ini" ] && ini="${s}.${ini}" || ini="$s"
-  [ -s "${pathIni}/${ini}" ] && csvIni+="$(udfIni2Csv "${pathIni}/${ini}" | tr -d '\\')"
- done
+ if [ -d $pathIni ]; then
+  for s in $aini; do
+   [ -n "$s" ] || continue
+   [ -n "$ini" ] && ini="${s}.${ini}" || ini="$s"
+   [ -s "${pathIni}/${ini}" ] && csvIni+="$(udfIni2Csv "${pathIni}/${ini}" | tr -d '\\')"
+  done
+ fi
 
  [ "$_bashlyk_bSetOptions" = "1" -a -n "$_bashlyk_csvOptions2Ini" ] && {
   udfMakeTemp fnOpt
@@ -1248,6 +1254,9 @@ udfIniGroup2Csv() {
   _bashlyk_bSetOptions=0
   csvIni+="$(udfIni2Csv $fnOpt | tr -d '\\')"
  }
+
+ ## TODO предусмотреть код возврата отсутствия конфигурационного файла
+ [ -n "$csvIni" ] || return 1
 
  declare -A a
  cIFS=$IFS
