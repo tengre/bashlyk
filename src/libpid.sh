@@ -25,7 +25,7 @@
 #   Здесь указываются модули, код которых используется данной библиотекой
 # SOURCE
 : ${_bashlyk_pathLib:=/usr/share/bashlyk}
-[ -s "${_bashlyk_pathLib}/libstd.sh" ] && . "${_bashlyk_pathLib}/libstd.sh"
+[[ -s ${_bashlyk_pathLib}/libstd.sh ]] && . "${_bashlyk_pathLib}/libstd.sh"
 #******
 #****v* libpid/Init section
 #  DESCRIPTION
@@ -52,24 +52,26 @@
 #    command - command
 #    args    - arguments
 #  RETURN VALUE
-#    0 - Процесс с PID существует для указанной командной строки (command args)
-#    1 - Процесс с PID для проверяемой командной строки не обнаружен.
-#    2 - Процесс с PID для проверяемой командной строки идентичен PID текущего
-#    процесса
+#    0                    - Процесс существует для указанной командной строки
+#    iErrorNoSuchProcess  - Процесс для указанной командной строки не обнаружен.
+#    iErrorCurrentProcess - Процесс для данной командной строки идентичен PID
+#                           текущего процесса
 #  EXAMPLE
 #    (sleep 8)&
 #    local pid=$!
 #    ps -p $pid -o pid= -o args=
 #    udfCheckStarted $pid sleep 8                                               #? true
-#    udfCheckStarted $pid sleep 88                                              #? false
-#    udfCheckStarted $$ $0                                                      #? 2
+#    udfCheckStarted $pid sleep 88                                              #? $_bashlyk_iErrorNoSuchProcess
+#    udfCheckStarted $$ $0                                                      #? $_bashlyk_iErrorCurrentProcess
 #  SOURCE
 udfCheckStarted() {
- [ -n "$*" ] || return 255
- [ "$$" = "$1" ] && return 2
+ [[ -n $*   ]] || return $(_ iErrorEmptyOrMissingArgument)
+ [[ $$ = $1 ]] && return $(_ iErrorCurrentProcess)
  local pid="$1"
- shift 1
- ps -p $pid -o args= | grep "${*}$" >/dev/null 2>&1
+ shift
+ ps -p $pid -o args= | grep "${*}$" >/dev/null 2>&1 \
+  || return $(_ iErrorNoSuchProcess)
+ return 0
 }
 #******
 #****f* libpid/udfSetPid
@@ -83,28 +85,40 @@ udfCheckStarted() {
 #    с именем файла в виде md5-хеша командной строки, иначе pid файл создается в
 #    самом каталоге для PID-файлов с именем, производным от имени скрипта.
 #  RETURN VALUE
-#    0   - PID file for command line successfully created
-#    1   - PID file exist and command line process already started
-#    255 - PID file don't created. Error status
+#    0                        - PID file for command line successfully created
+#    iErrorAlreadyStarted     - PID file exist and command line process already
+#                               started
+#    iErrorNotExistNotCreated - PID file don't created
 #  EXAMPLE
 #    udfSetPid                                                                  #? true
 #    test -f $_bashlyk_fnPid                                                    #? true
 #    head -n 1 $_bashlyk_fnPid >| grep -w $$                                    #? true
+#    ## TODO проверить коды возврата
 #  SOURCE
 udfSetPid() {
  local fnPid pid
- [ -n "$_bashlyk_sArg" ] \
-  && fnPid="${_bashlyk_pathRun}/$(udfGetMd5 ${_bashlyk_s0} ${_bashlyk_sArg}).pid" \
-  || fnPid="${_bashlyk_pathRun}/${_bashlyk_s0}.pid"
- mkdir -p ${_bashlyk_pathRun} \
-  || eval 'udfWarn "Warn: path for PIDs ${_bashlyk_pathRun} not created..."; return 255'
- [ -f "$fnPid" ] && pid=$(head -n 1 ${fnPid})
- if [ -n "$pid" ]; then
-  udfCheckStarted $pid ${_bashlyk_s0} ${_bashlyk_sArg} \
-   && eval 'echo "$0 : Already started with pid = $pid"; return 1'
+ if [[ -n $_bashlyk_sArg ]]; then
+  fnPid="${_bashlyk_pathRun}/$(udfGetMd5 ${_bashlyk_s0} ${_bashlyk_sArg}).pid"
+ else
+  fnPid="${_bashlyk_pathRun}/${_bashlyk_s0}.pid"
  fi
- echo $$ > ${fnPid} \
- || eval 'udfWarn "Warn: pid file $fnPid not created..."; return 255'
+ mkdir -p ${_bashlyk_pathRun} || {
+  udfSetLastError iErrorNotExistNotCreated "${_bashlyk_pathRun}"
+  return $?
+ }
+ [[ -f $fnPid ]] && pid=$(head -n 1 "$fnPid")
+ if [[ -n $pid ]]; then
+  udfCheckStarted $pid ${_bashlyk_s0} ${_bashlyk_sArg} && {
+   echo "$0 : Already started with pid = $pid"
+   udfLastError iErrorAlreadyStarted "$pid"
+   return $?
+  }
+ fi
+ echo $$ > $fnPid || {
+  udfWarn "Warn: pid file $fnPid not created..."
+  udfSetLastError iErrorNotExistNotCreated "$fnPid"
+  return $?
+ }
  echo "$0 ${_bashlyk_sArg}" >> $fnPid
  _bashlyk_fnPid=$fnPid
  udfAddFile2Clean $fnPid
@@ -120,12 +134,13 @@ udfSetPid() {
 #    this current process with identical command line stopped
 #    else created pid file and current process don`t stopped.
 #  RETURN VALUE
-#    0   - PID file for command line successfully created
-#    1   - PID file exist and command line process already started,
-#          current process stopped
-#    255 - PID file don't created. Error status - current process stopped
+#    0                        - PID file for command line successfully created
+#    iErrorAlreadyStarted     - PID file exist and command line process already
+#                               started, current process stopped
+#    iErrorNotExistNotCreated - PID file don't created, current process stopped
 #  EXAMPLE
 #    udfExitIfAlreadyStarted                                                    #? true
+#    ## TODO проверка кодов возврата
 #  SOURCE
 udfExitIfAlreadyStarted() {
  udfSetPid || exit $?
@@ -148,8 +163,8 @@ udfClean() {
  local a="${_bashlyk_afnClean} ${_bashlyk_apathClean} $*"
  for fn in $a
  do
-  [ -n "$fn" -a -f "$fn" ] && rm -f $1 "$fn"
-  [ -n "$fn" -a -d "$fn" ] && rmdir "$fn" >/dev/null 2>&1
+  [[ -n $fn && -f "$fn" ]] && rm -f $1 "$fn"
+  [[ -n $fn && -d "$fn" ]] && rmdir "$fn" >/dev/null 2>&1
  done
  return $?
 }

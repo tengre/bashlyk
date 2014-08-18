@@ -26,7 +26,7 @@
 #    Здесь указываются модули, код которых используется данной библиотекой
 #  SOURCE
 : ${_bashlyk_pathLib:=/usr/share/bashlyk}
-[ -s "${_bashlyk_pathLib}/libstd.sh" ] && . "${_bashlyk_pathLib}/libstd.sh"
+[[ -s "${_bashlyk_pathLib}/libstd.sh" ]] && . "${_bashlyk_pathLib}/libstd.sh"
 #******
 #****v* liblog/Init section
 #  DESCRIPTION
@@ -104,29 +104,29 @@ udfLogger() {
  bSysLog=0
  bUseLog=0
  sTagLog="${_bashlyk_s0}[$(printf "%05d" $$)]"
- [ -z "$_bashlyk_bUseSyslog" -o ${_bashlyk_bUseSyslog} -eq 0 ] \
+ [[ -z $_bashlyk_bUseSyslog || $_bashlyk_bUseSyslog -eq 0 ]] \
   && bSysLog=0 || bSysLog=1
- if [ -z "$_bashlyk_bNotUseLog" ]; then
+ if [[ -z $_bashlyk_bNotUseLog ]]; then
   udfCheck4LogUse && bUseLog=1 || bUseLog=0
  else
-  [ ${_bashlyk_bNotUseLog} -ne 0 ] && bUseLog=0 || bUseLog=1
+  [[ $_bashlyk_bNotUseLog -ne 0 ]] && bUseLog=0 || bUseLog=1
  fi
- [ -d "${_bashlyk_pathLog}" ] || mkdir -p "${_bashlyk_pathLog}" \
+ [[ -d ${_bashlyk_pathLog} ]] || mkdir -p "$_bashlyk_pathLog" \
   || udfThrow "Error: do not create path ${_bashlyk_pathLog}"
- udfAddPath2Clean ${_bashlyk_pathLog}
+ udfAddPath2Clean $_bashlyk_pathLog
  case "${bSysLog}${bUseLog}" in
   00)
    echo "$*"
   ;;
   01)
-   udfTimeStamp "$HOSTNAME $sTagLog: $*" >> ${_bashlyk_fnLog}
+   udfTimeStamp "$HOSTNAME $sTagLog: $*" >> $_bashlyk_fnLog
   ;;
   10)
    echo "$*"
    logger -s -t "$sTagLog" "$*" 2>/dev/null
   ;;
   11)
-   udfTimeStamp "$HOSTNAME $sTagLog: $*" >> ${_bashlyk_fnLog}
+   udfTimeStamp "$HOSTNAME $sTagLog: $*" >> $_bashlyk_fnLog
    logger -s -t "$sTagLog" "$*" 2>/dev/null
   ;;
  esac
@@ -150,13 +150,13 @@ udfLogger() {
 #    echo test | udfLog - tag >| grep "tag test"                                #? true
 #  SOURCE
 udfLog() {
- if [ "$1" = "-" ]; then
+ if [[ $1 = "-" ]]; then
   shift
   local s sPrefix
-  [ -n "$*" ] && sPrefix="$* " || sPrefix=
-  while read s; do [ -n "$s" ] && udfLogger "${sPrefix}${s}"; done
+  [[ -n $* ]] && sPrefix="$* " || sPrefix=
+  while read s; do [[ -n $s ]] && udfLogger "${sPrefix}${s}"; done
  else
-  [ -n "$*" ] && udfLogger "$*"
+  [[ -n $* ]] && udfLogger "$*"
  fi
 }
 #******
@@ -175,7 +175,7 @@ udfLog() {
 #    udfIsInteract                                                              #= false
 #  SOURCE
 udfIsInteract() {
- [ -t 1 -a -t 0 ] && [ -n "$TERM" ] && [ "$TERM" != "dumb" ] \
+ [[ -t 1 && -t 0 && -n $TERM && $TERM != "dumb" ]] \
   && _bashlyk_bInteract=1 || _bashlyk_bInteract=0
  return $_bashlyk_bInteract
 }
@@ -236,7 +236,7 @@ udfCheck4LogUse() {
 #  SOURCE
 udfUptime() {
  local iDiffTime=$(($(date "+%s")-${_bashlyk_iStartTimeStamp}))
- [ -n "$1" ] && echo "$* ($iDiffTime sec)" || echo $iDiffTime
+ [[ -n $1 ]] && echo "$* ($iDiffTime sec)" || echo $iDiffTime
 }
 #******
 #****f* liblog/udfFinally
@@ -261,10 +261,11 @@ udfFinally() {
 #    Используется специальный сокет для того чтобы отмечать тегами строки
 #    журнала.
 #  Return VALUE
-#     0   - Выполнено
-#     1   - Сокет не создан, но стандартный вывод перенаправляется в файл лога
-#           (без тегирования)
-#     255 - Каталог для сокета не существует и не может быть создан
+#     0                        - Выполнено успешно
+#     1                        - Сокет не создан, но стандартный вывод
+#                                перенаправляется в файл лога (без тегирования)
+#     iErrorNotExistNotCreated - Каталог для сокета не существует и не может
+#                                быть создан
 #  EXAMPLE
 #    local fnLog=$(mktemp --suffix=.log || tempfile -s .test.log)               #? true
 #    _ fnLog $fnLog                                                             #? true
@@ -274,12 +275,17 @@ udfFinally() {
 #  SOURCE
 udfSetLogSocket() {
  local fnSock
- [ -n "$_bashlyk_sArg" ] \
-  && fnSock="${_bashlyk_pathRun}/$(udfGetMd5 ${_bashlyk_s0} ${_bashlyk_sArg}).${$}.socket" \
-  || fnSock="${_bashlyk_pathRun}/${_bashlyk_s0}.${$}.socket"
- mkdir -p ${_bashlyk_pathRun} \
-  || eval 'udfWarn "Warn: path for Sockets ${_bashlyk_pathRun} not created..."; return 255'
- [ -a $fnSock ] && rm -f $fnSock
+ if [[ -n $_bashlyk_sArg ]]; then
+  fnSock="${_bashlyk_pathRun}/$(udfGetMd5 ${_bashlyk_s0} ${_bashlyk_sArg}).${$}.socket"
+ else
+  fnSock="${_bashlyk_pathRun}/${_bashlyk_s0}.${$}.socket"
+ fi
+ mkdir -p ${_bashlyk_pathRun} || {
+  udfWarn "Warn: path for Sockets ${_bashlyk_pathRun} not created..."
+  udfSetLastError iErrorNotExistNotCreated "${_bashlyk_pathRun}"
+  return $?
+ }
+ [[ -a $fnSock ]] && rm -f $fnSock
  if mkfifo -m 0600 $fnSock >/dev/null 2>&1; then
   ( udfLog - < $fnSock )&
   _bashlyk_pidLogSock=$!
@@ -318,9 +324,13 @@ udfSetLog() {
             _bashlyk_pathLog=$(dirname ${_bashlyk_fnLog})
          ;;
  esac
- [ -d "${_bashlyk_pathLog}" ] || mkdir -p "${_bashlyk_pathLog}" \
-  || udfThrow "Error: cannot create path ${_bashlyk_pathLog}"
- touch "${_bashlyk_fnLog}" || udfThrow "Error: ${_bashlyk_fnLog} not usable for logging"
+ mkdir -p "$_bashlyk_pathLog" || {
+  udfThrow "Error: cannot create path $_bashlyk_pathLog"
+ }
+ touch "$_bashlyk_fnLog" || {
+  udfSetLastError iErrorNotExistNotCreated "$_bashlyk_fnLog"
+  udfThrow "Error: $_bashlyk_fnLog not usable for logging"
+ }
  udfSetLogSocket
  return 0
 }
@@ -341,10 +351,10 @@ udfSetLog() {
 #    rm -f $fnLog
 #  SOURCE
 _fnLog() {
- if [ -n "$1" ]; then
+ if [[ -n $1 ]]; then
   udfSetLog "$1"
  else
-  echo ${_bashlyk_fnLog}
+  _ fnLog
  fi
 }
 #******
@@ -377,11 +387,11 @@ _fnLog() {
 #  SOURCE
 udfDebug() {
  local i re='^[0-9]+$'
- [ -n "$*" ] && i=$1 || return 2
+ [[ -n $* ]] && i=$1 || return 2
  shift
  echo $i | grep -E $re >/dev/null 2>&1 || i=0
- [ $DEBUGLEVEL -ge $i ] || return 1
- [ -n "$*" ] && echo "$*"
+ [[ $DEBUGLEVEL -ge $i ]] || return 1
+ [[ -n $* ]] && echo "$*"
  return 0
 }
 #******
