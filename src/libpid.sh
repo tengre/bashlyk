@@ -15,9 +15,9 @@
 #    Отсутствие значения $BASH_VERSION предполагает несовместимость с
 #    c текущим командным интерпретатором
 #  SOURCE
-[ -n "$_BASHLYK_LIBPID" ] && return 0 || _BASHLYK_LIBPID=1
 [ -n "$BASH_VERSION" ] \
  || eval 'echo "bash interpreter for this script ($0) required ..."; exit 255'
+[[ -n $_BASHLYK_LIBPID ]] && return 0 || _BASHLYK_LIBPID=1
 #******
 #****** libpid/External Modules
 # DESCRIPTION

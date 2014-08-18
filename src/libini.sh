@@ -15,9 +15,9 @@
 #    Отсутствие значения $BASH_VERSION предполагает несовместимость с
 #    c текущим командным интерпретатором
 #  SOURCE
-[ -n "$_BASHLYK_LIBINI" ] && return 0 || _BASHLYK_LIBINI=1
 [ -n "$BASH_VERSION" ] \
  || eval 'echo "bash interpreter for this script ($0) required ..."; exit 255'
+[[ -n $_BASHLYK_LIBINI ]] && return 0 || _BASHLYK_LIBINI=1
 #******
 #****** libini/External Modules
 # DESCRIPTION
@@ -272,8 +272,8 @@ udfReadIniSection2Var() {
 #              разделенный символом ";" строка, в полях которого содержатся
 #              данные в формате "<key>=<value>;..."
 #  RETURN VALUE
-#     0  - Выполнено успешно
-#    255 - Ошибка: аргумент отсутствует
+#    0                            - Выполнено успешно
+#    iErrorEmptyOrMissingArgument - аргумент отсутствует
 #  EXAMPLE
 #    local csv='sTxt=bar;b=false;iXo=21;iYo=1080;sTxt=foo bar;b=true;iXo=1920;'
 #    local csvResult
@@ -283,7 +283,7 @@ udfReadIniSection2Var() {
 #    echo $csvResult | grep "^${csvTest}$"                                      #? true
 #  SOURCE
 udfCsvOrder() {
- [ -n "$1" ] || return 255
+ [[ -n $1 ]] || return $(_ iErrorEmptyOrMissingArgument)
  local fnExec aKeys csv
  local csvResult
  #
@@ -369,7 +369,7 @@ udfCsvOrder2Var() {
 #    echo "${b}:${sTxt}:${iXo}:${iYo}" | grep "^${sResult}$"                    #? true
 #  SOURCE
 udfSetVarFromCsv() {
- [ -n "$1" ] || return 255
+ [[ -n $1 ]] || return $(_ iErrorEmptyOrMissingArgument)
  #
  local bashlyk_csvInput_KLokRJky bashlyk_csvResult_KLokRJky
  local bashlyk_k_KLokRJky bashlyk_v_KLokRJky
@@ -380,7 +380,7 @@ udfSetVarFromCsv() {
  for bashlyk_k_KLokRJky in $*; do
   #bashlyk_csvResult_KLokRJky=$(echo $bashlyk_csvInput_KLokRJky | grep -Po ";$bashlyk_k_KLokRJky=.*?;" | tr -d ';')
   bashlyk_v_KLokRJky="$(echo "${bashlyk_csvInput_KLokRJky#*;$bashlyk_k_KLokRJky=}" | cut -f 1 -d ';')"
-  if [ -n "$bashlyk_v_KLokRJky" ]; then
+  if [[ -n $bashlyk_v_KLokRJky ]]; then
    eval "$bashlyk_k_KLokRJky=$bashlyk_v_KLokRJky"
    #2>/dev/null
   fi
@@ -505,8 +505,9 @@ udfCsvKeys2Var() {
 #    csv; - CSV-строка, разделённая ";", поля которой содержат данные вида
 #           "[<section>];<key>=<value>;..."
 #  RETURN VALUE
-#     0  - Выполнено успешно
-#    255 - Ошибка: аргументы отсутствуют
+#    0  - Выполнено успешно
+#    iErrorNotExistNotCreated     -
+#    iErrorEmptyOrMissingArgument - аргументы отсутствуют
 #  EXAMPLE
 #    ## TODO дополнить тесты по второму аргументу
 #    local ini csv='[];void=0;[exec]:;"TZ_bashlyk_&#61_UTC date -R --date_bashlyk_&#61_'@12345679'";sUname_bashlyk_&#61_"$_bashlyk_&#40_uname_bashlyk_&#41_";:[exec][main];sTxt="foo = bar";b=true;iXo=1921;[replace];"after replacing";[unify];*.bak;*.tmp;*~;[acc];;*.bak;*.tmp;;*.bak;*.tmp;*~;'
@@ -521,16 +522,24 @@ udfCsvKeys2Var() {
 #    rm -f $ini ${ini}.bak
 #  SOURCE
 udfIniWrite() {
- [ -n "$1" ] || return $(udfSetLastError iErrorEmptyOrMissingArgument "\$1")
+ [[ -n $1 ]] || {
+  udfSetLastError iErrorEmptyOrMissingArgument "\$1"
+  return $?
+ }
  #
  local ini s csv cIFS
  #
  ini="$1"
- [ -n "$2" ] && s="$2" || s="$(_ csvOptions2Ini)"
- [ -n "$s" ] || \
-  return $(udfSetLastError iErrorEmptyOrMissingArgument "\$2 _ csvOptions2Ini")
+ [[ -n $2 ]] && s="$2" || s="$(_ csvOptions2Ini)"
+ [[ -n $s ]] || {
+  udfSetLastError iErrorEmptyOrMissingArgument "\$2 _ csvOptions2Ini"
+  return $?
+ }
  #
- mkdir -p $(dirname $ini) || udfSetLastError iErrorNotExistNotCreated "$ini"
+ mkdir -p $(dirname $ini) || {
+  udfSetLastError iErrorNotExistNotCreated "$ini"
+  return $?
+ }
  [ -s "$ini" ] && mv -f "$ini" "${ini}.bak"
  csv="$(echo "$s" | sed -e "s/[;]\+/;/g" -e "s/\(:\?\[\)/;;\1/g" -e "s/\[\]//g" | tr -d '"')"
  cIFS=$IFS; IFS=';'
@@ -626,7 +635,7 @@ udfIniChange() {
 #
 #  RETURN VALUE
 #     0  - Выполнено успешно
-#     2  - невалидный идентификатор переменной для приема значения
+#    200 - невалидный идентификатор переменной для приема значения
 #    255 - Ошибка: аргументы отсутствуют
 #  EXAMPLE
 #    local sTxt="foo = bar" b=true iXo=1921 iYo=1080 ini iniChild
@@ -688,9 +697,11 @@ udfIniChange() {
 #    echo "$unify"   >| grep '^\*\.bak;\*\.tmp;\*~;$'                           #? true
 #    echo "$acc"     >| grep '^\*\.bak;\*\.tmp;\*\.bak;\*\.tmp;\*~;$'           #? true
 #    rm -f $iniChild $ini
+#    udfIni $iniChild $sRules                                                   #? $_bashlyk_iErrorFileNotFound
+#    ## TODO проверка пустых данных (iErrorEmptyOrMissingArgument)
 #  SOURCE
 udfIni() {
- [ -n "$1" ] || return 255
+ [[ -n $1 ]] || return $(_ iErrorEmptyOrMissingArgument)
  #
  local bashlyk_udfIni_csv bashlyk_udfIni_s bashlyk_udfIni_sSection
  local bashlyk_udfIni_csvSection bashlyk_udfIni_csvVar bashlyk_udfIni_ini
@@ -699,16 +710,16 @@ udfIni() {
  bashlyk_udfIni_ini="$1"
  shift
  #
- [ "$_bashlyk_bSetOptions" = "1" ] && udfOptions2Ini $*
+ [[ $_bashlyk_bSetOptions = "1" ]] && udfOptions2Ini $*
  #
  bashlyk_udfIni_csv=$(udfIniGroup2Csv "$bashlyk_udfIni_ini")
- ## TODO обработка исключения
- [ $? = 1 ] && return 1
+ bashlyk_udfIni_s=$?
+ [[ $bashlyk_udfIni_s = 0 ]] || return $bashlyk_udfIni_s
  #
  for bashlyk_udfIni_s in $*; do
   bashlyk_udfIni_sSection=${bashlyk_udfIni_s%:*}
   bashlyk_udfIni_csvSection=$(udfGetCsvSection "$bashlyk_udfIni_csv" "$bashlyk_udfIni_sSection")
-  if [ $bashlyk_udfIni_s = "${bashlyk_udfIni_s%:[=\-+\!]*}" ]; then
+  if [[ $bashlyk_udfIni_s = ${bashlyk_udfIni_s%:[=\-+\!]*} ]]; then
    bashlyk_udfIni_aVar="$(echo ${bashlyk_udfIni_s#*:}  | tr ';' ' ')"
    ## TODO продумать расширение имен переменных до вида "имяСекции_переменная"
    udfSetVarFromCsv "$bashlyk_udfIni_csvSection" $bashlyk_udfIni_aVar
@@ -1198,7 +1209,7 @@ udfIni2CsvVar() {
 #              конфигурационные данные в формате "[<section>];<key>=<value>;..."
 #  RETURN VALUE
 #     0  - Выполнено успешно
-#     1  - файл конфигурации не найден
+#    185 - файл конфигурации не найден
 #    255 - Ошибка: аргумент отсутствует
 #  EXAMPLE
 #    local re='\[test\];_b.*d=;sTxt=foo;.*autoKey_0=.*_b.*d=;.*foo bar.*o=1080;'
@@ -1214,23 +1225,22 @@ udfIni2CsvVar() {
 #    udfIniGroup2CsvVar csvResult $iniChild                                     #? true
 #    echo "$csvResult" >| grep "$re"                                            #? true
 #    rm -f $iniChild $ini
+#    udfIniGroup2Csv $iniChild                                                  #? $_bashlyk_iErrorFileNotFound
+#    ## TODO проверка пустых данных (iErrorEmptyOrMissingArgument)
 #  SOURCE
 udfIniGroup2Csv() {
- [ -n "$1" ] || return 255
+ [[ -n $1 ]] || return $(_ iErrorEmptyOrMissingArgument)
  #
- local a aini cIFS csvIni ini pathIni s sTag sGlobIgnore aTag csvOut fnOpt
- ini=''
- pathIni="$_bashlyk_pathIni"
+ local a aini cIFS csvIni ini pathIni s sTag sGlobIgnore aTag csvOut fnOpt ini pathIni
  #
- ## TODO встроить защиту от подстановки конфигурационного файла
+ ## TODO встроить защиту от подстановки конфигурационного файла (по владельцу)
  #
- [ "$1"  = "${1##*/}" -a -f ${pathIni}/$1 ] || pathIni=
- [ "$1"  = "${1##*/}" -a -f $1 ] && pathIni=$(pwd)
- [ "$1" != "${1##*/}" -a -f $1 ] && pathIni=$(dirname $1)
+ [[ $1  = ${1##*/} && -f $(_ pathIni)/$1 ]] && pathIni=$(_ pathIni)
+ [[ $1  = ${1##*/} && -f $1            ]] && pathIni=$(pwd)
+ [[ $1 != ${1##*/} && -f $1            ]] && pathIni=$(dirname $1)
  #
- if [ -z "$pathIni" ]; then
-  [ -f "/etc/${_bashlyk_pathPrefix}/$1" ] \
-   && pathIni="/etc/${_bashlyk_pathPrefix}" || pathIni=/dev/null
+ if [[ -z $pathIni ]]; then
+  [[ -f "/etc/$(_ pathPrefix)/$1" ]] && pathIni="/etc/$(_ pathPrefix)"
  fi
  #
  aini=$(echo "${1##*/}" |\
@@ -1239,15 +1249,16 @@ udfIniGroup2Csv() {
  sGlobIgnore=$GLOBIGNORE
  GLOBIGNORE="*:?"
 
- if [ -d $pathIni ]; then
+ if [[ -n $pathIni ]]; then
   for s in $aini; do
-   [ -n "$s" ] || continue
-   [ -n "$ini" ] && ini="${s}.${ini}" || ini="$s"
-   [ -s "${pathIni}/${ini}" ] && csvIni+="$(udfIni2Csv "${pathIni}/${ini}" | tr -d '\\')"
+   [[ -n $s                  ]] || continue
+   [[ -n $ini                ]] && ini="${s}.${ini}" || ini="$s"
+   [[ -s "${pathIni}/${ini}" ]] && \
+    csvIni+="$(udfIni2Csv "${pathIni}/${ini}" | tr -d '\\')"
   done
  fi
 
- [ "$_bashlyk_bSetOptions" = "1" -a -n "$_bashlyk_csvOptions2Ini" ] && {
+ [[ $_bashlyk_bSetOptions = "1" && -n $_bashlyk_csvOptions2Ini ]] && {
   udfMakeTemp fnOpt
   udfIniWrite $fnOpt "$_bashlyk_csvOptions2Ini"
   _bashlyk_csvOptions2Ini=''
@@ -1255,17 +1266,23 @@ udfIniGroup2Csv() {
   csvIni+="$(udfIni2Csv $fnOpt | tr -d '\\')"
  }
 
- ## TODO предусмотреть код возврата отсутствия конфигурационного файла
- [ -n "$csvIni" ] || return 1
+ if [[ -z $csvIni ]]; then
+  if [[ ! -d $pathIni ]]; then
+   udfSetLastError iErrorFileNotFound "$1"
+  else
+   udfSetLastError iErrorEmptyOrMissingArgument
+  fi
+  return $?
+ fi
 
  declare -A a
  cIFS=$IFS
  IFS='['
  for s in $csvIni; do
   sTag=${s%%]*}
-  [ -z "$sTag" ] && sTag=" "
-  [ "$sTag" = ";"   ] && continue
-  [ -z "$(echo "${s#*]}" | tr -d ';:')" ] && continue
+  [[ -z $sTag    ]] && sTag=" "
+  [[ $sTag = ";" ]] && continue
+  [[ -z $(echo "${s#*]}" | tr -d ';:') ]] && continue
   a[$sTag]+="_bashlyk_csv_record=${s#*]}"
  done
  for s in "${!a[@]}"; do
@@ -1331,9 +1348,9 @@ udfIniGroup2CsvVar() {
 #   #udfPrepare2Exec $preExec
 #  SOURCE
 udfOptions2Ini() {
- [ -n "$1" ] || {
+ [[ -n $1 ]] || {
   udfSetLastError iErrorEmptyOrMissingArgument
-  return 255
+  return $?
  }
  local cIFS csv k s sClass sData sIni sRules sSection
  for s in $*; do
@@ -1346,23 +1363,27 @@ udfOptions2Ini() {
   csv=""
   cIFS=$IFS
   IFS=';'
-  [ -n "$sClass" ] && [ -n "$sData" ] && {
+  [[ -n $sClass && -n $sData ]] && {
    udfSetLastError iErrorFormatError "$sClass"
    continue
   }
-  if [ -z "$sData" ]; then
-   [ -n "${!sSection}" ] && csv+="$(echo "${!sSection}" | tr ',' ';');"
+  if [[ -z $sData ]]; then
+   [[ -n ${!sSection} ]] && csv+="$(echo "${!sSection}" | tr ',' ';');"
   else
    for k in $sData; do
-    [ -n "${!k}" ] && csv+="$k=${!k};"
+    [[ -n ${!k} ]] && csv+="$k=${!k};"
    done
   fi
   IFS=$cIFS
-  [ -n "$csv	" ] || continue
-  [ "$sClass" = "!" ] && s="[${sSection}]:;${csv};:[${sSection}]" || s="[${sSection}];${csv};"
+  [[ -n $csv ]] || continue
+  if [[ $sClass = "!" ]]; then
+   s="[${sSection}]:;${csv};:[${sSection}]"
+  else
+   s="[${sSection}];${csv};"
+  fi
   sIni+=$s
  done
- _bashlyk_csvOptions2Ini="$sIni"
+ _ csvOptions2Ini "$sIni"
  return 0
 }
 #******

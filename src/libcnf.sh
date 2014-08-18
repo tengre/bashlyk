@@ -14,9 +14,9 @@
 #    Отсутствие значения $BASH_VERSION предполагает несовместимость с
 #    c текущим командным интерпретатором
 #  SOURCE
-[ -n "$_BASHLYK_LIBCNF" ] && return 0 || _BASHLYK_LIBCNF=1
 [ -n "$BASH_VERSION" ] \
  || eval 'echo "bash interpreter for this script ($0) required ..."; exit 255'
+[[ -n $_BASHLYK_LIBCNF ]] && return 0 || _BASHLYK_LIBCNF=1
 #******
 #****** libcnf/External Modules
 # DESCRIPTION
@@ -24,7 +24,7 @@
 #   Здесь указываются модули, код которых используется данной библиотекой
 # SOURCE
 : ${_bashlyk_pathLib:=/usr/share/bashlyk}
-[ -s "${_bashlyk_pathLib}/libstd.sh" ] && . "${_bashlyk_pathLib}/libstd.sh"
+[[ -s "${_bashlyk_pathLib}/libstd.sh" ]] && . "${_bashlyk_pathLib}/libstd.sh"
 #******
 #****v* libcnf/Init section
 #  DESCRIPTION
@@ -54,9 +54,9 @@
 #  INPUTS
 #    file     - имя файла конфигурации
 #  RETURN VALUE
-#     0  - Выполнено успешно
-#     1  - Ошибка: файл конфигурации не найден
-#    255 - Ошибка: аргумент отсутствует
+#    iErrorEmptyOrMissingArgument - аргумент не задан
+#    iErrorFileNotFound           - файл конфигурации не найден
+#    0                            - успешная операция
 #  EXAMPLE
 #    local b conf d pid s0 s
 #    # TODO "историческая" проверка в текущем каталоге временно убрана (.)
@@ -74,28 +74,29 @@
 #    rm -f $conf
 #  SOURCE
 udfGetConfig() {
- [ -n "$1" ] || return 255
+ [[ -n $1 ]] || return $(_ iErrorEmptyOrMissingArgument)
  #
  local bashlyk_aconf_MROATHra bashlyk_conf_MROATHra bashlyk_s_MROATHra
  local bashlyk_pathCnf_MROATHra="$_bashlyk_pathCnf"
  #
- [ "$1"  = "${1##*/}" -a -f ${bashlyk_pathCnf_MROATHra}/$1 ] || bashlyk_pathCnf_MROATHra=
- [ "$1"  = "${1##*/}" -a -f $1 ] && bashlyk_pathCnf_MROATHra=$(pwd)
- [ "$1" != "${1##*/}" -a -f $1 ] && bashlyk_pathCnf_MROATHra=$(dirname $1)
+ [[ $1  = ${1##*/} && -f ${bashlyk_pathCnf_MROATHra}/$1 ]] || bashlyk_pathCnf_MROATHra=
+ [[ $1  = ${1##*/} && -f $1 ]] && bashlyk_pathCnf_MROATHra=$(pwd)
+ [[ $1 != ${1##*/} && -f $1 ]] && bashlyk_pathCnf_MROATHra=$(dirname $1)
  #
- if [ -z "$bashlyk_pathCnf_MROATHra" ]; then
-  [ -f "/etc/${_bashlyk_pathPrefix}/$1" ] \
-   && bashlyk_pathCnf_MROATHra="/etc/${_bashlyk_pathPrefix}" || return 1
+ if [[ -z $bashlyk_pathCnf_MROATHra ]]; then
+  [[ -f "/etc/${_bashlyk_pathPrefix}/$1" ]] \
+   && bashlyk_pathCnf_MROATHra="/etc/${_bashlyk_pathPrefix}" \
+   || return $(_ iErrorFileNotFound)
  fi
  #
  bashlyk_conf_MROATHra=
  bashlyk_aconf_MROATHra=$(echo "${1##*/}" | awk 'BEGIN{FS="."} {for (i=NF;i>=1;i--) printf $i" "}')
  for bashlyk_s_MROATHra in $bashlyk_aconf_MROATHra; do
-  [ -n "$bashlyk_s_MROATHra" ] || continue
-  [ -n "$bashlyk_conf_MROATHra" ] \
+  [[ -n $bashlyk_s_MROATHra ]] || continue
+  [[ -n $bashlyk_conf_MROATHra ]] \
    && bashlyk_conf_MROATHra="${bashlyk_s_MROATHra}.${bashlyk_conf_MROATHra}" \
    || bashlyk_conf_MROATHra="$bashlyk_s_MROATHra"
-  [ -s "${bashlyk_pathCnf_MROATHra}/${bashlyk_conf_MROATHra}" ] \
+  [[ -s "${bashlyk_pathCnf_MROATHra}/${bashlyk_conf_MROATHra}" ]] \
    && . "${bashlyk_pathCnf_MROATHra}/${bashlyk_conf_MROATHra}"
  done
  return 0
@@ -116,9 +117,9 @@ udfGetConfig() {
 #    Важно! Экранировать аргументы двойными кавычками, если есть вероятность
 #    наличия в них пробелов
 #  RETURN VALUE
-#    255 - Ошибка: аргументы отсутствует
-#    254 - Ошибка: нет каталога для файла конфигурации и его невозможно создать
-#     0  - Выполнено успешно
+#    iErrorEmptyOrMissingArgument - аргумент не задан
+#    iErrorNotExistNotCreated     - путь не существует и не создан
+#    0                            - успешная операция
 #  EXAMPLE
 #    local b conf d pid s0 s
 #    conf=$(mktemp --suffix=.conf || tempfile -s .test.conf)                    #? true
@@ -133,13 +134,13 @@ udfGetConfig() {
 #    rm -f $conf
 #  SOURCE
 udfSetConfig() {
- [ -n "$1" -a -n "$2" ] || return 255
+ [[ -n $1 && -n $2 ]] || return $(_ iErrorEmptyOrMissingArgument)
  #
  local bashlyk_conf_kpHeLmpy bashlyk_chIFS_kpHeLmpy="$IFS"
  local bashlyk_pathCnf_kpHeLmpy="$_bashlyk_pathCnf" bashlyk_sPair_kpHeLmpy
  #
  [ "$1" != "${1##*/}" ] && bashlyk_pathCnf_kpHeLmpy="$(dirname $1)"
- mkdir -p "$bashlyk_pathCnf_kpHeLmpy" || return 254
+ mkdir -p "$bashlyk_pathCnf_kpHeLmpy" || return $(_ iErrorNotExistNotCreated)
  bashlyk_conf_kpHeLmpy="${bashlyk_pathCnf_kpHeLmpy}/${1##*/}"
  IFS=';'
  {
@@ -152,4 +153,3 @@ udfSetConfig() {
  return 0
 }
 #******
-

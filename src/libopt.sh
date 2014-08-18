@@ -16,9 +16,9 @@
 #    Отсутствие значения $BASH_VERSION предполагает несовместимость с
 #    c текущим командным интерпретатором
 #  SOURCE
-[ -n "$_BASHLYK_LIBOPT" ] && return 0 || _BASHLYK_LIBOPT=1
 [ -n "$BASH_VERSION" ] \
  || eval 'echo "bash interpreter for this script ($0) required ..."; exit 255'
+[[ -n $_BASHLYK_LIBOPT ]] && return 0 || _BASHLYK_LIBOPT=1
 #******
 #****** libopt/External modules
 #  DESCRIPTION
@@ -26,8 +26,8 @@
 #    Здесь указываются модули, код которых используется данной библиотекой
 #  SOURCE
 : ${_bashlyk_pathLib:=/usr/share/bashlyk}
-[ -s "${_bashlyk_pathLib}/libstd.sh" ] && . "${_bashlyk_pathLib}/libstd.sh"
-[ -s "${_bashlyk_pathLib}/libcnf.sh" ] && . "${_bashlyk_pathLib}/libcnf.sh"
+[[ -s "${_bashlyk_pathLib}/libstd.sh" ]] && . "${_bashlyk_pathLib}/libstd.sh"
+[[ -s "${_bashlyk_pathLib}/libcnf.sh" ]] && . "${_bashlyk_pathLib}/libcnf.sh"
 #******
 #****v* libopt/Init section
 #  DESCRIPTION
@@ -54,23 +54,26 @@
 #    args   - опции с аргументами
 #  OUTPUT
 #   Ассоциативный массив в виде CSV строки
+#  RETURN VALUE
+#    iErrorEmptyOrMissingArgument - аргумент не задан
+#    0                            - успешная операция
 #  EXAMPLE
 #   udfGetOptHash 'job:,force' --job main --force >| grep "^;job=main;force=1;$" #? true
 #  SOURCE
 udfGetOptHash() {
- [ -n "$*" ] || return -1
+ [[ -n $* ]] || return $(_ iErrorEmptyOrMissingArgument)
  local k v csvKeys csvHash=';' sOpt bFound
  csvKeys="$1"
  shift
  sOpt="$(getopt -l $csvKeys -n $0 -- $0 $@)" || return 1
  eval set -- "$sOpt"
  while true; do
-  [ -n "$1" ] || break
+  [[ -n $1 ]] || break
   bFound=
   for k in $(echo $csvKeys | tr ',' ' '); do
    v=$(echo $k | tr -d ':')
-   [ "--$v" = "$1" ] && bFound=1 || continue
-   if [ -n "$(echo $k | grep ':$')" ]; then
+   [[ "--$v" = $1 ]] && bFound=1 || continue
+   if [[ -n $(echo $k | grep ':$') ]]; then
     csvHash+="$v=$(udfAlias2WSpace $2);"
     shift 2
    else
@@ -78,7 +81,7 @@ udfGetOptHash() {
     shift
    fi
   done
-  [ -z "$bFound" ] && shift
+  [[ -z $bFound ]] && shift
  done
  shift
  echo "$csvHash"
@@ -95,24 +98,22 @@ udfGetOptHash() {
 #  INPUTS
 #    arg - CSV строка
 #  RETURN VALUE
-#    0  - Переменные сформированы
-#    1  - Ошибка, переменные не сформированы
-#   255 - Ошибка, отсутствует аргумент
+#    iErrorEmptyOrMissingArgument - аргумент не задан
+#    0                            - успешная операция
 #  EXAMPLE
 #    local job bForce
 #    udfSetOptHash "job=main;bForce=1;"                                         #? true
 #    echo "dbg $job :: $bForce" >| grep "^dbg main :: 1$"                       #? true
+#    ## TODO коды возврата проверить
 #  SOURCE
 udfSetOptHash() {
- [ -n "$*" ] || return 255
- local confTmp rc
- udfMakeTemp confTmp && {
-  udfSetConfig $confTmp "$*"
-  udfGetConfig $confTmp
-  rm -f $confTmp
-  rc=0
- } || rc=1
- return $rc
+ [[ -n $* ]] || return $(_ iErrorEmptyOrMissingArgument)
+ local confTmp rc=0
+ udfMakeTemp confTmp
+ udfSetConfig $confTmp "$*" || return $?
+ udfGetConfig $confTmp      || return $?
+ rm -f $confTmp
+ return 0
 }
 #******
 #****f* libopt/udfGetOpt
@@ -126,9 +127,8 @@ udfSetOptHash() {
 #    csvopt - список ожидаемых опций
 #    args   - опции с аргументами
 #  RETURN VALUE
-#    0 - Переменные сформированы
-#    1 - Ошибка, переменные не сформированы
-#   255 - Ошибка, отсутствует аргумент
+#    iErrorEmptyOrMissingArgument - аргумент не задан
+#    0                            - успешная операция
 #  EXAMPLE
 #    local job bForce
 #    udfGetOpt job:,bForce --job main --bForce                                  #? true
@@ -151,12 +151,15 @@ udfGetOpt() {
 #    hash - ассоциативный массив в виде CSV строки c разделителем ";"
 #  OUTPUT
 #    аргумент <hash> без подстрок ";<pair>;"
+#  RETURN VALUE
+#    iErrorEmptyOrMissingArgument - аргумент не задан
+#    0                            - успешная операция
 #  EXAMPLE
 #    local s="job=main;bForce=1"
 #    udfExcludePairFromHash 'save=1' "${s};save=1;" >| grep "^${s}$"            #? true
 #  SOURCE
 udfExcludePairFromHash() {
- [ -n "$*" ] || return 1
+ [[ -n $* ]] || return $(_ iErrorEmptyOrMissingArgument)
  local s="$1"
  shift
  local csv="$*"

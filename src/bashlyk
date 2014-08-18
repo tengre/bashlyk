@@ -15,7 +15,7 @@
 #    Глобальная переменная $_BASHLYK обеспечивает
 #    защиту от повторного использования данного сценария
 #  SOURCE
-[ -n "$_BASHLYK" ] && return 0 || _BASHLYK=1
+[[ -n $_BASHLYK ]] && return 0 || _BASHLYK=1
 #******
 #****v* bashlyk/Init section
 #  DESCRIPTION

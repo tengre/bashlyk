@@ -16,9 +16,9 @@
 #    Отсутствие значения $BASH_VERSION предполагает несовместимость с
 #    c текущим командным интерпретатором
 #  SOURCE
-[ -n "$_BASHLYK_LIBLOG" ] && return 0 || _BASHLYK_LIBLOG=1
 [ -n "$BASH_VERSION" ] \
  || eval 'echo "bash interpreter for this script ($0) required ..."; exit 255'
+[[ -n $_BASHLYK_LIBLOG ]] && return 0 || _BASHLYK_LIBLOG=1
 #******
 #****** liblog/External modules
 #  DESCRIPTION
