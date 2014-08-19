@@ -338,7 +338,7 @@ _CsvOrder_EOF
 #    #пример приведен в описании udfCsvOrder
 #  SOURCE
 udfCsvOrder2Var() {
- [[ -n "$2" ]] || return $(_ iErrorEmptyOrMissingArgument)
+ [[ -n $2 ]] || return $(_ iErrorEmptyOrMissingArgument)
  udfIsValidVariable $1 || return 2
  #udfThrow "Error: required valid variable name \"$1\""
  eval 'export ${1}="$(udfCsvOrder "$2")"'
@@ -403,8 +403,8 @@ udfSetVarFromCsv() {
 #              произведена инициализация в соответствующие переменные значений
 #              совпадающих ключей CSV-строки
 #  RETURN VALUE
-#    255 - Ошибка: аргумент(ы) отсутствуют
-#     0  - Выполнено успешно
+#    iErrorEmptyOrMissingArgument - аргумент(ы) отсутствуют
+#     0                           - Выполнено успешно
 #  EXAMPLE
 #    local sResult='true:foo bar:1024:768'
 #    local sTxt b iXo iYo ini
@@ -421,7 +421,7 @@ udfSetVarFromIni() {
  local ini sSection
  #
  ini="$1"
- [ -n "$2" ] && sSection="$2"
+ [[ -n $2 ]] && sSection="$2"
  shift 2
 
  udfSetVarFromCsv ";$(udfIniGroupSection2Csv $ini $sSection);" $*
@@ -440,8 +440,8 @@ udfSetVarFromIni() {
 #  OUTPUT
 #              строка ключей
 #  RETURN VALUE
-#     0  - Выполнено успешно
-#    255 - Ошибка: аргумент отсутствует
+#    0                            - Выполнено успешно
+#    iErrorEmptyOrMissingArgument - Ошибка: аргумент отсутствует
 #  EXAMPLE
 #    local csv='sTxt="foo bar";b=true;iXo=1921;iYo=1080;' sResult
 #    udfCsvKeys "$csv" | xargs >| grep "^sTxt b iXo iYo$"                       #? true
@@ -505,13 +505,14 @@ udfCsvKeys2Var() {
 #           "[<section>];<key>=<value>;..."
 #  RETURN VALUE
 #    0  - Выполнено успешно
-#    iErrorNotExistNotCreated     -
+#    iErrorNotExistNotCreated     - путь не существует и не создан
 #    iErrorEmptyOrMissingArgument - аргументы отсутствуют
 #  EXAMPLE
 #    ## TODO дополнить тесты по второму аргументу
-#    local ini csv='[];void=0;[exec]:;"TZ_bashlyk_&#61_UTC date -R --date_bashlyk_&#61_'@12345679'";sUname_bashlyk_&#61_"$_bashlyk_&#40_uname_bashlyk_&#41_";:[exec][main];sTxt="foo = bar";b=true;iXo=1921;[replace];"after replacing";[unify];*.bak;*.tmp;*~;[acc];;*.bak;*.tmp;;*.bak;*.tmp;*~;'
+#    local ini csv='[];void=0;[exec]:;"TZ_bashlyk_&#61_UTC date -R --date_bashlyk_&#61_'@12345679'";sUname_bashlyk_&#61_"$_bashlyk_&#40_uname_bashlyk_&#41_";:[exec];[main];sTxt="foo = bar";b=true;iXo=1921;[replace];"after replacing";[unify];*.bak;*.tmp;*~;[acc];;*.bak;*.tmp;;*.bak;*.tmp;*~;'
 #    ini=$(mktemp --suffix=.ini || tempfile -s .test.ini)                       #? true
 #    udfIniWrite $ini "$csv"                                                    #? true
+#    cat $ini
 #    grep -E '^\[unify\]$'                      $ini                            #? true
 #    grep -E 'sTxt.*=.*foo.*=.*bar$'            $ini                            #? true
 #    grep -E 'b.*=.*true$'                      $ini                            #? true
@@ -539,13 +540,13 @@ udfIniWrite() {
   udfSetLastError iErrorNotExistNotCreated "$ini"
   return $?
  }
- [ -s "$ini" ] && mv -f "$ini" "${ini}.bak"
+ [[ -s $ini ]] && mv -f "$ini" "${ini}.bak"
  csv="$(echo "$s" | sed -e "s/[;]\+/;/g" -e "s/\(:\?\[\)/;;\1/g" -e "s/\[\]//g" | tr -d '"')"
  cIFS=$IFS; IFS=';'
  for s in $csv; do
   k="${s%%=*}"
   v="${s#*=}"
-  [ "$k" = "$v" ] && echo "$v" || printf "\t${k}\t=\t${v}\n"
+  [[ "$k" = "$v" ]] && echo "$v" || printf "\t${k}\t=\t${v}\n"
  ## TODO продумать перенос уничтожения автоключей в udfBashlykUnquote
  done | sed -e "s/\t\?_bashlyk_ini_.*_autoKey_[0-9]\+\t\?=\t\?//g" | udfBashlykUnquote > "$ini"
  IFS=$cIFS
@@ -569,8 +570,8 @@ udfIniWrite() {
 #            начала файла до первого заголовка секции "[<...>]" данных или до
 #            конца конфигурационного файла, если секций нет вообще
 #  RETURN VALUE
-#     0  - Выполнено успешно
-#    255 - Ошибка: аргументы отсутствуют
+#    0                            - Выполнено успешно
+#    iErrorEmptyOrMissingArgument - аргументы отсутствуют
 #  EXAMPLE
 #    local csv='sTxt="foo bar";b=true;iXo=1921;iYo=999;' csvResult
 #    local re='b=.*;_b.*auto.*0="= value".*auto.*1=.*key = value".*sTxt=".*ar";'
@@ -633,9 +634,9 @@ udfIniChange() {
 #     !       - замена данных (активная секция)
 #
 #  RETURN VALUE
-#     0  - Выполнено успешно
-#    200 - невалидный идентификатор переменной для приема значения
-#    255 - Ошибка: аргументы отсутствуют
+#    0                            - Выполнено успешно
+#    iErrorNonValidVariable       - невалидный идентификатор переменной
+#    iErrorEmptyOrMissingArgument - Ошибка: аргументы отсутствуют
 #  EXAMPLE
 #    local sTxt="foo = bar" b=true iXo=1921 iYo=1080 ini iniChild
 #    local exec replace unify acc sVoid=void sMain='sTxt;b;iXo'
@@ -752,8 +753,8 @@ udfIni() {
 #               По умолчанию и всегда выполняется сериализация "безымянной"
 #               секции
 #  RETURN VALUE
-#     0  - Выполнено успешно
-#    255 - Ошибка: аргументы отсутствуют или файл конфигурации не найден
+#    0                            - Выполнено успешно
+#    iErrorEmptyOrMissingArgument - аргументы отсутствуют или файл конфигурации не найден
 #  EXAMPLE
 #    local csv='b=true;_bashlyk_ini_test_autoKey_0="iXo Xo = 19";_bashlyk_ini_test_autoKey_1="simple line";iXo=1921;iYo=1080;sTxt="foo bar";'
 #    local sTxt="foo bar" b=true iXo=1921 iYo=1080 ini iniChild
@@ -793,8 +794,8 @@ udfGetIni() {
 #              помещён в соответствующую переменную
 #    section - список имен секций, данные которых нужно получить
 #  RETURN VALUE
-#     0  - Выполнено успешно
-#    255 - Ошибка: аргументы отсутствуют
+#    0                            - Выполнено успешно
+#    iErrorEmptyOrMissingArgument - аргументы отсутствуют
 #  EXAMPLE
 #    #пример приведен в описании udfGetIni
 #  SOURCE
@@ -843,9 +844,9 @@ udfGetCsvSection() {
 #              соответствующую переменную.
 #  RETURN VALUE
 #     0  - Выполнено успешно
-#     2  - Ошибка: аргумент <varname> не является валидным идентификатором
-#          переменной
-#    255 - отсутствует аргумент
+#    iErrorNonValidVariable       - аргумент не является валидным
+#                                   идентификатором переменной
+#    iErrorEmptyOrMissingArgument - отсутствует аргумент
 #  EXAMPLE
 #    local csv='[];a=b;c=d e;[s1];a=f;c=g h;[s2];a=k;c=l m;' csvResult
 #    udfGetCsvSection2Var csvResult "$csv"
@@ -856,8 +857,8 @@ udfGetCsvSection() {
 #    echo $csvResult >| grep '^a=k;c=l m;$'                                     #? true
 #  SOURCE
 udfGetCsvSection2Var() {
- [ -n "$2" ] || return 255
- udfIsValidVariable $1 || return 2
+ [ -n "$2" ] || return $(_ iErrorEmptyOrMissingArgument)
+ udfIsValidVariable $1 || return $?
  eval 'export ${1}="$(udfGetCsvSection "$2" $3)"'
  return 0
 }
@@ -926,7 +927,7 @@ udfCsvHash2Raw() {
  do
   s="${s#${sUnnamedKeyword}[0-9]*=}"
   s="${s##*_bashlyk_csv_record=}"
-  [ -n "$s" ] || continue
+  [[ -n $s ]] || continue
   csv+="${s};"
  done
  IFS=$cIFS
@@ -952,8 +953,9 @@ udfCsvHash2Raw() {
 #    строки CSV, разделенных ';', каждое поле которой содержит данные в формате
 #    "<ключ>=<значение>" согласно данных строки секции
 #  RETURN VALUE
-#     0  - Выполнено успешно
-#    255 - Ошибка: аргумент отсутствует или файл конфигурации не найден
+#    0                            - Выполнено успешно
+#    iErrorEmptyOrMissingArgument - аргумент отсутствует или файл конфигурации
+#                                   не найден
 #  EXAMPLE
 #    local csv='sTxt="foo bar";b=true;iXo=1921;iYo=1080;_bashlyk_ini_test_autoKey_0="simple line";'
 #    local sTxt="foo bar" b=true iXo=1921 iYo=1080 ini iniChild csvResult
@@ -967,7 +969,7 @@ udfCsvHash2Raw() {
 #    rm -f $ini
 #  SOURCE
 udfIniSection2Csv() {
- [ -n "$1" -a -f "$1" ] || return 255
+ [[ -n $1 && -f $1 ]] || return $(_ iErrorEmptyOrMissingArgument)
  mawk -f ${_bashlyk_pathLib}/inisection2csv.awk -v "sTag=$2" -- $1
  return 0
 }
@@ -987,15 +989,15 @@ udfIniSection2Csv() {
 #              идентификатора результат будет выдан на стандартный вывод
 #  RETURN VALUE
 #     0  - Выполнено успешно
-#     2  - Ошибка: аргумент <varname> не является валидным идентификатором
-#          переменной
-#    255 - Ошибка: аргумент отсутствует или файл конфигурации не найден
+#    iErrorNonValidVariable       - аргумент <varname> не является валидным
+#                                   идентификатором переменной
+#    iErrorEmptyOrMissingArgument - аргумент отсутствует или файл конфигурации не найден
 #  EXAMPLE
 #    #пример приведен в описании udfIniGroupSection2Csv
 #  SOURCE
 udfIniSection2CsvVar() {
- [ -n "$2" -a -f "$2" ] || return 255
- udfIsValidVariable $1  || return 2
+ [[ -n $2 && -f $2 ]] || return $(_ iErrorEmptyOrMissingArgument)
+ udfIsValidVariable $1 || return $?
  #udfThrow "Error: required valid variable name \"$1\""
  eval 'export ${1}="$(udfIniSection2Csv "$2" $3)"'
  return 0
@@ -1026,9 +1028,9 @@ udfIniSection2CsvVar() {
 #              разделенный символом ";" строка, в полях которого содержатся
 #              конфигурационные данные в формате "<key>=<value>;..."
 #  RETURN VALUE
-#     0  - Выполнено успешно
-#     1  - Ошибка: файл конфигурации не найден
-#    255 - Ошибка: аргумент отсутствует
+#    0                            - Выполнено успешно
+#    iErrorNoSuchFileOrDir        - файл конфигурации не найден
+#    iErrorEmptyOrMissingArgument - аргумент отсутствует
 #  EXAMPLE
 #    local csv='b=true;_bashlyk_ini_test_autoKey_0="iXo Xo = 19";_bashlyk_ini_test_autoKey_1="simple line";iXo=1921;iYo=1080;sTxt="foo bar";'
 #    local sTxt="foo bar" b=true iXo=1921 iYo=1080 ini iniChild
@@ -1044,7 +1046,7 @@ udfIniSection2CsvVar() {
 #    rm -f $iniChild $ini
 #  SOURCE
 udfIniGroupSection2Csv() {
- [ -n "$1" ] || return 255
+ [[ -n $1 ]] || return $(_ iErrorEmptyOrMissingArgument)
  #
  local aini csvIni csvResult
  local ini pathIni s
@@ -1053,15 +1055,14 @@ udfIniGroupSection2Csv() {
  ini=''
  pathIni="$_bashlyk_pathIni"
  #
- [ "$1"  = "${1##*/}" -a -f ${pathIni}/$1 ] \
-  || pathIni=
- [ "$1"  = "${1##*/}" -a -f $1 ] && pathIni=$(pwd)
- [ "$1" != "${1##*/}" -a -f $1 ] && pathIni=$(dirname $1)
- [ -n "$2" ] && sTag="$2"
+ [[ $1  = ${1##*/} && -f ${pathIni}/$1 ]] || pathIni=
+ [[ $1  = ${1##*/} && -f $1 ]] && pathIni=$(pwd)
+ [[ $1 != ${1##*/} && -f $1 ]] && pathIni=$(dirname $1)
+ [[ -n $2 ]] && sTag="$2"
  #
- if [ -z "$pathIni" ]; then
-  [ -f "/etc/${_bashlyk_pathPrefix}/$1" ] \
-   && pathIni="/etc/${_bashlyk_pathPrefix}" || return 1
+ if [[ -z $pathIni ]]; then
+  [[ -f "/etc/${_bashlyk_pathPrefix}/$1" ]] \
+   && pathIni="/etc/${_bashlyk_pathPrefix}" || return $(_ iErrorNoSuchFileOrDir)
  fi
  #
  aini=$(echo "${1##*/}" |\
@@ -1071,9 +1072,10 @@ udfIniGroupSection2Csv() {
  GLOBIGNORE="*:?"
 
  for s in $aini; do
-  [ -n "$s" ] || continue
-  [ -n "$ini" ] && ini="${s}.${ini}" || ini="$s"
-  [ -s "${pathIni}/${ini}" ] && csvIni+=";$(udfIniSection2Csv "${pathIni}/${ini}" "$sTag");"
+  [[ -n $s   ]] || continue
+  [[ -n $ini ]] && ini="${s}.${ini}" || ini="$s"
+  [[ -s "${pathIni}/${ini}" ]] && \
+   csvIni+=";$(udfIniSection2Csv "${pathIni}/${ini}" "$sTag");"
  done
  GLOBIGNORE=$sGlobIgnore
  udfCsvOrder "$csvIni"
@@ -1095,16 +1097,16 @@ udfIniGroupSection2Csv() {
 #              конфигурационные данные в формате "<key>=<value>;..." будет
 #              помещён в соответствующую переменную
 #  RETURN VALUE
-#     0  - Выполнено успешно
-#     2  - Ошибка: аргумент <varname> не является валидным идентификатором
-#          переменной
-#    255 - Ошибка: аргумент отсутствует
+#    0                            - Выполнено успешно
+#    iErrorNonValidVariable       - аргумент <varname> не является валидным
+#                                   идентификатором переменной
+#    iErrorEmptyOrMissingArgument - аргумент отсутствует
 #  EXAMPLE
 #    #пример приведен в описании udfIniGroupSection2Csv
 #  SOURCE
 udfIniGroupSection2CsvVar() {
- [ -n "$2" ] || return 255
- udfIsValidVariable $1 || return 2
+ [[ -n $2 ]] || return $(_ iErrorEmptyOrMissingArgument)
+ udfIsValidVariable $1 || return $?
  eval 'export ${1}="$(udfIniGroupSection2Csv "$2" $3)"'
  return 0
 }
@@ -1126,10 +1128,9 @@ udfIniGroupSection2CsvVar() {
 #    строки CSV, разделенных ';', каждое поле которой содержит данные в формате
 #    "[<секция>];<ключ>=<значение>" согласно данных секции.
 #  RETURN VALUE
-#     0  - Выполнено успешно
-#     2  - Ошибка: аргумент <varname> не является валидным идентификатором
-#          переменной
-#    255 - Ошибка: аргумент отсутствует или файл конфигурации не найден
+#    0                            - Выполнено успешно
+#    iErrorEmptyOrMissingArgument - аргумент отсутствует или файл конфигурации
+#                                   не найден
 #  EXAMPLE
 #    local ini re
 #    re='sTxt="-S-(da.*-R).*y_1="^_s.*e^_";\[exec\].*=$(.*\[ -n "$sUname" \] .*'
@@ -1154,7 +1155,7 @@ udfIniGroupSection2CsvVar() {
 #    rm -f $ini
 #  SOURCE
 udfIni2Csv() {
- [ -n "$1" -a -f "$1" ] || return 255
+ [[ -n $1 && -f $1 ]] || return $(_ iErrorEmptyOrMissingArgument)
  mawk -f ${_bashlyk_pathLib}/ini2csv.awk -- $1
  return 0
 }
@@ -1170,16 +1171,16 @@ udfIni2Csv() {
 #              соответствующую переменную.
 #    file    - имя файла конфигурации
 #  RETURN VALUE
-#     0  - Выполнено успешно
-#     2  - Ошибка: аргумент <varname> не является валидным идентификатором
-#          переменной
-#    255 - Ошибка: аргумент отсутствует
+#    0                            - Выполнено успешно
+#    iErrorNonValidVariable       - аргумент <varname> не является валидным
+#                                   идентификатором переменной
+#    iErrorEmptyOrMissingArgument - аргумент отсутствует
 #  EXAMPLE
 #    #пример приведен в описании udfIni2Csv
 #  SOURCE
 udfIni2CsvVar() {
- [ -n "$2" ] || return 255
- udfIsValidVariable $1 || return 2
+ [[ -n $2 ]] || return $(_ iErrorEmptyOrMissingArgument)
+ udfIsValidVariable $1 || return $?
  #udfThrow "Error: required valid variable name \"$1\""
  eval 'export ${1}="$(udfIni2Csv "$2")"'
  return 0
@@ -1207,9 +1208,9 @@ udfIni2CsvVar() {
 #              разделенный символом ";" CSV-строка, в полях которого содержатся
 #              конфигурационные данные в формате "[<section>];<key>=<value>;..."
 #  RETURN VALUE
-#     0  - Выполнено успешно
-#    185 - файл конфигурации не найден
-#    255 - Ошибка: аргумент отсутствует
+#    0                            - Выполнено успешно
+#    iErrorNoSuchFileOrDir        - файл конфигурации не найден
+#    iErrorEmptyOrMissingArgument - аргумент отсутствует
 #  EXAMPLE
 #    local re='\[test\];_b.*d=;sTxt=foo;.*autoKey_0=.*_b.*d=;.*foo bar.*o=1080;'
 #    local sTxt=foo b=false iXo=1921 iYo=80 ini iniChild csvResult
@@ -1235,8 +1236,8 @@ udfIniGroup2Csv() {
  ## TODO встроить защиту от подстановки конфигурационного файла (по владельцу)
  #
  [[ $1  = ${1##*/} && -f $(_ pathIni)/$1 ]] && pathIni=$(_ pathIni)
- [[ $1  = ${1##*/} && -f $1            ]] && pathIni=$(pwd)
- [[ $1 != ${1##*/} && -f $1            ]] && pathIni=$(dirname $1)
+ [[ $1  = ${1##*/} && -f $1              ]] && pathIni=$(pwd)
+ [[ $1 != ${1##*/} && -f $1              ]] && pathIni=$(dirname $1)
  #
  if [[ -z $pathIni ]]; then
   [[ -f "/etc/$(_ pathPrefix)/$1" ]] && pathIni="/etc/$(_ pathPrefix)"
@@ -1304,16 +1305,16 @@ udfIniGroup2Csv() {
 #              соответствующую переменную.
 #    file    - имя файла конфигурации
 #  RETURN VALUE
-#     0  - Выполнено успешно
-#     2  - Ошибка: аргумент <varname> не является валидным идентификатором
-#          переменной
-#    255 - Ошибка: аргумент отсутствует
+#    0                            - Выполнено успешно
+#    iErrorNonValidVariable       - аргумент <varname> не является валидным
+#                                   идентификатором переменной
+#    iErrorEmptyOrMissingArgument - аргумент отсутствует
 #  EXAMPLE
 #    #пример приведен в описании udfIniGroup2Csv
 #  SOURCE
 udfIniGroup2CsvVar() {
- [ -n "$2" ] || return 255
- udfIsValidVariable "$1" || return 2
+ [[ -n $2 ]] || return $(_ iErrorEmptyOrMissingArgument)
+ udfIsValidVariable $1 || return $?
  eval 'export ${1}="$(udfIniGroup2Csv "$2")"'
  return 0
 }
@@ -1330,8 +1331,8 @@ udfIniGroup2CsvVar() {
 #  INPUTS
 #    распределение переменных по указанным секциям (см. udfIni)
 #  RETURN VALUE
-#     0  - Выполнено успешно
-#    255 - Ошибка: аргумент отсутствует
+#    0                            - Выполнено успешно
+#    iErrorEmptyOrMissingArgument - аргумент отсутствует
 #  EXAMPLE
 #   local sVoid="verbose;direct;log;" sMain="source;destination"
 #   local unify="*.tmp,*~,*.bak" replace="replace" unify="unify" acc="acc"
@@ -1358,7 +1359,7 @@ udfOptions2Ini() {
   sClass="${s#*:}"
   sData=${sData/:/}
   sData=${sData/[=\-+\!]/}
-  [ "$sClass" = "$sData" ] && sClass=
+  [[ $sClass = $sData ]] && sClass=
   csv=""
   cIFS=$IFS
   IFS=';'
