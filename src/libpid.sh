@@ -17,7 +17,7 @@
 #  SOURCE
 [ -n "$BASH_VERSION" ] \
  || eval 'echo "bash interpreter for this script ($0) required ..."; exit 255'
-[[ -n $_BASHLYK_LIBPID ]] && return 0 || _BASHLYK_LIBPID=1
+[[ -n "$_BASHLYK_LIBPID" ]] && return 0 || _BASHLYK_LIBPID=1
 #******
 #****** libpid/External Modules
 # DESCRIPTION
@@ -65,8 +65,8 @@
 #    udfCheckStarted $$ $0                                                      #? $_bashlyk_iErrorCurrentProcess
 #  SOURCE
 udfCheckStarted() {
- [[ -n $*   ]] || return $(_ iErrorEmptyOrMissingArgument)
- [[ $$ = $1 ]] && return $(_ iErrorCurrentProcess)
+ [[ -n "$*"      ]] || return $(_ iErrorEmptyOrMissingArgument)
+ [[ "$$" == "$1" ]] && return $(_ iErrorCurrentProcess)
  local pid="$1"
  shift
  ps -p $pid -o args= | grep "${*}$" >/dev/null 2>&1 \
@@ -97,17 +97,17 @@ udfCheckStarted() {
 #  SOURCE
 udfSetPid() {
  local fnPid pid
- if [[ -n $_bashlyk_sArg ]]; then
+ if [[ -n "$_bashlyk_sArg" ]]; then
   fnPid="${_bashlyk_pathRun}/$(udfGetMd5 ${_bashlyk_s0} ${_bashlyk_sArg}).pid"
  else
   fnPid="${_bashlyk_pathRun}/${_bashlyk_s0}.pid"
  fi
- mkdir -p ${_bashlyk_pathRun} || {
+ mkdir -p "${_bashlyk_pathRun}" || {
   udfSetLastError iErrorNotExistNotCreated "${_bashlyk_pathRun}"
   return $?
  }
- [[ -f $fnPid ]] && pid=$(head -n 1 "$fnPid")
- if [[ -n $pid ]]; then
+ [[ -f "$fnPid" ]] && pid=$(head -n 1 "$fnPid")
+ if [[ -n "$pid" ]]; then
   udfCheckStarted $pid ${_bashlyk_s0} ${_bashlyk_sArg} && {
    echo "$0 : Already started with pid = $pid"
    udfLastError iErrorAlreadyStarted "$pid"
@@ -163,8 +163,8 @@ udfClean() {
  local a="${_bashlyk_afnClean} ${_bashlyk_apathClean} $*"
  for fn in $a
  do
-  [[ -n $fn && -f "$fn" ]] && rm -f $1 "$fn"
-  [[ -n $fn && -d "$fn" ]] && rmdir "$fn" >/dev/null 2>&1
+  [[ -n "$fn" && -f "$fn" ]] && rm -f $1 "$fn"
+  [[ -n "$fn" && -d "$fn" ]] && rmdir "$fn" >/dev/null 2>&1
  done
  return $?
 }

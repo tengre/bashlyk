@@ -19,7 +19,7 @@
 #  SOURCE
 [ -n "$BASH_VERSION" ] \
  || eval 'echo "bash interpreter for this script ($0) required ..."; exit 255'
-[[ -n $_BASHLYK_LIBSTD ]] && return 0 || _BASHLYK_LIBSTD=1
+[[ -n "$_BASHLYK_LIBSTD" ]] && return 0 || _BASHLYK_LIBSTD=1
 #******
 #****v* libstd/Init section
 #  DESCRIPTION
@@ -146,12 +146,12 @@ udfDate() {
 #    echo body | udfEcho - subject | tr -d '\n' >| grep -w "^subject----body$"  #? true
 #  SOURCE
 udfEcho() {
- if [[ $1 = "-" ]]; then
+ if [[ "$1" == "-" ]]; then
   shift
-  [[ -n $1 ]] && printf "%s\n----\n" "$*"
+  [[ -n "$1" ]] && printf "%s\n----\n" "$*"
   cat
  else
-  [[ -n $1 ]] && echo $*
+  [[ -n "$1" ]] && echo $*
  fi
 }
 #******
@@ -178,7 +178,7 @@ udfEcho() {
 #    _ emailOptions "$emailOptions"
 #  SOURCE
 udfMail() {
- [[ -n $1 ]] || {
+ [[ -n "$1" ]] || {
   udfSetLastError iErrorEmptyOrMissingArgument "udfMail"
   return $?
  }
@@ -190,8 +190,8 @@ udfMail() {
   return $?
  }
 
- [[ -n $sTo ]] || sTo=$_bashlyk_sUser
- [[ -n $sTo ]] || sTo=postmaster
+ [[ -n "$sTo" ]] || sTo=$_bashlyk_sUser
+ [[ -n "$sTo" ]] || sTo=postmaster
 
  {
   case "$1" in
@@ -199,7 +199,7 @@ udfMail() {
      udfEcho $*
      ;;
    *)
-     [[ -s $* ]] && cat "$*" || echo "$*"
+     [[ -s "$*" ]] && cat "$*" || echo "$*"
      ;;
   esac
  } | mail -e -s "${_bashlyk_emailSubj}" $_bashlyk_emailOptions $sTo
@@ -209,7 +209,7 @@ udfMail() {
 #******
 #****f* libstd/udfMessage
 #  SYNOPSIS
-#    udfMessage [[-] args]
+#    udfMessage [-] [args]
 #  DESCRIPTION
 #    Передача сообщения владельцу процесса по одному из доступных способов:
 #    службы уведомлений рабочего стола X-Window, почты или утилитой write
@@ -236,7 +236,7 @@ udfMessage() {
  udfEcho $* | tee -a $fnTmp | head -n $i
 
  udfNotify2X $fnTmp || udfMail $fnTmp || {
-  [[ -n $_bashlyk_sLogin ]] && cat $fnTmp | write $_bashlyk_sLogin
+  [[ -n "$_bashlyk_sLogin" ]] && cat $fnTmp | write $_bashlyk_sLogin
  }
  i=$?
  rm -f $fnTmp
@@ -266,19 +266,19 @@ udfMessage() {
 #    [[ $rc -eq 0 ]] && sleep 2
 #  SOURCE
 udfNotify2X() {
- [[ -n $1 ]] || {
+ [[ -n "$1" ]] || {
   udfSetLastError iErrorEmptyOrMissingArgument "udfNotify2X"
   return $?
  }
  #
  local iTimeout=8 s
 
- [[ -s $* ]] && s="$(cat "$*")" || s="$(echo -e "$*")"
+ [[ -s "$*" ]] && s="$(cat "$*")" || s="$(echo -e "$*")"
 
  for cmd in notify-send kdialog zenity xmessage; do
   udfNotifyCommand $cmd "$(_ emailSubj)" "$s" "$iTimeout" && break
  done
- [[ $? = 0 ]] || udfSetLastError iErrorCommandNotFound "udfNotifyCommand"
+ (( $? == 0 )) || udfSetLastError iErrorCommandNotFound "udfNotifyCommand"
  return $?
 }
 #******
@@ -301,27 +301,27 @@ udfGetXSessionProperties() {
  a="x-session-manager gnome-session gnome-session-flashback lxsession mate-session-manager openbox razorqt-session xfce4-session"
  user=$(_ sUser)
  #
- [[ $user = root && -n "$SUDO_USER" ]] && user=$SUDO_USER
+ [[ "$user" == "root" && -n "$SUDO_USER" ]] && user=$SUDO_USER
 
  a+=" $(grep "Exec=.*" /usr/share/xsessions/*.desktop 2>/dev/null | cut -f 2 -d"=" | sort | uniq )"
 
  for s in $a; do
   for pid in $(ps -C ${s##*/} -o pid=); do
    userX=$(stat -c %U /proc/$pid)
-   [[ -n      $userX ]] || continue
-   [[ $user = $userX || $user = root ]] || continue
+   [[ -n "$userX" ]] || continue
+   [[ "$user" == "$userX" || "$user" == "root" ]] || continue
    ## TODO если много X-сессий - позволить rootу выбирать оптимальный
    sB="$(grep -az DBUS_SESSION_BUS_ADDRESS= /proc/${pid}/environ)"
    sD="$(grep -az DISPLAY= /proc/${pid}/environ)"
    sX="$(grep -az XAUTHORITY= /proc/${pid}/environ)"
-   [[ -n $sB && -n $sD && -n $sX ]] && break 2
+   [[ -n "$sB" && -n "$sD" && -n "$sX" ]] && break 2
   done
  done
 
- [[ -n $userX ]] || return $(_ iErrorXsessionNotFound)
- [[ $user = $userX || $user = root ]] || return $(_ iErrorNotPermitted)
- [[ -n $sB && -n $sD && -n $sX ]] || return $(_ iErrorEmptyOrMissingArgument)
- [[ "$(_ sUser)" = root ]] && sudo="sudo -u $userX" || sudo=''
+ [[ -n "$userX" ]] || return $(_ iErrorXsessionNotFound)
+ [[ "$user" == "$userX" || "$user" == "root" ]] || return $(_ iErrorNotPermitted)
+ [[ -n "$sB" && -n "$sD" && -n "$sX" ]] || return $(_ iErrorEmptyOrMissingArgument)
+ [[ "$(_ sUser)" == "root" ]] && sudo="sudo -u $userX" || sudo=''
  _ sXSessionProp "$sudo $sD $sX $sB"
  return 0
 }
@@ -362,14 +362,14 @@ udfGetXSessionProperties() {
 #    echo $? >| grep "$(_ iErrorCommandNotFound)\|0"                            #? true
 #  SOURCE
 udfNotifyCommand() {
- [[ -n $4 ]] || {
+ [[ -n "$4" ]] || {
   udfSetLastError iErrorEmptyOrMissingArgument "udfNotifyCommand"
   return $?
  }
  #
  local h t rc X
  udfIsNumber "$4" && t=$4 || t=8
- [[ -n $(_ sXSessionProp) ]] || udfGetXSessionProperties || return $?
+ [[ -n "$(_ sXSessionProp)" ]] || udfGetXSessionProperties || return $?
  X=$(_ sXSessionProp)
  #
  declare -A h=(                                                                                \
@@ -379,10 +379,10 @@ udfNotifyCommand() {
   [xmessage]="$X $1 -center -timeout $t \"$(printf "$2 via $1\n\n$3\n")\" 2>/dev/null"         \
  )
 
- if [[ -x $(which "$1") ]]; then
+ if [[ -x "$(which "$1")" ]]; then
   eval "${h[$1]}"
   rc=$?
-  [[ $1 = zenity && $rc = 5 ]] && rc=0
+  [[ "$1" == "zenity" && "$rc" == "5" ]] && rc=0
  else
   rc=$(_ iErrorCommandNotFound)
   udfSetLastError $rc "$1"
@@ -414,13 +414,13 @@ udfNotifyCommand() {
 #  SOURCE
 udfWarn() {
  local s
- [[ -n $* ]] && s="$*" || s="$(_ sLastError)"
- [[ $_bashlyk_bNotUseLog -ne 0 ]] && udfEcho $s || udfMessage $s
+ [[ -n "$*" ]] && s="$*" || s="$(_ sLastError)"
+ [[ "$_bashlyk_bNotUseLog" != "0" ]] && udfEcho $s || udfMessage $s
 }
 #******
 #****f* libstd/udfThrow
 #  SYNOPSIS
-#    udfThrow [-] args
+#    udfThrow [-] errNo errMessage
 #  DESCRIPTION
 #    Вывод аварийного сообщения с завершением работы. Если терминал отсутствует,
 #    то сообщение передается системе уведомлений.
@@ -437,7 +437,7 @@ udfWarn() {
 #  SOURCE
 udfThrow() {
  udfWarn $*
- [[ $(_ iLastError) -ne 0 ]] && exit $(_ iLastError) || exit 255
+ (( $(_ iLastError) != 0 )) && exit $(_ iLastError) || exit 255
 }
 #******
 #****f* libstd/udfOnEmptyVariable
@@ -470,10 +470,10 @@ udfOnEmptyVariable() {
    s='Throw'; shift;;
  esac
  for bashlyk_tfAFyKrLgSeOatp2_s in $*; do
-  [[ -z ${!bashlyk_tfAFyKrLgSeOatp2_s} ]] \
+  [[ -z "${!bashlyk_tfAFyKrLgSeOatp2_s}" ]] \
    && bashlyk_EysrBRwAuGMRNQoG_a+=" $bashlyk_tfAFyKrLgSeOatp2_s"
  done
- [[ -n $bashlyk_EysrBRwAuGMRNQoG_a ]] && {
+ [[ -n "$bashlyk_EysrBRwAuGMRNQoG_a" ]] && {
   udf${s} "Error: Variable(s) or option(s) ($bashlyk_EysrBRwAuGMRNQoG_a ) is empty..."
   return $(_ iErrorEmptyOrMissingArgument)
  }
@@ -575,9 +575,9 @@ udfShowVariable() {
 #    udfIsNumber                                                                #? $_bashlyk_iErrorEmptyOrMissingArgument
 #  SOURCE
 udfIsNumber() {
- [[ -n $1 ]] || return $(_ iErrorEmptyOrMissingArgument)
+ [[ -n "$1" ]] || return $(_ iErrorEmptyOrMissingArgument)
  local s
- [[ -n $2 ]] && s="[$2]?"
+ [[ -n "$2" ]] && s="[$2]?"
  echo "$1" | grep -i -E "^[[:digit:]]+${s}$" >/dev/null 2>&1 || \
   return $(_ iErrorNonValidArgument)
  return 0
@@ -602,7 +602,7 @@ udfIsNumber() {
 #    udfIsValidVariable "k1"                                                    #? true
 #  SOURCE
 udfIsValidVariable() {
- [[ -n $1 ]] || return $(_ iErrorEmptyOrMissingArgument)
+ [[ -n "$1" ]] || return $(_ iErrorEmptyOrMissingArgument)
  echo "$1" | grep -E '^[_a-zA-Z]+[_a-zA-Z0-9]+?$' >/dev/null 2>&1 || \
   return $(_ iErrorNonValidVariable)
  return 0
@@ -622,7 +622,7 @@ udfIsValidVariable() {
 #    udfQuoteIfNeeded two words >| grep '^".*"$'                                #? true
 #  SOURCE
 udfQuoteIfNeeded() {
- [[ -n $(echo "$*" | grep -e [[:space:]]) ]] && echo "\"$*\"" || echo "$*"
+ [[ -n "$(echo "$*" | grep -e [[:space:]])" ]] && echo "\"$*\"" || echo "$*"
 }
 #******
 #****f* libstd/udfWSpace2Alias
@@ -740,7 +740,7 @@ udfMakeTemp() {
             bashlyk_sVar_ioAUaE5R="$1"
             udfIsNumber "$2"
             bashlyk_rc_ioAUaE5R=$?
-            if [[ -z $3 && -n $2 && $bashlyk_rc_ioAUaE5R -eq 0 ]]; then
+            if [[ -z "$3" && -n "$2" && $bashlyk_rc_ioAUaE5R -eq 0 ]]; then
              # oldstyle
              bashlyk_octMode_ioAUaE5R="$2"
              bashlyk_sVar_ioAUaE5R=''
@@ -750,55 +750,55 @@ udfMakeTemp() {
   esac
  done
 
- if [[ -n $bashlyk_sVar_ioAUaE5R ]]; then
+ if [[ -n "$bashlyk_sVar_ioAUaE5R" ]]; then
   udfIsValidVariable "$bashlyk_sVar_ioAUaE5R" || return $?
  else
   bashlyk_bNoKeep_ioAUaE5R=false
  fi
 
- if [[ -f $(which mktemp) ]]; then
+ if [[ -f "$(which mktemp)" ]]; then
   bashlyk_sCreateMode_ioAUaE5R=mktemp
- elif [[ -f $(which tempfile) ]]; then
-  [[ -z $bashlyk_optDir_ioAUaE5R ]] \
+ elif [[ -f "$(which tempfile)" ]]; then
+  [[ -z "$bashlyk_optDir_ioAUaE5R" ]] \
    && bashlyk_sCreateMode_ioAUaE5R=tempfile \
    || bashlyk_sCreateMode_ioAUaE5R=direct
  fi
 
  case "$bashlyk_sCreateMode_ioAUaE5R" in
     direct)
-   [[ -n $bashlyk_path_ioAUaE5R ]] \
+   [[ -n "$bashlyk_path_ioAUaE5R" ]] \
     && bashlyk_s_ioAUaE5R="${bashlyk_path_ioAUaE5R}/" \
     || bashlyk_s_ioAUaE5R="/tmp/"
    bashlyk_s_ioAUaE5R+="${bashlyk_sPrefix_ioAUaE5R}${$}${bashlyk_sSuffix_ioAUaE5R}"
-   [[ -n $bashlyk_optDir_ioAUaE5R ]] \
+   [[ -n "$bashlyk_optDir_ioAUaE5R" ]] \
     && mkdir -p $bashlyk_s_ioAUaE5R \
     || touch $bashlyk_s_ioAUaE5R
-   [[ -n $bashlyk_octMode_ioAUaE5R ]] \
+   [[ -n "$bashlyk_octMode_ioAUaE5R" ]] \
     && chmod $bashlyk_octMode_ioAUaE5R $bashlyk_s_ioAUaE5R
   ;;
     mktemp)
-   if [[ -n $bashlyk_path_ioAUaE5R ]]; then
+   if [[ -n "$bashlyk_path_ioAUaE5R" ]]; then
     mkdir -p ${bashlyk_path_ioAUaE5R}
     bashlyk_path_ioAUaE5R="--tmpdir=${bashlyk_path_ioAUaE5R}"
    else
     bashlyk_path_ioAUaE5R="--tmpdir=/tmp"
    fi
-   if [[ -n $bashlyk_sPrefix_ioAUaE5R ]]; then
+   if [[ -n "$bashlyk_sPrefix_ioAUaE5R" ]]; then
     bashlyk_sPrefix_ioAUaE5R=$(echo $bashlyk_sPrefix_ioAUaE5R | tr -d '/')
    fi
-   if [[ -n ${bashlyk_sSuffix_ioAUaE5R} ]]; then
+   if [[ -n "${bashlyk_sSuffix_ioAUaE5R}" ]]; then
     bashlyk_sSuffix_ioAUaE5R="--suffix=$(echo ${bashlyk_sSuffix_ioAUaE5R} | tr -d '/')"
    fi
    bashlyk_s_ioAUaE5R=$(mktemp $bashlyk_path_ioAUaE5R $bashlyk_optDir_ioAUaE5R \
     ${bashlyk_sSuffix_ioAUaE5R} "${bashlyk_sPrefix_ioAUaE5R}XXXXXXXX")
 
-   [[ -n $bashlyk_octMode_ioAUaE5R ]] \
+   [[ -n "$bashlyk_octMode_ioAUaE5R" ]] \
     && chmod $bashlyk_octMode_ioAUaE5R $bashlyk_s_ioAUaE5R
   ;;
   tempfile)
-   [[ -n $bashlyk_sPrefix_ioAUaE5R ]] \
+   [[ -n "$bashlyk_sPrefix_ioAUaE5R" ]] \
     && bashlyk_sPrefix_ioAUaE5R="-p $bashlyk_sPrefix_ioAUaE5R"
-   [[ -n $bashlyk_sSuffix_ioAUaE5R ]] \
+   [[ -n "$bashlyk_sSuffix_ioAUaE5R" ]] \
     && bashlyk_sSuffix_ioAUaE5R="-s $bashlyk_sSuffix_ioAUaE5R"
    bashlyk_s_ioAUaE5R=$(tempfile $bashlyk_optDir_ioAUaE5R \
     $bashlyk_sPrefix_ioAUaE5R $bashlyk_sSuffix_ioAUaE5R)
@@ -807,21 +807,21 @@ udfMakeTemp() {
     return $(_ iErrorUnexpected)
   ;;
  esac
- [[ -n $bashlyk_sUser_ioAUaE5R  ]] \
+ [[ -n "$bashlyk_sUser_ioAUaE5R"  ]] \
   && chown $bashlyk_sUser_ioAUaE5R  $bashlyk_s_ioAUaE5R
- [[ -n $bashlyk_sGroup_ioAUaE5R ]] \
+ [[ -n "$bashlyk_sGroup_ioAUaE5R" ]] \
   && chgrp $bashlyk_sGroup_ioAUaE5R $bashlyk_s_ioAUaE5R
 
- if   [[ -f $bashlyk_s_ioAUaE5R ]]; then
+ if   [[ -f "$bashlyk_s_ioAUaE5R" ]]; then
   $bashlyk_bNoKeep_ioAUaE5R && udfAddFile2Clean $bashlyk_s_ioAUaE5R
- elif [[ -d $bashlyk_s_ioAUaE5R ]]; then
+ elif [[ -d "$bashlyk_s_ioAUaE5R" ]]; then
   $bashlyk_bNoKeep_ioAUaE5R && udfAddPath2Clean $bashlyk_s_ioAUaE5R
  else
   return $(_ iErrorNotExistNotCreated)
  fi
 
  bashlyk_foResult_ioAUaE5R=$bashlyk_s_ioAUaE5R
- if [[ -n $bashlyk_sVar_ioAUaE5R ]]; then
+ if [[ -n "$bashlyk_sVar_ioAUaE5R" ]]; then
   eval 'export ${bashlyk_sVar_ioAUaE5R}=${bashlyk_foResult_ioAUaE5R}'
  else
   echo ${bashlyk_foResult_ioAUaE5R}
@@ -857,7 +857,7 @@ udfMakeTemp() {
 #    test -f $foTemp                                                            #? false
 #  SOURCE
 udfMakeTempV() {
- [[ -n $1 ]] || return $(_ iErrorEmptyOrMissingArgument)
+ [[ -n "$1" ]] || return $(_ iErrorEmptyOrMissingArgument)
  udfIsValidVariable "$1" || {
   udfSetLastError iErrorNonValidVariable "$1"
   udfThrow "Error: non valid variable name \"$1\""
@@ -865,7 +865,7 @@ udfMakeTempV() {
  #
  local sKeep sType sPrefix
  #
- [[ -n $3 ]] && sPrefix="prefix=$3"
+ [[ -n "$3" ]] && sPrefix="prefix=$3"
  case "$2" in
           dir) sType="type=dir" ; sKeep="keep=false" ;;
          file) sType="type=file"; sKeep="keep=false" ;;
@@ -898,7 +898,7 @@ udfMakeTempV() {
 #  SOURCE
 udfPrepare2Exec() {
  local s cIFS cmd="$*" cmdSed=''
- if [[ $1 = "-" ]]; then
+ if [[ "$1" == "-" ]]; then
   udfBashlykUnquote
  else
   cIFS=$IFS
@@ -928,7 +928,7 @@ udfPrepare2Exec() {
 #    udfShellExec 'false; true'                                                 #? true
 #  SOURCE
 udfShellExec() {
- [[ -n $* ]] || return $(_ iErrorEmptyOrMissingArgument)
+ [[ -n "$*" ]] || return $(_ iErrorEmptyOrMissingArgument)
  local rc fn
  udfMakeTemp fn
  udfPrepare2Exec $* > $fn
@@ -953,7 +953,7 @@ udfShellExec() {
 #    test -f $fnTemp                                                            #? false
 #  SOURCE
 udfAddFile2Clean() {
- [[ -n $1 ]] || return 0
+ [[ -n "$1" ]] || return 0
  _bashlyk_afnClean+=" $*"
  trap "udfOnTrap" 0 1 2 5 15
 }
@@ -973,7 +973,7 @@ udfAddFile2Clean() {
 #    test -d $pathTemp                                                          #? false
 #  SOURCE
 udfAddPath2Clean() {
- [[ -n $1 ]] || return 0
+ [[ -n "$1" ]] || return 0
  _bashlyk_apathClean+=" $*"
  trap "udfOnTrap" 0 1 2 5 15
 }
@@ -992,7 +992,7 @@ udfAddPath2Clean() {
 #    echo "$(_ ajobClean)" | grep -w "%1"                                       #? true
 #  SOURCE
 udfAddJob2Clean() {
- [[ -n $1 ]] || return 0
+ [[ -n "$1" ]] || return 0
  _bashlyk_ajobClean+=" $*"
  trap "udfOnTrap" 0 1 2 5 15
 }
@@ -1013,7 +1013,7 @@ udfAddJob2Clean() {
 #    echo "$(_ apidClean)" >| grep -w "$pid"                                    #? true
 #  SOURCE
 udfAddPid2Clean() {
- [[ -n $1 ]] || return 0
+ [[ -n "$1" ]] || return 0
  _bashlyk_apidClean+=" $*"
  trap "udfOnTrap" 0 1 2 5 15
 }
@@ -1062,7 +1062,7 @@ udfOnTrap() {
  #
  for s in ${_bashlyk_apidClean}; do
   for i in 15 9; do
-   [[ -n $(ps -o pid= --ppid $$ | xargs | grep -w $s) ]] && {
+   [[ -n "$(ps -o pid= --ppid $$ | xargs | grep -w $s)" ]] && {
     kill -${i} $s 2>/dev/null
     sleep 0.2
    }
@@ -1077,7 +1077,7 @@ udfOnTrap() {
   rmdir $s 2>/dev/null
  done
  #
- [[ -n ${_bashlyk_pidLogSock} ]] && {
+ [[ -n "${_bashlyk_pidLogSock}" ]] && {
   exec >/dev/null 2>&1
   wait ${_bashlyk_pidLogSock}
  }
@@ -1102,7 +1102,7 @@ udfOnTrap() {
 #    _ARGUMENTS $ARGUMENTS
 #  SOURCE
 _ARGUMENTS() {
- [[ -n $1 ]] && _bashlyk_sArg="$*" || echo ${_bashlyk_sArg}
+ [[ -n "$1" ]] && _bashlyk_sArg="$*" || echo ${_bashlyk_sArg}
 }
 #******
 #****f* libstd/_s0
@@ -1122,7 +1122,7 @@ _ARGUMENTS() {
 #    _s0 $s0
 #  SOURCE
 _s0() {
- [[ -n $1 ]] && _bashlyk_s0="$*" || echo ${_bashlyk_s0}
+ [[ -n "$1" ]] && _bashlyk_s0="$*" || echo ${_bashlyk_s0}
 }
 #******
 #****f* libstd/_pathDat
@@ -1143,7 +1143,7 @@ _s0() {
 #    _pathDat $pathDat
 #  SOURCE
 _pathDat() {
- if [[ -n $1 ]]; then
+ if [[ -n "$1" ]]; then
   _bashlyk_pathDat="$*"
   mkdir -p $_bashlyk_pathDat
  else
@@ -1191,8 +1191,8 @@ _pathDat() {
 #    _ sWSpaceAlias
 #  SOURCE
 _(){
- [[ -n $1 ]] || return $(_ iErrorEmptyOrMissingArgument)
- if [[ $# -gt 1 ]]; then
+ [[ -n "$1" ]] || return $(_ iErrorEmptyOrMissingArgument)
+ if (( $# > 1 )); then
   eval "_bashlyk_${1##*=}=\"${2}\""
  else
   case "$1" in
@@ -1200,8 +1200,8 @@ _(){
         local k v
         k=${1%=*}
         v=${1##*=}
-        [ -n "$k" ] || k=$v
-        udfIsValidVariable "$k" || return $?
+        [[ -n "$k" ]] || k=$v
+        udfIsValidVariable $k || return $?
         eval "export $k="'$_bashlyk_'"${v}"
         ;;
      *) eval "echo "'$_bashlyk_'"${1}";;
@@ -1233,9 +1233,9 @@ _(){
 #    echo "$sWSpaceAlias" >| grep "^${_bashlyk_sWSpaceAlias}$"                  #? true
 #  SOURCE
 _getv() {
- [[ -n $1 ]] || return $(_ iErrorEmptyOrMissingArgument)
- if [[ -n $2 ]]; then
-  udfIsValidVariable "$2" || return $?
+ [[ -n "$1" ]] || return $(_ iErrorEmptyOrMissingArgument)
+ if [[ -n "$2" ]]; then
+  udfIsValidVariable $2 || return $?
   eval "export $2="'$_bashlyk_'"${1}"
  else
   udfIsValidVariable "$1" || return $?
@@ -1258,7 +1258,7 @@ _getv() {
 #    _gete sWSpaceAlias >| grep "^${_bashlyk_sWSpaceAlias}$"                    #? true
 #  SOURCE
 _gete() {
- [[ -n $1 ]] || return $(_ iErrorEmptyOrMissingArgument)
+ [[ -n "$1" ]] || return $(_ iErrorEmptyOrMissingArgument)
  eval "echo "'$_bashlyk_'"${1}"
 }
 #******
@@ -1280,7 +1280,7 @@ _gete() {
 #    _set sWSpaceAlias $sWSpaceAlias
 #  SOURCE
 _set() {
- [[ -n $1 ]] || return $(_ iErrorEmptyOrMissingArgument)
+ [[ -n "$1" ]] || return $(_ iErrorEmptyOrMissingArgument)
  eval "_bashlyk_$1=$2"
 }
 #******
@@ -1317,7 +1317,7 @@ _set() {
 #    ## TODO проверить все коды возврата
 #  SOURCE
 udfCheckCsv() {
- [[ -n $1 ]] || return $(_ iErrorEmptyOrMissingArgument)
+ [[ -n "$1" ]] || return $(_ iErrorEmptyOrMissingArgument)
  local bashlyk_s_Q1eiphgO bashlyk_cIFS_Q1eiphgO bashlyk_k_Q1eiphgO
  local bashlyk_v_Q1eiphgO bashlyk_i_Q1eiphgO bashlyk_csvResult_Q1eiphgO
  #
@@ -1331,8 +1331,8 @@ udfCheckCsv() {
   -e "s/^\[.*\];//")
   bashlyk_k_Q1eiphgO="$(echo ${bashlyk_s_Q1eiphgO%%=*}|xargs)"
   bashlyk_v_Q1eiphgO="$(echo ${bashlyk_s_Q1eiphgO#*=}|xargs)"
-  [[ -n $bashlyk_k_Q1eiphgO ]] || continue
-  if [[ $bashlyk_k_Q1eiphgO = $bashlyk_v_Q1eiphgO || -n $(echo "$bashlyk_k_Q1eiphgO" | grep '.*[[:space:]+].*') ]]; then
+  [[ -n "$bashlyk_k_Q1eiphgO" ]] || continue
+  if [[ "$bashlyk_k_Q1eiphgO" == "$bashlyk_v_Q1eiphgO" || -n "$(echo "$bashlyk_k_Q1eiphgO" | grep '.*[[:space:]+].*')" ]]; then
    bashlyk_k_Q1eiphgO=${_bashlyk_sUnnamedKeyword}${bashlyk_i_Q1eiphgO}
    bashlyk_i_Q1eiphgO=$((bashlyk_i_Q1eiphgO+1))
   fi
@@ -1340,7 +1340,7 @@ udfCheckCsv() {
    $bashlyk_v_Q1eiphgO);"
  done
  IFS=$bashlyk_cIFS_Q1eiphgO
- if [[ -n $2 ]]; then
+ if [[ -n "$2" ]]; then
   udfIsValidVariable "$2" || return $?
   #udfThrow "Error: required valid variable name \"$2\""
   eval 'export ${2}="${bashlyk_csvResult_Q1eiphgO}"'
@@ -1371,10 +1371,10 @@ udfGetMd5() {
           cat | md5sum
          ;;
   "--file")
-          [[ -f $2 ]] && md5sum "$2"
+          [[ -f "$2" ]] && md5sum "$2"
          ;;
          *)
-          [[ -n $1 ]] && echo "$*" | md5sum
+          [[ -n "$1" ]] && echo "$*" | md5sum
          ;;
   esac
  } | cut -f 1 -d ' '
@@ -1403,12 +1403,12 @@ udfGetMd5() {
 #    udfGetPathMd5 $path                                                        #? true
 #  SOURCE
 udfGetPathMd5() {
- [[ -n $1 && -d $1 ]] || return $(_ iErrorEmptyOrMissingArgument)
+ [[ -n "$1" && -d "$1" ]] || return $(_ iErrorEmptyOrMissingArgument)
  local pathSrc="$(pwd)" pathDst s
  cd "$1" 2>/dev/null || return $(_ iErrorFileNotFound)
  pathDst="$(pwd)"
  for s in *; do
-  [[ -d $s ]] && udfGetPathMd5 $s
+  [[ -d "$s" ]] && udfGetPathMd5 $s
  done
  md5sum $pathDst/* 2>/dev/null
  cd $pathSrc
@@ -1435,7 +1435,7 @@ udfGetPathMd5() {
 #    udfXml "$sTag" "$sContent" >| grep "^${sXml}$"                             #? true
 #  SOURCE
 udfXml() {
- [[ -n $1 ]] || return $(_ iErrorEmptyOrMissingArgument)
+ [[ -n "$1" ]] || return $(_ iErrorEmptyOrMissingArgument)
  local s=($1)
  shift
  echo "<${s[*]}>${*}</${s[0]}>"
@@ -1457,7 +1457,7 @@ udfXml() {
 #    _ sLastError >| grep "^12NonValid Variable$"                               #? true
 #  SOURCE
 udfSetLastError() {
- [[ -n $1 ]] || return $(_ iErrorEmptyOrMissingArgument)
+ [[ -n "$1" ]] || return $(_ iErrorEmptyOrMissingArgument)
  local i
  udfIsNumber "$1" && i="$1" || i=$(_ "$1")
  udfIsNumber "$i" || return $(_ iErrorNonValidArgument)
@@ -1484,7 +1484,7 @@ udfSetLastError() {
 #    udfSerialize sUname sDate i >| grep "^sUname=.*i=100;$"                    #? true
 #  SOURCE
 udfSerialize() {
- [[ -n $1 ]] || return $(_ iErrorEmptyOrMissingArgument)
+ [[ -n "$1" ]] || return $(_ iErrorEmptyOrMissingArgument)
  local s csv
  for s in $*; do
   udfIsValidVariable "$s" && csv+="${s}=${!s};" || \

@@ -15,13 +15,13 @@
 #    Глобальная переменная $_BASHLYK обеспечивает
 #    защиту от повторного использования данного сценария
 #  SOURCE
-[[ -n $_BASHLYK ]] && return 0 || _BASHLYK=1
+[[ -n "$_BASHLYK" ]] && return 0 || _BASHLYK=1
 #******
 #****v* bashlyk/Init section
 #  DESCRIPTION
 #    Блок инициализации глобальных переменных
 #  SOURCE
-[ -s /etc/bashlyk/bashlyk.conf ] && . /etc/bashlyk/bashlyk.conf
+[[ -s "/etc/bashlyk/bashlyk.conf" ]] && . /etc/bashlyk/bashlyk.conf
 : ${_bashlyk_aLib:="std,pid,cnf,ini,opt,log"}
 : ${_bashlyk_pathLib:="/usr/share/bashlyk"}
 : ${_bashlyk_sArg:=$*}
@@ -60,13 +60,13 @@ udfInit() {
    _bashlyk_pathRun="/var/run/${_bashlyk_pathPrefix}"
    _bashlyk_pathLog="/var/log/${_bashlyk_pathPrefix}"
    _bashlyk_pathDat="/var/lib/${_bashlyk_pathPrefix}"
-   [ -s /etc/${_bashlyk_pathPrefix}/bashlyk.conf ] \
-    && . /etc/${_bashlyk_pathPrefix}/bashlyk.conf
+   [[ -s "/etc/${_bashlyk_pathPrefix}/bashlyk.conf" ]] \
+    && . "/etc/${_bashlyk_pathPrefix}/bashlyk.conf"
    ;;
   *)
-   if [ -z "$HOME" -o ! -O "$HOME" ]; then
+   if [[ -z "$HOME" || ! -O "$HOME" ]]; then
     sHome=$(getent passwd $_bashlyk_sUser | cut -d ":" -f 6)
-    [ -n "$sHome" -a -d "$sHome" -a -O "$sHome" ] || \
+    [[ -n "$sHome" && -d "$sHome" && -O "$sHome" ]] || \
      sHome="/tmp/${$}_${_bashlyk_sUser}"
    else
     sHome=$HOME
@@ -76,27 +76,27 @@ udfInit() {
    _bashlyk_pathDat="${sHome}/.local/share/${_bashlyk_pathPrefix}/lib"
    _bashlyk_pathCnf="${sHome}/.config/${_bashlyk_pathPrefix}"
    _bashlyk_pathIni="${sHome}/.config/${_bashlyk_pathPrefix}"
-   [ -s ${sHome}/.config/bashlyk/bashlyk.conf ] && \
-    . ${sHome}/.config/bashlyk/bashlyk.conf
-   [ -s ${sHome}/.config/${_bashlyk_pathPrefix}/bashlyk.conf ] && \
-    . ${sHome}/.config/${_bashlyk_pathPrefix}/bashlyk.conf
+   [[ -s "${sHome}/.config/bashlyk/bashlyk.conf" ]] && \
+    . "${sHome}/.config/bashlyk/bashlyk.conf"
+   [[ -s "${sHome}/.config/${_bashlyk_pathPrefix}/bashlyk.conf" ]] && \
+    . "${sHome}/.config/${_bashlyk_pathPrefix}/bashlyk.conf"
   ;;
  esac
 
  [ -t 1 ] && _bashlyk_bInteract=1 || _bashlyk_bInteract=0
  tty > /dev/null 2>&1 && _bashlyk_bTerminal=1 || _bashlyk_bTerminal=0
  #
- if [ -n "$(echo "$_bashlyk_sArg" | grep -w 'bashlyk-test')" ]; then
+ if [[ -n "$(echo "$_bashlyk_sArg" | grep -w 'bashlyk-test')" ]]; then
   _bashlyk_aUnit="$(echo "${_bashlyk_sArg#*--bashlyk-test=}" | cut -f1 -d' ' \
    | tr ',' ' ' | grep -v '\-\-bashlyk-test')"
-  [ -n "$_bashlyk_aUnit" ] || _bashlyk_aUnit="$(echo ${_bashlyk_aLib} | tr ',' ' ')"
+  [[ -n "$_bashlyk_aUnit" ]] || _bashlyk_aUnit="$(echo ${_bashlyk_aLib} | tr ',' ' ')"
   _bashlyk_sMode='test'
   export _bashlyk_pathCnf _bashlyk_pathRun _bashlyk_pathDat _bashlyk_pathLog
   export _bashlyk_sLogin _bashlyk_bUseMail _bashlyk_sUser _bashlyk_sGroup
  else
   _bashlyk_sMode='lib'
  fi
- [ -n "$_bashlyk_aUnit" ] || _bashlyk_aUnit="$(echo ${_bashlyk_aLib} | tr ',' ' ')"
+ [[ -n "$_bashlyk_aUnit" ]] || _bashlyk_aUnit="$(echo ${_bashlyk_aLib} | tr ',' ' ')"
 }
 #******
 #****f* bashlyk/udfMain
@@ -112,9 +112,9 @@ udfMain() {
  #
  udfInit
  #
- if [ "$_bashlyk_sMode" = "test" ]; then
+ if [[ "$_bashlyk_sMode" == "test" ]]; then
   cmd=${_bashlyk_pathLib}/testunit.sh
-  [ -x $cmd ] || eval 'echo "Error: $cmd not found..."; exit 255'
+  [[ -x "$cmd" ]] || eval 'echo "Error: $cmd not found..."; exit 255'
   for s in $_bashlyk_aUnit; do
    $cmd $s
   done
@@ -122,7 +122,7 @@ udfMain() {
  else
   for s in $_bashlyk_aUnit; do
    fn=${_bashlyk_pathLib}/lib${s}.sh
-   [ -s $fn ] && . $fn || eval 'echo "Error: $fn not found..."; exit 255'
+   [[ -s "$fn" ]] && . $fn || eval 'echo "Error: $fn not found..."; exit 255'
   done
  fi
  unset _bashlyk_aUnit _bashlyk_sMode
@@ -135,7 +135,7 @@ udfMain() {
          *)
            _bashlyk_bNotUseLog=$_bashlyk_bInteract ;;
  esac
- [ $_bashlyk_bNotUseLog -ne 0 ] || udfSetLog
+ [[ "$_bashlyk_bNotUseLog" != "0" ]] || udfSetLog
  return 0
 }
 #******

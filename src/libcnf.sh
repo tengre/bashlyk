@@ -16,7 +16,7 @@
 #  SOURCE
 [ -n "$BASH_VERSION" ] \
  || eval 'echo "bash interpreter for this script ($0) required ..."; exit 255'
-[[ -n $_BASHLYK_LIBCNF ]] && return 0 || _BASHLYK_LIBCNF=1
+[[ -n "$_BASHLYK_LIBCNF" ]] && return 0 || _BASHLYK_LIBCNF=1
 #******
 #****** libcnf/External Modules
 # DESCRIPTION
@@ -74,16 +74,16 @@
 #    rm -f $conf
 #  SOURCE
 udfGetConfig() {
- [[ -n $1 ]] || return $(_ iErrorEmptyOrMissingArgument)
+ [[ -n "$1" ]] || return $(_ iErrorEmptyOrMissingArgument)
  #
  local bashlyk_aconf_MROATHra bashlyk_conf_MROATHra bashlyk_s_MROATHra
  local bashlyk_pathCnf_MROATHra="$_bashlyk_pathCnf"
  #
- [[ $1  = ${1##*/} && -f ${bashlyk_pathCnf_MROATHra}/$1 ]] || bashlyk_pathCnf_MROATHra=
- [[ $1  = ${1##*/} && -f $1 ]] && bashlyk_pathCnf_MROATHra=$(pwd)
- [[ $1 != ${1##*/} && -f $1 ]] && bashlyk_pathCnf_MROATHra=$(dirname $1)
+ [[ "$1" == "${1##*/}" && -f "${bashlyk_pathCnf_MROATHra}/$1" ]] || bashlyk_pathCnf_MROATHra=
+ [[ "$1" == "${1##*/}" && -f "$1" ]] && bashlyk_pathCnf_MROATHra=$(pwd)
+ [[ "$1" != "${1##*/}" && -f "$1" ]] && bashlyk_pathCnf_MROATHra=$(dirname $1)
  #
- if [[ -z $bashlyk_pathCnf_MROATHra ]]; then
+ if [[ -z "$bashlyk_pathCnf_MROATHra" ]]; then
   [[ -f "/etc/${_bashlyk_pathPrefix}/$1" ]] \
    && bashlyk_pathCnf_MROATHra="/etc/${_bashlyk_pathPrefix}" \
    || return $(_ iErrorFileNotFound)
@@ -92,8 +92,8 @@ udfGetConfig() {
  bashlyk_conf_MROATHra=
  bashlyk_aconf_MROATHra=$(echo "${1##*/}" | awk 'BEGIN{FS="."} {for (i=NF;i>=1;i--) printf $i" "}')
  for bashlyk_s_MROATHra in $bashlyk_aconf_MROATHra; do
-  [[ -n $bashlyk_s_MROATHra ]] || continue
-  [[ -n $bashlyk_conf_MROATHra ]] \
+  [[ -n "$bashlyk_s_MROATHra" ]] || continue
+  [[ -n "$bashlyk_conf_MROATHra" ]] \
    && bashlyk_conf_MROATHra="${bashlyk_s_MROATHra}.${bashlyk_conf_MROATHra}" \
    || bashlyk_conf_MROATHra="$bashlyk_s_MROATHra"
   [[ -s "${bashlyk_pathCnf_MROATHra}/${bashlyk_conf_MROATHra}" ]] \
@@ -134,7 +134,7 @@ udfGetConfig() {
 #    rm -f $conf
 #  SOURCE
 udfSetConfig() {
- [[ -n $1 && -n $2 ]] || return $(_ iErrorEmptyOrMissingArgument)
+ [[ -n "$1" && -n "$2" ]] || return $(_ iErrorEmptyOrMissingArgument)
  #
  local bashlyk_conf_kpHeLmpy bashlyk_chIFS_kpHeLmpy="$IFS"
  local bashlyk_pathCnf_kpHeLmpy="$_bashlyk_pathCnf" bashlyk_sPair_kpHeLmpy

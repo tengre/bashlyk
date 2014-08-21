@@ -18,7 +18,7 @@
 #  SOURCE
 [ -n "$BASH_VERSION" ] \
  || eval 'echo "bash interpreter for this script ($0) required ..."; exit 255'
-[[ -n $_BASHLYK_LIBLOG ]] && return 0 || _BASHLYK_LIBLOG=1
+[[ -n "$_BASHLYK_LIBLOG" ]] && return 0 || _BASHLYK_LIBLOG=1
 #******
 #****** liblog/External modules
 #  DESCRIPTION
@@ -104,14 +104,14 @@ udfLogger() {
  bSysLog=0
  bUseLog=0
  sTagLog="${_bashlyk_s0}[$(printf "%05d" $$)]"
- [[ -z $_bashlyk_bUseSyslog || $_bashlyk_bUseSyslog -eq 0 ]] \
+ [[ -z "$_bashlyk_bUseSyslog" || "$_bashlyk_bUseSyslog" -eq 0 ]] \
   && bSysLog=0 || bSysLog=1
- if [[ -z $_bashlyk_bNotUseLog ]]; then
+ if [[ -z "$_bashlyk_bNotUseLog" ]]; then
   udfCheck4LogUse && bUseLog=1 || bUseLog=0
  else
-  [[ $_bashlyk_bNotUseLog -ne 0 ]] && bUseLog=0 || bUseLog=1
+  (( $_bashlyk_bNotUseLog != 0 )) && bUseLog=0 || bUseLog=1
  fi
- [[ -d ${_bashlyk_pathLog} ]] || mkdir -p "$_bashlyk_pathLog" \
+ mkdir -p "$_bashlyk_pathLog" \
   || udfThrow "Error: do not create path ${_bashlyk_pathLog}"
  udfAddPath2Clean $_bashlyk_pathLog
  case "${bSysLog}${bUseLog}" in
@@ -150,13 +150,13 @@ udfLogger() {
 #    echo test | udfLog - tag >| grep "tag test"                                #? true
 #  SOURCE
 udfLog() {
- if [[ $1 = "-" ]]; then
+ if [[ "$1" == "-" ]]; then
   shift
   local s sPrefix
-  [[ -n $* ]] && sPrefix="$* " || sPrefix=
-  while read s; do [[ -n $s ]] && udfLogger "${sPrefix}${s}"; done
+  [[ -n "$*" ]] && sPrefix="$* " || sPrefix=
+  while read s; do [[ -n "$s" ]] && udfLogger "${sPrefix}${s}"; done
  else
-  [[ -n $* ]] && udfLogger "$*"
+  [[ -n "$*" ]] && udfLogger "$*"
  fi
 }
 #******
@@ -175,7 +175,7 @@ udfLog() {
 #    udfIsInteract                                                              #= false
 #  SOURCE
 udfIsInteract() {
- [[ -t 1 && -t 0 && -n $TERM && $TERM != "dumb" ]] \
+ [[ -t 1 && -t 0 && -n "$TERM" && "$TERM" != "dumb" ]] \
   && _bashlyk_bInteract=1 || _bashlyk_bInteract=0
  return $_bashlyk_bInteract
 }
@@ -236,7 +236,7 @@ udfCheck4LogUse() {
 #  SOURCE
 udfUptime() {
  local iDiffTime=$(($(date "+%s")-${_bashlyk_iStartTimeStamp}))
- [[ -n $1 ]] && echo "$* ($iDiffTime sec)" || echo $iDiffTime
+ [[ -n "$1" ]] && echo "$* ($iDiffTime sec)" || echo $iDiffTime
 }
 #******
 #****f* liblog/udfFinally
@@ -275,7 +275,7 @@ udfFinally() {
 #  SOURCE
 udfSetLogSocket() {
  local fnSock
- if [[ -n $_bashlyk_sArg ]]; then
+ if [[ -n "$_bashlyk_sArg" ]]; then
   fnSock="${_bashlyk_pathRun}/$(udfGetMd5 ${_bashlyk_s0} ${_bashlyk_sArg}).${$}.socket"
  else
   fnSock="${_bashlyk_pathRun}/${_bashlyk_s0}.${$}.socket"
@@ -285,7 +285,7 @@ udfSetLogSocket() {
   udfSetLastError iErrorNotExistNotCreated "${_bashlyk_pathRun}"
   return $?
  }
- [[ -a $fnSock ]] && rm -f $fnSock
+ [[ -a "$fnSock" ]] && rm -f $fnSock
  if mkfifo -m 0600 $fnSock >/dev/null 2>&1; then
   ( udfLog - < $fnSock )&
   _bashlyk_pidLogSock=$!
@@ -351,7 +351,7 @@ udfSetLog() {
 #    rm -f $fnLog
 #  SOURCE
 _fnLog() {
- if [[ -n $1 ]]; then
+ if [[ -n "$1" ]]; then
   udfSetLog "$1"
  else
   _ fnLog
@@ -372,12 +372,12 @@ _fnLog() {
 #    Текст отладочного сообщения (аргумент "message"), если его уровень
 #    (аргумент "level") не больше заданного для сценария переменной DEBUGLEVEL
 #  RETURN VALUE
-#    0 - уровень "level" не больше значения глобальной переменной DEBUGLEVEL
-#    1 - уровень "level" больше значения глобальной переменной DEBUGLEVEL
-#    2 - аргументы отсутствуют
+#    0                            - уровень "level" не больше DEBUGLEVEL
+#    1                            - уровень "level"    больше DEBUGLEVEL
+#    iErrorEmptyOrMissingArgument - аргументы отсутствуют
 #  EXAMPLE
 #    DEBUGLEVEL=0
-#    udfDebug                                                                   #? 2
+#    udfDebug                                                                   #? $_bashlyk_iErrorEmptyOrMissingArgument
 #    udfDebug 0 echo level 0                                                    #? true
 #    udfDebug 1 silence level 0                                                 #? 1
 #    DEBUGLEVEL=5
@@ -387,11 +387,11 @@ _fnLog() {
 #  SOURCE
 udfDebug() {
  local i re='^[0-9]+$'
- [[ -n $* ]] && i=$1 || return 2
+ [[ -n "$*" ]] && i=$1 || return $(_ iErrorEmptyOrMissingArgument)
  shift
  echo $i | grep -E $re >/dev/null 2>&1 || i=0
- [[ $DEBUGLEVEL -ge $i ]] || return 1
- [[ -n $* ]] && echo "$*"
+ (( $DEBUGLEVEL >= $i )) || return 1
+ [[ -n "$*" ]] && echo "$*"
  return 0
 }
 #******
