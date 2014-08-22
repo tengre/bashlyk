@@ -37,6 +37,7 @@ udfTestUnitMsg() {
  {
   if [[ "$rc2" == "?" ]]; then
    _bashlyk_TestUnit_iCount=$((_bashlyk_TestUnit_iCount+1))
+   ## TODO включить FUNCNAME
    echo "--[?]: status $rc0 ( must have $rc1 ) - ${BASH_SOURCE[1]} (line ${BASH_LINENO[0]}):"
    head -n ${BASH_LINENO[0]} ${BASH_SOURCE[1]} | tail -n 1
   else
