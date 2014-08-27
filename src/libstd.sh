@@ -1480,15 +1480,16 @@ udfSetLastError() {
 #    iErrorEmptyOrMissingArgument - аргумент не задан
 #    0                            - успешная операция
 #  EXAMPLE
-#    local sUname="$(uname -a)" sDate="" i=100
-#    udfSerialize sUname sDate i >| grep "^sUname=.*i=100;$"                    #? true
+#    local sUname="$(uname -a)" sDate="" s=100
+#    udfSerialize sUname sDate s >| grep "^sUname=.*s=100;$"                    #? true
 #  SOURCE
 udfSerialize() {
  [[ -n "$1" ]] || return $(_ iErrorEmptyOrMissingArgument)
- local s csv
- for s in $*; do
-  udfIsValidVariable "$s" && csv+="${s}=${!s};" || \
-   udfSetLastError iErrorNonValidVariable "$s"
+ local bashlyk_s_Serialize csv
+ for bashlyk_s_Serialize in $*; do
+  udfIsValidVariable "$bashlyk_s_Serialize" \
+   && csv+="${bashlyk_s_Serialize}=${!bashlyk_s_Serialize};" \
+   || udfSetLastError iErrorNonValidVariable "$bashlyk_s_Serialize"
  done
  echo "$csv"
 }
@@ -1515,5 +1516,29 @@ udfBashlykUnquote() {
  eval "$cmd"
 }
 #******
-
-
+#****f* libstd/udfError
+#  SYNOPSIS
+#    udfError
+#  DESCRIPTION
+#
+#
+#  EXAMPLE
+#
+#    
+#  SOURCE
+udfError() {
+ local sBehaviorOnError=$(_ sBehaviorOnError)
+ [[ -n "$sBehaviorOnError" ]] || sBehaviorOnError='return'
+ case "$1" in
+  'return') [[ -n "${FUNCNAME[1]}" && "${FUNCNAME[1]}" != "main" ]] && sBehaviorOnError='return';;
+    'warn') sBehaviorOnError='udfWarn';;
+    'exit') sBehaviorOnError='exit';;
+ esac
+ [[ "${sBehaviorOnError}" == "return" && "${FUNCNAME[1]}" == "main" ]] && sBehaviorOnError='exit'
+ shift
+ [[ "$sBehaviorOnError" == "udfWarn" ]] && sBehaviorOnError+=" $*" || sBehaviorOnError+=" \$?"
+ echo "udfSetLastError $*; $sBehaviorOnError"
+}
+#******
+#shopt -s expand_aliases
+#alias onError="eval $udfError"
