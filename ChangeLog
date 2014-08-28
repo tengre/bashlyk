@@ -12,7 +12,7 @@ Thu, 28 Aug 2014 17:23:11 +0400
    udfGetXSessionProperties
  libstd.sh:
  - добавлена новая универсальная функция обработки ошибок udfOnerror, которая в сочетании
-   c eval позволяет управлять обработку глобально или выборочно, соответственно, код связанный
+   c eval позволяет управлять обработкой глобально или выборочно, соответственно, код связанный
    c "return" при ошибках, "udfThrow" или "udfWarn" по возможности заменен
    на "eval $(udfOnError [return|rewarn|warn|echo|exit] iError... )"
  - в udfOnTrap добавлен вывод содержимого глобальных переменных sLastError iLastError на STDERR
