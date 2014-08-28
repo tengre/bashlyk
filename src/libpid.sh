@@ -65,12 +65,11 @@
 #    udfCheckStarted $$ $0                                                      #? $_bashlyk_iErrorCurrentProcess
 #  SOURCE
 udfCheckStarted() {
- [[ -n "$*"      ]] || return $(_ iErrorEmptyOrMissingArgument)
- [[ "$$" == "$1" ]] && return $(_ iErrorCurrentProcess)
+ [[ -n "$*"      ]] || eval $(udfOnError return iErrorEmptyOrMissingArgument)
+ [[ "$$" == "$1" ]] && eval $(udfOnError return iErrorCurrentProcess)
  local pid="$1"
  shift
- ps -p $pid -o args= | grep "${*}$" >/dev/null 2>&1 \
-  || return $(_ iErrorNoSuchProcess)
+ ps -p $pid -o args= | grep "${*}$" >/dev/null 2>&1 || eval $(udfOnError return iErrorNoSuchProcess)
  return 0
 }
 #******
@@ -102,10 +101,7 @@ udfSetPid() {
  else
   fnPid="${_bashlyk_pathRun}/${_bashlyk_s0}.pid"
  fi
- mkdir -p "${_bashlyk_pathRun}" || {
-  udfSetLastError iErrorNotExistNotCreated "${_bashlyk_pathRun}"
-  return $?
- }
+ mkdir -p "${_bashlyk_pathRun}" || eval $(udfOnError return iErrorNotExistNotCreated "${_bashlyk_pathRun}")
  [[ -f "$fnPid" ]] && pid=$(head -n 1 "$fnPid")
  if [[ -n "$pid" ]]; then
   udfCheckStarted $pid ${_bashlyk_s0} ${_bashlyk_sArg} && {
@@ -116,8 +112,7 @@ udfSetPid() {
  fi
  echo $$ > $fnPid || {
   udfWarn "Warn: pid file $fnPid not created..."
-  udfSetLastError iErrorNotExistNotCreated "$fnPid"
-  return $?
+  eval $(udfOnError return iErrorNotExistNotCreated "$fnPid")
  }
  echo "$0 ${_bashlyk_sArg}" >> $fnPid
  _bashlyk_fnPid=$fnPid

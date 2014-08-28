@@ -42,9 +42,11 @@ _bashlyk_iErrorAlreadyStarted=182
 _bashlyk_iErrorCommandNotFound=180
 _bashlyk_iErrorXsessionNotFound=170
 _bashlyk_iErrorUserXsessionNotFound=171
+_bashlyk_iErrorFormatError=160
 #
 _bashlyk_iMaxOutputLines=1000
 #
+: ${_bashlyk_sBehaviorOnError:=return}
 : ${_bashlyk_iLastError:=0}
 : ${_bashlyk_sLastError:=}
 : ${_bashlyk_sArg:=$*}
@@ -69,15 +71,95 @@ _bashlyk_iMaxOutputLines=1000
 : ${_bashlyk_aRequiredCmd_std:="[ basename cat cut chgrp chmod chown date dir  \
  echo false file grep kill ls mail md5sum pwd mkdir mktemp printf ps rm rmdir  \
  sed sleep tee tempfile touch true w which xargs"}
-: ${_bashlyk_aExport_std:="udfBaseId udfDate udfEcho udfMail udfWarn udfThrow  \
- udfOnEmptyVariable udfThrowOnEmptyVariable udfWarnOnEmptyVariable             \
- udfShowVariable udfIsNumber udfIsValidVariable udfQuoteIfNeeded               \
- udfWSpace2Alias udfAlias2WSpace udfMakeTemp  udfMakeTempV udfShellExec        \
- udfAddFile2Clean udfAddPath2Clean udfAddJob2Clean udfAddPid2Clean udfCheckCsv \
- udfCleanQueue udfOnTrap _ARGUMENTS _s0 _pathDat _ _gete _getv _set            \
- udfGetMd5 udfGetPathMd5 udfXml udfPrepare2Exec udfSerialize udfSetLastError   \
- udfBashlykUnquote udfTimeStamp udfMessage udfNotify2X udfNotifyCommand        \
- udfGetXSessionProperties"}
+: ${_bashlyk_aExport_std:="udfBaseId udfDate udfShowVariable udfIsNumber udfIsValidVariable udfQuoteIfNeeded udfWSpace2Alias \
+ udfAlias2WSpace udfMakeTemp  udfMakeTempV udfShellExec udfAddFile2Clean udfAddPath2Clean udfAddJob2Clean udfAddPid2Clean \
+ udfCheckCsv udfCleanQueue udfOnTrap _ARGUMENTS _s0 _pathDat _ _gete _getv _set udfGetMd5 udfGetPathMd5 udfXml udfPrepare2Exec \ udfSerialize udfSetLastError udfBashlykUnquote udfTimeStamp"}
+#******
+#****f* libstd/udfIsNumber
+#  SYNOPSIS
+#    udfIsNumber <number> [<tag>]
+#  DESCRIPTION
+#    Проверка аргумента на то, что он является натуральным числом
+#    Аргумент считается числом, если он содержит цифры и может иметь в конце
+#    символ - признак порядка, например, k M G T (kilo-, Mega-, Giga-, Terra-)
+#  INPUTS
+#    number - проверяемое значение
+#    tag    - набор символов, один из которых можно применить
+#             после цифр для указания признака числа, например,
+#             порядка. (регистр не имеет значения)
+#  RETURN VALUE
+#    0                            - аргумент является натуральным числом
+#    iErrorNonValidArgument       - аргумент не является натуральным числом
+#    iErrorEmptyOrMissingArgument - аргумент не задан
+#  EXAMPLE
+#    udfIsNumber 12                                                             #? true
+#    udfIsNumber 34k k                                                          #? true
+#    udfIsNumber 67M kMGT                                                       #? true
+#    udfIsNumber 89G G                                                          #? true
+#    udfIsNumber 12,34                                                          #? $_bashlyk_iErrorNonValidArgument
+#    udfIsNumber 12T                                                            #? $_bashlyk_iErrorNonValidArgument
+#    udfIsNumber 1O2                                                            #? $_bashlyk_iErrorNonValidArgument
+#    udfIsNumber                                                                #? $_bashlyk_iErrorEmptyOrMissingArgument
+#  SOURCE
+udfIsNumber() {
+ [[ -n "$1" ]] || return $(_ iErrorEmptyOrMissingArgument)
+ local s
+ [[ -n "$2" ]] && s="[$2]?"
+ echo "$1" | grep -i -E "^[[:digit:]]+${s}$" >/dev/null 2>&1 || return $(_ iErrorNonValidArgument)
+ return 0
+}
+#******
+#****f* libstd/udfSetLastError
+#  SYNOPSIS
+#    udfSetLastError iError sError
+#  DESCRIPTION
+#    Save in global variables _bashlyk_iLastError _bashlyk_sLastError error states
+#  INPUTS
+#    iError - Error Number
+#    sError - Error text
+#  RETURN VALUE
+#    last error code
+#  EXAMPLE
+#    udfSetLastError                                                            #? $_bashlyk_iErrorEmptyOrMissingArgument
+#    udfSetLastError iErrorNonValidVariable "12NonValid Variable"               #? $_bashlyk_iErrorNonValidVariable
+#    _ iLastError >| grep -w "$_bashlyk_iErrorNonValidVariable"                 #? true
+#    _ sLastError >| grep "^12NonValid Variable$"                               #? true
+#  SOURCE
+udfSetLastError() {
+ [[ -n "$1" ]] || return $_bashlyk_iErrorEmptyOrMissingArgument
+ local i
+ udfIsNumber "$1" && i="$1" || eval "i=\$_bashlyk_${1}"
+ udfIsNumber "$i" || return $_bashlyk_iErrorNonValidArgument
+ shift
+ _bashlyk_iLastError=$i
+ _bashlyk_sLastError="$*"
+ return $i
+}
+#******
+#****f* libstd/udfOnError
+#  SYNOPSIS
+#    udfOnError
+#  DESCRIPTION
+#
+#
+#  EXAMPLE
+#    echo $(udfOnError warn   iErrorNonValidArgument "test unit")               #? true
+#    echo $(udfOnError exit   iErrorNonValidArgument "test unit")               #? true
+#    echo $(udfOnError return iErrorNonValidArgument "test unit")               #? true
+#  SOURCE
+udfOnError() {
+ local sBehaviorOnError=$(_ sBehaviorOnError)
+ [[ -n "$sBehaviorOnError" ]] || sBehaviorOnError='return'
+ case "$1" in
+  'return') [[ -n "${FUNCNAME[1]}" && "${FUNCNAME[1]}" != "main" ]] && sBehaviorOnError='return';;
+    'warn') sBehaviorOnError='echo';;
+    'exit') sBehaviorOnError='exit';;
+ esac
+ [[ "${sBehaviorOnError}" == "return" && "${FUNCNAME[1]}" == "main" ]] && sBehaviorOnError='exit'
+ shift
+ [[ "$sBehaviorOnError" == "echo" ]] && sBehaviorOnError+=" $*" || sBehaviorOnError+=" \$?"
+ echo "udfSetLastError $*; $sBehaviorOnError"
+}
 #******
 #****f* libstd/udfBaseId
 #  SYNOPSIS
@@ -129,403 +211,6 @@ udfDate() {
  date "+%b %d %H:%M:%S $*"
 }
 #******
-#****f* libstd/udfEcho
-#  SYNOPSIS
-#    udfEcho [-] args
-#  DESCRIPTION
-#    Сборка сообщения из аргументов и стандартного ввода
-#  INPUTS
-#    -    - данные читаются из стандартного ввода
-#    args - строка для вывода. Если имеется в качестве первого аргумента
-#           "-", то эта строка выводится заголовком для данных
-#           из стандартного ввода
-#  OUTPUT
-#   Зависит от параметров вывода
-#  EXAMPLE
-#    udfEcho 'test' >| grep -w 'test'                                           #? true
-#    echo body | udfEcho - subject | tr -d '\n' >| grep -w "^subject----body$"  #? true
-#  SOURCE
-udfEcho() {
- if [[ "$1" == "-" ]]; then
-  shift
-  [[ -n "$1" ]] && printf "%s\n----\n" "$*"
-  cat
- else
-  [[ -n "$1" ]] && echo $*
- fi
-}
-#******
-#****f* libstd/udfMail
-#  SYNOPSIS
-#    udfMail [[-] arg]
-#  DESCRIPTION
-#    Передача сообщения по почте
-#  INPUTS
-#    arg -  Если это имя непустого существующего файла, то выполняется попытка
-#           чтения из него, иначе строка аргументов воспринимается как текст
-#           сообщения
-#    -   -  данные читаются из стандартного ввода
-#  RETURN VALUE
-#    0                            - сообщение успешно отправлено
-#    iErrorEmptyOrMissingArgument - аргумент не задан
-#    iErrorCommandNotFound        - команда не найдена
-#  EXAMPLE
-##  TODO уточнить по каждому варианту
-#    local emailOptions=$(_ emailOptions)
-#    _ emailOptions '-v'
-#    echo "notification testing" | udfMail - "bashlyk::libstd::udfMail"
-#    [ $? -eq $(_ iErrorCommandNotFound) -o $? -eq 0 ] && true                  #? true
-#    _ emailOptions "$emailOptions"
-#  SOURCE
-udfMail() {
- [[ -n "$1" ]] || {
-  udfSetLastError iErrorEmptyOrMissingArgument "udfMail"
-  return $?
- }
- #
- local sTo=$_bashlyk_sLogin
-
- which mail >/dev/null 2>&1 || {
-  udfSetLastError iErrorCommandNotFound "mail"
-  return $?
- }
-
- [[ -n "$sTo" ]] || sTo=$_bashlyk_sUser
- [[ -n "$sTo" ]] || sTo=postmaster
-
- {
-  case "$1" in
-   -)
-     udfEcho $*
-     ;;
-   *)
-     [[ -s "$*" ]] && cat "$*" || echo "$*"
-     ;;
-  esac
- } | mail -e -s "${_bashlyk_emailSubj}" $_bashlyk_emailOptions $sTo
-
- return $?
-}
-#******
-#****f* libstd/udfMessage
-#  SYNOPSIS
-#    udfMessage [-] [args]
-#  DESCRIPTION
-#    Передача сообщения владельцу процесса по одному из доступных способов:
-#    службы уведомлений рабочего стола X-Window, почты или утилитой write
-#  INPUTS
-#    -    - данные читаются из стандартного ввода
-#    args - строка для вывода. Если имеется в качестве первого аргумента
-#           "-", то эта строка выводится заголовком для данных
-#           из стандартного ввода
-#  RETURN VALUE
-#    0   - сообщение успешно отправлено (передано выбранному транспорту)
-#    iErrorEmptyOrMissingArgument - аргумент не задан
-#    iErrorCommandNotFound        - команда не найдена
-#  EXAMPLE
-#    local sBody="notification testing" sSubj="bashlyk::libstd::udfMessage"
-#    echo "$sBody" | udfMessage - "$sSubj"                                      #? true
-#    [[ $? -eq 0 ]] && sleep 2
-#  SOURCE
-udfMessage() {
- local fnTmp i=$(_ iMaxOutputLines)
-
- udfIsNumber $i || i=9999
-
- udfMakeTemp fnTmp
- udfEcho $* | tee -a $fnTmp | head -n $i
-
- udfNotify2X $fnTmp || udfMail $fnTmp || {
-  [[ -n "$_bashlyk_sLogin" ]] && cat $fnTmp | write $_bashlyk_sLogin
- }
- i=$?
- rm -f $fnTmp
- return $i
-}
-#******
-#****f* libstd/udfNotify2X
-#  SYNOPSIS
-#    udfNotify2X arg
-#  DESCRIPTION
-#    Передача сообщения через службы уведомления, основанные на X-Window
-#  INPUTS
-#    arg -  Если это имя непустого существующего файла, то выполняется попытка
-#           чтения из него, иначе строка аргументов воспринимается как текст
-#           сообщения
-#  RETURN VALUE
-#    0                            - сообщение успешно отправлено
-#    iErrorEmptyOrMissingArgument - аргумент не задан
-#    iErrorCommandNotFound        - команда не найдена
-#    iErrorXsessionNotFound       - X-сессия не обнаружена
-#    iErrorNotPermitted           - не разрешено
-#  EXAMPLE
-#    local sBody="notification testing" sSubj="bashlyk::libstd::udfNotify2X" rc
-#    udfNotify2X "${sSubj}\n----\n${sBody}\n"
-#    rc=$?
-#    echo "$?" >| grep "$(_ iErrorNotPermitted)\|$(_ iErrorXsessionNotFound)\|0" #? true
-#    [[ $rc -eq 0 ]] && sleep 2
-#  SOURCE
-udfNotify2X() {
- [[ -n "$1" ]] || {
-  udfSetLastError iErrorEmptyOrMissingArgument "udfNotify2X"
-  return $?
- }
- #
- local iTimeout=8 s
-
- [[ -s "$*" ]] && s="$(cat "$*")" || s="$(echo -e "$*")"
-
- for cmd in notify-send kdialog zenity xmessage; do
-  udfNotifyCommand $cmd "$(_ emailSubj)" "$s" "$iTimeout" && break
- done
- (( $? == 0 )) || udfSetLastError iErrorCommandNotFound "udfNotifyCommand"
- return $?
-}
-#******
-#****f* libstd/udfGetXSessionProperties
-#  SYNOPSIS
-#    udfGetXSessionProperties
-#  DESCRIPTION
-#    установить некоторые переменные среды первой локальной X-сессии
-#  RETURN VALUE
-#    0                            - сообщение успешно отправлено
-#    iErrorCommandNotFound        - команда не найдена
-#    iErrorXsessionNotFound       - X-сессия не обнаружена
-#    iErrorNotPermitted           - не разрешено
-#  EXAMPLE
-#    udfGetXSessionProperties
-#  SOURCE
-udfGetXSessionProperties() {
- local a pid s sB sD sX sudo user userX
- #
- a="x-session-manager gnome-session gnome-session-flashback lxsession mate-session-manager openbox razorqt-session xfce4-session"
- user=$(_ sUser)
- #
- [[ "$user" == "root" && -n "$SUDO_USER" ]] && user=$SUDO_USER
-
- a+=" $(grep "Exec=.*" /usr/share/xsessions/*.desktop 2>/dev/null | cut -f 2 -d"=" | sort | uniq )"
-
- for s in $a; do
-  for pid in $(ps -C ${s##*/} -o pid=); do
-   userX=$(stat -c %U /proc/$pid)
-   [[ -n "$userX" ]] || continue
-   [[ "$user" == "$userX" || "$user" == "root" ]] || continue
-   ## TODO если много X-сессий - позволить rootу выбирать оптимальный
-   sB="$(grep -az DBUS_SESSION_BUS_ADDRESS= /proc/${pid}/environ)"
-   sD="$(grep -az DISPLAY= /proc/${pid}/environ)"
-   sX="$(grep -az XAUTHORITY= /proc/${pid}/environ)"
-   [[ -n "$sB" && -n "$sD" && -n "$sX" ]] && break 2
-  done
- done
-
- [[ -n "$userX" ]] || return $(_ iErrorXsessionNotFound)
- [[ "$user" == "$userX" || "$user" == "root" ]] || return $(_ iErrorNotPermitted)
- [[ -n "$sB" && -n "$sD" && -n "$sX" ]] || return $(_ iErrorEmptyOrMissingArgument)
- [[ "$(_ sUser)" == "root" ]] && sudo="sudo -u $userX" || sudo=''
- _ sXSessionProp "$sudo $sD $sX $sB"
- return 0
-}
-#******
-#****f* libstd/udfNotifyCommand
-#  SYNOPSIS
-#    udfNotifyCommand command title text timeout
-#  DESCRIPTION
-#    Передача сообщения через службы уведомления, основанные на X-Window
-#  INPUTS
-#    command - утилита для выдачи уведомления, в данной версии это одно из
-#              notify-send kdialog zenity xmessage
-#      title - заголовок сообщения
-#       text - текст сообщения
-#    timeout - время показа окна сообщения
-#       user - получатель сообщения
-#  RETURN VALUE
-#    0                            - сообщение успешно отправлено
-#    iErrorEmptyOrMissingArgument - аргументы не заданы
-#    iErrorCommandNotFound        - команда не найдена
-#  EXAMPLE
-#    local title="bashlyk::libstd::udfNotifyCommand" body="notification testing"
-#    local rc
-#    udfNotifyCommand notify-send $title "$body" 8
-#    rc=$?
-#    echo $? >| grep "$(_ iErrorCommandNotFound)\|0"                            #? true
-#    [[ $rc -eq 0 ]] && sleep 2
-#    udfNotifyCommand kdialog     $title "$body" 8
-#    rc=$?
-#    echo $? >| grep "$(_ iErrorCommandNotFound)\|0"                            #? true
-#    [[ $rc -eq 0 ]] && sleep 2
-#    udfNotifyCommand zenity      $title "$body" 2
-#    rc=$?
-#    echo $? >| grep "$(_ iErrorCommandNotFound)\|0"                            #? true
-#    [[ $rc -eq 0 ]] && sleep 2
-#    udfNotifyCommand xmessage    $title "$body" 4
-#    rc=$?
-#    echo $? >| grep "$(_ iErrorCommandNotFound)\|0"                            #? true
-#  SOURCE
-udfNotifyCommand() {
- [[ -n "$4" ]] || {
-  udfSetLastError iErrorEmptyOrMissingArgument "udfNotifyCommand"
-  return $?
- }
- #
- local h t rc X
- udfIsNumber "$4" && t=$4 || t=8
- [[ -n "$(_ sXSessionProp)" ]] || udfGetXSessionProperties || return $?
- X=$(_ sXSessionProp)
- #
- declare -A h=(                                                                                \
-  [notify-send]="$X $1 -t $t \"$2 via $1\" \"$(printf "$3")\""                                 \
-  [kdialog]="$X $1 --title \"$2 via $1\" --passivepopup \"$(printf "$3")\" $t"                 \
-  [zenity]="$X $1 --notification --timeout $(($t/2)) --text \"$(printf "$2 via $1\n\n$3\n")\"" \
-  [xmessage]="$X $1 -center -timeout $t \"$(printf "$2 via $1\n\n$3\n")\" 2>/dev/null"         \
- )
-
- if [[ -x "$(which "$1")" ]]; then
-  eval "${h[$1]}"
-  rc=$?
-  [[ "$1" == "zenity" && "$rc" == "5" ]] && rc=0
- else
-  rc=$(_ iErrorCommandNotFound)
-  udfSetLastError $rc "$1"
- fi
-
- return $rc
-}
-#******
-#****f* libstd/udfWarn
-#  SYNOPSIS
-#    udfWarn [-] args
-#  DESCRIPTION
-#    Вывод предупреждающего сообщения. Если терминал отсутствует, то сообщение
-#    передается функции udfMessage.
-#  INPUTS
-#    -    - данные читаются из стандартного ввода
-#    args - строка для вывода. Если имеется в качестве первого аргумента
-#           "-", то строка выводится заголовком для данных
-#           из стандартного ввода, при отсутствии аргументов выдаётся содержимое
-#           глобальной переменной $_bashlyk_sLastError
-#  OUTPUT
-#   Зависит от параметров вывода
-#  EXAMPLE
-#    # TODO требуется более точная проверка
-#    local bNotUseLog=$_bashlyk_bNotUseLog
-#    _bashlyk_bNotUseLog=0 date | udfWarn - "udfWarn test log"                  #? true
-#    _bashlyk_bNotUseLog=1 date | udfWarn - "udfWarn test int"                  #? true
-#    _bashlyk_bNotUseLog=$bNotUseLog
-#  SOURCE
-udfWarn() {
- local s
- [[ -n "$*" ]] && s="$*" || s="$(_ sLastError)"
- [[ "$_bashlyk_bNotUseLog" != "0" ]] && udfEcho $s || udfMessage $s
-}
-#******
-#****f* libstd/udfThrow
-#  SYNOPSIS
-#    udfThrow [-] errNo errMessage
-#  DESCRIPTION
-#    Вывод аварийного сообщения с завершением работы. Если терминал отсутствует,
-#    то сообщение передается системе уведомлений.
-#  INPUTS
-#    -    - данные читаются из стандартного ввода
-#    args - строка для вывода. Если имеется в качестве первого аргумента
-#           "-", то строка выводится заголовком для данных
-#           из стандартного ввода
-#  OUTPUT
-#   Зависит от параметров вывода
-#  ## TODO добавить секцию RETURN VALUE
-#  EXAMPLE
-#    $(udfThrow test; true)                                                     #? false
-#  SOURCE
-udfThrow() {
- udfWarn $*
- (( $(_ iLastError) != 0 )) && exit $(_ iLastError) || exit 255
-}
-#******
-#****f* libstd/udfOnEmptyVariable
-#  SYNOPSIS
-#    udfOnEmptyVariable [Warn | Throw ] args
-#  DESCRIPTION
-#    Вызывает останов или выдает предупреждение, если аргументы - имена
-#    переменных - содержат пустые значения
-#  INPUTS
-#    Warn  - вывод предупреждения
-#    Throw - останов сценария (по умолчанию)
-#    args  - имена переменных
-#  OUTPUT
-#    Сообщение об ошибке с перечислением имен переменных,
-#    которые содержат пустые значения
-#  RETURN VALUE
-#    0                            - переменные не содержат пустые значения
-#    iErrorEmptyOrMissingArgument - есть не инициализированные переменные
-#  EXAMPLE
-#    local sNoEmpty='test' sEmpty=''
-#    $(udfOnEmptyVariable sNoEmpty)                                             #? true
-#    $(udfOnEmptyVariable sEmpty >/dev/null 2>&1; true)                         #? $_bashlyk_iErrorEmptyOrMissingArgument
-#  SOURCE
-udfOnEmptyVariable() {
- local bashlyk_EysrBRwAuGMRNQoG_a bashlyk_tfAFyKrLgSeOatp2_s s='Throw'
- case "$1" in
-  "Warn")
-   s='Warn'; shift;;
-  "Throw")
-   s='Throw'; shift;;
- esac
- for bashlyk_tfAFyKrLgSeOatp2_s in $*; do
-  [[ -z "${!bashlyk_tfAFyKrLgSeOatp2_s}" ]] \
-   && bashlyk_EysrBRwAuGMRNQoG_a+=" $bashlyk_tfAFyKrLgSeOatp2_s"
- done
- [[ -n "$bashlyk_EysrBRwAuGMRNQoG_a" ]] && {
-  udf${s} "Error: Variable(s) or option(s) ($bashlyk_EysrBRwAuGMRNQoG_a ) is empty..."
-  return $(_ iErrorEmptyOrMissingArgument)
- }
- return 0
-}
-#******
-#****f* libstd/udfThrowOnEmptyVariable
-#  SYNOPSIS
-#    udfThrowOnEmptyVariable args
-#  DESCRIPTION
-#    Вызывает останов сценария, если аргументы, как имена переменных, содержат
-#    пустые значения
-#  INPUTS
-#    args - имена переменных
-#  OUTPUT
-#    Сообщение об ошибке с перечислением имен переменных, которые содержат
-#    пустые значения
-#  RETURN VALUE
-#    0                            - переменные не содержат пустые значения
-#    iErrorEmptyOrMissingArgument - есть не инициализированные переменные
-#  EXAMPLE
-#    local sNoEmpty='test' sEmpty=''
-#    $(udfThrowOnEmptyVariable sNoEmpty >/dev/null 2>&1)                        #? true
-#    $(udfThrowOnEmptyVariable sEmpty >/dev/null 2>&1)                          #? $_bashlyk_iErrorEmptyOrMissingArgument
-#  SOURCE
-udfThrowOnEmptyVariable() {
- udfOnEmptyVariable Throw $*
-}
-#******
-#****f* libstd/udfWarnOnEmptyVariable
-#  SYNOPSIS
-#    udfWarnOnEmptyVariable args
-#  DESCRIPTION
-#    Выдаёт предупреждение, если аргументы - имена переменных - содержат пустые
-#    значения
-#  INPUTS
-#    args - имена переменных
-#  OUTPUT
-#    Сообщение об ошибке с перечислением имен переменных, которые содержат
-#    пустые значения
-#  RETURN VALUE
-#    0                            - переменные не содержат пустые значения
-#    iErrorEmptyOrMissingArgument - есть не инициализированные переменные
-#  EXAMPLE
-#    local sNoEmpty='test' sEmpty=''
-#    udfWarnOnEmptyVariable sNoEmpty                                            #? true
-#    udfWarnOnEmptyVariable sEmpty                                              #? $_bashlyk_iErrorEmptyOrMissingArgument
-#  SOURCE
-udfWarnOnEmptyVariable() {
- udfOnEmptyVariable Warn $*
-}
-#******
 #****f* libstd/udfShowVariable
 #  SYNOPSIS
 #    udfShowVariable args
@@ -548,41 +233,6 @@ udfShowVariable() {
  return 0
 }
 #******
-#****f* libstd/udfIsNumber
-#  SYNOPSIS
-#    udfIsNumber <number> [<tag>]
-#  DESCRIPTION
-#    Проверка аргумента на то, что он является натуральным числом
-#    Аргумент считается числом, если он содержит цифры и может иметь в конце
-#    символ - признак порядка, например, k M G T (kilo-, Mega-, Giga-, Terra-)
-#  INPUTS
-#    number - проверяемое значение
-#    tag    - набор символов, один из которых можно применить
-#             после цифр для указания признака числа, например,
-#             порядка. (регистр не имеет значения)
-#  RETURN VALUE
-#    0                            - аргумент является натуральным числом
-#    iErrorNonValidArgument       - аргумент не является натуральным числом
-#    iErrorEmptyOrMissingArgument - аргумент не задан
-#  EXAMPLE
-#    udfIsNumber 12                                                             #? true
-#    udfIsNumber 34k k                                                          #? true
-#    udfIsNumber 67M kMGT                                                       #? true
-#    udfIsNumber 89G G                                                          #? true
-#    udfIsNumber 12,34                                                          #? $_bashlyk_iErrorNonValidArgument
-#    udfIsNumber 12T                                                            #? $_bashlyk_iErrorNonValidArgument
-#    udfIsNumber 1O2                                                            #? $_bashlyk_iErrorNonValidArgument
-#    udfIsNumber                                                                #? $_bashlyk_iErrorEmptyOrMissingArgument
-#  SOURCE
-udfIsNumber() {
- [[ -n "$1" ]] || return $(_ iErrorEmptyOrMissingArgument)
- local s
- [[ -n "$2" ]] && s="[$2]?"
- echo "$1" | grep -i -E "^[[:digit:]]+${s}$" >/dev/null 2>&1 || \
-  return $(_ iErrorNonValidArgument)
- return 0
-}
-#******
 #****f* libstd/udfIsValidVariable
 #  SYNOPSIS
 #    udfIsValidVariable <arg>
@@ -602,9 +252,8 @@ udfIsNumber() {
 #    udfIsValidVariable "k1"                                                    #? true
 #  SOURCE
 udfIsValidVariable() {
- [[ -n "$1" ]] || return $(_ iErrorEmptyOrMissingArgument)
- echo "$1" | grep -E '^[_a-zA-Z]+[_a-zA-Z0-9]+?$' >/dev/null 2>&1 || \
-  return $(_ iErrorNonValidVariable)
+ [[ -n "$1" ]] || eval $(udfOnError return iErrorEmptyOrMissingArgument)
+ echo "$1" | grep -E '^[_a-zA-Z]+[_a-zA-Z0-9]+?$' >/dev/null 2>&1 || eval $(udfOnError return iErrorNonValidVariable $1)
  return 0
 }
 #******
@@ -751,7 +400,7 @@ udfMakeTemp() {
  done
 
  if [[ -n "$bashlyk_sVar_ioAUaE5R" ]]; then
-  udfIsValidVariable "$bashlyk_sVar_ioAUaE5R" || return $?
+  udfIsValidVariable "$bashlyk_sVar_ioAUaE5R" || eval $(udfOnError return $? $bashlyk_sVar_ioAUaE5R)
  else
   bashlyk_bNoKeep_ioAUaE5R=false
  fi
@@ -804,7 +453,7 @@ udfMakeTemp() {
     $bashlyk_sPrefix_ioAUaE5R $bashlyk_sSuffix_ioAUaE5R)
   ;;
   *)
-    return $(_ iErrorUnexpected)
+    eval $(udfOnError return iErrorUnexpected $bashlyk_sCreateMode_ioAUaE5R)
   ;;
  esac
  [[ -n "$bashlyk_sUser_ioAUaE5R"  ]] \
@@ -817,7 +466,7 @@ udfMakeTemp() {
  elif [[ -d "$bashlyk_s_ioAUaE5R" ]]; then
   $bashlyk_bNoKeep_ioAUaE5R && udfAddPath2Clean $bashlyk_s_ioAUaE5R
  else
-  return $(_ iErrorNotExistNotCreated)
+  eval $(udfOnError return iErrorNotExistNotCreated $bashlyk_s_ioAUaE5R)
  fi
 
  bashlyk_foResult_ioAUaE5R=$bashlyk_s_ioAUaE5R
@@ -826,7 +475,7 @@ udfMakeTemp() {
  else
   echo ${bashlyk_foResult_ioAUaE5R}
  fi
- return $?
+ return 0
 }
 #******
 #****f* libstd/udfMakeTempV
@@ -857,11 +506,8 @@ udfMakeTemp() {
 #    test -f $foTemp                                                            #? false
 #  SOURCE
 udfMakeTempV() {
- [[ -n "$1" ]] || return $(_ iErrorEmptyOrMissingArgument)
- udfIsValidVariable "$1" || {
-  udfSetLastError iErrorNonValidVariable "$1"
-  udfThrow "Error: non valid variable name \"$1\""
- }
+ [[ -n "$1" ]] || eval $(udfOnError exit iErrorEmptyOrMissingArgument "$1")
+ udfIsValidVariable "$1" || eval $(udfOnError exit iErrorNonValidVariable "$1")
  #
  local sKeep sType sPrefix
  #
@@ -928,7 +574,7 @@ udfPrepare2Exec() {
 #    udfShellExec 'false; true'                                                 #? true
 #  SOURCE
 udfShellExec() {
- [[ -n "$*" ]] || return $(_ iErrorEmptyOrMissingArgument)
+ [[ -n "$*" ]] || eval $(udfOnError return iErrorEmptyOrMissingArgument)
  local rc fn
  udfMakeTemp fn
  udfPrepare2Exec $* > $fn
@@ -947,9 +593,9 @@ udfShellExec() {
 #  INPUTS
 #    args - имена файлов
 #  EXAMPLE
-#    local fnTemp
+#    local fnTemp rc
 #    udfMakeTemp fnTemp keep=true
-#    test $(udfAddFile2Clean $fnTemp)
+#    echo $(udfAddFile2Clean $fnTemp)
 #    test -f $fnTemp                                                            #? false
 #  SOURCE
 udfAddFile2Clean() {
@@ -969,7 +615,7 @@ udfAddFile2Clean() {
 #  EXAMPLE
 #    local pathTemp
 #    udfMakeTemp pathTemp keep=true type=dir
-#    test $(udfAddPath2Clean $pathTemp)
+#    echo $(udfAddPath2Clean $pathTemp)
 #    test -d $pathTemp                                                          #? false
 #  SOURCE
 udfAddPath2Clean() {
@@ -1076,6 +722,8 @@ udfOnTrap() {
  for s in ${_bashlyk_apathClean}; do
   rmdir $s 2>/dev/null
  done
+ #
+ echo "Last Error: $_bashlyk_sLastError ( $_bashlyk_iLastError )" >2
  #
  [[ -n "${_bashlyk_pidLogSock}" ]] && {
   exec >/dev/null 2>&1
@@ -1191,7 +839,7 @@ _pathDat() {
 #    _ sWSpaceAlias
 #  SOURCE
 _(){
- [[ -n "$1" ]] || return $(_ iErrorEmptyOrMissingArgument)
+ [[ -n "$1" ]] || eval $(udfOnError return iErrorEmptyOrMissingArgument)
  if (( $# > 1 )); then
   eval "_bashlyk_${1##*=}=\"${2}\""
  else
@@ -1201,7 +849,7 @@ _(){
         k=${1%=*}
         v=${1##*=}
         [[ -n "$k" ]] || k=$v
-        udfIsValidVariable $k || return $?
+        udfIsValidVariable $k || eval $(udfOnError return $? $k)
         eval "export $k="'$_bashlyk_'"${v}"
         ;;
      *) eval "echo "'$_bashlyk_'"${1}";;
@@ -1233,7 +881,7 @@ _(){
 #    echo "$sWSpaceAlias" >| grep "^${_bashlyk_sWSpaceAlias}$"                  #? true
 #  SOURCE
 _getv() {
- [[ -n "$1" ]] || return $(_ iErrorEmptyOrMissingArgument)
+ [[ -n "$1" ]] || eval $(udfOnError return iErrorEmptyOrMissingArgument)
  if [[ -n "$2" ]]; then
   udfIsValidVariable $2 || return $?
   eval "export $2="'$_bashlyk_'"${1}"
@@ -1258,7 +906,7 @@ _getv() {
 #    _gete sWSpaceAlias >| grep "^${_bashlyk_sWSpaceAlias}$"                    #? true
 #  SOURCE
 _gete() {
- [[ -n "$1" ]] || return $(_ iErrorEmptyOrMissingArgument)
+ [[ -n "$1" ]] || eval $(udfOnError return iErrorEmptyOrMissingArgument)
  eval "echo "'$_bashlyk_'"${1}"
 }
 #******
@@ -1280,7 +928,7 @@ _gete() {
 #    _set sWSpaceAlias $sWSpaceAlias
 #  SOURCE
 _set() {
- [[ -n "$1" ]] || return $(_ iErrorEmptyOrMissingArgument)
+ [[ -n "$1" ]] || eval $(udfOnError return iErrorEmptyOrMissingArgument)
  eval "_bashlyk_$1=$2"
 }
 #******
@@ -1317,7 +965,7 @@ _set() {
 #    ## TODO проверить все коды возврата
 #  SOURCE
 udfCheckCsv() {
- [[ -n "$1" ]] || return $(_ iErrorEmptyOrMissingArgument)
+ [[ -n "$1" ]] || eval $(udfOnError return iErrorEmptyOrMissingArgument)
  local bashlyk_s_Q1eiphgO bashlyk_cIFS_Q1eiphgO bashlyk_k_Q1eiphgO
  local bashlyk_v_Q1eiphgO bashlyk_i_Q1eiphgO bashlyk_csvResult_Q1eiphgO
  #
@@ -1341,8 +989,7 @@ udfCheckCsv() {
  done
  IFS=$bashlyk_cIFS_Q1eiphgO
  if [[ -n "$2" ]]; then
-  udfIsValidVariable "$2" || return $?
-  #udfThrow "Error: required valid variable name \"$2\""
+  udfIsValidVariable "$2" || eval $(udfOnError return iErrorNonValidVariable "$2")
   eval 'export ${2}="${bashlyk_csvResult_Q1eiphgO}"'
  else
   echo "$bashlyk_csvResult_Q1eiphgO"
@@ -1403,9 +1050,9 @@ udfGetMd5() {
 #    udfGetPathMd5 $path                                                        #? true
 #  SOURCE
 udfGetPathMd5() {
- [[ -n "$1" && -d "$1" ]] || return $(_ iErrorEmptyOrMissingArgument)
+ [[ -n "$1" && -d "$1" ]] || eval $(udfOnError return iErrorEmptyOrMissingArgument)
  local pathSrc="$(pwd)" pathDst s
- cd "$1" 2>/dev/null || return $(_ iErrorFileNotFound)
+ cd "$1" 2>/dev/null || eval $(udfOnError return iErrorFileNotFound "$1")
  pathDst="$(pwd)"
  for s in *; do
   [[ -d "$s" ]] && udfGetPathMd5 $s
@@ -1435,36 +1082,10 @@ udfGetPathMd5() {
 #    udfXml "$sTag" "$sContent" >| grep "^${sXml}$"                             #? true
 #  SOURCE
 udfXml() {
- [[ -n "$1" ]] || return $(_ iErrorEmptyOrMissingArgument)
+ [[ -n "$1" ]] || eval $(udfOnError return iErrorEmptyOrMissingArgument)
  local s=($1)
  shift
  echo "<${s[*]}>${*}</${s[0]}>"
-}
-#******
-#****f* libstd/udfSetLastError
-#  SYNOPSIS
-#    udfSetLastError iError sError
-#  DESCRIPTION
-#    Save in global variables _bashlyk_iLastError _bashlyk_sLastError error states
-#  INPUTS
-#    iError - Error Number
-#    sError - Error text
-#  RETURN VALUE
-#    last error code
-#  EXAMPLE
-#    udfSetLastError iErrorNonValidVariable "12NonValid Variable"               #? $_bashlyk_iErrorNonValidVariable
-#    _ iLastError >| grep -w "$_bashlyk_iErrorNonValidVariable"                 #? true
-#    _ sLastError >| grep "^12NonValid Variable$"                               #? true
-#  SOURCE
-udfSetLastError() {
- [[ -n "$1" ]] || return $(_ iErrorEmptyOrMissingArgument)
- local i
- udfIsNumber "$1" && i="$1" || i=$(_ "$1")
- udfIsNumber "$i" || return $(_ iErrorNonValidArgument)
- shift
- _ iLastError $i
- _ sLastError "$*"
- return $i
 }
 #******
 #****f* libstd/udfSerialize
@@ -1484,7 +1105,7 @@ udfSetLastError() {
 #    udfSerialize sUname sDate s >| grep "^sUname=.*s=100;$"                    #? true
 #  SOURCE
 udfSerialize() {
- [[ -n "$1" ]] || return $(_ iErrorEmptyOrMissingArgument)
+ [[ -n "$1" ]] || eval $(udfOnError return iErrorEmptyOrMissingArgument)
  local bashlyk_s_Serialize csv
  for bashlyk_s_Serialize in $*; do
   udfIsValidVariable "$bashlyk_s_Serialize" \
@@ -1516,29 +1137,5 @@ udfBashlykUnquote() {
  eval "$cmd"
 }
 #******
-#****f* libstd/udfError
-#  SYNOPSIS
-#    udfError
-#  DESCRIPTION
-#
-#
-#  EXAMPLE
-#
-#    
-#  SOURCE
-udfError() {
- local sBehaviorOnError=$(_ sBehaviorOnError)
- [[ -n "$sBehaviorOnError" ]] || sBehaviorOnError='return'
- case "$1" in
-  'return') [[ -n "${FUNCNAME[1]}" && "${FUNCNAME[1]}" != "main" ]] && sBehaviorOnError='return';;
-    'warn') sBehaviorOnError='udfWarn';;
-    'exit') sBehaviorOnError='exit';;
- esac
- [[ "${sBehaviorOnError}" == "return" && "${FUNCNAME[1]}" == "main" ]] && sBehaviorOnError='exit'
- shift
- [[ "$sBehaviorOnError" == "udfWarn" ]] && sBehaviorOnError+=" $*" || sBehaviorOnError+=" \$?"
- echo "udfSetLastError $*; $sBehaviorOnError"
-}
-#******
 #shopt -s expand_aliases
-#alias onError="eval $udfError"
+#alias onError="eval $(udfOnError"

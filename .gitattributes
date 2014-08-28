@@ -21,6 +21,7 @@ src/inisection2csv.awk -text
 src/libcnf.sh -text
 src/libini.sh -text
 src/liblog.sh -text
+src/libmsg.sh -text
 src/libopt.sh -text
 src/libpid.sh -text
 src/libppp.sh -text

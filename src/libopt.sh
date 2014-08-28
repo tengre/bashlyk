@@ -61,7 +61,7 @@
 #   udfGetOptHash 'job:,force' --job main --force >| grep "^;job=main;force=1;$" #? true
 #  SOURCE
 udfGetOptHash() {
- [[ -n "$*" ]] || return $(_ iErrorEmptyOrMissingArgument)
+ [[ -n "$*" ]] || eval $(udfOnError return iErrorEmptyOrMissingArgument)
  local k v csvKeys csvHash=';' sOpt bFound
  csvKeys="$1"
  shift
@@ -107,7 +107,7 @@ udfGetOptHash() {
 #    ## TODO коды возврата проверить
 #  SOURCE
 udfSetOptHash() {
- [[ -n "$*" ]] || return $(_ iErrorEmptyOrMissingArgument)
+ [[ -n "$*" ]] || eval $(udfOnError return iErrorEmptyOrMissingArgument)
  local confTmp rc=0
  udfMakeTemp confTmp
  udfSetConfig $confTmp "$*" || return $?
@@ -159,7 +159,7 @@ udfGetOpt() {
 #    udfExcludePairFromHash 'save=1' "${s};save=1;" >| grep "^${s}$"            #? true
 #  SOURCE
 udfExcludePairFromHash() {
- [[ -n "$*" ]] || return $(_ iErrorEmptyOrMissingArgument)
+ [[ -n "$*" ]] || eval $(udfOnError return iErrorEmptyOrMissingArgument)
  local s="$1"
  shift
  local csv="$*"

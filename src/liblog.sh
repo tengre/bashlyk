@@ -27,6 +27,7 @@
 #  SOURCE
 : ${_bashlyk_pathLib:=/usr/share/bashlyk}
 [[ -s "${_bashlyk_pathLib}/libstd.sh" ]] && . "${_bashlyk_pathLib}/libstd.sh"
+[[ -s "${_bashlyk_pathLib}/libmsg.sh" ]] && . "${_bashlyk_pathLib}/libmsg.sh"
 #******
 #****v* liblog/Init section
 #  DESCRIPTION
@@ -111,9 +112,9 @@ udfLogger() {
  else
   (( $_bashlyk_bNotUseLog != 0 )) && bUseLog=0 || bUseLog=1
  fi
- mkdir -p "$_bashlyk_pathLog" \
-  || udfThrow "Error: do not create path ${_bashlyk_pathLog}"
+ mkdir -p "$_bashlyk_pathLog" || eval $(udfOnError exit iErrorNotExistNotCreated "Error: do not create path ${_bashlyk_pathLog}")
  udfAddPath2Clean $_bashlyk_pathLog
+
  case "${bSysLog}${bUseLog}" in
   00)
    echo "$*"
@@ -282,8 +283,7 @@ udfSetLogSocket() {
  fi
  mkdir -p ${_bashlyk_pathRun} || {
   udfWarn "Warn: path for Sockets ${_bashlyk_pathRun} not created..."
-  udfSetLastError iErrorNotExistNotCreated "${_bashlyk_pathRun}"
-  return $?
+  eval $(udfOnError return iErrorNotExistNotCreated ${_bashlyk_pathRun})
  }
  [[ -a "$fnSock" ]] && rm -f $fnSock
  if mkfifo -m 0600 $fnSock >/dev/null 2>&1; then
@@ -324,13 +324,8 @@ udfSetLog() {
             _bashlyk_pathLog=$(dirname ${_bashlyk_fnLog})
          ;;
  esac
- mkdir -p "$_bashlyk_pathLog" || {
-  udfThrow "Error: cannot create path $_bashlyk_pathLog"
- }
- touch "$_bashlyk_fnLog" || {
-  udfSetLastError iErrorNotExistNotCreated "$_bashlyk_fnLog"
-  udfThrow "Error: $_bashlyk_fnLog not usable for logging"
- }
+ mkdir -p "$_bashlyk_pathLog" || eval $(udfOnError exit iErrorNotExistNotCreated "Error: cannot create path $_bashlyk_pathLog")
+ touch "$_bashlyk_fnLog"      || eval $(udfOnError exit iErrorNotExistNotCreated "Error: $_bashlyk_fnLog not usable for logging")
  udfSetLogSocket
  return 0
 }
@@ -387,7 +382,7 @@ _fnLog() {
 #  SOURCE
 udfDebug() {
  local i re='^[0-9]+$'
- [[ -n "$*" ]] && i=$1 || return $(_ iErrorEmptyOrMissingArgument)
+ [[ -n "$*" ]] && i=$1 || eval $(udfOnError return iErrorEmptyOrMissingArgument)
  shift
  echo $i | grep -E $re >/dev/null 2>&1 || i=0
  (( $DEBUGLEVEL >= $i )) || return 1

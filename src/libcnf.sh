@@ -74,7 +74,7 @@
 #    rm -f $conf
 #  SOURCE
 udfGetConfig() {
- [[ -n "$1" ]] || return $(_ iErrorEmptyOrMissingArgument)
+ [[ -n "$1" ]] || eval $(udfOnError return iErrorEmptyOrMissingArgument)
  #
  local bashlyk_aconf_MROATHra bashlyk_conf_MROATHra bashlyk_s_MROATHra
  local bashlyk_pathCnf_MROATHra="$_bashlyk_pathCnf"
@@ -86,7 +86,7 @@ udfGetConfig() {
  if [[ -z "$bashlyk_pathCnf_MROATHra" ]]; then
   [[ -f "/etc/${_bashlyk_pathPrefix}/$1" ]] \
    && bashlyk_pathCnf_MROATHra="/etc/${_bashlyk_pathPrefix}" \
-   || return $(_ iErrorFileNotFound)
+   || eval $(udfOnError return iErrorFileNotFound)
  fi
  #
  bashlyk_conf_MROATHra=
@@ -134,13 +134,13 @@ udfGetConfig() {
 #    rm -f $conf
 #  SOURCE
 udfSetConfig() {
- [[ -n "$1" && -n "$2" ]] || return $(_ iErrorEmptyOrMissingArgument)
+ [[ -n "$1" && -n "$2" ]] || eval $(udfOnError return iErrorEmptyOrMissingArgument)
  #
  local bashlyk_conf_kpHeLmpy bashlyk_chIFS_kpHeLmpy="$IFS"
  local bashlyk_pathCnf_kpHeLmpy="$_bashlyk_pathCnf" bashlyk_sPair_kpHeLmpy
  #
  [ "$1" != "${1##*/}" ] && bashlyk_pathCnf_kpHeLmpy="$(dirname $1)"
- mkdir -p "$bashlyk_pathCnf_kpHeLmpy" || return $(_ iErrorNotExistNotCreated)
+ mkdir -p "$bashlyk_pathCnf_kpHeLmpy" || eval $(udfOnError return iErrorNotExistNotCreated $bashlyk_pathCnf_kpHeLmpy)
  bashlyk_conf_kpHeLmpy="${bashlyk_pathCnf_kpHeLmpy}/${1##*/}"
  IFS=';'
  {
