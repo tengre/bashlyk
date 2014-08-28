@@ -145,18 +145,24 @@ udfSetLastError() {
 #    echo $(udfOnError warn   iErrorNonValidArgument "test unit")               #? true
 #    echo $(udfOnError exit   iErrorNonValidArgument "test unit")               #? true
 #    echo $(udfOnError return iErrorNonValidArgument "test unit")               #? true
+#    echo $(udfOnError rewarn iErrorNonValidArgument "test unit")               #? true
 #  SOURCE
 udfOnError() {
- local sBehaviorOnError=$(_ sBehaviorOnError)
+ local sBehaviorOnError=$_bashlyk_sBehaviorOnError
  [[ -n "$sBehaviorOnError" ]] || sBehaviorOnError='return'
  case "$1" in
   'return') [[ -n "${FUNCNAME[1]}" && "${FUNCNAME[1]}" != "main" ]] && sBehaviorOnError='return';;
+  'rewarn') [[ -n "${FUNCNAME[1]}" && "${FUNCNAME[1]}" != "main" ]] && sBehaviorOnError='rewarn';;
     'warn') sBehaviorOnError='echo';;
     'exit') sBehaviorOnError='exit';;
  esac
  [[ "${sBehaviorOnError}" == "return" && "${FUNCNAME[1]}" == "main" ]] && sBehaviorOnError='exit'
  shift
- [[ "$sBehaviorOnError" == "echo" ]] && sBehaviorOnError+=" $*" || sBehaviorOnError+=" \$?"
+ case "$sBehaviorOnError" in
+         echo) sBehaviorOnError+=" $*";;
+       rewarn) sBehaviorOnError="echo $*; return $_bashlyk_iLastError";;
+  exit|return) sBehaviorOnError+=" \$?"
+ esac
  echo "udfSetLastError $*; $sBehaviorOnError"
 }
 #******
