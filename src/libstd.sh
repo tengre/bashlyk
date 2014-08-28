@@ -42,7 +42,6 @@ _bashlyk_iErrorAlreadyStarted=182
 _bashlyk_iErrorCommandNotFound=180
 _bashlyk_iErrorXsessionNotFound=170
 _bashlyk_iErrorUserXsessionNotFound=171
-_bashlyk_iErrorFormatError=160
 #
 _bashlyk_iMaxOutputLines=1000
 #

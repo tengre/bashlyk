@@ -1320,7 +1320,7 @@ udfOptions2Ini() {
   cIFS=$IFS
   IFS=';'
   [[ -n "$sClass" && -n "$sData" ]] && {
-   udfSetLastError iErrorFormatError "$sClass"
+   udfSetLastError iErrorNonValidArgument "$sClass"
    continue
   }
   if [[ -z "$sData" ]]; then
