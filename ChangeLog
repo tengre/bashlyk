@@ -1,16 +1,31 @@
-Thu, 21 Aug 2014 16:27:36 +0400
-	Fix bugs
+Thu, 28 Aug 2014 17:23:11 +0400
+	New upstream release
 	Version 1.80
  - исправлена ошибка создания нового ini-файла из опций командной строки
  - использование более безопасного кода проверки условий
- - уточнение кодов возврата согласно новой перстраиваемой таблицы кодов,
+ - уточнение кодов возврата согласно новой перестраиваемой таблицы кодов,
    соответствующее исправление тестовых модулей
+ - сформирована новая библиотека libmsg.sh переносом из libstd.sh ряда функций:
+   udfEcho udfWarn udfThrow
+   udfOnEmptyVariable udfThrowOnEmptyVariable udfWarnOnEmptyVariable
+   udfMail udfMessage udfNotify2X udfNotifyCommand
+   udfGetXSessionProperties
  libstd.sh:
+ - добавлена новая универсальная функция обработки ошибок udfOnerror, которая в сочетании
+   c eval позволяет управлять обработку глобально или выборочно, соответственно, код связанный
+   c "return" при ошибках, "udfThrow" или "udfWarn" по возможности заменен
+   на "eval $(udfOnError [return|rewarn|warn|echo|exit] iError... )"
+ - в udfOnTrap добавлен вывод содержимого глобальных переменных sLastError iLastError на STDERR
+ - udfSerialize - исправлена ошибка с неслучайным именем переменной для $!.. подстановки
  - новые коды ошибок:
    * iErrorNoSuchProcess
    * iErrorNoSuchFileOrDir
    * iErrorCurrentProcess
    * iErrorAlreadyStarted
+ testunit.sh:
+ - добавлен вывод ${FUNCNAME[1]} в журнал ошибок
+ bashlyk.conf:
+ - в список библиотек по умолчанию добавлен вызов libmsg.sh
 
 Mon, 04 Aug 2014 15:04:47 +0400
 	New upstream release
