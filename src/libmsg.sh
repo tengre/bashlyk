@@ -16,7 +16,7 @@
 
 [[ -n "$_BASHLYK_LIBMSG" ]] && return 0 || _BASHLYK_LIBMSG=1
 #******
-#****** libpid/External Modules
+#****** libmsg/External Modules
 # DESCRIPTION
 #   Using modules section
 #   Здесь указываются модули, код которых используется данной библиотекой
