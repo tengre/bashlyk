@@ -293,6 +293,7 @@ udfSetLogSocket() {
  else
   udfWarn "Warn: Socket $fnSock not created..."
   exec >>$_bashlyk_fnLog 2>&1
+  _bashlyk_fnLogSock=$_bashlyk_fnLog
   return 1
  fi
  _bashlyk_fnLogSock=$fnSock

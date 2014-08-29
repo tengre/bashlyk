@@ -750,7 +750,9 @@ udfOnTrap() {
   rmdir $s 2>/dev/null
  done
  #
- echo "Last Error: $_bashlyk_sLastError ( $_bashlyk_iLastError )" >2
+ [[ "$_bashlyk_iLastError" != 0 && -f $_bashlyk_fnLogSock ]] && {
+  echo "$$ process last error: $_bashlyk_sLastError ( $_bashlyk_iLastError )" >> $_bashlyk_fnLogSock
+ }
  #
  [[ -n "${_bashlyk_pidLogSock}" ]] && {
   exec >/dev/null 2>&1
