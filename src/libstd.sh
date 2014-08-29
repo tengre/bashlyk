@@ -101,10 +101,10 @@ _bashlyk_iMaxOutputLines=1000
 #    udfIsNumber                                                                #? $_bashlyk_iErrorEmptyOrMissingArgument
 #  SOURCE
 udfIsNumber() {
- [[ -n "$1" ]] || return $(_ iErrorEmptyOrMissingArgument)
+ [[ -n "$1" ]] || return $_bashlyk_iErrorEmptyOrMissingArgument
  local s
  [[ -n "$2" ]] && s="[$2]?"
- echo "$1" | grep -i -E "^[[:digit:]]+${s}$" >/dev/null 2>&1 || return $(_ iErrorNonValidArgument)
+ echo "$1" | grep -i -E "^[[:digit:]]+${s}$" >/dev/null 2>&1 || return $_bashlyk_iErrorNonValidArgument
  return 0
 }
 #******
@@ -127,9 +127,8 @@ udfIsNumber() {
 udfSetLastError() {
  [[ -n "$1" ]] || return $_bashlyk_iErrorEmptyOrMissingArgument
  local i
- udfIsNumber "$1" && i="$1" || eval "i=\$_bashlyk_${1}"
- udfIsNumber "$i" || return $_bashlyk_iErrorNonValidArgument
- shift
+ udfIsNumber $1 && i=$1  || eval "i=\$_bashlyk_${1}"
+ udfIsNumber $i && shift || i=$_bashlyk_iErrorUnexpected
  _bashlyk_iLastError=$i
  _bashlyk_sLastError="$*"
  return $i
@@ -137,43 +136,56 @@ udfSetLastError() {
 #******
 #****f* libstd/udfOnError
 #  SYNOPSIS
-#    udfOnError
+#    udfOnError [<action>] [<iError>] [<sMessage>]
 #  DESCRIPTION
-#
-#
+#   Подготовка кода для установки состоянии ошибки в глобальные переменные _bashlyk_iLastError, _bashlyk_sLastError и
+#   дальнейшего выполнения сценария, который можно вызвать при помощи eval
+#  INPUTS
+#    action   - необязательный аргумент, учитывается если имеет одно из значений:
+#                warn   - вывести сообщение на STDOUT в виде остальной строки аргументов (echo - синоним warn)
+#                return - вписать команду возврата если код находится внутри какой-либо функции, иначе вписать "exit"
+#                rewarn - комбинированное действие warn + return, однако, если код находится не внутри функции, то возврат не
+#                         вписывается в код - только echo
+#                exit   - вписать команду безусловного завершения сценария
+#               В других случаях выполняется действие, хранимое в глобальной переменной $_bashlyk_sBehaviorOnError
+#    iError   - цифровой код ошибки или выражение "iError<Имя ошибки>" при помощи которого можно получить код ошибки c глобальной
+#               переменной вида _bashlyk_iError<..>. Если не удается извлечь цифровой код, то он устанавливается равным
+#               $_bashlyk_iErrorUnexpected. В конечном итоге полученный цифровой код инициализирует глобальную переменную
+#               $_bashlyk_iLastError
+#    sMessage - описание ошибки или детализация, например, имя файла или т.п. - инициализирует глобальную переменную
+#               $_bashlyk_sLastError
+#  OUTPUT
+#    строка команд типа "udfSetLastError _bashlyk_iErrorNoSuchFileOrDir "$filename"; exit $?",
+#    которую можно выполнить при помощи eval
 #  EXAMPLE
-#    echo $(udfOnError warn   iErrorNonValidArgument "test unit")               #? true
-#    echo $(udfOnError exit   iErrorNonValidArgument "test unit")               #? true
-#    echo $(udfOnError return iErrorNonValidArgument "test unit")               #? true
-#    echo $(udfOnError rewarn iErrorNonValidArgument "test unit")               #? true
+#    local s="udfSetLastError iErrorNonValidArgument test unit;"
+#    eval $(udfOnError warn   iErrorNonValidArgument "test unit")                           #? $_bashlyk_iErrorNonValidArgument
+#    udfIsNumber 020h || eval $(udfOnError echo $? "020h")                                  #? $_bashlyk_iErrorNonValidArgument
+#    echo $(udfOnError exit   iErrorNonValidArgument "test unit") >| grep "^$s exit \$?$"   #? true
+#    echo $(udfOnError return iErrorNonValidArgument "test unit") >| grep "^$s return \$?$" #? true
+#    echo $(udfOnError rewarn iErrorNonValidArgument "test unit") >| grep " $s return \$?$" #? true
 #  SOURCE
 udfOnError() {
- local sBehaviorOnError=$_bashlyk_sBehaviorOnError
- case "$sBehaviorOnError" in
+ local sAction=$_bashlyk_sBehaviorOnError sMessage=''
+ case "$sAction" in
   echo|rewarn|exit|return) ;;
-                     warn) sBehaviorOnError="echo";;
-                        *) sBehaviorOnError='return';;
+                     warn) sAction=echo;;
+                        *) sAction=return;;
  esac
 
  case "$1" in
-  'return') sBehaviorOnError='return';;
-  'rewarn') sBehaviorOnError='rewarn';;
-    'warn') sBehaviorOnError='echo';;
-    'echo') sBehaviorOnError='echo';;
-    'exit') sBehaviorOnError='exit';;
+  return|rewarn|warn|echo|exit) sAction=$1;shift;;
  esac
+ ## TODO [ -n "${FUNCNAME[1]}" ]
+ [[ "$sAction" == "return" && "${FUNCNAME[1]}" == "main" ]] && sAction='exit'
+ [[ "$sAction" == "rewarn" && "${FUNCNAME[1]}" == "main" ]] && sAction='echo'
 
- [[ "${sBehaviorOnError}" == "return" && "${FUNCNAME[1]}" == "main" ]] && sBehaviorOnError='exit'
- [[ "${sBehaviorOnError}" == "rewarn" && "${FUNCNAME[1]}" == "main" ]] && sBehaviorOnError='echo'
-
- shift
-
- case "$sBehaviorOnError" in
-         echo) sBehaviorOnError+=" $*";;
-       rewarn) sBehaviorOnError="echo $*; return $_bashlyk_iLastError";;
-  exit|return) sBehaviorOnError+=" \$?";;
+ case "$sAction" in
+    echo|warn) sAction="";               sMessage="echo ${*};";;
+       rewarn) sAction="; return \$?";   sMessage="echo ${*};";;
+  exit|return) sAction="; $sAction \$?"; sMessage="";;
  esac
- echo "udfSetLastError $*; $sBehaviorOnError"
+ printf "%s udfSetLastError ${*}%s\n" "$sMessage" "${sAction}"
 }
 #******
 #****f* libstd/udfBaseId
