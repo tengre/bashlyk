@@ -742,6 +742,10 @@ udfOnTrap() {
   done
  done
  #
+ [[ "$_bashlyk_iLastError" != 0 && "$_bashlyk_bNotUseLog" == "0" ]] && {
+  echo "Last Error: $_bashlyk_sLastError ($_bashlyk_iLastError) " > $_bashlyk_fnLogSock 2>/dev/null
+ }
+ #
  for s in ${_bashlyk_afnClean}; do
   rm -f $s
  done
@@ -749,10 +753,6 @@ udfOnTrap() {
  for s in ${_bashlyk_apathClean}; do
   rmdir $s 2>/dev/null
  done
- #
- [[ "$_bashlyk_iLastError" != 0 && -f $_bashlyk_fnLogSock ]] && {
-  echo "$$ process last error: $_bashlyk_sLastError ( $_bashlyk_iLastError )" >> $_bashlyk_fnLogSock
- }
  #
  [[ -n "${_bashlyk_pidLogSock}" ]] && {
   exec >/dev/null 2>&1
