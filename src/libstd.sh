@@ -126,12 +126,16 @@ udfIsNumber() {
 #  SOURCE
 udfSetLastError() {
  [[ -n "$1" ]] || return $_bashlyk_iErrorEmptyOrMissingArgument
- local i
+ local i s
  udfIsNumber $1 && i=$1  || eval "i=\$_bashlyk_${1}"
  udfIsNumber $i && shift || i=$_bashlyk_iErrorUnexpected
  _bashlyk_iLastError=$i
  _bashlyk_sLastError="$*"
- return $i
+ for (( i=0; i < ${#BASH_SOURCE[@]}; i++ )); do s+="${BASH_SOURCE[i]} "; done
+ for (( i=0; i < ${#BASH_LINENO[@]}; i++ )); do s+="${BASH_LINENO[i]} "; done
+ for (( i=0; i < ${#FUNCNAME[@]}; i++    )); do s+="${FUNCNAME[i]} "   ; done
+ _bashlyk_sStackTrace=$s
+ return $_bashlyk_iLastError
 }
 #******
 #****f* libstd/udfOnError
@@ -743,6 +747,7 @@ udfOnTrap() {
  done
  #
  [[ "$_bashlyk_iLastError" != 0 && "$_bashlyk_bNotUseLog" == "0" ]] && {
+  echo "Call Trace: $_bashlyk_sCallTrace" > $_bashlyk_fnLogSock 2>/dev/null
   echo "Last Error: $_bashlyk_sLastError ($_bashlyk_iLastError) " > $_bashlyk_fnLogSock 2>/dev/null
  }
  #
