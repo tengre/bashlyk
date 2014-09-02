@@ -1225,16 +1225,6 @@ udfIniGroup2Csv() {
   csvIni+="$(udfIni2Csv $fnOpt | tr -d '\\')"
  }
 
- if [[ -z "$csvIni" ]]; then
-  if [[ ! -d "$pathIni" ]]; then
-   udfSetLastError iErrorNoSuchFileOrDir "$1"
-  else
-   udfSetLastError iErrorEmptyOrMissingArgument
-  fi
-  ## TODO eval ...
-  return $?
- fi
-
  declare -A a
  cIFS=$IFS
  IFS='['
@@ -1250,6 +1240,10 @@ udfIniGroup2Csv() {
  done
  IFS=$cIFS
  GLOBIGNORE=$sGlobIgnore
+ [[ -n "$csvOut" ]] || {
+  [[ -d "$pathIni" ]] || eval $(udfOnError return iErrorNoSuchFileOrDir "$1")
+  [[ -n "$csvIni"  ]] || eval $(udfOnError return iErrorEmptyOrMissingArgument)
+ }
  echo ${csvOut} | sed -e "s/;\+/;/g"
  return 0
 }

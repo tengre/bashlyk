@@ -147,7 +147,7 @@ udfOnEmptyVariable() {
  done
  [[ -n "$bashlyk_EysrBRwAuGMRNQoG_a" ]] && {
   udf${s} "Error: Variable(s) or option(s) ($bashlyk_EysrBRwAuGMRNQoG_a ) is empty..."
-  eval $(udfOnError return iErrorEmptyOrMissingArgument)
+  eval $(udfOnError return iErrorEmptyOrMissingArgument $*)
  }
  return 0
 }
