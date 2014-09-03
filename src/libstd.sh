@@ -48,6 +48,7 @@ _bashlyk_iMaxOutputLines=1000
 : ${_bashlyk_sBehaviorOnError:=return}
 : ${_bashlyk_iLastError:=0}
 : ${_bashlyk_sLastError:=}
+: ${_bashlyk_sStackTrace:=}
 : ${_bashlyk_sArg:=$*}
 : ${_bashlyk_pathDat:=/tmp}
 : ${_bashlyk_sWSpaceAlias:=___}
@@ -131,9 +132,11 @@ udfSetLastError() {
  udfIsNumber $i && shift || i=$_bashlyk_iErrorUnexpected
  _bashlyk_iLastError=$i
  _bashlyk_sLastError="$*"
- for (( i=0; i < ${#BASH_SOURCE[@]}; i++ )); do s+="${BASH_SOURCE[i]} "; done
- for (( i=0; i < ${#BASH_LINENO[@]}; i++ )); do s+="${BASH_LINENO[i]} "; done
- for (( i=0; i < ${#FUNCNAME[@]}; i++    )); do s+="${FUNCNAME[i]} "   ; done
+ s="${BASH_SOURCE[0]}=>${FUNCNAME[0]}; "
+ for (( i=0; i < ${#FUNCNAME[@]}; i++ )); do
+  [[ ${BASH_LINENO[i]} == 0 ]] && continue
+  s+="${BASH_SOURCE[i+1]}:${BASH_LINENO[i]}=>${FUNCNAME[i]} ($(head -n ${BASH_LINENO[i]} ${BASH_SOURCE[i+1]} | tail -n 1)); "
+ done
  _bashlyk_sStackTrace=$s
  return $_bashlyk_iLastError
 }
