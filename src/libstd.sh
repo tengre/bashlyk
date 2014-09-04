@@ -172,8 +172,8 @@ udfStackTrace() {
 #                trace      - тоже самое что exit, но c выводом стека вызовов функций
 #               В других случаях выполняется действие, хранимое в глобальной переменной $_bashlyk_sBehaviorOnError
 #    iError   - цифровой код ошибки или выражение "iError<Имя ошибки>" при помощи которого можно получить код ошибки c глобальной
-#               переменной вида _bashlyk_iError<..>. Если не удается извлечь цифровой код, то он устанавливается равным
-#               $_bashlyk_iErrorUnexpected. В конечном итоге полученный цифровой код инициализирует глобальную переменную
+#               переменной вида _bashlyk_iError<..>. Если не удается извлечь цифровой код, то он устанавливается равным коду
+#               последней выполненной команды. В конечном итоге полученный цифровой код инициализирует глобальную переменную
 #               $_bashlyk_iLastError
 #    sMessage - описание ошибки или детализация, например, имя файла или т.п. - инициализирует глобальную переменную
 #               $_bashlyk_sLastError
@@ -184,13 +184,14 @@ udfStackTrace() {
 #    local s="udfSetLastError iErrorNonValidArgument test unit;"
 #    eval $(udfOnError echo   iErrorNonValidArgument "test unit")                           #? $_bashlyk_iErrorNonValidArgument
 #    udfIsNumber 020h || eval $(udfOnError echo $? "020h")                                  #? $_bashlyk_iErrorNonValidArgument
-#    udfIsValidVariable 1NonValid || eval $(udfOnError warn $? "1NonValid")
-#    echo $(udfOnError exit   iErrorNonValidArgument "test unit")
-#    echo $(udfOnError return iErrorNonValidArgument "test unit")
-#    echo $(udfOnError rewarn iErrorNonValidArgument "test unit")
-#    echo $(udfOnError trace  iErrorNonValidArgument "test unit")
+#    udfIsValidVariable 1NonValid || eval $(udfOnError warn $? "1NonValid")                 #? $_bashlyk_iErrorNonValidVariable
+#    udfIsValidVariable 2NonValid || eval $(udfOnError warn "2NonValid")                    #? $_bashlyk_iErrorNonValidVariable
+#    echo $(udfOnError exit   iErrorNonValidArgument "test unit") >| grep "$s exit \$?"     #? true
+#    echo $(udfOnError return iErrorNonValidArgument "test unit") >| grep "$s return \$?"   #? true
+#    echo $(udfOnError rewarn iErrorNonValidArgument "test unit") >| grep "Trace; $s"       #? true
+#    echo $(udfOnError trace  iErrorNonValidArgument "test unit") >| grep "Trace; $s"       #? true
 #    _bashlyk_sBehaviorOnError=warn
-#    eval $(udfOnError iErrorNonValidArgument "test unit")
+#    eval $(udfOnError iErrorNonValidArgument "test unit")                                  #? $_bashlyk_iErrorNonValidArgument
 #  SOURCE
 udfOnError() {
  local rc=$? sAction=$_bashlyk_sBehaviorOnError sMessage='' s
