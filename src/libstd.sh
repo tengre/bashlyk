@@ -45,7 +45,7 @@ _bashlyk_iErrorUserXsessionNotFound=171
 #
 _bashlyk_iMaxOutputLines=1000
 #
-: ${_bashlyk_sBehaviorOnError:=return}
+: ${_bashlyk_sBehaviorOnError:=stacktrace}
 : ${_bashlyk_iLastError:=0}
 : ${_bashlyk_sLastError:=}
 : ${_bashlyk_sStackTrace:=}
@@ -127,18 +127,33 @@ udfIsNumber() {
 #  SOURCE
 udfSetLastError() {
  [[ -n "$1" ]] || return $_bashlyk_iErrorEmptyOrMissingArgument
- local i s
+ local i
  udfIsNumber $1 && i=$1  || eval "i=\$_bashlyk_${1}"
  udfIsNumber $i && shift || i=$_bashlyk_iErrorUnexpected
  _bashlyk_iLastError=$i
  _bashlyk_sLastError="$*"
- s="${BASH_SOURCE[0]}=>${FUNCNAME[0]}; "
- for (( i=0; i < ${#FUNCNAME[@]}; i++ )); do
+ return $i
+}
+#******
+#****f* libstd/udfStackTrace
+#  SYNOPSIS
+#    udfStackTrace
+#  DESCRIPTION
+#    OUTPUT BASH Stack Trace
+#  OUTPUT
+#    BASH Stack Trace
+#  EXAMPLE
+#    udfStackTrace
+#  SOURCE
+udfStackTrace() {
+ local s=""
+ echo "Stack Trace for ${BASH_SOURCE[0]}::${FUNCNAME[0]}:"
+ for (( i=${#FUNCNAME[@]}-1; i >= 0; i-- )); do
   [[ ${BASH_LINENO[i]} == 0 ]] && continue
-  s+="${BASH_SOURCE[i+1]}:${BASH_LINENO[i]}=>${FUNCNAME[i]} ($(head -n ${BASH_LINENO[i]} ${BASH_SOURCE[i+1]} | tail -n 1)); "
+  echo "$s $i: call ${BASH_SOURCE[$i+1]}:${BASH_LINENO[$i]} ${FUNCNAME[$i]}(...)"
+  echo "$s $i: code $(sed -n "${BASH_LINENO[$i]}p" ${BASH_SOURCE[$i+1]})"
+  s+=" "
  done
- _bashlyk_sStackTrace=$s
- return $_bashlyk_iLastError
 }
 #******
 #****f* libstd/udfOnError
@@ -149,11 +164,12 @@ udfSetLastError() {
 #   дальнейшего выполнения сценария, который можно вызвать при помощи eval
 #  INPUTS
 #    action   - необязательный аргумент, учитывается если имеет одно из значений:
-#                warn   - вывести сообщение на STDOUT в виде остальной строки аргументов (echo - синоним warn)
-#                return - вписать команду возврата если код находится внутри какой-либо функции, иначе вписать "exit"
-#                rewarn - комбинированное действие warn + return, однако, если код находится не внутри функции, то возврат не
-#                         вписывается в код - только echo
-#                exit   - вписать команду безусловного завершения сценария
+#                warn       - вывести сообщение на STDOUT в виде остальной строки аргументов и стек вызовов
+#                return     - вписать команду возврата если код находится внутри какой-либо функции, иначе вписать "exit"
+#                rewarn     - комбинированное действие warn + return, однако, если код находится не внутри функции, то возврат не
+#                             вписывается в код - только вывод сообщения и стека вызовов
+#                exit       - вписать команду безусловного завершения сценария
+#                trace      - тоже самое что exit, но c выводом стека вызовов функций
 #               В других случаях выполняется действие, хранимое в глобальной переменной $_bashlyk_sBehaviorOnError
 #    iError   - цифровой код ошибки или выражение "iError<Имя ошибки>" при помощи которого можно получить код ошибки c глобальной
 #               переменной вида _bashlyk_iError<..>. Если не удается извлечь цифровой код, то он устанавливается равным
@@ -166,33 +182,43 @@ udfSetLastError() {
 #    которую можно выполнить при помощи eval
 #  EXAMPLE
 #    local s="udfSetLastError iErrorNonValidArgument test unit;"
-#    eval $(udfOnError warn   iErrorNonValidArgument "test unit")                           #? $_bashlyk_iErrorNonValidArgument
+#    eval $(udfOnError echo   iErrorNonValidArgument "test unit")                           #? $_bashlyk_iErrorNonValidArgument
 #    udfIsNumber 020h || eval $(udfOnError echo $? "020h")                                  #? $_bashlyk_iErrorNonValidArgument
-#    echo $(udfOnError exit   iErrorNonValidArgument "test unit") >| grep "^$s exit \$?$"   #? true
-#    echo $(udfOnError return iErrorNonValidArgument "test unit") >| grep "^$s return \$?$" #? true
-#    echo $(udfOnError rewarn iErrorNonValidArgument "test unit") >| grep " $s return \$?$" #? true
+#    udfIsValidVariable 1NonValid || eval $(udfOnError warn $? "1NonValid")
+#    echo $(udfOnError exit   iErrorNonValidArgument "test unit")
+#    echo $(udfOnError return iErrorNonValidArgument "test unit")
+#    echo $(udfOnError rewarn iErrorNonValidArgument "test unit")
+#    echo $(udfOnError trace  iErrorNonValidArgument "test unit")
+#    _bashlyk_sBehaviorOnError=warn
+#    eval $(udfOnError iErrorNonValidArgument "test unit")
 #  SOURCE
 udfOnError() {
- local sAction=$_bashlyk_sBehaviorOnError sMessage=''
+ local rc=$? sAction=$_bashlyk_sBehaviorOnError sMessage='' s
  case "$sAction" in
-  echo|rewarn|exit|return) ;;
-                     warn) sAction=echo;;
-                        *) sAction=return;;
+  echo|rewarn|exit|return|warn|trace) ;;
+                          stacktrace) sAction=trace;;
+                                   *) sAction=return;;
  esac
 
  case "$1" in
-  return|rewarn|warn|echo|exit) sAction=$1;shift;;
+  return|rewarn|warn|echo|exit|trace) sAction=$1;shift;;
  esac
+
+ udfSetLastError $1
+ [[ $? == $_bashlyk_iErrorUnexpected ]] && rc+=" $*" || rc="$*"
+
  ## TODO [ -n "${FUNCNAME[1]}" ]
  [[ "$sAction" == "return" && "${FUNCNAME[1]}" == "main" ]] && sAction='exit'
- [[ "$sAction" == "rewarn" && "${FUNCNAME[1]}" == "main" ]] && sAction='echo'
+ [[ "$sAction" == "rewarn" && "${FUNCNAME[1]}" == "main" ]] && sAction='warn'
 
  case "$sAction" in
-    echo|warn) sAction="";               sMessage="echo ${*};";;
-       rewarn) sAction="; return \$?";   sMessage="echo ${*};";;
+         echo) sAction="";               sMessage="echo ${rc};";;
+         warn) sAction="";               sMessage="echo ${rc}; udfStackTrace;";;
+       rewarn) sAction="; return \$?";   sMessage="echo ${rc}; udfStackTrace;";;
   exit|return) sAction="; $sAction \$?"; sMessage="";;
+        trace) sAction="; exit \$?";     sMessage="echo ${rc}; udfStackTrace;";;
  esac
- printf "%s udfSetLastError ${*}%s\n" "$sMessage" "${sAction}"
+ printf "%s udfSetLastError ${rc}%s\n" "$sMessage" "${sAction}"
 }
 #******
 #****f* libstd/udfBaseId
@@ -748,11 +774,6 @@ udfOnTrap() {
    }
   done
  done
- #
- [[ "$_bashlyk_iLastError" != 0 && "$_bashlyk_bNotUseLog" == "0" ]] && {
-  echo "Call Trace: $_bashlyk_sCallTrace" > $_bashlyk_fnLogSock 2>/dev/null
-  echo "Last Error: $_bashlyk_sLastError ($_bashlyk_iLastError) " > $_bashlyk_fnLogSock 2>/dev/null
- }
  #
  for s in ${_bashlyk_afnClean}; do
   rm -f $s
