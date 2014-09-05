@@ -21,6 +21,14 @@
  || eval 'echo "bash interpreter for this script ($0) required ..."; exit 255'
 [[ -n "$_BASHLYK_LIBSTD" ]] && return 0 || _BASHLYK_LIBSTD=1
 #******
+#****** libmsg/External Modules
+# DESCRIPTION
+#   Using modules section
+#   Здесь указываются модули, код которых используется данной библиотекой
+# SOURCE
+: ${_bashlyk_pathLib:=/usr/share/bashlyk}
+[[ -s ${_bashlyk_pathLib}/libmsg.sh ]] && . "${_bashlyk_pathLib}/libmsg.sh"
+#******
 #****v* libstd/Init section
 #  DESCRIPTION
 #    Блок инициализации глобальных переменных
@@ -45,7 +53,7 @@ _bashlyk_iErrorUserXsessionNotFound=171
 #
 _bashlyk_iMaxOutputLines=1000
 #
-: ${_bashlyk_sBehaviorOnError:=stacktrace}
+: ${_bashlyk_sBehaviorOnError:=throw}
 : ${_bashlyk_iLastError:=0}
 : ${_bashlyk_sLastError:=}
 : ${_bashlyk_sStackTrace:=}
@@ -164,12 +172,15 @@ udfStackTrace() {
 #   дальнейшего выполнения сценария, который можно вызвать при помощи eval
 #  INPUTS
 #    action   - необязательный аргумент, учитывается если имеет одно из значений:
-#                warn       - вывести сообщение на STDOUT в виде остальной строки аргументов и стек вызовов
+#                echo       - подготовить сообщение на STDOUT в виде остальной строки аргументов
+#                warn       - подготовить сообщение системе уведомлений в виде остальной строки аргументов и стека вызовов
 #                return     - вписать команду возврата если код находится внутри какой-либо функции, иначе вписать "exit"
-#                rewarn     - комбинированное действие warn + return, однако, если код находится не внутри функции, то возврат не
-#                             вписывается в код - только вывод сообщения и стека вызовов
+#                retecho    - комбинированное действие echo + return, однако, если код находится не внутри функции, то вывод только
+#                             сообщения на STDOUT в виде остальной строки аргументов
+#                retwarn    - комбинированное действие warn + return, однако, если код находится не внутри функции, то вывод только
+#                             сообщения и стека вызовов системе уведомлений
 #                exit       - вписать команду безусловного завершения сценария
-#                trace      - тоже самое что exit, но c выводом стека вызовов функций
+#                throw      - тоже самое что exit, но c выводом сообщения и стека вызовов системе уведомлений
 #               В других случаях выполняется действие, хранимое в глобальной переменной $_bashlyk_sBehaviorOnError
 #    iError   - цифровой код ошибки или выражение "iError<Имя ошибки>" при помощи которого можно получить код ошибки c глобальной
 #               переменной вида _bashlyk_iError<..>. Если не удается извлечь цифровой код, то он устанавливается равным коду
@@ -182,42 +193,44 @@ udfStackTrace() {
 #    которую можно выполнить при помощи eval
 #  EXAMPLE
 #    local s="udfSetLastError iErrorNonValidArgument test unit;"
-#    eval $(udfOnError echo   iErrorNonValidArgument "test unit")                           #? $_bashlyk_iErrorNonValidArgument
-#    udfIsNumber 020h || eval $(udfOnError echo $? "020h")                                  #? $_bashlyk_iErrorNonValidArgument
-#    udfIsValidVariable 1NonValid || eval $(udfOnError warn $? "1NonValid")                 #? $_bashlyk_iErrorNonValidVariable
-#    udfIsValidVariable 2NonValid || eval $(udfOnError warn "2NonValid")                    #? $_bashlyk_iErrorNonValidVariable
-#    echo $(udfOnError exit   iErrorNonValidArgument "test unit") >| grep "$s exit \$?"     #? true
-#    echo $(udfOnError return iErrorNonValidArgument "test unit") >| grep "$s return \$?"   #? true
-#    echo $(udfOnError rewarn iErrorNonValidArgument "test unit") >| grep "Trace; $s"       #? true
-#    echo $(udfOnError trace  iErrorNonValidArgument "test unit") >| grep "Trace; $s"       #? true
+#    eval $(udfOnError echo iErrorNonValidArgument "test unit")                                  #? $_bashlyk_iErrorNonValidArgument
+#    udfIsNumber 020h || eval $(udfOnError echo $? "020h")                                       #? $_bashlyk_iErrorNonValidArgument
+#    udfIsValidVariable 1NonValid || eval $(udfOnError warn $? "1NonValid")                      #? $_bashlyk_iErrorNonValidVariable
+#    udfIsValidVariable 2NonValid || eval $(udfOnError warn "2NonValid")                         #? $_bashlyk_iErrorNonValidVariable
+#    echo $(udfOnError exit    iErrorNonValidArgument "test unit") >| grep "$s exit \$?"         #? true
+#    echo $(udfOnError return  iErrorNonValidArgument "test unit") >| grep "$s return \$?"       #? true
+#    echo $(udfOnError retecho iErrorNonValidArgument "test unit") >| grep "echo.*$s return \$?" #? true
+#    echo $(udfOnError retwarn iErrorNonValidArgument "test unit") >| grep "Warn.*$s return \$?" #? true
+#    echo $(udfOnError throw   iErrorNonValidArgument "test unit") >| grep "dfWarn.*$s exit \$?" #? true
 #    _bashlyk_sBehaviorOnError=warn
-#    eval $(udfOnError iErrorNonValidArgument "test unit")                                  #? $_bashlyk_iErrorNonValidArgument
+#    eval $(udfOnError iErrorNonValidArgument "test unit")                                       #? $_bashlyk_iErrorNonValidArgument
 #  SOURCE
 udfOnError() {
  local rc=$? sAction=$_bashlyk_sBehaviorOnError sMessage='' s
  case "$sAction" in
-  echo|rewarn|exit|return|warn|trace) ;;
-                          stacktrace) sAction=trace;;
+  echo|exit|retecho|retwarn|return|warn|throw) ;;
                                    *) sAction=return;;
  esac
 
  case "$1" in
-  return|rewarn|warn|echo|exit|trace) sAction=$1;shift;;
+  echo|exit|retecho|retwarn|return|warn|throw) sAction=$1;shift;;
  esac
 
  udfSetLastError $1
  [[ $? == $_bashlyk_iErrorUnexpected ]] && rc+=" $*" || rc="$*"
 
  ## TODO [ -n "${FUNCNAME[1]}" ]
- [[ "$sAction" == "return" && "${FUNCNAME[1]}" == "main" ]] && sAction='exit'
- [[ "$sAction" == "rewarn" && "${FUNCNAME[1]}" == "main" ]] && sAction='warn'
+ [[ "$sAction" == "retecho" && "${FUNCNAME[1]}" == "main" ]] && sAction='echo'
+ [[ "$sAction" == "retwarn" && "${FUNCNAME[1]}" == "main" ]] && sAction='warn'
+ [[ "$sAction" == "return"  && "${FUNCNAME[1]}" == "main" ]] && sAction='exit'
 
  case "$sAction" in
          echo) sAction="";               sMessage="echo ${rc};";;
-         warn) sAction="";               sMessage="echo ${rc}; udfStackTrace;";;
-       rewarn) sAction="; return \$?";   sMessage="echo ${rc}; udfStackTrace;";;
+      retecho) sAction="; return \$?";   sMessage="echo ${rc};";;
+         warn) sAction="";               sMessage="udfStackTrace | udfWarn - ${rc};";;
+      retwarn) sAction="; return \$?";   sMessage="udfStackTrace | udfWarn - ${rc};";;
+        throw) sAction="; exit \$?";     sMessage="udfStackTrace | udfWarn - ${rc};";;
   exit|return) sAction="; $sAction \$?"; sMessage="";;
-        trace) sAction="; exit \$?";     sMessage="echo ${rc}; udfStackTrace;";;
  esac
  printf "%s udfSetLastError ${rc}%s\n" "$sMessage" "${sAction}"
 }
@@ -567,8 +580,8 @@ udfMakeTemp() {
 #    test -f $foTemp                                                            #? false
 #  SOURCE
 udfMakeTempV() {
- [[ -n "$1" ]] || eval $(udfOnError exit iErrorEmptyOrMissingArgument "$1")
- udfIsValidVariable "$1" || eval $(udfOnError exit iErrorNonValidVariable "$1")
+ [[ -n "$1" ]] || eval $(udfOnError throw iErrorEmptyOrMissingArgument "$1")
+ udfIsValidVariable "$1" || eval $(udfOnError throw iErrorNonValidVariable "$1")
  #
  local sKeep sType sPrefix
  #

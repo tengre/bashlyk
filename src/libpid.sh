@@ -105,15 +105,10 @@ udfSetPid() {
  [[ -f "$fnPid" ]] && pid=$(head -n 1 "$fnPid")
  if [[ -n "$pid" ]]; then
   udfCheckStarted $pid ${_bashlyk_s0} ${_bashlyk_sArg} && {
-   echo "$0 : Already started with pid = $pid"
-   udfLastError iErrorAlreadyStarted "$pid"
-   return $?
+   eval $(udfOnError retecho iErrorAlreadyStarted "$0 : Already started with pid = $pid")
   }
  fi
- echo $$ > $fnPid || {
-  udfWarn "Warn: pid file $fnPid not created..."
-  eval $(udfOnError return iErrorNotExistNotCreated "$fnPid")
- }
+ echo $$ > $fnPid || eval $(udfOnError rewarn iErrorNotExistNotCreated "Warn: pid file $fnPid not created...")
  echo "$0 ${_bashlyk_sArg}" >> $fnPid
  _bashlyk_fnPid=$fnPid
  udfAddFile2Clean $fnPid

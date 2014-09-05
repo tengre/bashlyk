@@ -1,4 +1,4 @@
-Thu, 04 Sep 2014 15:20:38 +0400
+Fri, 05 Sep 2014 12:46:35 +0400
 	New upstream release
 	Version 1.80
  - глобальный рефакторинг - использование более безопасного и наглядного кода
@@ -15,11 +15,13 @@ Thu, 04 Sep 2014 15:20:38 +0400
  - добавлена новая функция udfStackTrace для вывода стека вызовов
  - добавлена новая универсальная функция обработки ошибок udfOnerror, которая в
    сочетании c eval, позволяет управлять поведением обработки глобально за счет
-   установки переменной $_bashlyk_sBehaviorOnError или выборочно за счет
-   установки безусловной команды типа "exit" или "return". Cоответственно, код,
-   связанный c "return" при ошибках, "udfThrow" или "udfWarn" по возможности
-   заменен на "eval $(udfOnError [return|rewarn|warn|echo|exit|trace] iError... )"
-   во всех модулях
+   установки переменной $_bashlyk_sBehaviorOnError или выборочно - за счет
+   установки безусловной команды типа "return", "throw" и др. Код, связанный c
+   "return" при ошибках, "udfThrow" или "udfWarn", по возможности, заменен во
+   всех модулях на
+   "eval $(udfOnError [echo|exit|retecho|retwarn|return|warn|throw] iError... )"
+ - в связи c тем, что udfWarn может быть вызван из udfOnError производится
+   подключение библиотеки libmsg.sh
  - udfSerialize - исправлена ошибка с неслучайным именем переменной для
    $! подстановки
  - новые коды ошибок:
@@ -27,6 +29,7 @@ Thu, 04 Sep 2014 15:20:38 +0400
    * iErrorNoSuchFileOrDir
    * iErrorCurrentProcess
    * iErrorAlreadyStarted
+   * iErrorUnexpected
  testunit.sh:
  - добавлен вывод ${FUNCNAME[1]} в журнал ошибок
  bashlyk.conf:

@@ -112,7 +112,7 @@ udfLogger() {
  else
   (( $_bashlyk_bNotUseLog != 0 )) && bUseLog=0 || bUseLog=1
  fi
- mkdir -p "$_bashlyk_pathLog" || eval $(udfOnError exit iErrorNotExistNotCreated "Error: do not create path ${_bashlyk_pathLog}")
+ mkdir -p "$_bashlyk_pathLog" || eval $(udfOnError throw iErrorNotExistNotCreated "Error: do not create path ${_bashlyk_pathLog}")
  udfAddPath2Clean $_bashlyk_pathLog
 
  case "${bSysLog}${bUseLog}" in
@@ -325,8 +325,8 @@ udfSetLog() {
             _bashlyk_pathLog=$(dirname ${_bashlyk_fnLog})
          ;;
  esac
- mkdir -p "$_bashlyk_pathLog" || eval $(udfOnError exit iErrorNotExistNotCreated "Error: cannot create path $_bashlyk_pathLog")
- touch "$_bashlyk_fnLog"      || eval $(udfOnError exit iErrorNotExistNotCreated "Error: $_bashlyk_fnLog not usable for logging")
+ mkdir -p "$_bashlyk_pathLog" || eval $(udfOnError throw iErrorNotExistNotCreated "Error: cannot create path $_bashlyk_pathLog")
+ touch "$_bashlyk_fnLog"      || eval $(udfOnError throw iErrorNotExistNotCreated "Error: $_bashlyk_fnLog not usable for logging")
  udfSetLogSocket
  return 0
 }
