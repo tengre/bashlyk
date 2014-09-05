@@ -21,7 +21,7 @@
  || eval 'echo "bash interpreter for this script ($0) required ..."; exit 255'
 [[ -n "$_BASHLYK_LIBSTD" ]] && return 0 || _BASHLYK_LIBSTD=1
 #******
-#****** libmsg/External Modules
+#****** libstd/External Modules
 # DESCRIPTION
 #   Using modules section
 #   Здесь указываются модули, код которых используется данной библиотекой
