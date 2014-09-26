@@ -219,10 +219,11 @@ udfOnError() {
  udfSetLastError $1
  [[ $? == $_bashlyk_iErrorUnexpected ]] && rc+=" $*" || rc="$*"
 
- ## TODO [ -n "${FUNCNAME[1]}" ]
- [[ "$sAction" == "retecho" && "${FUNCNAME[1]}" == "main" ]] && sAction='echo'
- [[ "$sAction" == "retwarn" && "${FUNCNAME[1]}" == "main" ]] && sAction='warn'
- [[ "$sAction" == "return"  && "${FUNCNAME[1]}" == "main" ]] && sAction='exit'
+ if [[ "${FUNCNAME[1]}" == "main" || -z "${FUNCNAME[1]}" ]]; then
+  [[ "$sAction" == "retecho" ]] && sAction='echo'
+  [[ "$sAction" == "retwarn" ]] && sAction='warn'
+  [[ "$sAction" == "return"  ]] && sAction='exit'
+ fi
 
  case "$sAction" in
          echo) sAction="";               sMessage="echo ${rc};";;
