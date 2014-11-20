@@ -192,7 +192,7 @@ udfStackTrace() {
 #    строка команд типа "udfSetLastError _bashlyk_iErrorNoSuchFileOrDir "$filename"; exit $?",
 #    которую можно выполнить при помощи eval
 #  EXAMPLE
-#    local s="udfSetLastError iErrorNonValidArgument test unit;"
+#    local s="udfSetLastError iErrorNonValidArgument - test unit;"
 #    eval $(udfOnError echo iErrorNonValidArgument "test unit")                                  #? $_bashlyk_iErrorNonValidArgument
 #    udfIsNumber 020h || eval $(udfOnError echo $? "020h")                                       #? $_bashlyk_iErrorNonValidArgument
 #    udfIsValidVariable 1NonValid || eval $(udfOnError warn $? "1NonValid")                      #? $_bashlyk_iErrorNonValidVariable
@@ -216,8 +216,11 @@ udfOnError() {
   echo|exit|retecho|retwarn|return|warn|throw) sAction=$1;shift;;
  esac
 
- udfSetLastError $1
- [[ $? == $_bashlyk_iErrorUnexpected ]] && rc+=" $*" || rc="$*"
+ s=$1
+ shift
+
+ udfSetLastError $s
+ [[ $? == $_bashlyk_iErrorUnexpected ]] && rc+=" - $*" || rc="$s - $*"
 
  if [[ "${FUNCNAME[1]}" == "main" || -z "${FUNCNAME[1]}" ]]; then
   [[ "$sAction" == "retecho" ]] && sAction='echo'
@@ -226,11 +229,11 @@ udfOnError() {
  fi
 
  case "$sAction" in
-         echo) sAction="";               sMessage="echo ${rc};";;
-      retecho) sAction="; return \$?";   sMessage="echo ${rc};";;
-         warn) sAction="";               sMessage="udfStackTrace | udfWarn - ${rc};";;
-      retwarn) sAction="; return \$?";   sMessage="udfStackTrace | udfWarn - ${rc};";;
-        throw) sAction="; exit \$?";     sMessage="udfStackTrace | udfWarn - ${rc};";;
+         echo) sAction="";               sMessage="echo  Warn: ${rc};";;
+      retecho) sAction="; return \$?";   sMessage="echo Error: ${rc};";;
+         warn) sAction="";               sMessage="udfStackTrace | udfWarn -  Warn: ${rc};";;
+      retwarn) sAction="; return \$?";   sMessage="udfStackTrace | udfWarn - Error: ${rc};";;
+        throw) sAction="; exit \$?";     sMessage="udfStackTrace | udfWarn - Error: ${rc};";;
   exit|return) sAction="; $sAction \$?"; sMessage="";;
  esac
  printf "%s udfSetLastError ${rc}%s\n" "$sMessage" "${sAction}"
