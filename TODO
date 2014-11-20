@@ -79,7 +79,7 @@ Mon, 11 Aug 2014 11:45:14 +0400
   прямого указания ini-файла)
 - использование alias для обработки ошибок (.. || udaThrow "iError.." "..."
   alias udaThrow='eval "udfSetLastError..
-- call stack trace
++ call stack trace
 
 
 

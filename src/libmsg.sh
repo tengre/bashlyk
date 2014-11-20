@@ -134,13 +134,14 @@ udfThrow() {
 #    iErrorEmptyOrMissingArgument - есть не инициализированные переменные
 #  EXAMPLE
 #    local sNoEmpty='test' sEmpty='' sEmptyMore=''
-#    udfOnEmptyVariable sNoEmpty                              #? true
+#    udfOnEmptyVariable                                       #? $_bashlyk_iErrorEmptyOrMissingArgument
 #    udfOnEmptyVariable sEmpty                                #? $_bashlyk_iErrorEmptyOrMissingArgument
 #    $(udfOnEmptyVariable sEmpty || exit 111)                 #? 111
 #    udfOnEmptyVariable WARN sEmpty sNoEmpty sEmptyMore       #? $_bashlyk_iErrorEmptyOrMissingArgument
 #    udfOnEmptyVariable Echo sEmpty sNoEmpty                  #? $_bashlyk_iErrorEmptyOrMissingArgument
 #    $(udfOnEmptyVariable  Exit sEmpty >/dev/null 2>&1; true) #? $_bashlyk_iErrorEmptyOrMissingArgument
 #    $(udfOnEmptyVariable Throw sEmpty >/dev/null 2>&1; true) #? $_bashlyk_iErrorEmptyOrMissingArgument
+#    udfOnEmptyVariable sNoEmpty                              #? true
 #  SOURCE
 udfOnEmptyVariable() {
  local bashlyk_EysrBRwAuGMRNQoG_a bashlyk_tfAFyKrLgSeOatp2_s udfOnEmptyVariable_s="return" udfOnEmptyVariable_i=0
@@ -151,7 +152,7 @@ udfOnEmptyVariable() {
       [Tt][Hh][Rr][Oo][Ww]) udfOnEmptyVariable_s='throw';   shift;;
   [Rr][Ee][Tt][Uu][Rr][Nn]) udfOnEmptyVariable_s='return';  shift;;
  esac
- [[ -n "$1" ]] || eval $(udfOnError return iErrorEmptyOrMissingArgument)
+ [[ -n "$1" ]] || eval $(udfOnError return iErrorEmptyOrMissingArgument "Variable\(s\) list empty")
  for bashlyk_tfAFyKrLgSeOatp2_s in $*; do
   [[ -z "${!bashlyk_tfAFyKrLgSeOatp2_s}" ]] && {
    (( i == 0 )) && bashlyk_EysrBRwAuGMRNQoG_a+="\'${bashlyk_tfAFyKrLgSeOatp2_s}\'"
