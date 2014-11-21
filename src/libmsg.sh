@@ -144,24 +144,25 @@ udfThrow() {
 #    udfOnEmptyVariable sNoEmpty                              #? true
 #  SOURCE
 udfOnEmptyVariable() {
- local bashlyk_EysrBRwAuGMRNQoG_a bashlyk_tfAFyKrLgSeOatp2_s udfOnEmptyVariable_s="return" udfOnEmptyVariable_i=0
+ local bashlyk_udfOnEmptyVariable_csv bashlyk_udfOnEmptyVariable_s
+ local bashlyk_udfOnEmptyVariable_cmd="return" bashlyk_udfOnEmptyVariable_i=0
  case "$1" in
-          [Ee][Cc][Hh][Oo]) udfOnEmptyVariable_s='retecho'; shift;;
-          [Ee][Xx][Ii][Tt]) udfOnEmptyVariable_s='exit';    shift;;
-          [Ww][Aa][Rr][Nn]) udfOnEmptyVariable_s='retwarn'; shift;;
-      [Tt][Hh][Rr][Oo][Ww]) udfOnEmptyVariable_s='throw';   shift;;
-  [Rr][Ee][Tt][Uu][Rr][Nn]) udfOnEmptyVariable_s='return';  shift;;
+          [Ee][Cc][Hh][Oo]) bashlyk_udfOnEmptyVariable_cmd='retecho'; shift;;
+          [Ee][Xx][Ii][Tt]) bashlyk_udfOnEmptyVariable_cmd='exit';    shift;;
+          [Ww][Aa][Rr][Nn]) bashlyk_udfOnEmptyVariable_cmd='retwarn'; shift;;
+      [Tt][Hh][Rr][Oo][Ww]) bashlyk_udfOnEmptyVariable_cmd='throw';   shift;;
+  [Rr][Ee][Tt][Uu][Rr][Nn]) bashlyk_udfOnEmptyVariable_cmd='return';  shift;;
  esac
  [[ -n "$1" ]] || eval $(udfOnError return iErrorEmptyOrMissingArgument "Variable\(s\) list empty")
- for bashlyk_tfAFyKrLgSeOatp2_s in $*; do
-  [[ -z "${!bashlyk_tfAFyKrLgSeOatp2_s}" ]] && {
-   (( i == 0 )) && bashlyk_EysrBRwAuGMRNQoG_a+="\'${bashlyk_tfAFyKrLgSeOatp2_s}\'"
-   (( i == 1 )) && bashlyk_EysrBRwAuGMRNQoG_a+=", \'${bashlyk_tfAFyKrLgSeOatp2_s}\'"
-   i=1
+ for bashlyk_udfOnEmptyVariable_s in $*; do
+  [[ -z "${!bashlyk_udfOnEmptyVariable_s}" ]] && {
+   (( bashlyk_udfOnEmptyVariable_i == 0 )) && bashlyk_udfOnEmptyVariable_csv+="\'${bashlyk_udfOnEmptyVariable_s}\'"
+   (( bashlyk_udfOnEmptyVariable_i == 1 )) && bashlyk_udfOnEmptyVariable_csv+=", \'${bashlyk_udfOnEmptyVariable_s}\'"
+   bashlyk_udfOnEmptyVariable_i=1
   }
  done
- [[ -n "$bashlyk_EysrBRwAuGMRNQoG_a" ]] && {
-  eval $(udfOnError $udfOnEmptyVariable_s iErrorEmptyOrMissingArgument "Variable\(s\) $bashlyk_EysrBRwAuGMRNQoG_a is empty...")
+ [[ -n "$bashlyk_udfOnEmptyVariable_csv" ]] && {
+  eval $(udfOnError $bashlyk_udfOnEmptyVariable_cmd iErrorEmptyOrMissingArgument "Variable\(s\) $bashlyk_udfOnEmptyVariable_csv is empty...")
  }
  return 0
 }
