@@ -173,7 +173,7 @@ udfStackTrace() {
 #  INPUTS
 #    action   - необязательный аргумент, учитывается если имеет одно из значений:
 #                echo       - подготовить сообщение на STDOUT в виде остальной строки аргументов
-#                warn       - подготовить сообщение системе уведомлений в виде остальной строки аргументов и стека вызовов
+#                warn       - подготовить сообщение системе уведомлений в виде остальной строки аргументов
 #                return     - вписать команду возврата если код находится внутри какой-либо функции, иначе вписать "exit"
 #                retecho    - комбинированное действие echo + return, однако, если код находится не внутри функции, то вывод только
 #                             сообщения на STDOUT в виде остальной строки аргументов
@@ -231,7 +231,7 @@ udfOnError() {
  case "$sAction" in
          echo) sAction="";               sMessage="echo  Warn: ${rc};";;
       retecho) sAction="; return \$?";   sMessage="echo Error: ${rc};";;
-         warn) sAction="";               sMessage="udfStackTrace | udfWarn -  Warn: ${rc};";;
+         warn) sAction="";               sMessage="udfWarn Warn: ${rc};";;
       retwarn) sAction="; return \$?";   sMessage="udfStackTrace | udfWarn - Error: ${rc};";;
         throw) sAction="; exit \$?";     sMessage="udfStackTrace | udfWarn - Error: ${rc};";;
   exit|return) sAction="; $sAction \$?"; sMessage="";;
