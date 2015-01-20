@@ -76,12 +76,12 @@ _bashlyk_iMaxOutputLines=1000
 : ${_bashlyk_emailSubj:="${_bashlyk_sUser}@${HOSTNAME}::${_bashlyk_s0}"}
 : ${_bashlyk_reMetaRules:='34=":40=(:41=):59=;:91=[:92=\\:93=]:61=='}
 : ${_bashlyk_envXSession:=}
-: ${_bashlyk_aRequiredCmd_std:="[ basename cat cut chgrp chmod chown date dir  \
- echo false file grep kill ls mail md5sum pwd mkdir mktemp printf ps rm rmdir  \
- sed sleep tee tempfile touch true w which xargs"}
-: ${_bashlyk_aExport_std:="udfBaseId udfDate udfShowVariable udfIsNumber udfIsValidVariable udfQuoteIfNeeded udfWSpace2Alias \
- udfAlias2WSpace udfMakeTemp  udfMakeTempV udfShellExec udfAddFile2Clean udfAddPath2Clean udfAddJob2Clean udfAddPid2Clean \
- udfCheckCsv udfCleanQueue udfOnTrap _ARGUMENTS _s0 _pathDat _ _gete _getv _set udfGetMd5 udfGetPathMd5 udfXml udfPrepare2Exec \ udfSerialize udfSetLastError udfBashlykUnquote udfTimeStamp"}
+: ${_bashlyk_aRequiredCmd_std:="[ basename cat cut chgrp chmod chown date dir echo false file grep kill ls mail md5sum pwd mkdir \
+  mktemp printf ps rm rmdir sed sleep tee tempfile touch true w which xargs"}
+: ${_bashlyk_aExport_std:="udfBaseId udfDate udfShowVariable udfIsNumber udfIsValidVariable udfQuoteIfNeeded udfWSpace2Alias     \
+ udfAlias2WSpace udfMakeTemp  udfMakeTempV udfShellExec udfAddFile2Clean udfAddPath2Clean udfAddJob2Clean udfAddPid2Clean        \
+ udfCheckCsv udfCleanQueue udfOnTrap _ARGUMENTS _s0 _pathDat _ _gete _getv _set udfGetMd5 udfGetPathMd5 udfXml udfPrepare2Exec   \
+ udfSerialize udfSetLastError udfBashlykUnquote udfTimeStamp udfOnError"}
 #******
 #****f* libstd/udfIsNumber
 #  SYNOPSIS
@@ -283,7 +283,7 @@ udfTimeStamp() {
 #    строка с заголовком в виде "штампа времени"
 #  EXAMPLE
 #    local re="[[:graph:]]+ [0-9]+ [0-9]+:[0-9]+:[[:digit:]]+ foo bar"
-#    udfDate foo bar >| grep -E "$re"                                           #? true
+#    udfDate foo bar >| grep -E "$re"                                                                                        #? true
 #  SOURCE
 udfDate() {
  date "+%b %d %H:%M:%S $*"
@@ -293,21 +293,36 @@ udfDate() {
 #  SYNOPSIS
 #    udfShowVariable args
 #  DESCRIPTION
-#    Выводит значения аргументов, если они являются переменными
+#    Вывод листинга значений аргументов, если они являются именами переменными. Допускается 
+#    разделять имена переменных знаками ',' и ';', однако, необходимо помнить, что знак ';' 
+#    (или аргументы целиком) необходимо экранировать кавычками, иначе интерпретатор воспримет
+#    аргумент как следующую команду!
+#    Если аргумент не является валидным именем переменной, то выводится соответствующее сообщение.
+#    Функцию можно использовать для формирования строк инициализации переменных, при этом 
+#    информационные строки за счет экранирования командой ':' не выполняют никаких действий
+#    при разборе интерпретатором, их также можно отфильтровать командой "grep -v '^:'"
 #  INPUTS
-#    args - имена переменных
+#    args - ожидаются имена переменных
 #  OUTPUT
-#    Имя переменной и значение в виде <Имя>=<Значение>
+#    служебные строки выводятся с начальным ':' для автоматической подавления возможности выполнения
+#    Валидное имя переменной и значение в виде <Имя>=<Значение>
 #  EXAMPLE
-#    local sTest='test'
-#    udfShowVariable sTest >| grep -w 'sTest=test'                              #? true
+#    local s='text' b='true' i=2015 a='true 2015 text' 
+#    udfShowVariable "a,b; i" s 12w >| grep -w "a=true 2015 text\|b=true\|i=2015\|s=text"                                    #? true
+#    udfShowVariable a b i s 12w >| grep -v '^:'                                                                             #? true
 #  SOURCE
 udfShowVariable() {
- local bashlyk_aSE10yGYS4AwxLJA_a bashlyk_G9WOnrBkEFSt9oKw_s
- for bashlyk_G9WOnrBkEFSt9oKw_s in $*; do
-  bashlyk_aSE10yGYS4AwxLJA_a+="\t${bashlyk_G9WOnrBkEFSt9oKw_s}=${!bashlyk_G9WOnrBkEFSt9oKw_s}\n"
+ local bashlyk_udfShowVariable_a bashlyk_udfShowVariable_s bashlyk_udfShowVariable_cIFS="$IFS"
+ IFS+=",;"
+ for bashlyk_udfShowVariable_s in $*; do
+  if udfIsValidVariable $bashlyk_udfShowVariable_s; then
+   bashlyk_udfShowVariable_a+="\t${bashlyk_udfShowVariable_s}=${!bashlyk_udfShowVariable_s}\n"
+  else
+   bashlyk_udfShowVariable_a+=": Variable name \"${bashlyk_udfShowVariable_s}\" is not valid!\n"
+  fi
  done
- echo -e "Variable listing:\n${bashlyk_aSE10yGYS4AwxLJA_a}"
+ IFS="$bashlyk_udfShowVariable_cIFS"
+ echo -e ": Variable listing>\n${bashlyk_udfShowVariable_a}"
  return 0
 }
 #******
@@ -325,13 +340,14 @@ udfShowVariable() {
 #    iErrorEmptyOrMissingArgument - аргумент не задан
 #  EXAMPLE
 #    udfIsValidVariable                                                         #? $_bashlyk_iErrorEmptyOrMissingArgument
-#    udfIsValidVariable "12"                                                    #? $_bashlyk_iErrorNonValidVariable
+#    udfIsValidVariable "12w"                                                   #? $_bashlyk_iErrorNonValidVariable
 #    udfIsValidVariable "a"                                                     #? true
 #    udfIsValidVariable "k1"                                                    #? true
 #  SOURCE
 udfIsValidVariable() {
- [[ -n "$1" ]] || eval $(udfOnError return iErrorEmptyOrMissingArgument)
- echo "$1" | grep -E '^[_a-zA-Z]+[_a-zA-Z0-9]+?$' >/dev/null 2>&1 || eval $(udfOnError return iErrorNonValidVariable $1)
+ [[ -n "$1" ]] || return $(_ iErrorEmptyOrMissingArgument)
+ echo "$1" | grep -E '^[_a-zA-Z]+[_a-zA-Z0-9]+?$' >/dev/null 2>&1 || return $(_ iErrorNonValidVariable)
+ #echo "$1" | grep -E '^[_a-zA-Z]+[_a-zA-Z0-9]+?$' >/dev/null 2>&1 || eval $(udfOnError return iErrorNonValidVariable $1)
  return 0
 }
 #******
@@ -617,8 +633,8 @@ udfMakeTempV() {
 #    строк - каждое поле входной csv;-строки - отдельная строка
 #  EXAMPLE
 #    local s="_bashlyk_&#91__bashlyk_&#93__bashlyk_&#59__bashlyk_&#40__bashlyk_&#41__bashlyk_&#61_"
-#    echo $s | udfPrepare2Exec -                                                #? true
-#    udfPrepare2Exec $s | grep -e '\[\];()='                                    #? true
+#    echo $s | udfPrepare2Exec -                                                                    #? true
+#    udfPrepare2Exec $s | grep -e '\[\];()='                                                        #? true
 #  SOURCE
 udfPrepare2Exec() {
  local s cIFS cmd="$*" cmdSed=''
@@ -1178,7 +1194,7 @@ udfXml() {
 #    0                            - успешная операция
 #  EXAMPLE
 #    local sUname="$(uname -a)" sDate="" s=100
-#    udfSerialize sUname sDate s >| grep "^sUname=.*s=100;$"                    #? true
+#    udfSerialize sUname sDate s >| grep "^sUname=.*s=100;$"                                                                 #? true
 #  SOURCE
 udfSerialize() {
  [[ -n "$1" ]] || eval $(udfOnError return iErrorEmptyOrMissingArgument)
@@ -1199,7 +1215,7 @@ udfSerialize() {
 #    из "csv;"-потока со стандартного входа в символы '"[]()=;\'
 #  EXAMPLE
 #    local s="_bashlyk_&#34__bashlyk_&#91__bashlyk_&#93__bashlyk_&#59__bashlyk_&#40__bashlyk_&#41__bashlyk_&#61_"
-#    echo $s | udfBashlykUnquote >| grep -e '\"\[\];()='                          #? true
+#    echo $s | udfBashlykUnquote >| grep -e '\"\[\];()='                                                                     #? true
 #  SOURCE
 udfBashlykUnquote() {
  local a cmd="sed" i
@@ -1213,5 +1229,3 @@ udfBashlykUnquote() {
  eval "$cmd"
 }
 #******
-#shopt -s expand_aliases
-#alias onError="eval $(udfOnError"
