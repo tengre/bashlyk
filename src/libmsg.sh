@@ -85,7 +85,7 @@ udfEcho() {
 #    _bashlyk_bNotUseLog=$bNotUseLog
 #  SOURCE
 udfWarn() {
- local s
+ local s IFS=$' \t\n'
  [[ -n "$*" ]] && s="$*" || s="$(_ sLastError)"
  [[ "$_bashlyk_bNotUseLog" != "0" ]] && udfEcho $s || udfMessage $s
 }
@@ -144,7 +144,7 @@ udfThrow() {
 #    udfOnEmptyVariable sNoEmpty                              #? true
 #  SOURCE
 udfOnEmptyVariable() {
- local bashlyk_udfOnEmptyVariable_csv bashlyk_udfOnEmptyVariable_s
+ local bashlyk_udfOnEmptyVariable_csv bashlyk_udfOnEmptyVariable_s IFS=$' \t\n'
  local bashlyk_udfOnEmptyVariable_cmd="return" bashlyk_udfOnEmptyVariable_i=0
  case "$1" in
           [Ee][Cc][Hh][Oo]) bashlyk_udfOnEmptyVariable_cmd='retecho'; shift;;
@@ -236,10 +236,10 @@ udfWarnOnEmptyVariable() {
 #    _ emailOptions "$emailOptions"
 #  SOURCE
 udfMail() {
+ local sTo=$_bashlyk_sLogin IFS=$' \t\n'
+ #
  [[ -n "$1" ]] || eval $(udfOnError return iErrorEmptyOrMissingArgument)
  #
- local sTo=$_bashlyk_sLogin
-
  which mail >/dev/null 2>&1 || eval $(udfOnError return iErrorCommandNotFound mail)
 
  [[ -n "$sTo" ]] || sTo=$_bashlyk_sUser
@@ -280,7 +280,7 @@ udfMail() {
 #    [[ $? -eq 0 ]] && sleep 2
 #  SOURCE
 udfMessage() {
- local fnTmp i=$(_ iMaxOutputLines)
+ local fnTmp i=$(_ iMaxOutputLines) IFS=$' \t\n'
 
  udfIsNumber $i || i=9999
 
@@ -318,10 +318,10 @@ udfMessage() {
 #    [[ $rc -eq 0 ]] && sleep 2
 #  SOURCE
 udfNotify2X() {
+ local iTimeout=8 s IFS=$' \t\n'
+ #
  [[ -n "$1" ]] || eval $(udfOnError return iErrorEmptyOrMissingArgument)
  #
- local iTimeout=8 s
-
  [[ -s "$*" ]] && s="$(cat "$*")" || s="$(echo -e "$*")"
 
  for cmd in notify-send kdialog zenity xmessage; do
@@ -345,7 +345,7 @@ udfNotify2X() {
 #    udfGetXSessionProperties
 #  SOURCE
 udfGetXSessionProperties() {
- local a pid s sB sD sX sudo user userX
+ local a pid s sB sD sX sudo user userX IFS=$' \t\n'
  #
  a="x-session-manager gnome-session gnome-session-flashback lxsession mate-session-manager openbox razorqt-session xfce4-session"
  user=$(_ sUser)
@@ -411,9 +411,10 @@ udfGetXSessionProperties() {
 #    echo $? >| grep "$(_ iErrorCommandNotFound)\|0"                            #? true
 #  SOURCE
 udfNotifyCommand() {
+ local h t rc X IFS=$' \t\n'
+ #
  [[ -n "$4" ]] || eval $(udfOnError iErrorEmptyOrMissingArgument)
  #
- local h t rc X
  udfIsNumber "$4" && t=$4 || t=8
  [[ -n "$(_ sXSessionProp)" ]] || udfGetXSessionProperties || return $?
  X=$(_ sXSessionProp)

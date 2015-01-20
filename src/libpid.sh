@@ -65,9 +65,10 @@
 #    udfCheckStarted $$ $0                                                      #? $_bashlyk_iErrorCurrentProcess
 #  SOURCE
 udfCheckStarted() {
+ local pid="$1" IFS=$' \t\n'
+ #
  [[ -n "$*"      ]] || eval $(udfOnError return iErrorEmptyOrMissingArgument)
  [[ "$$" == "$1" ]] && eval $(udfOnError return iErrorCurrentProcess)
- local pid="$1"
  shift
  ps -p $pid -o args= | grep "${*}$" >/dev/null 2>&1 || eval $(udfOnError return iErrorNoSuchProcess)
  return 0
@@ -95,7 +96,7 @@ udfCheckStarted() {
 #    ## TODO проверить коды возврата
 #  SOURCE
 udfSetPid() {
- local fnPid pid
+ local fnPid pid IFS=$' \t\n'
  if [[ -n "$_bashlyk_sArg" ]]; then
   fnPid="${_bashlyk_pathRun}/$(udfGetMd5 ${_bashlyk_s0} ${_bashlyk_sArg}).pid"
  else
@@ -149,7 +150,7 @@ udfExitIfAlreadyStarted() {
 #    udfClean
 #  SOURCE
 udfClean() {
- local fn
+ local fn IFS=$' \t\n'
  local a="${_bashlyk_afnClean} ${_bashlyk_apathClean} $*"
  for fn in $a
  do

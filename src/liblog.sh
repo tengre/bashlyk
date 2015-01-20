@@ -101,7 +101,7 @@
 #    _ bTerminal "$bTerminal"
 #  SOURCE
 udfLogger() {
- local bSysLog bUseLog sTagLog
+ local bSysLog bUseLog sTagLog IFS=$' \t\n'
  bSysLog=0
  bUseLog=0
  sTagLog="${_bashlyk_s0}[$(printf "%05d" $$)]"
@@ -151,9 +151,10 @@ udfLogger() {
 #    echo test | udfLog - tag >| grep "tag test"                                #? true
 #  SOURCE
 udfLog() {
+ local s sPrefix IFS=$' \t\n'
+ #
  if [[ "$1" == "-" ]]; then
   shift
-  local s sPrefix
   [[ -n "$*" ]] && sPrefix="$* " || sPrefix=
   while read s; do [[ -n "$s" ]] && udfLogger "${sPrefix}${s}"; done
  else
@@ -275,7 +276,7 @@ udfFinally() {
 #    rm -f $fnLog
 #  SOURCE
 udfSetLogSocket() {
- local fnSock
+ local fnSock IFS=$' \t\n'
  if [[ -n "$_bashlyk_sArg" ]]; then
   fnSock="${_bashlyk_pathRun}/$(udfGetMd5 ${_bashlyk_s0} ${_bashlyk_sArg}).${$}.socket"
  else
@@ -317,6 +318,8 @@ udfSetLogSocket() {
 #    rm -f $fnLog
 #  SOURCE
 udfSetLog() {
+ local IFS=$' \t\n'
+ #
  case "$1" in
         '') ;;
   ${1##*/}) _bashlyk_fnLog="${_bashlyk_pathLog}/$1";;
@@ -382,7 +385,7 @@ _fnLog() {
 #    udfDebug non valid test level 5                                            #? true
 #  SOURCE
 udfDebug() {
- local i re='^[0-9]+$'
+ local i re='^[0-9]+$' IFS=$' \t\n'
  [[ -n "$*" ]] && i=$1 || eval $(udfOnError return iErrorEmptyOrMissingArgument)
  shift
  echo $i | grep -E $re >/dev/null 2>&1 || i=0

@@ -74,10 +74,10 @@
 #    rm -f $conf
 #  SOURCE
 udfGetConfig() {
- [[ -n "$1" ]] || eval $(udfOnError return iErrorEmptyOrMissingArgument)
- #
  local bashlyk_aconf_MROATHra bashlyk_conf_MROATHra bashlyk_s_MROATHra
- local bashlyk_pathCnf_MROATHra="$_bashlyk_pathCnf"
+ local bashlyk_pathCnf_MROATHra="$_bashlyk_pathCnf" IFS=$' \t\n'
+ #
+ [[ -n "$1" ]] || eval $(udfOnError return iErrorEmptyOrMissingArgument)
  #
  [[ "$1" == "${1##*/}" && -f "${bashlyk_pathCnf_MROATHra}/$1" ]] || bashlyk_pathCnf_MROATHra=
  [[ "$1" == "${1##*/}" && -f "$1" ]] && bashlyk_pathCnf_MROATHra=$(pwd)
@@ -134,22 +134,19 @@ udfGetConfig() {
 #    rm -f $conf
 #  SOURCE
 udfSetConfig() {
+ local bashlyk_conf_kpHeLmpy IFS=$' \t\n' bashlyk_pathCnf_kpHeLmpy="$_bashlyk_pathCnf" bashlyk_sPair_kpHeLmpy
  [[ -n "$1" && -n "$2" ]] || eval $(udfOnError return iErrorEmptyOrMissingArgument)
  #
- local bashlyk_conf_kpHeLmpy bashlyk_chIFS_kpHeLmpy="$IFS"
- local bashlyk_pathCnf_kpHeLmpy="$_bashlyk_pathCnf" bashlyk_sPair_kpHeLmpy
- #
- [ "$1" != "${1##*/}" ] && bashlyk_pathCnf_kpHeLmpy="$(dirname $1)"
+ [[ "$1" != "${1##*/}" ]] && bashlyk_pathCnf_kpHeLmpy="$(dirname $1)"
  mkdir -p "$bashlyk_pathCnf_kpHeLmpy" || eval $(udfOnError return iErrorNotExistNotCreated $bashlyk_pathCnf_kpHeLmpy)
  bashlyk_conf_kpHeLmpy="${bashlyk_pathCnf_kpHeLmpy}/${1##*/}"
- IFS=';'
  {
   echo "# Created $(date -R) by $USER via $0 (pid $$)"
+  IFS=';'
   for bashlyk_sPair_kpHeLmpy in $(udfCheckCsv "$2"); do
    [ -n "${bashlyk_sPair_kpHeLmpy}" ] && echo "${bashlyk_sPair_kpHeLmpy}"
   done
  } >> $bashlyk_conf_kpHeLmpy 2>/dev/null
- IFS="$bashlyk_chIFS_kpHeLmpy"
  return 0
 }
 #******

@@ -44,7 +44,7 @@
 #    временном каталоге, обычно /tmp
 #  SOURCE
 udfInit() {
- local pathCnf pathRoot pathRun pathLog pathDat sHome
+ local pathCnf pathRoot pathRun pathLog pathDat sHome IFS=$' \t\n'
  #
  _bashlyk_sId=${_bashlyk:-bashlyk}
  [ -n "$_bashlyk" ] && _bashlyk_pathPrefix="${_bashlyk}" \
@@ -108,7 +108,7 @@ udfInit() {
 #    в зависимости от значения $_bashlyk_sCond4Log ("noterm" по умолчанию).
 #  SOURCE
 udfMain() {
- local cmd fn s
+ local cmd fn s IFS=$' \t\n'
  #
  udfInit
  #

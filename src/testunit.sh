@@ -25,7 +25,7 @@
 #   bashlyk library test unit stdout
 #  SOURCE
 udfTestUnitMsg() {
- local rc0=$? rc1 rc2=''
+ local rc0=$? rc1 rc2='' IFS=$' \t\n'
  case "$1" in
    true) rc1=0;;
   false) rc1=1;;
@@ -66,7 +66,7 @@ udfError() {
 #  SOURCE
 udfMain() {
  [[ -n "$1" ]] || return 255
- local a s fn
+ local a s fn IFS=$' \t\n'
  fn=${_bashlyk_pathLib}/lib${1}.sh
  [[ -s "$fn" ]] && . $fn || return 254
  mkdir -p $_bashlyk_pathLog || udfError "path $_bashlyk_pathLog not exist..."

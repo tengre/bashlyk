@@ -61,8 +61,10 @@
 #   udfGetOptHash 'job:,force' --job main --force >| grep "^;job=main;force=1;$" #? true
 #  SOURCE
 udfGetOptHash() {
+ local k v csvKeys csvHash=';' sOpt bFound IFS=$' \t\n'
+ #
  [[ -n "$*" ]] || eval $(udfOnError return iErrorEmptyOrMissingArgument)
- local k v csvKeys csvHash=';' sOpt bFound
+ #
  csvKeys="$1"
  shift
  sOpt="$(getopt -l $csvKeys -n $0 -- $0 $@)" || return 1
@@ -107,8 +109,10 @@ udfGetOptHash() {
 #    ## TODO коды возврата проверить
 #  SOURCE
 udfSetOptHash() {
+ local confTmp rc=0 IFS=$' \t\n'
+ #
  [[ -n "$*" ]] || eval $(udfOnError return iErrorEmptyOrMissingArgument)
- local confTmp rc=0
+ #
  udfMakeTemp confTmp
  udfSetConfig $confTmp "$*" || return $?
  udfGetConfig $confTmp      || return $?
@@ -159,8 +163,10 @@ udfGetOpt() {
 #    udfExcludePairFromHash 'save=1' "${s};save=1;" >| grep "^${s}$"            #? true
 #  SOURCE
 udfExcludePairFromHash() {
+ local s="$1" IFS=$' \t\n'
+ #
  [[ -n "$*" ]] || eval $(udfOnError return iErrorEmptyOrMissingArgument)
- local s="$1"
+ #
  shift
  local csv="$*"
  echo "$csv" | sed -e "s/;$s;//g"

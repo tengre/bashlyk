@@ -206,7 +206,7 @@ udfStackTrace() {
 #    eval $(udfOnError iErrorNonValidArgument "test unit")                                       #? $_bashlyk_iErrorNonValidArgument
 #  SOURCE
 udfOnError() {
- local rc=$? sAction=$_bashlyk_sBehaviorOnError sMessage='' s
+ local rc=$? sAction=$_bashlyk_sBehaviorOnError sMessage='' s IFS=$' \t\n'
  case "$sAction" in
   echo|exit|retecho|retwarn|return|warn|throw) ;;
                                    *) sAction=return;;
@@ -312,8 +312,7 @@ udfDate() {
 #    udfShowVariable a b i s 12w >| grep -v '^:'                                                                             #? true
 #  SOURCE
 udfShowVariable() {
- local bashlyk_udfShowVariable_a bashlyk_udfShowVariable_s bashlyk_udfShowVariable_cIFS="$IFS"
- IFS+=",;"
+ local bashlyk_udfShowVariable_a bashlyk_udfShowVariable_s IFS=$'\t\n ,;'
  for bashlyk_udfShowVariable_s in $*; do
   if udfIsValidVariable $bashlyk_udfShowVariable_s; then
    bashlyk_udfShowVariable_a+="\t${bashlyk_udfShowVariable_s}=${!bashlyk_udfShowVariable_s}\n"
@@ -321,7 +320,6 @@ udfShowVariable() {
    bashlyk_udfShowVariable_a+=": Variable name \"${bashlyk_udfShowVariable_s}\" is not valid!\n"
   fi
  done
- IFS="$bashlyk_udfShowVariable_cIFS"
  echo -e ": Variable listing>\n${bashlyk_udfShowVariable_a}"
  return 0
 }
@@ -345,9 +343,11 @@ udfShowVariable() {
 #    udfIsValidVariable "k1"                                                    #? true
 #  SOURCE
 udfIsValidVariable() {
- [[ -n "$1" ]] || return $(_ iErrorEmptyOrMissingArgument)
- echo "$1" | grep -E '^[_a-zA-Z]+[_a-zA-Z0-9]+?$' >/dev/null 2>&1 || return $(_ iErrorNonValidVariable)
- #echo "$1" | grep -E '^[_a-zA-Z]+[_a-zA-Z0-9]+?$' >/dev/null 2>&1 || eval $(udfOnError return iErrorNonValidVariable $1)
+ local IFS=$' \t\n'
+ #
+ [[ -n "$1" ]] || eval $(udfOnError return iErrorEmptyOrMissingArgument)
+ #
+ echo "$1" | grep -E '^[_a-zA-Z]+[_a-zA-Z0-9]+?$' >/dev/null 2>&1 || eval $(udfOnError return iErrorNonValidVariable $1)
  return 0
 }
 #******
@@ -461,7 +461,7 @@ udfMakeTemp() {
  local bashlyk_bNoKeep_ioAUaE5R bashlyk_sVar_ioAUaE5R bashlyk_sGroup_ioAUaE5R
  local bashlyk_sCreateMode_ioAUaE5R bashlyk_path_ioAUaE5R bashlyk_sUser_ioAUaE5R
  local bashlyk_sPrefix_ioAUaE5R bashlyk_sSuffix_ioAUaE5R bashlyk_rc_ioAUaE5R
- local bashlyk_octMode_ioAUaE5R
+ local bashlyk_octMode_ioAUaE5R IFS=$' \t\n'
  #
  bashlyk_bNoKeep_ioAUaE5R=true
  bashlyk_sCreateMode_ioAUaE5R=direct
@@ -600,10 +600,10 @@ udfMakeTemp() {
 #    test -f $foTemp                                                            #? false
 #  SOURCE
 udfMakeTempV() {
+ local sKeep sType sPrefix IFS=$' \t\n'
+ #
  [[ -n "$1" ]] || eval $(udfOnError throw iErrorEmptyOrMissingArgument "$1")
  udfIsValidVariable "$1" || eval $(udfOnError throw iErrorNonValidVariable "$1")
- #
- local sKeep sType sPrefix
  #
  [[ -n "$3" ]] && sPrefix="prefix=$3"
  case "$2" in
@@ -637,18 +637,15 @@ udfMakeTempV() {
 #    udfPrepare2Exec $s | grep -e '\[\];()='                                                        #? true
 #  SOURCE
 udfPrepare2Exec() {
- local s cIFS cmd="$*" cmdSed=''
+ local s cmd="$*" cmdSed='' IFS=$',;'
  if [[ "$1" == "-" ]]; then
   udfBashlykUnquote
  else
-  cIFS=$IFS
-  IFS=';'
   for s in $cmd
   do
    echo "$s" | udfBashlykUnquote
   done
  fi
- IFS=$cIFS
  return 0
 }
 #******
@@ -668,8 +665,8 @@ udfPrepare2Exec() {
 #    udfShellExec 'false; true'                                                 #? true
 #  SOURCE
 udfShellExec() {
+ local rc fn IFS=$' \t\n'
  [[ -n "$*" ]] || eval $(udfOnError return iErrorEmptyOrMissingArgument)
- local rc fn
  udfMakeTemp fn
  udfPrepare2Exec $* > $fn
  . $fn
@@ -794,7 +791,7 @@ udfCleanQueue() {
 #    ps -p $pid -o pid= >| grep -w $pid                                         #? false
 #  SOURCE
 udfOnTrap() {
- local i s
+ local i s IFS=$' \t\n'
  #
  for s in ${_bashlyk_ajobClean}; do
   kill $s 2>/dev/null
@@ -931,6 +928,7 @@ _pathDat() {
 #    _ sWSpaceAlias
 #  SOURCE
 _(){
+ local IFS=$' \t\n'
  [[ -n "$1" ]] || eval $(udfOnError return iErrorEmptyOrMissingArgument)
  if (( $# > 1 )); then
   eval "_bashlyk_${1##*=}=\"${2}\""
@@ -973,6 +971,7 @@ _(){
 #    echo "$sWSpaceAlias" >| grep "^${_bashlyk_sWSpaceAlias}$"                  #? true
 #  SOURCE
 _getv() {
+ local IFS=$' \t\n'
  [[ -n "$1" ]] || eval $(udfOnError return iErrorEmptyOrMissingArgument)
  if [[ -n "$2" ]]; then
   udfIsValidVariable $2 || return $?
@@ -998,6 +997,7 @@ _getv() {
 #    _gete sWSpaceAlias >| grep "^${_bashlyk_sWSpaceAlias}$"                    #? true
 #  SOURCE
 _gete() {
+ local IFS=$' \t\n'
  [[ -n "$1" ]] || eval $(udfOnError return iErrorEmptyOrMissingArgument)
  eval "echo "'$_bashlyk_'"${1}"
 }
@@ -1020,6 +1020,7 @@ _gete() {
 #    _set sWSpaceAlias $sWSpaceAlias
 #  SOURCE
 _set() {
+ local IFS=$' \t\n'
  [[ -n "$1" ]] || eval $(udfOnError return iErrorEmptyOrMissingArgument)
  eval "_bashlyk_$1=$2"
 }
@@ -1057,11 +1058,10 @@ _set() {
 #    ## TODO проверить все коды возврата
 #  SOURCE
 udfCheckCsv() {
+ local IFS=$' \t\n'
  [[ -n "$1" ]] || eval $(udfOnError return iErrorEmptyOrMissingArgument)
- local bashlyk_s_Q1eiphgO bashlyk_cIFS_Q1eiphgO bashlyk_k_Q1eiphgO
- local bashlyk_v_Q1eiphgO bashlyk_i_Q1eiphgO bashlyk_csvResult_Q1eiphgO
+ local bashlyk_s_Q1eiphgO bashlyk_k_Q1eiphgO bashlyk_v_Q1eiphgO bashlyk_i_Q1eiphgO bashlyk_csvResult_Q1eiphgO
  #
- bashlyk_cIFS_Q1eiphgO=$IFS
  IFS=';'
  bashlyk_i_Q1eiphgO=0
  bashlyk_csvResult_Q1eiphgO=''
@@ -1076,10 +1076,9 @@ udfCheckCsv() {
    bashlyk_k_Q1eiphgO=${_bashlyk_sUnnamedKeyword}${bashlyk_i_Q1eiphgO}
    bashlyk_i_Q1eiphgO=$((bashlyk_i_Q1eiphgO+1))
   fi
-  bashlyk_csvResult_Q1eiphgO+="$bashlyk_k_Q1eiphgO=$(udfQuoteIfNeeded \
-   $bashlyk_v_Q1eiphgO);"
+  IFS=' ' bashlyk_csvResult_Q1eiphgO+="$bashlyk_k_Q1eiphgO=$(udfQuoteIfNeeded $bashlyk_v_Q1eiphgO);"
  done
- IFS=$bashlyk_cIFS_Q1eiphgO
+ IFS=$' \t\n'
  if [[ -n "$2" ]]; then
   udfIsValidVariable "$2" || eval $(udfOnError return iErrorNonValidVariable "$2")
   eval 'export ${2}="${bashlyk_csvResult_Q1eiphgO}"'
@@ -1142,8 +1141,8 @@ udfGetMd5() {
 #    udfGetPathMd5 $path                                                        #? true
 #  SOURCE
 udfGetPathMd5() {
+ local pathSrc="$(pwd)" pathDst s IFS=$' \t\n'
  [[ -n "$1" && -d "$1" ]] || eval $(udfOnError return iErrorEmptyOrMissingArgument)
- local pathSrc="$(pwd)" pathDst s
  cd "$1" 2>/dev/null || eval $(udfOnError return iErrorFileNotFound "$1")
  pathDst="$(pwd)"
  for s in *; do
@@ -1174,8 +1173,9 @@ udfGetPathMd5() {
 #    udfXml "$sTag" "$sContent" >| grep "^${sXml}$"                             #? true
 #  SOURCE
 udfXml() {
+ local IFS=$' \t\n' s
  [[ -n "$1" ]] || eval $(udfOnError return iErrorEmptyOrMissingArgument)
- local s=($1)
+ s=($1)
  shift
  echo "<${s[*]}>${*}</${s[0]}>"
 }
@@ -1197,8 +1197,8 @@ udfXml() {
 #    udfSerialize sUname sDate s >| grep "^sUname=.*s=100;$"                                                                 #? true
 #  SOURCE
 udfSerialize() {
+ local bashlyk_s_Serialize csv IFS=$' \t\n'
  [[ -n "$1" ]] || eval $(udfOnError return iErrorEmptyOrMissingArgument)
- local bashlyk_s_Serialize csv
  for bashlyk_s_Serialize in $*; do
   udfIsValidVariable "$bashlyk_s_Serialize" \
    && csv+="${bashlyk_s_Serialize}=${!bashlyk_s_Serialize};" \
@@ -1218,7 +1218,7 @@ udfSerialize() {
 #    echo $s | udfBashlykUnquote >| grep -e '\"\[\];()='                                                                     #? true
 #  SOURCE
 udfBashlykUnquote() {
- local a cmd="sed" i
+ local a cmd="sed" i IFS=$' \t\n'
  declare -A a=( [34]='\"' [40]='\(' [41]='\)' [59]='\;' [61]='\=' [91]='\[' [92]='\\\' [93]='\]' )
  for i in "${!a[@]}"; do
   cmd+=" -e \"s/_bashlyk_\&#${i}_/${a[$i]}/g\""
