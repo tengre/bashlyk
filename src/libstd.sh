@@ -341,14 +341,20 @@ udfShowVariable() {
 #    udfIsValidVariable "12w"                                                   #? $_bashlyk_iErrorNonValidVariable
 #    udfIsValidVariable "a"                                                     #? true
 #    udfIsValidVariable "k1"                                                    #? true
+#    udfIsValidVariable "&w1"                                                   #? $_bashlyk_iErrorNonValidVariable
+#    udfIsValidVariable "#k12s"                                                 #? $_bashlyk_iErrorNonValidVariable
+#    udfIsValidVariable ":v1"                                                   #? $_bashlyk_iErrorNonValidVariable
+#    udfIsValidVariable ";q1"                                                   #? $_bashlyk_iErrorNonValidVariable
+#    udfIsValidVariable ",g99"                                                  #? $_bashlyk_iErrorNonValidVariable
 #  SOURCE
 udfIsValidVariable() {
  local IFS=$' \t\n'
  #
  [[ -n "$1" ]] || eval $(udfOnError return iErrorEmptyOrMissingArgument)
  #
- echo "$1" | grep -E '^[_a-zA-Z]+[_a-zA-Z0-9]+?$' >/dev/null 2>&1 || eval $(udfOnError return iErrorNonValidVariable $1)
- return 0
+ #[[ "$1" =~ ^[a-zA-Z][_a-zA-Z0-9]*$ ]] || eval $(udfOnError return iErrorNonValidVariable '${1}')
+ echo "$1" | grep -E '^[_a-zA-Z]+[_a-zA-Z0-9]+?$' >/dev/null 2>&1 || eval $(udfOnError return iErrorNonValidVariable '$1')
+ return 0 
 }
 #******
 #****f* libstd/udfQuoteIfNeeded
