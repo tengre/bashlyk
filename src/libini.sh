@@ -92,9 +92,7 @@
 udfGetIniSection() {
  [[ -n "$1" ]] || return 255
  #
- local aini csvIni csvResult
- local ini pathIni s
- local sTag sGlobIgnore
+ local aini csvIni csvResult ini pathIni s sTag sGlobIgnore IFS=$' \t\n'
  #
  ini=''
  pathIni="$_bashlyk_pathIni"
@@ -119,7 +117,6 @@ udfGetIniSection() {
   [[ -n "$ini"              ]] && ini="${s}.${ini}" || ini="$s"
   [[ -s "${pathIni}/${ini}" ]] && csvIni+=";$(udfIniSection2Csv "${pathIni}/${ini}" "$sTag");"
  done
-
  GLOBIGNORE=$sGlobIgnore
 
  udfCsvOrder "$csvIni"

@@ -308,8 +308,8 @@ udfDate() {
 #    Валидное имя переменной и значение в виде <Имя>=<Значение>
 #  EXAMPLE
 #    local s='text' b='true' i=2015 a='true 2015 text'
-#    udfShowVariable "a,b; i" s 12w >| grep -w "a=true 2015 text\|b=true\|i=2015\|s=text"                                    #? true
-#    udfShowVariable a b i s 12w >| grep -v '^:'                                                                             #? true
+#    udfShowVariable "a,b; i" s  >| grep -w "a=true 2015 text\|b=true\|i=2015\|s=text"                                    #? true
+#    udfShowVariable a b i s 12w >| grep '^:.*12w.* not valid'                                                            #? true                                                                             #? true
 #  SOURCE
 udfShowVariable() {
  local bashlyk_udfShowVariable_a bashlyk_udfShowVariable_s IFS=$'\t\n ,;'
@@ -334,10 +334,9 @@ udfShowVariable() {
 #    arg - проверяемое значение
 #  RETURN VALUE
 #    0                            - аргумент валидный идентификатор
-#    iErrorNonValidVariable       - аргумент невалидный идентификатор
-#    iErrorEmptyOrMissingArgument - аргумент не задан
+#    iErrorNonValidVariable       - аргумент невалидный идентификатор (или не задан)
 #  EXAMPLE
-#    udfIsValidVariable                                                         #? $_bashlyk_iErrorEmptyOrMissingArgument
+#    udfIsValidVariable                                                         #? $_bashlyk_iErrorNonValidVariable
 #    udfIsValidVariable "12w"                                                   #? $_bashlyk_iErrorNonValidVariable
 #    udfIsValidVariable "a"                                                     #? true
 #    udfIsValidVariable "k1"                                                    #? true
@@ -349,16 +348,7 @@ udfShowVariable() {
 #  SOURCE
 udfIsValidVariable() {
  local IFS=$' \t\n'
- #
- [[ -n "$1" ]] || eval $(udfOnError return iErrorEmptyOrMissingArgument)
- #
- #if [[ "$1" =~ ^[a-zA-Z][_a-zA-Z0-9]*$ ]]; then
- # return 0
- #else
- # eval $(udfOnError return iErrorNonValidVariable '${1}')
- #fi
- echo "$1" | grep -E '^[_a-zA-Z]+[_a-zA-Z0-9]+?$' >/dev/null 2>&1 || eval $(udfOnError return iErrorNonValidVariable '$1')
- return 0
+ [[ "$1" =~ ^[_a-zA-Z][_a-zA-Z0-9]*$ ]] && return 0 || eval $(udfOnError return iErrorNonValidVariable '${1}')
 }
 #******
 #****f* libstd/udfQuoteIfNeeded
@@ -1077,8 +1067,7 @@ udfCheckCsv() {
  bashlyk_csvResult_Q1eiphgO=''
  #
  for bashlyk_s_Q1eiphgO in $1; do
-  bashlyk_s_Q1eiphgO=$(echo $bashlyk_s_Q1eiphgO | tr -d "'" | tr -d '"' | sed  \
-  -e "s/^\[.*\];//")
+  bashlyk_s_Q1eiphgO=$(echo $bashlyk_s_Q1eiphgO | tr -d "'" | tr -d '"' | sed -e "s/^\[.*\];//")
   bashlyk_k_Q1eiphgO="$(echo ${bashlyk_s_Q1eiphgO%%=*}|xargs)"
   bashlyk_v_Q1eiphgO="$(echo ${bashlyk_s_Q1eiphgO#*=}|xargs)"
   [[ -n "$bashlyk_k_Q1eiphgO" ]] || continue
@@ -1090,7 +1079,7 @@ udfCheckCsv() {
  done
  IFS=$' \t\n'
  if [[ -n "$2" ]]; then
-  udfIsValidVariable "$2" || eval $(udfOnError return iErrorNonValidVariable "$2")
+  udfIsValidVariable "$2" || eval $(udfOnError return iErrorNonValidVariable '$2')
   eval 'export ${2}="${bashlyk_csvResult_Q1eiphgO}"'
  else
   echo "$bashlyk_csvResult_Q1eiphgO"
