@@ -134,19 +134,16 @@ udfGetConfig() {
 #    rm -f $conf
 #  SOURCE
 udfSetConfig() {
- local bashlyk_conf_kpHeLmpy IFS=$' \t\n' bashlyk_pathCnf_kpHeLmpy="$_bashlyk_pathCnf" bashlyk_sPair_kpHeLmpy
+ local conf IFS=$' \t\n' pathCnf="$_bashlyk_pathCnf"
  [[ -n "$1" && -n "$2" ]] || eval $(udfOnError return iErrorEmptyOrMissingArgument)
  #
- [[ "$1" != "${1##*/}" ]] && bashlyk_pathCnf_kpHeLmpy="$(dirname $1)"
- mkdir -p "$bashlyk_pathCnf_kpHeLmpy" || eval $(udfOnError return iErrorNotExistNotCreated $bashlyk_pathCnf_kpHeLmpy)
- bashlyk_conf_kpHeLmpy="${bashlyk_pathCnf_kpHeLmpy}/${1##*/}"
+ [[ "$1" != "${1##*/}" ]] && pathCnf="$(dirname $1)"
+ mkdir -p "$pathCnf" || eval $(udfOnError return iErrorNotExistNotCreated $pathCnf)
+ conf="${pathCnf}/${1##*/}"
  {
   echo "# Created $(date -R) by $USER via $0 (pid $$)"
-  IFS=';'
-  for bashlyk_sPair_kpHeLmpy in $(udfCheckCsv "$2"); do
-   [ -n "${bashlyk_sPair_kpHeLmpy}" ] && echo "${bashlyk_sPair_kpHeLmpy}"
-  done
- } >> $bashlyk_conf_kpHeLmpy 2>/dev/null
+  udfCheckCsv "$2" | tr ';' '\n'
+ } >> $conf 2>/dev/null
  return 0
 }
 #******

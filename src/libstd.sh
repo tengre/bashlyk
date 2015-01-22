@@ -113,7 +113,7 @@ udfIsNumber() {
  [[ -n "$1" ]] || return $_bashlyk_iErrorEmptyOrMissingArgument
  local s
  [[ -n "$2" ]] && s="[$2]?"
- echo "$1" | grep -i -E "^[[:digit:]]+${s}$" >/dev/null 2>&1 || return $_bashlyk_iErrorNonValidArgument
+ [[ "$1" =~ ^[0-9]+${s}$ ]] && return 0 || return $_bashlyk_iErrorNonValidArgument
  return 0
 }
 #******
@@ -365,7 +365,7 @@ udfIsValidVariable() {
 #    udfQuoteIfNeeded two words >| grep '^".*"$'                                #? true
 #  SOURCE
 udfQuoteIfNeeded() {
- [[ -n "$(echo "$*" | grep -e [[:space:]])" ]] && echo "\"$*\"" || echo "$*"
+ [[ "$*" =~ [[:space:]] ]] &&  echo "\"$*\"" || echo "$*"
 }
 #******
 #****f* libstd/udfWSpace2Alias
@@ -631,20 +631,18 @@ udfMakeTempV() {
 #  OUTPUT
 #    Если данные поступают со стандартного входа, то csv;-строка, иначе поток
 #    строк - каждое поле входной csv;-строки - отдельная строка
+#    ## TODO неясно зачем такое разделение
 #  EXAMPLE
 #    local s="_bashlyk_&#91__bashlyk_&#93__bashlyk_&#59__bashlyk_&#40__bashlyk_&#41__bashlyk_&#61_"
-#    echo $s | udfPrepare2Exec -                                                                    #? true
-#    udfPrepare2Exec $s | grep -e '\[\];()='                                                        #? true
+#    echo $s | udfPrepare2Exec -                                                                      #? true
+#    udfPrepare2Exec $s >| grep -e '\[\];()='                                                         #? true
 #  SOURCE
 udfPrepare2Exec() {
- local s cmd="$*" cmdSed='' IFS=$',;'
+ local s IFS=$' \t\n'
  if [[ "$1" == "-" ]]; then
   udfBashlykUnquote
  else
-  for s in $cmd
-  do
-   echo "$s" | udfBashlykUnquote
-  done
+  echo "${*//;/ }" | tr ' ' '\n' |  udfBashlykUnquote
  fi
  return 0
 }
