@@ -136,7 +136,7 @@ udfSetLastError() {
  [[ -n "$1" ]] || return $_bashlyk_iErrorEmptyOrMissingArgument
  local i
  [[ "$1" =~ ^[0-9]+$ ]] && i=$1  || eval "i=\$_bashlyk_${1}"
- [[ "$1" =~ ^[0-9]+$ ]] && shift || i=$_bashlyk_iErrorUnexpected
+ [[ "$i" =~ ^[0-9]+$ ]] && shift || i=$_bashlyk_iErrorUnexpected
  _bashlyk_iLastError=$i
  _bashlyk_sLastError="$*"
  return $i

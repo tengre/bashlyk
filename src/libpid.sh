@@ -68,9 +68,9 @@ udfCheckStarted() {
  local pid="$1" IFS=$' \t\n'
  #
  [[ -n "$*"      ]] || eval $(udfOnError return iErrorEmptyOrMissingArgument)
- [[ "$$" == "$1" ]] && return iErrorCurrentProcess
+ [[ "$$" == "$1" ]] && return $(_ iErrorCurrentProcess)
  shift
- [[ "$(ps -p $pid -o args=)" =~ ${*}$ ]] && return 0 || return iErrorNoSuchProcess
+ [[ "$(ps -p $pid -o args=)" =~ ${*}$ ]] && return 0 || return $(_ iErrorNoSuchProcess)
  return 0
 }
 #******
