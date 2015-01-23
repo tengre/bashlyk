@@ -68,9 +68,9 @@ udfCheckStarted() {
  local pid="$1" IFS=$' \t\n'
  #
  [[ -n "$*"      ]] || eval $(udfOnError return iErrorEmptyOrMissingArgument)
- [[ "$$" == "$1" ]] && eval $(udfOnError return iErrorCurrentProcess)
+ [[ "$$" == "$1" ]] && return iErrorCurrentProcess
  shift
- ps -p $pid -o args= | grep "${*}$" >/dev/null 2>&1 || eval $(udfOnError return iErrorNoSuchProcess)
+ [[ "$(ps -p $pid -o args=)" =~ ${*}$ ]] && return 0 || return iErrorNoSuchProcess
  return 0
 }
 #******
@@ -102,14 +102,14 @@ udfSetPid() {
  else
   fnPid="${_bashlyk_pathRun}/${_bashlyk_s0}.pid"
  fi
- mkdir -p "${_bashlyk_pathRun}" || eval $(udfOnError return iErrorNotExistNotCreated "${_bashlyk_pathRun}")
+ mkdir -p "${_bashlyk_pathRun}" || eval $(udfOnError return iErrorNotExistNotCreated '${_bashlyk_pathRun}')
  [[ -f "$fnPid" ]] && pid=$(head -n 1 "$fnPid")
  if [[ -n "$pid" ]]; then
   udfCheckStarted $pid ${_bashlyk_s0} ${_bashlyk_sArg} && {
-   eval $(udfOnError retecho iErrorAlreadyStarted "$0 : Already started with pid = $pid")
+   eval $(udfOnError retecho iErrorAlreadyStarted '$0 : Already started with pid = $pid')
   }
  fi
- echo $$ > $fnPid || eval $(udfOnError rewarn iErrorNotExistNotCreated "Warn: pid file $fnPid not created...")
+ echo $$ > $fnPid || eval $(udfOnError rewarn iErrorNotExistNotCreated 'Warn: pid file $fnPid not created...')
  echo "$0 ${_bashlyk_sArg}" >> $fnPid
  _bashlyk_fnPid=$fnPid
  udfAddFile2Clean $fnPid
@@ -150,8 +150,7 @@ udfExitIfAlreadyStarted() {
 #    udfClean
 #  SOURCE
 udfClean() {
- local fn IFS=$' \t\n'
- local a="${_bashlyk_afnClean} ${_bashlyk_apathClean} $*"
+ local fn IFS=$' \t\n' a="${_bashlyk_afnClean} ${_bashlyk_apathClean} $*"
  for fn in $a
  do
   [[ -n "$fn" && -f "$fn" ]] && rm -f $1 "$fn"

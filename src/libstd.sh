@@ -114,7 +114,6 @@ udfIsNumber() {
  local s
  [[ -n "$2" ]] && s="[$2]?"
  [[ "$1" =~ ^[0-9]+${s}$ ]] && return 0 || return $_bashlyk_iErrorNonValidArgument
- return 0
 }
 #******
 #****f* libstd/udfSetLastError
@@ -136,8 +135,8 @@ udfIsNumber() {
 udfSetLastError() {
  [[ -n "$1" ]] || return $_bashlyk_iErrorEmptyOrMissingArgument
  local i
- udfIsNumber $1 && i=$1  || eval "i=\$_bashlyk_${1}"
- udfIsNumber $i && shift || i=$_bashlyk_iErrorUnexpected
+ [[ "$1" =~ ^[0-9]+$ ]] && i=$1  || eval "i=\$_bashlyk_${1}"
+ [[ "$1" =~ ^[0-9]+$ ]] && shift || i=$_bashlyk_iErrorUnexpected
  _bashlyk_iLastError=$i
  _bashlyk_sLastError="$*"
  return $i

@@ -105,14 +105,13 @@ udfLogger() {
  bSysLog=0
  bUseLog=0
  sTagLog="${_bashlyk_s0}[$(printf "%05d" $$)]"
- [[ -z "$_bashlyk_bUseSyslog" || "$_bashlyk_bUseSyslog" -eq 0 ]] \
-  && bSysLog=0 || bSysLog=1
+ [[ -z "$_bashlyk_bUseSyslog" || "$_bashlyk_bUseSyslog" -eq 0 ]] && bSysLog=0 || bSysLog=1
  if [[ -z "$_bashlyk_bNotUseLog" ]]; then
   udfCheck4LogUse && bUseLog=1 || bUseLog=0
  else
   (( $_bashlyk_bNotUseLog != 0 )) && bUseLog=0 || bUseLog=1
  fi
- mkdir -p "$_bashlyk_pathLog" || eval $(udfOnError throw iErrorNotExistNotCreated "Error: do not create path ${_bashlyk_pathLog}")
+ mkdir -p "$_bashlyk_pathLog" || eval $(udfOnError throw iErrorNotExistNotCreated 'path ${_bashlyk_pathLog} is not created...')
  udfAddPath2Clean $_bashlyk_pathLog
 
  case "${bSysLog}${bUseLog}" in
@@ -177,8 +176,7 @@ udfLog() {
 #    udfIsInteract                                                              #= false
 #  SOURCE
 udfIsInteract() {
- [[ -t 1 && -t 0 && -n "$TERM" && "$TERM" != "dumb" ]] \
-  && _bashlyk_bInteract=1 || _bashlyk_bInteract=0
+ [[ -t 1 && -t 0 && -n "$TERM" && "$TERM" != "dumb" ]] && _bashlyk_bInteract=1 || _bashlyk_bInteract=0
  return $_bashlyk_bInteract
 }
 #******
@@ -284,7 +282,7 @@ udfSetLogSocket() {
  fi
  mkdir -p ${_bashlyk_pathRun} || {
   udfWarn "Warn: path for Sockets ${_bashlyk_pathRun} not created..."
-  eval $(udfOnError return iErrorNotExistNotCreated ${_bashlyk_pathRun})
+  eval $(udfOnError return iErrorNotExistNotCreated 'path ${_bashlyk_pathRun} is not created...')
  }
  [[ -a "$fnSock" ]] && rm -f $fnSock
  if mkfifo -m 0600 $fnSock >/dev/null 2>&1; then
@@ -328,8 +326,8 @@ udfSetLog() {
             _bashlyk_pathLog=$(dirname ${_bashlyk_fnLog})
          ;;
  esac
- mkdir -p "$_bashlyk_pathLog" || eval $(udfOnError throw iErrorNotExistNotCreated "Error: cannot create path $_bashlyk_pathLog")
- touch "$_bashlyk_fnLog"      || eval $(udfOnError throw iErrorNotExistNotCreated "Error: $_bashlyk_fnLog not usable for logging")
+ mkdir -p "$_bashlyk_pathLog" || eval $(udfOnError throw iErrorNotExistNotCreated 'path $_bashlyk_pathLog is not created...')
+ touch "$_bashlyk_fnLog"      || eval $(udfOnError throw iErrorNotExistNotCreated 'file $_bashlyk_fnLog not usable for logging')
  udfSetLogSocket
  return 0
 }
@@ -350,11 +348,7 @@ udfSetLog() {
 #    rm -f $fnLog
 #  SOURCE
 _fnLog() {
- if [[ -n "$1" ]]; then
-  udfSetLog "$1"
- else
-  _ fnLog
- fi
+ [[ -n "$1" ]] && udfSetLog "$1" || _ fnLog
 }
 #******
 #****f* liblog/udfDebug
@@ -388,7 +382,7 @@ udfDebug() {
  local i re='^[0-9]+$' IFS=$' \t\n'
  [[ -n "$*" ]] && i=$1 || eval $(udfOnError return iErrorEmptyOrMissingArgument)
  shift
- echo $i | grep -E $re >/dev/null 2>&1 || i=0
+ [[ "$i" =~ ^[0-9]+$ ]] || i=0
  (( $DEBUGLEVEL >= $i )) || return 1
  [[ -n "$*" ]] && echo "$*"
  return 0

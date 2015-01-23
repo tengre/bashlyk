@@ -86,7 +86,8 @@ udfInit() {
  [ -t 1 ] && _bashlyk_bInteract=1 || _bashlyk_bInteract=0
  tty > /dev/null 2>&1 && _bashlyk_bTerminal=1 || _bashlyk_bTerminal=0
  #
- if [[ -n "$(echo "$_bashlyk_sArg" | grep -w 'bashlyk-test')" ]]; then
+ #if [[ -n "$(echo "$_bashlyk_sArg" | grep -w 'bashlyk-test')" ]]; then
+ if [[ "$_bashlyk_sArg" =~ bashlyk-test ]]; then
   _bashlyk_aUnit="$(echo "${_bashlyk_sArg#*--bashlyk-test=}" | cut -f1 -d' ' \
    | tr ',' ' ' | grep -v '\-\-bashlyk-test')"
   [[ -n "$_bashlyk_aUnit" ]] || _bashlyk_aUnit="$(echo ${_bashlyk_aLib} | tr ',' ' ')"

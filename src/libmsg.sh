@@ -57,6 +57,7 @@ udfEcho() {
  if [[ "$1" == "-" ]]; then
   shift
   [[ -n "$1" ]] && printf "%s\n----\n" "$*"
+  ## TODO alarm required...
   cat
  else
   [[ -n "$1" ]] && echo $*
@@ -153,7 +154,7 @@ udfOnEmptyVariable() {
       [Tt][Hh][Rr][Oo][Ww]) bashlyk_udfOnEmptyVariable_cmd='throw';   shift;;
   [Rr][Ee][Tt][Uu][Rr][Nn]) bashlyk_udfOnEmptyVariable_cmd='return';  shift;;
  esac
- [[ -n "$1" ]] || eval $(udfOnError return iErrorEmptyOrMissingArgument "Variable\(s\) list empty")
+ [[ -n "$1" ]] || eval $(udfOnError return iErrorEmptyOrMissingArgument 'Variable\(s\) list empty')
  for bashlyk_udfOnEmptyVariable_s in $*; do
   [[ -z "${!bashlyk_udfOnEmptyVariable_s}" ]] && {
    (( bashlyk_udfOnEmptyVariable_i == 0 )) && bashlyk_udfOnEmptyVariable_csv+="\'${bashlyk_udfOnEmptyVariable_s}\'"
@@ -162,7 +163,7 @@ udfOnEmptyVariable() {
   }
  done
  [[ -n "$bashlyk_udfOnEmptyVariable_csv" ]] && {
-  eval $(udfOnError $bashlyk_udfOnEmptyVariable_cmd iErrorEmptyOrMissingArgument "Variable\(s\) $bashlyk_udfOnEmptyVariable_csv is empty...")
+  eval $(udfOnError $bashlyk_udfOnEmptyVariable_cmd iErrorEmptyOrMissingArgument 'Variable\(s\) $bashlyk_udfOnEmptyVariable_csv is empty...')
  }
  return 0
 }
@@ -240,7 +241,7 @@ udfMail() {
  #
  [[ -n "$1" ]] || eval $(udfOnError return iErrorEmptyOrMissingArgument)
  #
- which mail >/dev/null 2>&1 || eval $(udfOnError return iErrorCommandNotFound mail)
+ which mail >/dev/null 2>&1 || eval $(udfOnError return iErrorCommandNotFound 'mail')
 
  [[ -n "$sTo" ]] || sTo=$_bashlyk_sUser
  [[ -n "$sTo" ]] || sTo=postmaster
@@ -327,7 +328,7 @@ udfNotify2X() {
  for cmd in notify-send kdialog zenity xmessage; do
   udfNotifyCommand $cmd "$(_ emailSubj)" "$s" "$iTimeout" && break
  done
- (( $? == 0 )) || eval $(udfOnError return iErrorCommandNotFound $cmd)
+ (( $? == 0 )) || eval $(udfOnError return iErrorCommandNotFound '$cmd')
  return 0
 }
 #******

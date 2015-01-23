@@ -107,7 +107,7 @@ udfGetIniSection() {
    && pathIni="/etc/${_bashlyk_pathPrefix}" || return 1
  fi
  #
- aini=$(echo "${1##*/}"|awk 'BEGIN{FS="."} {for (i=NF;i>=1;i--) printf $i" "}')
+ aini=$(echo "${1##*/}" | awk 'BEGIN{FS="."} {for (i=NF;i>=1;i--) printf $i" "}')
 
  sGlobIgnore=$GLOBIGNORE
  GLOBIGNORE="*:?"
@@ -145,8 +145,8 @@ udfGetIniSection() {
 #    #пример приведен в описании udfGetIniSection
 #  SOURCE
 udfGetIniSection2Var() {
- [[ -n "$2" ]] || return 255
- udfIsValidVariable $1 || eval $(udfOnError return $? $1)
+ [[ -n "$2" ]] || eval $(udfOnError return iErrorEmptyOrMissingArgument)
+ udfIsValidVariable $1 || eval $(udfOnError return $? '$1')
  eval 'export ${1}="$(udfGetIniSection "$2" $3)"'
  return 0
 }
@@ -190,7 +190,9 @@ udfReadIniSection() {
  #
  [[ -n "$2" ]] && sTag="$2" || bOpen=true
  while read s; do
-  ( echo $s | grep "^#\|^$" )>/dev/null && continue
+  #( echo $s | grep "^#\|^$" )>/dev/null && continue
+  ## TODO нет проверки комментариев и пустых строк
+  [[ "$s" =~ ^#|^$ ]] && continue
   b=$(echo $s | grep -oE '\[.*\]' | tr -d '[]' | xargs)
   if [[ -n "$b" ]]; then
    $bOpen && break
@@ -206,6 +208,7 @@ udfReadIniSection() {
    k="$(echo ${s%%=*}|xargs -0)"
    v="$(echo ${s#*=}|xargs -0)"
    if [[ -z "$k" || "$k" == "$v" || -n $(echo "$k" | grep '.*[[:space:]+].*') ]]
+   #if [[ -z "$k" || "$k" == "$v" || "$k" =~ .*[[:space:]+].* ]]
    then
     k=${sUnnamedKeyword}${i}
     i=$((i+1))
@@ -242,7 +245,7 @@ udfReadIniSection() {
 udfReadIniSection2Var() {
  local IFS=$' \t\n'
  [[ -n "$2" && -f "$2" ]] || eval $(udfOnError return iErrorEmptyOrMissingArgument)
- udfIsValidVariable $1 || eval $(udfOnError return $? $1)
+ udfIsValidVariable $1 || eval $(udfOnError return $? '$1')
  eval 'export ${1}="$(udfReadIniSection "$2" $3)"'
  return 0
 }
@@ -329,7 +332,7 @@ udfCsvOrder2Var() {
  local IFS=$' \t\n'
  #
  [[ -n "$2" ]] || eval $(udfOnError return iErrorEmptyOrMissingArgument)
- udfIsValidVariable $1 || eval $(udfOnError return $? $1)
+ udfIsValidVariable $1 || eval $(udfOnError return $? '$1')
  eval 'export ${1}="$(udfCsvOrder "$2")"'
  return 0
 }
@@ -369,7 +372,6 @@ udfSetVarFromCsv() {
   bashlyk_v_KLokRJky="$(echo "${bashlyk_csvInput_KLokRJky#*;$bashlyk_k_KLokRJky=}" | cut -f 1 -d ';')"
   if [[ -n "$bashlyk_v_KLokRJky" ]]; then
    eval "$bashlyk_k_KLokRJky=$bashlyk_v_KLokRJky"
-   #2>/dev/null
   fi
  done
  return 0
@@ -467,7 +469,7 @@ udfCsvKeys() {
 udfCsvKeys2Var() {
  local IFS=$' \t\n'
  [[ -n "$2" ]] || eval $(udfOnError return iErrorEmptyOrMissingArgument)
- udfIsValidVariable $1 || eval $(udfOnError return $? $1)
+ udfIsValidVariable $1 || eval $(udfOnError return $? '$1')
  eval 'export ${1}="$(udfCsvKeys "$2")"'
  return 0
 }
@@ -691,12 +693,12 @@ udfIni() {
   bashlyk_udfIni_sSection=${bashlyk_udfIni_s%:*}
   bashlyk_udfIni_csvSection=$(udfGetCsvSection "$bashlyk_udfIni_csv" "$bashlyk_udfIni_sSection")
   if [[ "$bashlyk_udfIni_s" == "${bashlyk_udfIni_s%:[=\-+\!]*}" ]]; then
-   bashlyk_udfIni_aVar="$(echo ${bashlyk_udfIni_s#*:}  | tr ';' ' ')"
+   bashlyk_udfIni_aVar="${bashlyk_udfIni_s#*:}"
    ## TODO продумать расширение имен переменных до вида "имяСекции_переменная"
-   udfSetVarFromCsv "$bashlyk_udfIni_csvSection" $bashlyk_udfIni_aVar
+   udfSetVarFromCsv "$bashlyk_udfIni_csvSection" ${bashlyk_udfIni_aVar//;/ }
   else
    bashlyk_udfIni_cClass="${bashlyk_udfIni_s#*:}"
-   udfIsValidVariable $bashlyk_udfIni_sSection || eval $(udfOnError return iErrorNonValidVariable "$bashlyk_udfIni_aVar")
+   udfIsValidVariable $bashlyk_udfIni_sSection || eval $(udfOnError return iErrorNonValidVariable '$bashlyk_udfIni_sSection')
    case "$bashlyk_udfIni_cClass" in
     !|-) bashlyk_udfIni_csvSection="${bashlyk_udfIni_csvSection##*_bashlyk_csv_record=;}" ;;
       #+) bashlyk_udfIni_csvSection="$(echo "$bashlyk_udfIni_csvSection" | sed -e "s/_bashlyk_csv_record=;//g")" ;;
@@ -773,7 +775,7 @@ udfGetIni2Var() {
  local bashlyk_GetIni2Var_ini="$2" bashlyk_GetIni2Var_s="$1" IFS=$' \t\n'
  #
  [[ -n "$2" && -f "$2" ]] || eval $(udfOnError return iErrorEmptyOrMissingArgument)
- udfIsValidVariable $1 || eval $(udfOnError return $? $1)
+ udfIsValidVariable $1 || eval $(udfOnError return $? '$1')
  shift 2
  eval 'export ${bashlyk_GetIni2Var_s}="$(udfGetIni ${bashlyk_GetIni2Var_ini} $*)"'
  return 0
@@ -830,7 +832,7 @@ udfGetCsvSection2Var() {
  local IFS=$' \t\n'
  #
  [ -n "$2" ] || eval $(udfOnError return iErrorEmptyOrMissingArgument)
- udfIsValidVariable $1 || eval $(udfOnError return $? $1)
+ udfIsValidVariable $1 || eval $(udfOnError return $? '$1')
  eval 'export ${1}="$(udfGetCsvSection "$2" $3)"'
  return 0
 }
@@ -966,7 +968,7 @@ udfIniSection2CsvVar() {
  local IFS=$' \t\n'
  #
  [[ -n "$2" && -f "$2" ]] || eval $(udfOnError return iErrorEmptyOrMissingArgument)
- udfIsValidVariable $1 || eval $(udfOnError return $? $1)
+ udfIsValidVariable $1 || eval $(udfOnError return $? '$1')
  eval 'export ${1}="$(udfIniSection2Csv "$2" $3)"'
  return 0
 }
@@ -1072,7 +1074,7 @@ udfIniGroupSection2CsvVar() {
  local IFS=$' \t\n'
  #
  [[ -n "$2" ]] || eval $(udfOnError return iErrorEmptyOrMissingArgument)
- udfIsValidVariable $1 || eval $(udfOnError return $? $1)
+ udfIsValidVariable $1 || eval $(udfOnError return $? '$1')
  eval 'export ${1}="$(udfIniGroupSection2Csv "$2" $3)"'
  return 0
 }
@@ -1149,7 +1151,7 @@ udfIni2CsvVar() {
  local IFS=$' \t\n'
  #
  [[ -n "$2" ]] || eval $(udfOnError return iErrorEmptyOrMissingArgument)
- udfIsValidVariable $1 || eval $(udfOnError return $? $1)
+ udfIsValidVariable $1 || eval $(udfOnError return $? '$1')
  eval 'export ${1}="$(udfIni2Csv "$2")"'
  return 0
 }
@@ -1249,7 +1251,7 @@ udfIniGroup2Csv() {
  IFS=$' \t\n'
  GLOBIGNORE=$sGlobIgnore
  [[ -n "$csvOut" ]] || {
-  [[ -d "$pathIni" ]] || eval $(udfOnError return iErrorNoSuchFileOrDir "$1")
+  [[ -d "$pathIni" ]] || eval $(udfOnError return iErrorNoSuchFileOrDir '$1')
   [[ -n "$csvIni"  ]] || eval $(udfOnError return iErrorEmptyOrMissingArgument)
  }
  echo ${csvOut} | sed -e "s/;\+/;/g"
@@ -1277,7 +1279,7 @@ udfIniGroup2CsvVar() {
  local IFS=$' \t\n'
  #
  [[ -n "$2" ]] || eval $(udfOnError return iErrorEmptyOrMissingArgument)
- udfIsValidVariable $1 || eval $(udfOnError return $? $1)
+ udfIsValidVariable $1 || eval $(udfOnError return $? '$1')
  eval 'export ${1}="$(udfIniGroup2Csv "$2")"'
  return 0
 }
@@ -1327,7 +1329,7 @@ udfOptions2Ini() {
    continue
   }
   if [[ -z "$sData" ]]; then
-   [[ -n "${!sSection}" ]] && csv+="$(echo "${!sSection}" | tr ',' ';');"
+   [[ -n "${!sSection}" ]] && csv+="${!sSection};"
   else
    for k in $sData; do
     [[ -n "${!k}" ]] && csv+="$k=${!k};"
@@ -1340,9 +1342,9 @@ udfOptions2Ini() {
   else
    s="[${sSection}];${csv};"
   fi
-  sIni+=$s
+  sIni+=${s}
  done
- _ csvOptions2Ini "$sIni"
+ _ csvOptions2Ini "${sIni//,/;}"
  return 0
 }
 #******

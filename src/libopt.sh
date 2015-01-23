@@ -72,10 +72,10 @@ udfGetOptHash() {
  while true; do
   [[ -n "$1" ]] || break
   bFound=
-  for k in $(echo $csvKeys | tr ',' ' '); do
-   v=$(echo $k | tr -d ':')
+  for k in ${csvKeys//,/ }; do
+   v=${k//:/}
    [[ "--$v" == "$1" ]] && bFound=1 || continue
-   if [[ -n "$(echo $k | grep ':$')" ]]; then
+   if [[ "$k" =~ :$ ]]; then
     csvHash+="$v=$(udfAlias2WSpace $2);"
     shift 2
    else
@@ -114,8 +114,8 @@ udfSetOptHash() {
  [[ -n "$*" ]] || eval $(udfOnError return iErrorEmptyOrMissingArgument)
  #
  udfMakeTemp confTmp
- udfSetConfig $confTmp "$*" || return $?
- udfGetConfig $confTmp      || return $?
+ udfSetConfig $confTmp "$*" || eval $(udfOnError return $?)
+ udfGetConfig $confTmp      || eval $(udfOnError return $?)
  rm -f $confTmp
  return 0
 }
@@ -169,7 +169,7 @@ udfExcludePairFromHash() {
  #
  shift
  local csv="$*"
- echo "$csv" | sed -e "s/;$s;//g"
+ echo "${csv//;$s;/}"
  return 0
 }
 #******
