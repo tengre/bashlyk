@@ -138,7 +138,7 @@ udfSetConfig() {
  [[ -n "$1" && -n "$2" ]] || eval $(udfOnError return iErrorEmptyOrMissingArgument)
  #
  [[ "$1" != "${1##*/}" ]] && pathCnf="$(dirname $1)"
- mkdir -p "$pathCnf" || eval $(udfOnError return iErrorNotExistNotCreated $pathCnf)
+ mkdir -p "$pathCnf" || eval $(udfOnError return iErrorNotExistNotCreated '$pathCnf')
  conf="${pathCnf}/${1##*/}"
  {
   echo "# Created $(date -R) by $USER via $0 (pid $$)"
