@@ -190,7 +190,6 @@ udfReadIniSection() {
  #
  [[ -n "$2" ]] && sTag="$2" || bOpen=true
  while read s; do
-  #( echo $s | grep "^#\|^$" )>/dev/null && continue
   ## TODO нет проверки комментариев и пустых строк
   [[ "$s" =~ ^#|^$ ]] && continue
   b=$(echo $s | grep -oE '\[.*\]' | tr -d '[]' | xargs)
@@ -207,8 +206,7 @@ udfReadIniSection() {
    s=$(echo $s | tr -d "'")
    k="$(echo ${s%%=*}|xargs -0)"
    v="$(echo ${s#*=}|xargs -0)"
-   if [[ -z "$k" || "$k" == "$v" || -n $(echo "$k" | grep '.*[[:space:]+].*') ]]
-   #if [[ -z "$k" || "$k" == "$v" || "$k" =~ .*[[:space:]+].* ]]
+   if [[ -z "$k" || "$k" == "$v" || "$k" =~ .*[[:space:]+].* ]]
    then
     k=${sUnnamedKeyword}${i}
     i=$((i+1))
@@ -1342,7 +1340,7 @@ udfOptions2Ini() {
   else
    s="[${sSection}];${csv};"
   fi
-  sIni+=${s}
+  sIni+=$s
  done
  _ csvOptions2Ini "${sIni//,/;}"
  return 0
