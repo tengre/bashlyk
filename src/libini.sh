@@ -1321,7 +1321,6 @@ udfOptions2Ini() {
   sData=${sData/[=\-+\!]/}
   [[ "$sClass" == "$sData" ]] && sClass=
   csv=""
-  IFS=';'
   [[ -n "$sClass" && -n "$sData" ]] && {
    udfSetLastError iErrorNonValidArgument "$sClass"
    continue
@@ -1329,11 +1328,12 @@ udfOptions2Ini() {
   if [[ -z "$sData" ]]; then
    [[ -n "${!sSection}" ]] && csv+="${!sSection};"
   else
+   IFS=';'
    for k in $sData; do
     [[ -n "${!k}" ]] && csv+="$k=${!k};"
    done
+   IFS=$' \t\n'
   fi
-  IFS=$' \t\n'
   [[ -n "$csv" ]] || continue
   if [[ "$sClass" == "!" ]]; then
    s="[${sSection}]:;${csv};:[${sSection}]"
