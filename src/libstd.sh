@@ -153,7 +153,7 @@ udfSetLastError() {
 #    udfStackTrace
 #  SOURCE
 udfStackTrace() {
- local s=""
+ local i s
  echo "Stack Trace for ${BASH_SOURCE[0]}::${FUNCNAME[0]}:"
  for (( i=${#FUNCNAME[@]}-1; i >= 0; i-- )); do
   [[ ${BASH_LINENO[i]} == 0 ]] && continue
