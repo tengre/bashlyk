@@ -605,7 +605,8 @@ udfIniChange() {
 #  RETURN VALUE
 #    0                            - Выполнено успешно
 #    iErrorNonValidVariable       - невалидный идентификатор переменной
-#    iErrorEmptyOrMissingArgument - Ошибка: аргументы отсутствуют
+#    iErrorNoSuchFileOrDir        - файл конфигурации не найден
+#    iErrorEmptyOrMissingArgument - аргументы отсутствуют
 #  EXAMPLE
 #    local sTxt="foo = bar" b=true iXo=1921 iYo=1080 ini iniChild
 #    local exec replace unify acc sVoid=void sMain='sTxt;b;iXo'
@@ -685,7 +686,7 @@ udfIni() {
  #
  bashlyk_udfIni_csv=$(udfIniGroup2Csv "$bashlyk_udfIni_ini")
  bashlyk_udfIni_s=$?
- [[ "$bashlyk_udfIni_s" == 0 ]] || return $bashlyk_udfIni_s
+ [[ "$bashlyk_udfIni_s" == 0 ]] || eval $(udfOnError return $bashlyk_udfIni_s)
  #
  for bashlyk_udfIni_s in $*; do
   bashlyk_udfIni_sSection=${bashlyk_udfIni_s%:*}

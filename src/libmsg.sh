@@ -157,8 +157,8 @@ udfOnEmptyVariable() {
  [[ -n "$1" ]] || eval $(udfOnError return iErrorEmptyOrMissingArgument 'Variable\(s\) list empty')
  for bashlyk_udfOnEmptyVariable_s in $*; do
   [[ -z "${!bashlyk_udfOnEmptyVariable_s}" ]] && {
-   (( bashlyk_udfOnEmptyVariable_i == 0 )) && bashlyk_udfOnEmptyVariable_csv+="\'${bashlyk_udfOnEmptyVariable_s}\'"
-   (( bashlyk_udfOnEmptyVariable_i == 1 )) && bashlyk_udfOnEmptyVariable_csv+=", \'${bashlyk_udfOnEmptyVariable_s}\'"
+   (( bashlyk_udfOnEmptyVariable_i == 0 )) && bashlyk_udfOnEmptyVariable_csv+="${bashlyk_udfOnEmptyVariable_s}"
+   (( bashlyk_udfOnEmptyVariable_i == 1 )) && bashlyk_udfOnEmptyVariable_csv+=", ${bashlyk_udfOnEmptyVariable_s}"
    bashlyk_udfOnEmptyVariable_i=1
   }
  done

@@ -636,13 +636,14 @@ udfMakeTempV() {
 #    local s="_bashlyk_&#91__bashlyk_&#93__bashlyk_&#59__bashlyk_&#40__bashlyk_&#41__bashlyk_&#61_"
 #    echo $s | udfPrepare2Exec -                                                                      #? true
 #    udfPrepare2Exec $s >| grep -e '\[\];()='                                                         #? true
+#    ## TODO требуется многострочный тест
 #  SOURCE
 udfPrepare2Exec() {
  local s IFS=$' \t\n'
  if [[ "$1" == "-" ]]; then
   udfBashlykUnquote
  else
-  echo "${*//;/ }" | tr ' ' '\n' |  udfBashlykUnquote
+  echo -e "${*//;/\\n}" | udfBashlykUnquote
  fi
  return 0
 }
