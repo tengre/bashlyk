@@ -216,11 +216,14 @@ udfOnError() {
   echo|exit|retecho|retwarn|return|warn|throw) sAction=$1;shift;;
  esac
 
- s=$1
- shift
-
- udfSetLastError $s
- [[ $? == $_bashlyk_iErrorUnexpected ]] && rc+=" - $*" || rc="$s - $*"
+ udfSetLastError $1
+ if [[ $? == $_bashlyk_iErrorUnexpected ]]; then
+  rc+=" - $*"
+ else
+  s=$1
+  shift
+  rc="$s - $*"
+ fi
 
  if [[ "${FUNCNAME[1]}" == "main" || -z "${FUNCNAME[1]}" ]]; then
   [[ "$sAction" == "retecho" ]] && sAction='echo'
