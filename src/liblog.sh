@@ -68,7 +68,6 @@
 #     * Вывод в системный журнал (syslog) и на консоль терминала
 #     * Вывод в системный журнал (syslog) и в файл $_bashlyk_fnLog
 #  EXAMPLE
-#    # TODO восстанавливать значения системных переменных _bashlyk_*
 #    local bInteract bNotUseLog bTerminal
 #    _ =bInteract
 #    _ =bNotUseLog

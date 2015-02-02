@@ -55,19 +55,23 @@
 #  OUTPUT
 #   Ассоциативный массив в виде CSV строки
 #  RETURN VALUE
-#    iErrorEmptyOrMissingArgument - аргумент не задан
 #    0                            - успешная операция
+#    iErrorEmptyOrMissingArgument - аргумент не задан
+#    iErrorNonValidArgument       - неправильная опция
+#    iErrorEmptyResult            - пустой результат
 #  EXAMPLE
-#   udfGetOptHash 'job:,force' --job main --force >| grep "^;job=main;force=1;$" #? true
+#   udfGetOptHash 'job:,force' --job main --force >| grep "^job=main;force=1;$" #? true
+#   udfGetOptHash                                                               #? ${_bashlyk_iErrorEmptyOrMissingArgument}
+#   udfGetOptHash 'bar:,foo' --job main --force                                 #? ${_bashlyk_iErrorNonValidArgument}
 #  SOURCE
 udfGetOptHash() {
- local k v csvKeys csvHash=';' sOpt bFound IFS=$' \t\n'
+ local k v csvKeys csvHash sOpt bFound IFS=$' \t\n'
  #
  [[ -n "$*" ]] || eval $(udfOnError return iErrorEmptyOrMissingArgument)
  #
  csvKeys="$1"
  shift
- sOpt="$(getopt -l $csvKeys -n $0 -- $0 $@)" || return 1
+ sOpt="$(getopt -l $csvKeys -n $0 -- $0 $@ 2>/dev/null)" || eval $(udfOnError return iErrorNonValidArgument $@)
  eval set -- "$sOpt"
  while true; do
   [[ -n "$1" ]] || break
@@ -86,8 +90,9 @@ udfGetOptHash() {
   [[ -z "$bFound" ]] && shift
  done
  shift
- echo "$csvHash"
- return 0
+ ## TODO ситуация iErrorEmptyResult недостижима ?
+ [[ -n "$csvHash" ]] && echo "$csvHash" || eval $(udfOnError return iErrorEmptyResult)
+ #return 0
 }
 #******
 #****f* libopt/udfSetOptHash
@@ -105,18 +110,19 @@ udfGetOptHash() {
 #  EXAMPLE
 #    local job bForce
 #    udfSetOptHash "job=main;bForce=1;"                                         #? true
-#    echo "dbg $job :: $bForce" >| grep "^dbg main :: 1$"                       #? true
+#    echo "$job :: $bForce" >| grep "^main :: 1$"                               #? true
+#    udfSetOptHash                                                              #? $_bashlyk_iErrorEmptyOrMissingArgument
 #    ## TODO коды возврата проверить
 #  SOURCE
 udfSetOptHash() {
- local confTmp rc=0 IFS=$' \t\n'
+ local _bashlyk_udfGetOptHash_confTmp IFS=$' \t\n'
  #
  [[ -n "$*" ]] || eval $(udfOnError return iErrorEmptyOrMissingArgument)
  #
- udfMakeTemp confTmp
- udfSetConfig $confTmp "$*" || eval $(udfOnError return $?)
- udfGetConfig $confTmp      || eval $(udfOnError return $?)
- rm -f $confTmp
+ udfMakeTemp   _bashlyk_udfGetOptHash_confTmp
+ udfSetConfig $_bashlyk_udfGetOptHash_confTmp "$*" || eval $(udfOnError return)
+ udfGetConfig $_bashlyk_udfGetOptHash_confTmp      || eval $(udfOnError return)
+ rm -f $_bashlyk_udfGetOptHash_confTmp
  return 0
 }
 #******
@@ -168,8 +174,7 @@ udfExcludePairFromHash() {
  [[ -n "$*" ]] || eval $(udfOnError return iErrorEmptyOrMissingArgument)
  #
  shift
- local csv="$*"
- echo "${csv//;$s;/}"
- return 0
+ echo "${*//;$s;/}"
+ #return 0
 }
 #******

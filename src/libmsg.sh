@@ -93,7 +93,7 @@ udfWarn() {
 #******
 #****f* libmsg/udfThrow
 #  SYNOPSIS
-#    udfThrow [-] errNo errMessage
+#    udfThrow [-] args
 #  DESCRIPTION
 #    Вывод аварийного сообщения с завершением работы. Если терминал отсутствует,
 #    то сообщение передается системе уведомлений.
@@ -104,7 +104,8 @@ udfWarn() {
 #           из стандартного ввода
 #  OUTPUT
 #   Зависит от параметров вывода
-#  ## TODO добавить секцию RETURN VALUE
+#  RETURN VALUE
+#   возвращает значение $_bashlyk_iLastError, если оно не нуль или 255
 #  EXAMPLE
 #    $(udfThrow test; true)                                                     #? false
 #  SOURCE

@@ -55,23 +55,24 @@
 #    file     - имя файла конфигурации
 #  RETURN VALUE
 #    iErrorEmptyOrMissingArgument - аргумент не задан
-#    iErrorFileNotFound           - файл конфигурации не найден
+#    iErrorNoSuchFileOrDir        - файл конфигурации не найден
 #    0                            - успешная операция
 #  EXAMPLE
 #    local b conf d pid s0 s
 #    # TODO "историческая" проверка в текущем каталоге временно убрана (.)
 #    conf=$(mktemp --suffix=.conf || tempfile -d /tmp -s .test.conf)            #? true
-#    udfSetConfig $conf "s0=$0;b=true;pid=$$;s=$(uname -a);$(date -R -r $0)"    #? true
+#    printf "s0=$0\nb=true\npid=$$\ns=\"$(uname -a)\"\n" >| tee $conf           #? true
 #    udfGetConfig $conf                                                         #? true
 #    test "$s0" = $0 -a "$b" = true -a "$pid" = $$ -a "$s" = "$(uname -a)"      #? true
-#    rm -f $conf
+#    rm -f $conf                                                                #? true
 #    b='' conf='' d='' pid='' s0='' sS=''
 #    conf=$(mktemp --suffix=.conf || tempfile -s .test.conf)                    #? true
-#    udfSetConfig $conf "s0=$0;b=true;pid=$$;s=$(uname -a);$(date -R -r $0)"    #? true
+#    printf "s0=$0\nb=true\npid=$$\ns=\"$(uname -a)\"\n" >| tee $conf           #? true
 #    udfGetConfig $conf                                                         #? true
 #    test "$s0" = $0 -a "$b" = true -a "$pid" = $$ -a "$s" = "$(uname -a)"      #? true
-#    cat $conf
 #    rm -f $conf
+#    udfGetConfig $conf                                                         #? $_bashlyk_iErrorNoSuchFileOrDir
+#    udfGetConfig                                                               #? $_bashlyk_iErrorEmptyOrMissingArgument
 #  SOURCE
 udfGetConfig() {
  local bashlyk_aconf_MROATHra bashlyk_conf_MROATHra bashlyk_s_MROATHra
@@ -86,7 +87,7 @@ udfGetConfig() {
  if [[ -z "$bashlyk_pathCnf_MROATHra" ]]; then
   [[ -f "/etc/${_bashlyk_pathPrefix}/$1" ]] \
    && bashlyk_pathCnf_MROATHra="/etc/${_bashlyk_pathPrefix}" \
-   || eval $(udfOnError return iErrorFileNotFound)
+   || eval $(udfOnError return iErrorNoSuchFileOrDir)
  fi
  #
  bashlyk_conf_MROATHra=
@@ -118,7 +119,7 @@ udfGetConfig() {
 #    наличия в них пробелов
 #  RETURN VALUE
 #    iErrorEmptyOrMissingArgument - аргумент не задан
-#    iErrorNotExistNotCreated     - путь не существует и не создан
+#    iErrorNotExistNotCreated     - файл не существует и не создан
 #    0                            - успешная операция
 #  EXAMPLE
 #    local b conf d pid s0 s

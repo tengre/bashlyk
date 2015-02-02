@@ -38,7 +38,8 @@
 #    утилит
 #  SOURCE
 _bashlyk_iErrorEmptyOrMissingArgument=255
-_bashlyk_iErrorUnexpected=254
+_bashlyk_iErrorEmptyResult=254
+_bashlyk_iErrorUnexpected=253
 _bashlyk_iErrorNonValidArgument=250
 _bashlyk_iErrorNotPermitted=240
 _bashlyk_iErrorNonValidVariable=200
@@ -438,13 +439,10 @@ udfAlias2WSpace() {
 #    varname, если временный объект не создан, то ничего не выдается
 #
 #  RETURN VALUE
-#    0                            - выполнено успешно
-#    iErrorNotExistNotCreated     - временный объект файловой системы не создан
-#    iErrorNonValidVariable       - аргумент <varname> не является валидным
-#                                   идентификатором переменной
-#    iErrorUnexpected             - неожиданная ошибка
-#    iErrorEmptyOrMissingArgument - аргумент отсутствует или файл конфигурации
-#                                   не найден
+#    0                        - выполнено успешно
+#    iErrorNotExistNotCreated - временный объект файловой системы не создан
+#    iErrorNonValidVariable   - аргумент <varname> не является валидным
+#                               идентификатором переменной
 #
 #  EXAMPLE
 #    local foTemp
@@ -457,7 +455,9 @@ udfAlias2WSpace() {
 #    rm -f $foTemp
 #    $(udfMakeTemp foTemp prefix=pre. suffix=.suf)
 #    test -f $foTemp                                                            #? false
-#    ## TODO проверить все коды возврата
+#    udfMakeTemp                                                                #? true
+#    udfMakeTemp 2t                                                             #? ${_bashlyk_iErrorNonValidVariable}
+#    udfMakeTemp path=/proc                                                     #? ${_bashlyk_iErrorNotExistNotCreated}
 #  SOURCE
 udfMakeTemp() {
  local bashlyk_foResult_ioAUaE5R bashlyk_optDir_ioAUaE5R bashlyk_s_ioAUaE5R
@@ -550,9 +550,11 @@ udfMakeTemp() {
     $bashlyk_sPrefix_ioAUaE5R $bashlyk_sSuffix_ioAUaE5R)
   ;;
   *)
+    ## не достижимое состояние
     eval $(udfOnError return iErrorUnexpected $bashlyk_sCreateMode_ioAUaE5R)
   ;;
  esac
+ ## TODO обработка ошибок
  [[ -n "$bashlyk_sUser_ioAUaE5R"  ]] \
   && chown $bashlyk_sUser_ioAUaE5R  $bashlyk_s_ioAUaE5R
  [[ -n "$bashlyk_sGroup_ioAUaE5R" ]] \
@@ -622,19 +624,16 @@ udfMakeTempV() {
 #******
 #****f* libstd/udfPrepare2Exec
 #  SYNOPSIS
-#    udfPrepare2Exec - | args
+#    udfPrepare2Exec - args
 #  DESCRIPTION
-#    ## TODO STDIN ? ';' : '\n'
-#    Преобразование при необходимости метапоследовательностей _bashlyk_&#XX_
-#    из "csv;"-потока со стандартного входа или аргументов командной строки
-#    в символы '[]()=;\'
+#    Преобразование метапоследовательностей _bashlyk_&#XX_ из потока со стандартного входа в символы '[]()=;\'
+#    или аргументов командной строки в виде csv;-строки в отдельные строки 
 #  INPUTS
 #    args - командная строка
 #       - - данные поступают со стандартного входа
 #  OUTPUT
 #    Если данные поступают со стандартного входа, то csv;-строка, иначе поток
 #    строк - каждое поле входной csv;-строки - отдельная строка
-#    ## TODO неясно зачем такое разделение
 #  EXAMPLE
 #    local s="_bashlyk_&#91__bashlyk_&#93__bashlyk_&#59__bashlyk_&#40__bashlyk_&#41__bashlyk_&#61_"
 #    echo $s | udfPrepare2Exec -                                                                      #? true
@@ -1057,7 +1056,8 @@ _set() {
 #    udfCheckCsv "$s" >| grep "$csv"                                            #? true
 #    udfCheckCsv "$s" r                                                         #? true
 #    echo $r >| grep "$csv"                                                     #? true
-#    ## TODO проверить все коды возврата
+#    udfCheckCsv "$s" 2r                                                        #? ${_bashlyk_iErrorNonValidVariable}
+#    udfCheckCsv                                                                #? ${_bashlyk_iErrorEmptyOrMissingArgument}
 #  SOURCE
 udfCheckCsv() {
  local IFS=$' \t\n'
@@ -1131,20 +1131,22 @@ udfGetMd5() {
 #    Список MD5-сумм и имён нескрытых файлов в каталоге <path> рекурсивно
 #  RETURN VALUE
 #    iErrorEmptyOrMissingArgument - аргумент не задан
-#    iErrorFileNotFound           - путь не доступен
+#    iErrorNoSuchFileOrDir        - путь не доступен
+#    iErrorNotPermitted           - нет прав
 #    0                            - успешная операция
 #  EXAMPLE
-#    # TODO требуется более точная проверка
 #    local path=$(udfMakeTemp type=dir)
 #    touch ${path}/testfile
 #    udfAddFile2Clean ${path}/testfile
 #    udfAddPath2Clean ${path}
-#    udfGetPathMd5 $path                                                        #? true
+#    udfGetPathMd5 $path >| grep '^d41.*27e.*testfile'                   #? true
+#    udfGetPathMd5                                                       #? ${_bashlyk_iErrorNoSuchFileOrDir}
+#    ## TODO udfGetPathMd5 /root                                          #? ${_bashlyk_iErrorNotPermitted}
 #  SOURCE
 udfGetPathMd5() {
  local pathSrc="$(pwd)" pathDst s IFS=$' \t\n'
- [[ -n "$1" && -d "$1" ]] || eval $(udfOnError return iErrorEmptyOrMissingArgument)
- cd "$1" 2>/dev/null || eval $(udfOnError return iErrorFileNotFound "$1")
+ [[ -n "$1" && -d "$1" ]] || eval $(udfOnError return iErrorNoSuchFileOrDir)
+ cd "$1" 2>/dev/null || eval $(udfOnError return iErrorNotPermitted '$1')
  pathDst="$(pwd)"
  for s in *; do
   [[ -d "$s" ]] && udfGetPathMd5 $s
@@ -1212,11 +1214,10 @@ udfSerialize() {
 #  SYNOPSIS
 #    udfBashlykUnquote
 #  DESCRIPTION
-#    Преобразование при необходимости метапоследовательностей _bashlyk_&#XX_
-#    из "csv;"-потока со стандартного входа в символы '"[]()=;\'
+#    Преобразование метапоследовательностей _bashlyk_&#XX_ из потока со стандартного входа в символы '"[]()=;\'
 #  EXAMPLE
 #    local s="_bashlyk_&#34__bashlyk_&#91__bashlyk_&#93__bashlyk_&#59__bashlyk_&#40__bashlyk_&#41__bashlyk_&#61_"
-#    echo $s | udfBashlykUnquote >| grep -e '\"\[\];()='                                                                     #? true
+#    echo $s | udfBashlykUnquote >| grep -e '\"\[\];()='                                                          #? true
 #  SOURCE
 udfBashlykUnquote() {
  local a cmd="sed" i IFS=$' \t\n'
