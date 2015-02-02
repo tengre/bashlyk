@@ -626,19 +626,22 @@ udfMakeTempV() {
 #  SYNOPSIS
 #    udfPrepare2Exec - args
 #  DESCRIPTION
-#    Преобразование метапоследовательностей _bashlyk_&#XX_ из потока со стандартного входа в символы '[]()=;\'
-#    или аргументов командной строки в виде csv;-строки в отдельные строки 
+#    Преобразование метапоследовательностей _bashlyk_&#XX_ в символы '[]()=;\'
+#    со стандартного входа или строки аргументов. В последнем случае,
+#    дополнительно происходит разделение полей "CSV;"-строки в отдельные
+#    строки
 #  INPUTS
 #    args - командная строка
 #       - - данные поступают со стандартного входа
 #  OUTPUT
-#    Если данные поступают со стандартного входа, то csv;-строка, иначе поток
-#    строк - каждое поле входной csv;-строки - отдельная строка
+#    поток строк, пригодных для выполнения командным интерпретатором
 #  EXAMPLE
-#    local s="_bashlyk_&#91__bashlyk_&#93__bashlyk_&#59__bashlyk_&#40__bashlyk_&#41__bashlyk_&#61_"
-#    echo $s | udfPrepare2Exec -                                                                      #? true
-#    udfPrepare2Exec $s >| grep -e '\[\];()='                                                         #? true
-#    ## TODO требуется многострочный тест
+#    local s1 s2
+#    s1="_bashlyk_&#91__bashlyk_&#93__bashlyk_&#59__bashlyk_&#40__bashlyk_&#41__bashlyk_&#61_"
+#    s2="while _bashlyk_&#91_ true _bashlyk_&#93_; do read;done"
+#    echo $s1 | udfPrepare2Exec -                                                              #? true
+#    udfPrepare2Exec $s1 >| grep -e '\[\];()='                                                 #? true
+#    udfPrepare2Exec $s2 >| grep -e "^while \[ true \]$\|^ do read$\|^done$"                   #? true
 #  SOURCE
 udfPrepare2Exec() {
  local s IFS=$' \t\n'
