@@ -269,11 +269,11 @@ udfBaseId() {
 #  OUTPUT
 #    строка с заголовком в виде "штампа времени"
 #  EXAMPLE
-#    local re="[[:graph:]]+ [0-9]+ [0-9]+:[0-9]+:[[:digit:]]+ foo bar"
+#    local re="[a-zA-Z]+ [0-9]+ [0-9]+:[0-9]+:[[:digit:]]+ foo bar"
 #    udfTimeStamp foo bar >| grep -E "$re"                                      #? true
 #  SOURCE
 udfTimeStamp() {
- LANG=C LC_TIME=C date "+%b %d %H:%M:%S $*"
+ LANG=C LC_TIME=C LC_ALL=C date "+%b %d %H:%M:%S $*"
 }
 #******
 #****f* libstd/udfDate
@@ -690,13 +690,16 @@ udfShellExec() {
 #  EXAMPLE
 #    local fnTemp rc
 #    udfMakeTemp fnTemp keep=true
+#    test -f $fnTemp                                                            #? true
 #    echo $(udfAddFile2Clean $fnTemp)
-#    test -f $fnTemp                                                            #? false
+#    echo $(udfMakeTemp rc)
+#    echo $(echo $$ $BASH_SUBSHELL)
+#    test -f $fnTemp                                                            #? true
 #  SOURCE
 udfAddFile2Clean() {
  [[ -n "$1" ]] || return 0
- _bashlyk_afnClean+=" $*"
- trap "udfOnTrap" 0 1 2 5 15
+ _bashlyk_afnClean[$BASH_SUBSHELL]+=" $*"
+ trap "udfOnTrap" 0 1 2 5 9 15
 }
 #******
 #****f* libstd/udfAddPath2Clean
@@ -716,7 +719,7 @@ udfAddFile2Clean() {
 udfAddPath2Clean() {
  [[ -n "$1" ]] || return 0
  _bashlyk_apathClean+=" $*"
- trap "udfOnTrap" 0 1 2 5 15
+ trap "udfOnTrap" 0 1 2 5 9 15
 }
 #******
 #****f* libstd/udfAddJob2Clean
@@ -809,8 +812,8 @@ udfOnTrap() {
    }
   done
  done
- #
- for s in ${_bashlyk_afnClean}; do
+ date "+ %H:%M:%S $$ $BASH_SUBSHELL ${_bashlyk_afnClean[$BASH_SUBSHELL]}" >> /tmp/trap.log
+ for s in ${_bashlyk_afnClean[$BASH_SUBSHELL]}; do
   rm -f $s
  done
  #
