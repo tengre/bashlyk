@@ -369,11 +369,9 @@ udfSetVarFromCsv() {
  #
  [[ -n "$1" ]] || eval $(udfOnError return iErrorEmptyOrMissingArgument)
  #
- echo "3a $$ $(ls -l "$fnIgn" 2>&1)" >> /tmp/ini.log
  bashlyk_csvInput_KLokRJky=";$(udfCsvOrder "$1");"
  shift
  #
- echo "3b $$ $(ls -l "$fnIgn" 2>&1)" >> /tmp/ini.log
  for bashlyk_k_KLokRJky in $*; do
   #bashlyk_csvResult_KLokRJky=$(echo $bashlyk_csvInput_KLokRJky | grep -Po ";$bashlyk_k_KLokRJky=.*?;" | tr -d ';')
   bashlyk_v_KLokRJky="$(echo "${bashlyk_csvInput_KLokRJky#*;$bashlyk_k_KLokRJky=}" | cut -f 1 -d ';')"

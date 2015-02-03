@@ -692,14 +692,16 @@ udfShellExec() {
 #    udfMakeTemp fnTemp keep=true
 #    test -f $fnTemp                                                            #? true
 #    echo $(udfAddFile2Clean $fnTemp)
-#    echo $(udfMakeTemp rc)
-#    echo $(echo $$ $BASH_SUBSHELL)
-#    test -f $fnTemp                                                            #? true
+#    test -f $fnTemp                                                            #? false
+#    udfMakeTemp rc keep=false
+#    echo $(udfMakeTemp rc suffix=.debug)
+#    test -f $rc                                                                #? true
 #  SOURCE
 udfAddFile2Clean() {
  [[ -n "$1" ]] || return 0
- _bashlyk_afnClean[$BASH_SUBSHELL]+=" $*"
- trap "udfOnTrap" 0 1 2 5 9 15
+ _bashlyk_afnClean[$BASHPID]+=" $*"
+ #"pid proc $BASHPID $BASH_SUBSHELL $$ $*" >> /tmp/bashlyk_fclean.log
+ trap "udfOnTrap" 1 2 5 9 15 EXIT
 }
 #******
 #****f* libstd/udfAddPath2Clean
@@ -718,8 +720,8 @@ udfAddFile2Clean() {
 #  SOURCE
 udfAddPath2Clean() {
  [[ -n "$1" ]] || return 0
- _bashlyk_apathClean+=" $*"
- trap "udfOnTrap" 0 1 2 5 9 15
+ _bashlyk_apathClean[$BASHPID]+=" $*"
+ trap "udfOnTrap" 1 2 5 9 15 EXIT
 }
 #******
 #****f* libstd/udfAddJob2Clean
@@ -738,7 +740,7 @@ udfAddPath2Clean() {
 udfAddJob2Clean() {
  [[ -n "$1" ]] || return 0
  _bashlyk_ajobClean+=" $*"
- trap "udfOnTrap" 0 1 2 5 15
+ trap "udfOnTrap" 1 2 5 9 15 EXIT
 }
 #******
 #****f* libstd/udfAddPid2Clean
@@ -759,7 +761,7 @@ udfAddJob2Clean() {
 udfAddPid2Clean() {
  [[ -n "$1" ]] || return 0
  _bashlyk_apidClean+=" $*"
- trap "udfOnTrap" 0 1 2 5 15
+ trap "udfOnTrap" 1 2 5 9 15 EXIT
 }
 #******
 #****f* libstd/udfCleanQueue
@@ -812,14 +814,18 @@ udfOnTrap() {
    }
   done
  done
- date "+ %H:%M:%S $$ $BASH_SUBSHELL ${_bashlyk_afnClean[$BASH_SUBSHELL]}" >> /tmp/trap.log
- for s in ${_bashlyk_afnClean[$BASH_SUBSHELL]}; do
-  rm -f $s
- done
  #
- for s in ${_bashlyk_apathClean}; do
-  rmdir $s 2>/dev/null
- done
+ #date "+ %H:%M:%S $$ $BASHPID $BASH_SUBSHELL ${_bashlyk_afnClean[$BASHPID]}" >> /tmp/bashlyk_trap.log
+ #
+ if (( ${#_bashlyk_afnClean[$BASHPID]} > 0 )); then
+  rm -f ${_bashlyk_afnClean[$BASHPID]}
+  unset _bashlyk_afnClean[$BASHPID]
+ fi
+ #
+ if (( ${#_bashlyk_apathClean[$BASHPID]} > 0 )); then
+  rmdir --ignore-fail-on-non-empty ${_bashlyk_apathClean[$BASHPID]}
+  unset _bashlyk_apathClean[$BASHPID]
+ fi
  #
  [[ -n "${_bashlyk_pidLogSock}" ]] && {
   exec >/dev/null 2>&1
