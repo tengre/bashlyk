@@ -1,4 +1,4 @@
-Wed, 04 Feb 2015 00:47:43 +0400
+Thu, 05 Feb 2015 17:17:28 +0400
 	Fix bugs
 	Version 1.82
  - исправлена ошибка потери временных файлов при завершении процесса-потомка с
@@ -27,8 +27,9 @@ Wed, 04 Feb 2015 00:47:43 +0400
  - udfSetConfig - убрана рандомизация локальных переменных - не требуется
  - udfGetConfig - в тестовом блоке не используется функция udfSetConfig
  libmsg.sh:
- - udfOnEmptyVariable - убраны экранированные одинарные кавычки имен переменных
-   в списке пустых переменных
+ - udfOnEmptyVariable - более информативный вывод, улучшен тест
+ - добавлены функции udf{,Throw,Warn}OnCommandNotFound по аналогии с
+   udf{,Throw,Warn}OnEmptyVariable
  libini.sh:
  - используется код возврата iErrorEmptyResult в функциях, где ожидается вывод
    строки результата - udfCsvOrder, udfReadIniSection, udfIniGroup2Csv и т.п.
