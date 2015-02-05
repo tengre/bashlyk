@@ -35,7 +35,8 @@
 : ${_bashlyk_envXSession:=}
 : ${_bashlyk_aRequiredCmd_msg:="[ "}
 : ${_bashlyk_aExport_msg:="udfEcho udfWarn udfThrow udfOnEmptyVariable udfThrowOnEmptyVariable udfWarnOnEmptyVariable udfMail \
-    udfMessage udfNotify2X udfNotifyCommand udfGetXSessionProperties"}
+    udfMessage udfNotify2X udfNotifyCommand udfGetXSessionProperties udfOnCommandNotFound udfThrowOnCommandNotFound           \
+    udfWarnOnCommandNotFound"}
 #******
 #****f* libmsg/udfEcho
 #  SYNOPSIS
@@ -114,6 +115,122 @@ udfThrow() {
  (( $(_ iLastError) != 0 )) && exit $(_ iLastError) || exit 255
 }
 #******
+#****f* libmsg/udfOnCommandNotFound
+#  SYNOPSIS
+#    udfOnCommandNotFound [echo|exit|return|warn|throw] <args>
+#  DESCRIPTION
+#    В зависимости от команды (первый аргумент) вызывает завершение сценария или выдает уведомление,
+#    если последующие аргументы не являются исполнимыми файлами - командами - в данной системе
+#    Командой по умолчанию является завершение текущей функции с кодом ошибки
+#    $(_ iErrorEmptyOrMissingArgument)
+#  INPUTS
+#    echo   - вывод предупреждения на STDOUT
+#    warn   - передача предупреждения системе уведомлений со стеком вызовов
+#    return - только возврат кода результата проверки (по умолчанию, можно не указывать)
+#    exit   - безусловное завершения сценария
+#    throw  - тоже самое что exit, но c выводом сообщения и стека вызовов системе уведомлений
+#    args   - имена команд
+#  OUTPUT
+#    Сообщение об ошибке с перечислением не найденных команд
+#  RETURN VALUE
+#    0                     - все аргументы являются исполнимыми командами
+#    iErrorCommandNotFound - есть аргументы, которые не являются исполнимыми командами
+#  EXAMPLE
+#    local cmdYes='sh' cmdNo1="bin_${RANDOM}" cmdNo2="bin_${RANDOM}"
+#    udfOnCommandNotFound                                              #? $_bashlyk_iErrorEmptyOrMissingArgument
+#    udfOnCommandNotFound $cmdNo1                                      #? $_bashlyk_iErrorCommandNotFound
+#    $(udfOnCommandNotFound $cmdNo2 || exit 123)                       #? 123
+#    udfOnCommandNotFound WARN $cmdYes $cmdNo1 $cmdNo2                 #? $_bashlyk_iErrorCommandNotFound
+#    udfOnCommandNotFound Echo $cmdYes $cmdNo1 $cmdNo2 >| grep ', bin' #? true
+#    $(udfOnCommandNotFound  Exit $cmdNo1 >/dev/null 2>&1; true)       #? $_bashlyk_iErrorCommandNotFound
+#    $(udfOnCommandNotFound Throw $cmdNo2 >/dev/null 2>&1; true)       #? $_bashlyk_iErrorCommandNotFound
+#    udfOnCommandNotFound $cmdYes                                      #? true
+#  SOURCE
+udfOnCommandNotFound() {
+ local bashlyk_udfOnCommandNotFound_csv bashlyk_udfOnCommandNotFound_s IFS=$' \t\n'
+ local bashlyk_udfOnCommandNotFound_cmd="return" bashlyk_udfOnCommandNotFound_i=0
+ case "$1" in
+          [Ee][Cc][Hh][Oo]) bashlyk_udfOnCommandNotFound_cmd='retecho'; shift;;
+          [Ee][Xx][Ii][Tt]) bashlyk_udfOnCommandNotFound_cmd='exit';    shift;;
+          [Ww][Aa][Rr][Nn]) bashlyk_udfOnCommandNotFound_cmd='retwarn'; shift;;
+      [Tt][Hh][Rr][Oo][Ww]) bashlyk_udfOnCommandNotFound_cmd='throw';   shift;;
+  [Rr][Ee][Tt][Uu][Rr][Nn]) bashlyk_udfOnCommandNotFound_cmd='return';  shift;;
+ esac
+ [[ -n "$1" ]] || eval $(udfOnError return iErrorEmptyOrMissingArgument 'Variable list is empty')
+ for bashlyk_udfOnCommandNotFound_s in $*; do
+
+  if [[ -z "$(which $bashlyk_udfOnCommandNotFound_s)" ]]; then
+   if (( bashlyk_udfOnCommandNotFound_i == 0 )); then
+    bashlyk_udfOnCommandNotFound_csv="${bashlyk_udfOnCommandNotFound_s}"
+   else
+    bashlyk_udfOnCommandNotFound_csv+=", ${bashlyk_udfOnCommandNotFound_s}"
+   fi
+   : $((bashlyk_udfOnCommandNotFound_i++))
+  fi
+ done
+ [[ -n "$bashlyk_udfOnCommandNotFound_csv" ]] && {
+  eval $(   \
+   udfOnError $bashlyk_udfOnCommandNotFound_cmd iErrorCommandNotFound   \
+    '$bashlyk_udfOnCommandNotFound_i command not found: $bashlyk_udfOnCommandNotFound_csv'   \
+  )
+ }
+ return 0
+}
+#******
+#****f* libmsg/udfThrowOnCommandNotFound
+#  SYNOPSIS
+#    udfThrowOnCommandNotFound args
+#  DESCRIPTION
+#    Вызывает останов сценария, если есть аргументы, которые не являются
+#    исполнимыми командами.
+#    Является эквивалентом "udfOnCommandNotFound throw"
+#  INPUTS
+#    args - имена команд
+#  OUTPUT
+#    Сообщение об ошибке с перечислением имен переменных, которые содержат
+#    пустые значения
+#  RETURN VALUE
+#    0                            - переменные не содержат пустые значения
+#    iErrorEmptyOrMissingArgument - есть не инициализированные переменные
+#    iErrorCommandNotFound        - есть аргументы, которые не являются
+#                                   исполнимыми командами
+#  EXAMPLE
+#    local cmdYes="sh" cmdNo="bin_${RANDOM}"
+#    udfThrowOnCommandNotFound $cmdYes                                        #? true
+#    udfThrowOnCommandNotFound                                                #? $_bashlyk_iErrorEmptyOrMissingArgument
+#    $(udfThrowOnCommandNotFound $cmdNo >/dev/null 2>&1)                      #? $_bashlyk_iErrorCommandNotFound
+#  SOURCE
+udfThrowOnCommandNotFound() {
+ udfOnCommandNotFound Throw $*
+}
+#******
+#****f* libmsg/udfWarnOnCommandNotFound
+#  SYNOPSIS
+#    udfWarnOnCommandNotFound args
+#  DESCRIPTION
+#    Выдаёт предупреждение, если есть аргументы, которые не являются
+#    исполнимыми командами
+#    Является эквивалентом "udfOnCommandNotFound warn"
+#  INPUTS
+#    args - имена переменных
+#  OUTPUT
+#    Сообщение об ошибке с перечислением аргументов, которые не являются
+#    исполнимыми командами
+#  RETURN VALUE
+#    0                            - переменные не содержат пустые значения
+#    iErrorEmptyOrMissingArgument - есть не инициализированные переменные
+#    iErrorCommandNotFound        - есть аргументы, которые не являются
+#                                   исполнимыми командами
+#  EXAMPLE
+#    local cmdYes="sh" cmdNo="bin_${RANDOM}"
+#    udfWarnOnCommandNotFound $cmdYes                                     #? true
+#    udfWarnOnCommandNotFound $cmdNo                                      #? $_bashlyk_iErrorCommandNotFound
+#    udfWarnOnCommandNotFound                                             #? $_bashlyk_iErrorEmptyOrMissingArgument
+#  SOURCE
+udfWarnOnCommandNotFound() {
+ udfOnCommandNotFound Warn $*
+}
+#******
 #****f* libmsg/udfOnEmptyVariable
 #  SYNOPSIS
 #    udfOnEmptyVariable [echo|exit|return|warn|throw] <args>
@@ -135,12 +252,12 @@ udfThrow() {
 #    0                            - переменные не содержат пустые значения
 #    iErrorEmptyOrMissingArgument - есть не инициализированные переменные
 #  EXAMPLE
-#    local sNoEmpty='test' sEmpty='' sEmptyMore=''
+#    local sNoEmpty='test' sEmpty='' sMoreEmpty=''
 #    udfOnEmptyVariable                                       #? $_bashlyk_iErrorEmptyOrMissingArgument
 #    udfOnEmptyVariable sEmpty                                #? $_bashlyk_iErrorEmptyOrMissingArgument
 #    $(udfOnEmptyVariable sEmpty || exit 111)                 #? 111
-#    udfOnEmptyVariable WARN sEmpty sNoEmpty sEmptyMore       #? $_bashlyk_iErrorEmptyOrMissingArgument
-#    udfOnEmptyVariable Echo sEmpty sNoEmpty                  #? $_bashlyk_iErrorEmptyOrMissingArgument
+#    udfOnEmptyVariable WARN sEmpty sNoEmpty sMoreEmpty       #? $_bashlyk_iErrorEmptyOrMissingArgument
+#    udfOnEmptyVariable Echo sEmpty sMoreEmpty >| grep 'y, s' #? true
 #    $(udfOnEmptyVariable  Exit sEmpty >/dev/null 2>&1; true) #? $_bashlyk_iErrorEmptyOrMissingArgument
 #    $(udfOnEmptyVariable Throw sEmpty >/dev/null 2>&1; true) #? $_bashlyk_iErrorEmptyOrMissingArgument
 #    udfOnEmptyVariable sNoEmpty                              #? true
@@ -155,16 +272,22 @@ udfOnEmptyVariable() {
       [Tt][Hh][Rr][Oo][Ww]) bashlyk_udfOnEmptyVariable_cmd='throw';   shift;;
   [Rr][Ee][Tt][Uu][Rr][Nn]) bashlyk_udfOnEmptyVariable_cmd='return';  shift;;
  esac
- [[ -n "$1" ]] || eval $(udfOnError return iErrorEmptyOrMissingArgument 'Variable\(s\) list empty')
+ [[ -n "$1" ]] || eval $(udfOnError return iErrorEmptyOrMissingArgument 'Variable list is empty')
  for bashlyk_udfOnEmptyVariable_s in $*; do
-  [[ -z "${!bashlyk_udfOnEmptyVariable_s}" ]] && {
-   (( bashlyk_udfOnEmptyVariable_i == 0 )) && bashlyk_udfOnEmptyVariable_csv+="${bashlyk_udfOnEmptyVariable_s}"
-   (( bashlyk_udfOnEmptyVariable_i == 1 )) && bashlyk_udfOnEmptyVariable_csv+=", ${bashlyk_udfOnEmptyVariable_s}"
-   bashlyk_udfOnEmptyVariable_i=1
-  }
+  if [[ -z "${!bashlyk_udfOnEmptyVariable_s}" ]]; then
+   if (( bashlyk_udfOnEmptyVariable_i == 0 )); then
+    bashlyk_udfOnEmptyVariable_csv+="${bashlyk_udfOnEmptyVariable_s}"
+   else
+    bashlyk_udfOnEmptyVariable_csv+=", ${bashlyk_udfOnEmptyVariable_s}"
+   fi
+   : $((bashlyk_udfOnEmptyVariable_i++))
+  fi
  done
  [[ -n "$bashlyk_udfOnEmptyVariable_csv" ]] && {
-  eval $(udfOnError $bashlyk_udfOnEmptyVariable_cmd iErrorEmptyOrMissingArgument 'Variable\(s\) $bashlyk_udfOnEmptyVariable_csv is empty...')
+  eval $(   \
+   udfOnError $bashlyk_udfOnEmptyVariable_cmd iErrorEmptyOrMissingArgument   \
+    '$bashlyk_udfOnEmptyVariable_i variable with empty value are found: $bashlyk_udfOnEmptyVariable_csv'   \
+  )
  }
  return 0
 }
@@ -175,6 +298,7 @@ udfOnEmptyVariable() {
 #  DESCRIPTION
 #    Вызывает останов сценария, если аргументы, как имена переменных, содержат
 #    пустые значения
+#    Является эквивалентом "udfOnEmptyVariable throw"
 #  INPUTS
 #    args - имена переменных
 #  OUTPUT
@@ -196,8 +320,9 @@ udfThrowOnEmptyVariable() {
 #  SYNOPSIS
 #    udfWarnOnEmptyVariable args
 #  DESCRIPTION
-#    Выдаёт предупреждение, если аргументы - имена переменных - содержат пустые
-#    значения
+#    Выдаёт предупреждение, если аргументы, как имена переменных, содержат
+#    пустые значения
+#    Является эквивалентом "udfOnEmptyVariable warn"
 #  INPUTS
 #    args - имена переменных
 #  OUTPUT
