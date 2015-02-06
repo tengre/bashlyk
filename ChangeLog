@@ -1,4 +1,4 @@
-Thu, 05 Feb 2015 17:17:28 +0400
+Fri, 06 Feb 2015 21:32:23 +0400
 	Fix bugs
 	Version 1.82
  - исправлена ошибка потери временных файлов при завершении процесса-потомка с
@@ -21,7 +21,8 @@ Thu, 05 Feb 2015 17:17:28 +0400
  - udfOnError - исправлена ошибка потери описания события если его код не задан
  - udfTimeStamp - добавлена переменная среды исполнения LC_ALL=С
  - новые коды ошибок:
-   iErrorVersionIncompatible
+   iErrorBrokenIntegrity
+   iErrorIncompatibleVersion
    iErrorEmptyResult
  libcnf.sh:
  - udfSetConfig - убрана рандомизация локальных переменных - не требуется
