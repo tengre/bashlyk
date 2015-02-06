@@ -42,6 +42,7 @@ _bashlyk_iErrorEmptyResult=254
 _bashlyk_iErrorUnexpected=253
 _bashlyk_iErrorNonValidArgument=250
 _bashlyk_iErrorNotPermitted=240
+_bashlyk_iErrorBrokenIntegrity=230
 _bashlyk_iErrorNonValidVariable=200
 _bashlyk_iErrorNotExistNotCreated=190
 _bashlyk_iErrorNoSuchFileOrDir=185
@@ -52,6 +53,7 @@ _bashlyk_iErrorCommandNotFound=180
 _bashlyk_iErrorUserXsessionNotFound=171
 _bashlyk_iErrorXsessionNotFound=170
 _bashlyk_iErrorVersionIncompatible=169
+
 #
 _bashlyk_iMaxOutputLines=1000
 #
