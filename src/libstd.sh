@@ -433,9 +433,11 @@ udfAlias2WSpace() {
 #    mode=<mode>       - права на временный объект
 #    owner=<owner>     - владелец временного объекта
 #    group=<group>     - группа временного объекта
-#    type=file|dir     - тип объекта: файл или каталог
+#    type=file|dir     - тип объекта: файл (по умолчанию) или каталог
 #    keep=true|false   - удалять/не удалять временные объекты после завершения
-#                        сценария (удалять по умолчанию)
+#                        сценария. По умолчанию, удаляется, если имя временного
+#                        объекта передается аргументу-переменной, если оно
+#                        выдается на stdout, то не удаляется
 #  OUTPUT
 #    вывод происходит если нет аргументов или отсутствует именной аргумент
 #    varname, если временный объект не создан, то ничего не выдается
@@ -457,7 +459,10 @@ udfAlias2WSpace() {
 #    rm -f $foTemp
 #    $(udfMakeTemp foTemp prefix=pre. suffix=.suf)
 #    test -f $foTemp                                                            #? false
-#    udfMakeTemp                                                                #? true
+#    unset foTemp
+#    foTemp=$(udfMakeTemp)                                                      #? true
+#    test -f $foTemp                                                            #? true
+#    rm -f $foTemp
 #    udfMakeTemp 2t                                                             #? ${_bashlyk_iErrorNonValidVariable}
 #    udfMakeTemp path=/proc                                                     #? ${_bashlyk_iErrorNotExistNotCreated}
 #  SOURCE
@@ -702,7 +707,6 @@ udfShellExec() {
 udfAddFile2Clean() {
  [[ -n "$1" ]] || return 0
  _bashlyk_afnClean[$BASHPID]+=" $*"
- #"pid proc $BASHPID $BASH_SUBSHELL $$ $*" >> /tmp/bashlyk_fclean.log
  trap "udfOnTrap" 1 2 5 9 15 EXIT
 }
 #******
@@ -715,10 +719,15 @@ udfAddFile2Clean() {
 #  INPUTS
 #    args - имена каталогов
 #  EXAMPLE
-#    local pathTemp
+#    local pathTemp rc
 #    udfMakeTemp pathTemp keep=true type=dir
+#    test -d $pathTemp                                                          #? true
 #    echo $(udfAddPath2Clean $pathTemp)
 #    test -d $pathTemp                                                          #? false
+#    udfMakeTemp rc keep=false type=dir
+#    echo $(udfMakeTemp rc suffix=.debug type=dir)
+#    test -d $rc                                                                #? true
+#    ls -ld $rc
 #  SOURCE
 udfAddPath2Clean() {
  [[ -n "$1" ]] || return 0
@@ -749,20 +758,22 @@ udfAddJob2Clean() {
 #  SYNOPSIS
 #    udfAddPid2Clean args
 #  DESCRIPTION
-#    Добавляет идентификаторы запущенных процессов к списку завершаемых при
-#    завершении сценария.
+#    Добавляет идентификаторы запущенных процессов к списку очистки при
+#    завершении текущего процесса.
 #  INPUTS
 #    args - идентификаторы процессов
 #  EXAMPLE
 #    sleep 99 &
-#    local pid=$!
-#    test -n "$pid"                                                             #? true
-#    udfAddPid2Clean $pid                                                       #? true
-#    echo "$(_ apidClean)" >| grep -w "$pid"                                    #? true
+#    udfAddPid2Clean $!
+#    test "${_bashlyk_apidClean[$BASHPID]}" -eq "$!"                                    #? true
+#    ps -p $! -o pid= >| grep -w $!                                                     #? true
+#    echo $(udfAddPid2Clean $!; echo "$BASHPID : $! : ${_bashlyk_apidClean[$BASHPID]}")
+#    ps -p $! -o pid= >| grep -w $!                                                     #? false
+#
 #  SOURCE
 udfAddPid2Clean() {
  [[ -n "$1" ]] || return 0
- _bashlyk_apidClean+=" $*"
+ _bashlyk_apidClean[$BASHPID]+=" $*"
  trap "udfOnTrap" 1 2 5 9 15 EXIT
 }
 #******
@@ -785,7 +796,8 @@ udfCleanQueue() {
 #    Процедура очистки при завершении вызвавшего сценария.
 #    Предназначен только для вызова командой trap.
 #    * Производится удаление файлов и пустых каталогов; заданий и процессов,
-#    указанных в соответствующих глобальных переменных
+#    указанных в соответствующих глобальных переменных.
+#    Все процессы должны быть родственны и потомками процесса рабочего сценария
 #    * Закрывается сокет журнала сценария, если он использовался.
 #  EXAMPLE
 #    local fnTemp pathTemp pid
@@ -808,7 +820,7 @@ udfOnTrap() {
   kill $s 2>/dev/null
  done
  #
- for s in ${_bashlyk_apidClean}; do
+ for s in ${_bashlyk_apidClean[$BASHPID]}; do
   for i in 15 9; do
    [[ -n "$(ps -o pid= --ppid $$ | xargs | grep -w $s)" ]] && {
     kill -${i} $s 2>/dev/null
@@ -825,7 +837,7 @@ udfOnTrap() {
  fi
  #
  if (( ${#_bashlyk_apathClean[$BASHPID]} > 0 )); then
-  rmdir --ignore-fail-on-non-empty ${_bashlyk_apathClean[$BASHPID]}
+  rmdir --ignore-fail-on-non-empty ${_bashlyk_apathClean[$BASHPID]} 2>/dev/null
   unset _bashlyk_apathClean[$BASHPID]
  fi
  #
