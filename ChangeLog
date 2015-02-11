@@ -29,9 +29,10 @@ Mon, 09 Feb 2015 13:54:55 +0400
  - udfSetConfig - убрана рандомизация локальных переменных - не требуется
  - udfGetConfig - в тестовом блоке не используется функция udfSetConfig
  libmsg.sh:
- - udfOnEmptyVariable - более информативный вывод, улучшен тест
  - добавлены функции udf{,Throw,Warn}OnCommandNotFound по аналогии с
    udf{,Throw,Warn}OnEmptyVariable
+ - udfOn... - генерация стека вызовов не происходит в режиме предупреждения,
+   более информативный вывод, улучшены тесты
  libini.sh:
  - используется код возврата iErrorEmptyResult в функциях, где ожидается вывод
    строки результата - udfCsvOrder, udfReadIniSection, udfIniGroup2Csv и т.п.
