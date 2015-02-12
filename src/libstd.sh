@@ -238,7 +238,7 @@ udfOnError() {
          echo) sAction="";               sMessage="echo  Warn: ${rc};";;
       retecho) sAction="; return \$?";   sMessage="echo Error: ${rc};";;
          warn) sAction="";               sMessage="udfWarn Warn: ${rc};";;
-      retwarn) sAction="; return \$?";   sMessage="udfStackTrace | udfWarn - Error: ${rc};";;
+      retwarn) sAction="; return \$?";   sMessage="udfWarn Error: ${rc};";;
         throw) sAction="; exit \$?";     sMessage="udfStackTrace | udfWarn - Error: ${rc};";;
   exit|return) sAction="; $sAction \$?"; sMessage="";;
  esac

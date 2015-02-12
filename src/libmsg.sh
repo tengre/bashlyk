@@ -140,7 +140,7 @@ udfThrow() {
 #    udfOnCommandNotFound                                                     #? $_bashlyk_iErrorEmptyOrMissingArgument
 #    udfOnCommandNotFound $cmdNo1                                             #? $_bashlyk_iErrorCommandNotFound
 #    $(udfOnCommandNotFound $cmdNo2 || exit 123)                              #? 123
-#    udfOnCommandNotFound WARN $cmdYes $cmdNo1 $cmdNo2 >| grep "Warn:.*bin.*" #? true
+#    udfOnCommandNotFound WARN $cmdYes $cmdNo1 $cmdNo2 >| grep "Error.*bin.*" #? true
 #    udfOnCommandNotFound Echo $cmdYes $cmdNo1 $cmdNo2 >| grep ', bin'        #? true
 #    $(udfOnCommandNotFound  Exit $cmdNo1 >/dev/null 2>&1; true)              #? $_bashlyk_iErrorCommandNotFound
 #    $(udfOnCommandNotFound Throw $cmdNo2 >/dev/null 2>&1; true)              #? $_bashlyk_iErrorCommandNotFound
@@ -152,7 +152,7 @@ udfOnCommandNotFound() {
  case "$1" in
           [Ee][Cc][Hh][Oo]) bashlyk_udfOnCommandNotFound_cmd='retecho'; shift;;
           [Ee][Xx][Ii][Tt]) bashlyk_udfOnCommandNotFound_cmd='exit';    shift;;
-          [Ww][Aa][Rr][Nn]) bashlyk_udfOnCommandNotFound_cmd='warn';    shift;;
+          [Ww][Aa][Rr][Nn]) bashlyk_udfOnCommandNotFound_cmd='retwarn'; shift;;
       [Tt][Hh][Rr][Oo][Ww]) bashlyk_udfOnCommandNotFound_cmd='throw';   shift;;
   [Rr][Ee][Tt][Uu][Rr][Nn]) bashlyk_udfOnCommandNotFound_cmd='return';  shift;;
  esac
@@ -224,7 +224,7 @@ udfThrowOnCommandNotFound() {
 #  EXAMPLE
 #    local cmdYes="sh" cmdNo="bin_${RANDOM}"
 #    udfWarnOnCommandNotFound $cmdYes                                           #? true
-#    udfWarnOnCommandNotFound $cmdNo >| grep "Warn:.*1 command not found: bin_" #? true
+#    udfWarnOnCommandNotFound $cmdNo >| grep "Error.*1 command not found: bin_" #? true
 #    udfWarnOnCommandNotFound                                                   #? $_bashlyk_iErrorEmptyOrMissingArgument
 #  SOURCE
 udfWarnOnCommandNotFound() {
@@ -256,7 +256,7 @@ udfWarnOnCommandNotFound() {
 #    udfOnEmptyVariable                                                       #? $_bashlyk_iErrorEmptyOrMissingArgument
 #    udfOnEmptyVariable sEmpty                                                #? $_bashlyk_iErrorEmptyOrMissingArgument
 #    $(udfOnEmptyVariable sEmpty || exit 111)                                 #? 111
-#    udfOnEmptyVariable WARN sEmpty sNoEmpty sMoreEmpty >| grep "Warn:.*y, s" #? true
+#    udfOnEmptyVariable WARN sEmpty sNoEmpty sMoreEmpty >| grep "Error.*y, s" #? true
 #    udfOnEmptyVariable Echo sEmpty sMoreEmpty >| grep 'y, s'                 #? true
 #    $(udfOnEmptyVariable  Exit sEmpty >/dev/null 2>&1; true)                 #? $_bashlyk_iErrorEmptyOrMissingArgument
 #    $(udfOnEmptyVariable Throw sEmpty >/dev/null 2>&1; true)                 #? $_bashlyk_iErrorEmptyOrMissingArgument
@@ -268,7 +268,7 @@ udfOnEmptyVariable() {
  case "$1" in
           [Ee][Cc][Hh][Oo]) bashlyk_udfOnEmptyVariable_cmd='retecho'; shift;;
           [Ee][Xx][Ii][Tt]) bashlyk_udfOnEmptyVariable_cmd='exit';    shift;;
-          [Ww][Aa][Rr][Nn]) bashlyk_udfOnEmptyVariable_cmd='warn';    shift;;
+          [Ww][Aa][Rr][Nn]) bashlyk_udfOnEmptyVariable_cmd='retwarn'; shift;;
       [Tt][Hh][Rr][Oo][Ww]) bashlyk_udfOnEmptyVariable_cmd='throw';   shift;;
   [Rr][Ee][Tt][Uu][Rr][Nn]) bashlyk_udfOnEmptyVariable_cmd='return';  shift;;
  esac
@@ -334,7 +334,7 @@ udfThrowOnEmptyVariable() {
 #  EXAMPLE
 #    local sNoEmpty='test' sEmpty=''
 #    udfWarnOnEmptyVariable sNoEmpty                                             #? true
-#    udfWarnOnEmptyVariable sEmpty >| grep "Warn.*empty value are found: sEmpty" #? true
+#    udfWarnOnEmptyVariable sEmpty >| grep "Erro.*empty value are found: sEmpty" #? true
 #  SOURCE
 udfWarnOnEmptyVariable() {
  udfOnEmptyVariable Warn $*
