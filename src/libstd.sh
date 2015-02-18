@@ -43,6 +43,7 @@ _bashlyk_iErrorUnexpected=253
 _bashlyk_iErrorNonValidArgument=250
 _bashlyk_iErrorNotPermitted=240
 _bashlyk_iErrorBrokenIntegrity=230
+_bashlyk_iErrorAbortedBySignal=220
 _bashlyk_iErrorNonValidVariable=200
 _bashlyk_iErrorNotExistNotCreated=190
 _bashlyk_iErrorNoSuchFileOrDir=185
