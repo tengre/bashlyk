@@ -469,12 +469,13 @@ udfNotify2X() {
 #    iErrorXsessionNotFound       - X-сессия не обнаружена
 #    iErrorNotPermitted           - не разрешено
 #  EXAMPLE
+#    ## TODO улучшить тест
 #    udfGetXSessionProperties
 #  SOURCE
 udfGetXSessionProperties() {
  local a pid s sB sD sX sudo user userX IFS=$' \t\n'
  #
- a="x-session-manager gnome-session gnome-session-flashback lxsession mate-session-manager openbox razorqt-session xfce4-session"
+ a="x-session-manager gnome-session gnome-session-flashback lxsession mate-session-manager openbox razorqt-session xfce4-session /opt/trinity/bin/kwrapper /opt/trinity/bin/kdesktop kwin"
  user=$(_ sUser)
  #
  [[ "$user" == "root" && -n "$SUDO_USER" ]] && user=$SUDO_USER
