@@ -391,7 +391,8 @@ udfMail() {
 #    udfMessage [-] [args]
 #  DESCRIPTION
 #    Передача сообщения владельцу процесса по одному из доступных способов:
-#    службы уведомлений рабочего стола X-Window, почты или утилитой write
+#    службы уведомлений рабочего стола X-Window, почты, утилитой write или
+#    стандартный вывод сценария
 #  INPUTS
 #    -    - данные читаются из стандартного ввода
 #    args - строка для вывода. Если имеется в качестве первого аргумента
@@ -415,8 +416,8 @@ udfMessage() {
  udfEcho $* | tee -a $fnTmp | head -n $i
 
  udfNotify2X $fnTmp || udfMail $fnTmp || {
-  [[ -n "$_bashlyk_sLogin" ]] && cat $fnTmp | write $_bashlyk_sLogin
- }
+  [[ -n "$_bashlyk_sLogin" ]] && write $_bashlyk_sLogin < $fnTmp
+ } || cat $fnTmp
  i=$?
  rm -f $fnTmp
  return $i
@@ -468,9 +469,9 @@ udfNotify2X() {
 #    iErrorCommandNotFound        - команда не найдена
 #    iErrorXsessionNotFound       - X-сессия не обнаружена
 #    iErrorNotPermitted           - не разрешено
-#  EXAMPLE
 #    ## TODO улучшить тест
-#    udfGetXSessionProperties
+#  EXAMPLE
+#    udfGetXSessionProperties || echo "X-Session error ($?)"
 #  SOURCE
 udfGetXSessionProperties() {
  local a pid s sB sD sX sudo user userX IFS=$' \t\n'
