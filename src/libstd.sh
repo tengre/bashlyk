@@ -748,6 +748,9 @@ udfAddPath2Clean() {
 #    sleep 99 &
 #    udfAddJob2Clean "%1"                                                       #? true
 #    echo "$(_ ajobClean)" | grep -w "%1"                                       #? true
+##   TEMPORARY FIX (udfAddJob2Clean deprecated)
+#    kill %1
+#    _ ajobClean ''
 #  SOURCE
 udfAddJob2Clean() {
  [[ -n "$1" ]] || return 0
