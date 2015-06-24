@@ -118,14 +118,14 @@ udfLogger() {
    echo "$*"
   ;;
   01)
-   udfTimeStamp "$HOSTNAME $sTagLog: $*" >> $_bashlyk_fnLog
+   udfTimeStamp "$HOSTNAME $sTagLog: ${*//%/%%}" >> $_bashlyk_fnLog
   ;;
   10)
    echo "$*"
    logger -s -t "$sTagLog" "$*" 2>/dev/null
   ;;
   11)
-   udfTimeStamp "$HOSTNAME $sTagLog: $*" >> $_bashlyk_fnLog
+   udfTimeStamp "$HOSTNAME $sTagLog: ${*//%/%%}" >> $_bashlyk_fnLog
    logger -s -t "$sTagLog" "$*" 2>/dev/null
   ;;
  esac
