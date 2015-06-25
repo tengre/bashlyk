@@ -1,6 +1,6 @@
 options:
     --src ./src
-    --doc ./doc/f7task
+    --doc ./doc/bashlyk
     --html
     --singledoc
     --sections
