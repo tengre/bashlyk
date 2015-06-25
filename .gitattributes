@@ -6,8 +6,10 @@
 /README -text
 /TODO -text
 doc/Makefile.am -text
+doc/bashlyk.html.patch -text
 doc/bashlyk1.xml -text
 doc/bashlyk7.xml -text
+/robodoc.css -text
 /robodoc.rc -text
 src/Makefile.am -text
 src/bashlyk -text

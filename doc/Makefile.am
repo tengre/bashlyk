@@ -18,3 +18,6 @@ bashlyk.1: bashlyk1.xml
 
 bashlyk.7: bashlyk7.xml
 	$(XP) $(DB2MAN) $<
+
+all:
+	$(shell) cd .. && robodoc && cd ./doc && patch < ${PACKAGE}.html.patch
