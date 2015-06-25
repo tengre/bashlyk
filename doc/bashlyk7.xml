@@ -49,7 +49,7 @@ man(1), man(7), http://www.tldp.org/HOWTO/Man-Page/
   <!-- Fill in your name for FIRSTNAME and SURNAME. -->
   <!ENTITY dhfirstname "Damir">
   <!ENTITY dhsurname   "Yakupov">
-  <!-- dhusername could also be set to "&firstname; &surname;". -->  
+  <!-- dhusername could also be set to "&firstname; &surname;". -->
   <!ENTITY dhusername  "Damir Sh. Yakupov">
   <!ENTITY dhemail     "yds@bk.ru">
   <!-- SECTION should be 1-8, maybe w/ subsection other parameters are
@@ -112,7 +112,7 @@ man(1), man(7), http://www.tldp.org/HOWTO/Man-Page/
      <term><filename>libstd.sh</filename></term>
      <listitem>
       <para>
-       functions for handling temp objects (file, folder, job), autocleaning,
+       functions for handling temp objects (file, folder), autocleaning,
        validations, exceptions
       </para>
      </listitem>

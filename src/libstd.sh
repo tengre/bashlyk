@@ -84,9 +84,9 @@ _bashlyk_iMaxOutputLines=1000
 : ${_bashlyk_aRequiredCmd_std:="[ basename cat cut chgrp chmod chown date dir echo false file grep kill ls mail md5sum pwd mkdir \
   mktemp printf ps rm rmdir sed sleep tee tempfile touch true w which xargs"}
 : ${_bashlyk_aExport_std:="udfBaseId udfDate udfShowVariable udfIsNumber udfIsValidVariable udfQuoteIfNeeded udfWSpace2Alias     \
- udfAlias2WSpace udfMakeTemp  udfMakeTempV udfShellExec udfAddFile2Clean udfAddPath2Clean udfAddJob2Clean udfAddPid2Clean        \
+ udfAlias2WSpace udfMakeTemp  udfMakeTempV udfShellExec udfAddFile2Clean udfAddPath2Clean udfAddPid2Clean udfBashlykUnquote      \
  udfCheckCsv udfCleanQueue udfOnTrap _ARGUMENTS _s0 _pathDat _ _gete _getv _set udfGetMd5 udfGetPathMd5 udfXml udfPrepare2Exec   \
- udfSerialize udfSetLastError udfBashlykUnquote udfTimeStamp udfOnError"}
+ udfSerialize udfSetLastError udfTimeStamp udfOnError"}
 #******
 #****f* libstd/udfIsNumber
 #  SYNOPSIS
@@ -739,23 +739,13 @@ udfAddPath2Clean() {
 #****f* libstd/udfAddJob2Clean
 #  SYNOPSIS
 #    udfAddJob2Clean args
+#  NOTES
+#    deprecated
 #  DESCRIPTION
-#    Добавляет идентификаторы запущенных заданий к списку удаляемых при
-#    завершении сценария.
-#  INPUTS
-#    args - идентификаторы заданий
-#  EXAMPLE
-#    sleep 99 &
-#    udfAddJob2Clean "%1"                                                       #? true
-#    echo "$(_ ajobClean)" | grep -w "%1"                                       #? true
-##   TEMPORARY FIX (udfAddJob2Clean deprecated)
-#    kill %1
-#    _ ajobClean ''
+#    функция удалена, осталась только заглушка
 #  SOURCE
 udfAddJob2Clean() {
- [[ -n "$1" ]] || return 0
- _bashlyk_ajobClean+=" $*"
- trap "udfOnTrap" 1 2 5 9 15 EXIT
+ return 0
 }
 #******
 #****f* libstd/udfAddPid2Clean
@@ -820,10 +810,6 @@ udfCleanQueue() {
 udfOnTrap() {
  local i s IFS=$' \t\n'
  #
- for s in ${_bashlyk_ajobClean}; do
-  kill $s 2>/dev/null
- done
- #
  for s in ${_bashlyk_apidClean[$BASHPID]}; do
   for i in 15 9; do
    [[ -n "$(ps -o pid= --ppid $$ | xargs | grep -w $s)" ]] && {
@@ -832,8 +818,6 @@ udfOnTrap() {
    }
   done
  done
- #
- #date "+ %H:%M:%S $$ $BASHPID $BASH_SUBSHELL ${_bashlyk_afnClean[$BASHPID]}" >> /tmp/bashlyk_trap.log
  #
  if (( ${#_bashlyk_afnClean[$BASHPID]} > 0 )); then
   rm -f ${_bashlyk_afnClean[$BASHPID]}
