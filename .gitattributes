@@ -26,7 +26,6 @@ src/liblog.sh -text
 src/libmsg.sh -text
 src/libopt.sh -text
 src/libpid.sh -text
-src/libppp.sh -text
 src/libstd.sh -text
 src/testunit.awk -text
 src/testunit.sh -text
