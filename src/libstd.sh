@@ -212,12 +212,12 @@ udfStackTrace() {
 udfOnError() {
  local rc=$? sAction=$_bashlyk_sBehaviorOnError sMessage='' s IFS=$' \t\n'
  case "$sAction" in
-  echo|exit|retecho|retwarn|return|warn|throw) ;;
+  echo|exit|exitecho|exitwarn|retecho|retwarn|return|warn|throw) ;;
                                    *) sAction=return;;
  esac
 
  case "$1" in
-  echo|exit|retecho|retwarn|return|warn|throw) sAction=$1;shift;;
+  echo|exit|exitecho|exitwarn|retecho|retwarn|return|warn|throw) sAction=$1;shift;;
  esac
 
  udfSetLastError $1
@@ -230,16 +230,18 @@ udfOnError() {
  fi
 
  if [[ "${FUNCNAME[1]}" == "main" || -z "${FUNCNAME[1]}" ]]; then
-  [[ "$sAction" == "retecho" ]] && sAction='echo'
-  [[ "$sAction" == "retwarn" ]] && sAction='warn'
+  [[ "$sAction" == "retecho" ]] && sAction='exitecho'
+  [[ "$sAction" == "retwarn" ]] && sAction='exitwarn'
   [[ "$sAction" == "return"  ]] && sAction='exit'
  fi
 
  case "$sAction" in
          echo) sAction="";               sMessage="echo  Warn: ${rc};";;
       retecho) sAction="; return \$?";   sMessage="echo Error: ${rc};";;
+     exitecho) sAction="; exit \$?";     sMessage="echo Error: ${rc};";;
          warn) sAction="";               sMessage="udfWarn Warn: ${rc};";;
       retwarn) sAction="; return \$?";   sMessage="udfWarn Error: ${rc};";;
+     exitwarn) sAction="; exit \$?";     sMessage="udfWarn Error: ${rc};";;
         throw) sAction="; exit \$?";     sMessage="udfStackTrace | udfWarn - Error: ${rc};";;
   exit|return) sAction="; $sAction \$?"; sMessage="";;
  esac
