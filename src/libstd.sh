@@ -1,5 +1,5 @@
 #
-# $Id$
+# $Id: libstd.sh 530 2016-06-27 19:47:50+04:00 toor $
 #
 #****h* BASHLYK/libstd
 #  DESCRIPTION
@@ -132,19 +132,27 @@ udfIsNumber() {
 #  RETURN VALUE
 #    last error code
 #  EXAMPLE
+#    local pid=$BASHPID
 #    udfSetLastError                                                            #? $_bashlyk_iErrorEmptyOrMissingArgument
 #    udfSetLastError iErrorNonValidVariable "12NonValid Variable"               #? $_bashlyk_iErrorNonValidVariable
-#    _ iLastError >| grep -w "$_bashlyk_iErrorNonValidVariable"                 #? true
-#    _ sLastError >| grep "^12NonValid Variable$"                               #? true
+#    echo "process pid $BASHPID - $pid"
+#    _ iLastError[$pid] >| grep -w "$_bashlyk_iErrorNonValidVariable"           #? true
+#    _ sLastError[$pid] >| grep "^12NonValid Variable$"                         #? true
 #  SOURCE
 udfSetLastError() {
- [[ -n "$1" ]] || return $_bashlyk_iErrorEmptyOrMissingArgument
- local i
- [[ "$1" =~ ^[0-9]+$ ]] && i=$1  || eval "i=\$_bashlyk_${1}"
- [[ "$i" =~ ^[0-9]+$ ]] && shift || i=$_bashlyk_iErrorUnexpected
- _bashlyk_iLastError=$i
- _bashlyk_sLastError="$*"
- return $i
+
+	[[ -n "$1" ]] || return $_bashlyk_iErrorEmptyOrMissingArgument
+
+	local i
+
+	[[ "$1" =~ ^[0-9]+$ ]] && i=$1  || eval "i=\$_bashlyk_${1}"
+	[[ "$i" =~ ^[0-9]+$ ]] && shift || i=$_bashlyk_iErrorUnexpected
+
+	_bashlyk_iLastError[$BASHPID]=$i
+	_bashlyk_sLastError[$BASHPID]="$*"
+
+	return $i
+
 }
 #******
 #****f* libstd/udfStackTrace
@@ -905,6 +913,38 @@ _pathDat() {
  fi
 }
 #******
+#****f* libstd/udfPrepareByType
+#  SYNOPSIS
+#    udfPrepareByType <arg>
+#  DESCRIPTION
+#    present argument 'Array[item]' as '{Array[item]}'
+#  INPUTS
+#    <arg> - valid name of variable or valid name item of array
+#  OUTPUT
+#    converted input string, if necessary
+#  RETURN VALUE
+#    iErrorEmptyOrMissingArgument - аргумент не задан
+#    iErrorNonValidVariable       - не валидный идентификатор
+#    0                            - успешная операция
+#  EXAMPLE
+#    _bashlyk_sBehaviorOnError=return
+#    udfPrepareByType                                                           #? $_bashlyk_iErrorEmptyOrMissingArgument
+#    udfPrepareByType 12a                                                       #? $_bashlyk_iErrorNonValidVariable
+#    udfPrepareByType 12a[te]                                                   #? $_bashlyk_iErrorNonValidVariable
+## TODO - do not worked    udfPrepareByType a12[]                               #? $_bashlyk_iErrorNonValidVariable
+#    udfPrepareByType _a >| grep '^_a$'                                         #? true
+#    udfPrepareByType _a[1234] >| grep '^\{_a\[1234\]\}$'                       #? true
+#  SOURCE
+udfPrepareByType() {
+
+	[[ -n "$1" ]] || eval $(udfOnError return iErrorEmptyOrMissingArgument)
+
+	[[ "$1" =~ ^[_a-zA-Z][_a-zA-Z0-9]*(\[.*\])?$ ]] || eval $( udfOnError return iErrorNonValidVariable '$1' )
+
+	[[ "$1" =~ ^[_a-zA-Z][_a-zA-Z0-9]*\[.*\]$ ]] && echo "{$1}" || echo "$1"
+
+}
+#******
 #****f* libstd/_
 #  SYNOPSIS
 #    _ [[<get>]=]<subname> [<value>]
@@ -929,7 +969,7 @@ _pathDat() {
 #    iErrorNonValidVariable       - не валидный идентификатор
 #    0                            - успешная операция
 #  EXAMPLE
-#    local sS sWSpaceAlias
+#    local sS sWSpaceAlias pid=$BASHPID
 #    _ sS=sWSpaceAlias
 #    echo "$sS" >| grep "^${_bashlyk_sWSpaceAlias}$"                            #? true
 #    _ =sWSpaceAlias
@@ -943,23 +983,36 @@ _pathDat() {
 #    _ sWSpaceAlias >| grep "^two words$"                                       #? true
 #    _ sWSpaceAlias "$sWSpaceAlias"
 #    _ sWSpaceAlias
+#    _ sLastError[$pid] "_ sLastError settings test"                            #? true
+#    _ sLastError[$pid] >| grep "^_ sLastError settings test$"                  #? true
 #  SOURCE
 _(){
- local IFS=$' \t\n'
- [[ -n "$1" ]] || eval $(udfOnError return iErrorEmptyOrMissingArgument)
- if (( $# > 1 )); then
-  eval "_bashlyk_${1##*=}=\"${2}\""
- else
-  case "$1" in
-   *=*)
-        local k v
-        k=${1%=*}
-        v=${1##*=}
-        [[ -n "$k" ]] || k=$v
-        udfIsValidVariable $k || eval $(udfOnError return $? $k)
-        eval "export $k="'$_bashlyk_'"${v}"
+
+	local IFS=$' \t\n' k v
+
+	[[ -n "$1" ]] || eval $(udfOnError return iErrorEmptyOrMissingArgument)
+
+	if (( $# > 1 )); then
+
+		eval "_bashlyk_${1##*=}=\"$2\""
+
+	else
+
+		case "$1" in
+
+		*=*)
+			k=${1%=*}
+			v=${1##*=}
+			[[ -n "$k" ]] || k="$( udfPrepareByType "$v" )"
+			udfIsValidVariable $k || eval $(udfOnError return $? $k)
+			v="$( udfPrepareByType "_bashlyk_${v}" )"
+			eval "export $k=\$${v}"
         ;;
-     *) eval "echo "'$_bashlyk_'"${1}";;
+
+		*)
+			k="$( udfPrepareByType "_bashlyk_${1}" )"
+			eval "echo \$${k}"
+		;;
   esac
  fi
  return 0
