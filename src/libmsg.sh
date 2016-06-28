@@ -1,5 +1,5 @@
 #
-# $Id$
+# $Id: libmsg.sh 531 2016-06-28 16:22:11+04:00 toor $
 #
 #****h* BASHLYK/libmsg
 #  DESCRIPTION
@@ -69,50 +69,70 @@ udfEcho() {
 #  SYNOPSIS
 #    udfWarn [-] args
 #  DESCRIPTION
-#    Вывод предупреждающего сообщения. Если терминал отсутствует, то сообщение
-#    передается функции udfMessage.
+#    Show input message or data from special variable. In the case of
+#    non-interactive execution  message is sent notification system.
 #  INPUTS
-#    -    - данные читаются из стандартного ввода
-#    args - строка для вывода. Если имеется в качестве первого аргумента
-#           "-", то строка выводится заголовком для данных
-#           из стандартного ввода, при отсутствии аргументов выдаётся содержимое
-#           глобальной переменной $_bashlyk_sLastError
+#    -    - read message from stdin
+#    args - message string. With stdin data ("-" option required) used as header
+#           By default ${_bashlyk_sLastError[$BASHPID]}
 #  OUTPUT
-#   Зависит от параметров вывода
+#   show input message or value of ${_bashlyk_sLastError[$BASHPID]}
 #  EXAMPLE
 #    # TODO требуется более точная проверка
+#    _bashlyk_sLastError[$BASHPID]="udfWarn testing .."
 #    local bNotUseLog=$_bashlyk_bNotUseLog
-#    _bashlyk_bNotUseLog=0 date | udfWarn - "udfWarn test log"                  #? true
-#    _bashlyk_bNotUseLog=1 date | udfWarn - "udfWarn test int"                  #? true
+#    _bashlyk_bNotUseLog=1
+#    udfWarn                                                                    #? true
+#    _bashlyk_bNotUseLog=0
+#    date | udfWarn - "bashlyk::libmsg::udfWarn testing (non-interactive mode)" #? true
+#    _bashlyk_bNotUseLog=1
+#    date | udfWarn - "udfWarn test int"                                        #? true
 #    _bashlyk_bNotUseLog=$bNotUseLog
 #  SOURCE
 udfWarn() {
- local s IFS=$' \t\n'
- [[ -n "$*" ]] && s="$*" || s="$(_ sLastError)"
- [[ "$_bashlyk_bNotUseLog" != "0" ]] && udfEcho $s || udfMessage $s
+
+	local s IFS=$' \t\n'
+
+	[[ -n "$*" ]] && s="$*" || s="${_bashlyk_sLastError[$BASHPID]}"
+
+	[[ "$_bashlyk_bNotUseLog" != "0" ]] && udfEcho $s || udfMessage $s
+
 }
 #******
 #****f* libmsg/udfThrow
 #  SYNOPSIS
 #    udfThrow [-] args
 #  DESCRIPTION
-#    Вывод аварийного сообщения с завершением работы. Если терминал отсутствует,
-#    то сообщение передается системе уведомлений.
+#    Stop the script. Returns an error code of the last command if value of
+#    the special variable $_bashlyk_iLastError[$BASHPID] not defined
+#    Perhaps set the the message. In the case of non-interactive execution
+#    message is sent notification system.
 #  INPUTS
-#    -    - данные читаются из стандартного ввода
-#    args - строка для вывода. Если имеется в качестве первого аргумента
-#           "-", то строка выводится заголовком для данных
-#           из стандартного ввода
+#    -    - read message from stdin
+#    args - message string. With stdin data ("-" option required) used as header
 #  OUTPUT
-#   Зависит от параметров вывода
+#    show input message or data from special variable
 #  RETURN VALUE
-#   возвращает значение $_bashlyk_iLastError, если оно не нуль или 255
+#   return ${_bashlyk_iLastError[$BASHPID]} or last non zero return code or 255
 #  EXAMPLE
-#    $(udfThrow test; true)                                                     #? false
+#    local rc=$( echo $RANDOM | tr -d 0 | head -c 2 )
+#    echo $(false || udfThrow error=$?; echo rc=$?) >| grep "^error=1$"         #? true
+#    echo $(udfSetLastError $rc || udfThrow $?; echo rc=$?) >| grep -w "$rc"    #? true
 #  SOURCE
 udfThrow() {
- udfWarn $*
- (( $(_ iLastError) != 0 )) && exit $(_ iLastError) || exit 255
+
+	local i=$? rc
+
+	(( $i == 0 )) && i=255
+
+	rc=${_bashlyk_iLastError[$BASHPID]}
+
+	udfWarn $*
+
+	udfIsNumber $rc || rc=$i
+
+	exit $rc
+
 }
 #******
 #****f* libmsg/udfOnCommandNotFound
