@@ -1,5 +1,5 @@
 #
-# $Id: libstd.sh 530 2016-06-27 19:47:50+04:00 toor $
+# $Id: libstd.sh 532 2016-06-28 20:28:45+04:00 toor $
 #
 #****h* BASHLYK/libstd
 #  DESCRIPTION
@@ -146,6 +146,7 @@ udfSetLastError() {
 	local i
 
 	[[ "$1" =~ ^[0-9]+$ ]] && i=$1  || eval "i=\$_bashlyk_${1}"
+	## TODO check max value constraints
 	[[ "$i" =~ ^[0-9]+$ ]] && shift || i=$_bashlyk_iErrorUnexpected
 
 	_bashlyk_iLastError[$BASHPID]=$i
