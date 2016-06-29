@@ -1,5 +1,5 @@
 #
-# $Id: libmsg.sh 531 2016-06-28 16:22:11+04:00 toor $
+# $Id: libmsg.sh 533 2016-06-30 00:11:40+04:00 toor $
 #
 #****h* BASHLYK/libmsg
 #  DESCRIPTION
@@ -115,7 +115,7 @@ udfWarn() {
 #  RETURN VALUE
 #   return ${_bashlyk_iLastError[$BASHPID]} or last non zero return code or 255
 #  EXAMPLE
-#    local rc=$( echo $RANDOM | tr -d 0 | head -c 2 )
+#    local rc=222
 #    echo $(false || udfThrow error=$?; echo rc=$?) >| grep "^error=1$"         #? true
 #    echo $(udfSetLastError $rc || udfThrow $?; echo rc=$?) >| grep -w "$rc"    #? true
 #  SOURCE
