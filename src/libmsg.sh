@@ -1,5 +1,5 @@
 #
-# $Id: libmsg.sh 534 2016-06-30 14:27:52+04:00 toor $
+# $Id: libmsg.sh 535 2016-06-30 16:56:44+04:00 toor $
 #
 #****h* BASHLYK/libmsg
 #  DESCRIPTION
@@ -283,6 +283,7 @@ udfWarnOnCommandNotFound() {
 udfOnEmptyVariable() {
  local bashlyk_udfOnEmptyVariable_csv bashlyk_udfOnEmptyVariable_s IFS=$' \t\n'
  local bashlyk_udfOnEmptyVariable_cmd="return" bashlyk_udfOnEmptyVariable_i=0
+ local bashlyk_udfOnEmptyVariable_onError
  case "$1" in
           [Ee][Cc][Hh][Oo]) bashlyk_udfOnEmptyVariable_cmd='retecho'; shift;;
           [Ee][Xx][Ii][Tt]) bashlyk_udfOnEmptyVariable_cmd='exit';    shift;;
@@ -301,12 +302,13 @@ udfOnEmptyVariable() {
    : $((bashlyk_udfOnEmptyVariable_i++))
   fi
  done
+
+ bashlyk_udfOnEmptyVariable_onError=$( _ onError )
+ _ onError $bashlyk_udfOnEmptyVariable_cmd
  [[ -n "$bashlyk_udfOnEmptyVariable_csv" ]] && {
-  eval $(   \
-   udfOnError $bashlyk_udfOnEmptyVariable_cmd iErrorEmptyOrMissingArgument   \
-    '$bashlyk_udfOnEmptyVariable_i variable with empty value are found: $bashlyk_udfOnEmptyVariable_csv'   \
-  )
+  eval $(udfOnError EmptyOrMissingArgument '$bashlyk_udfOnEmptyVariable_csv (total  $bashlyk_udfOnEmptyVariable_i)' )
  }
+ _ onError $bashlyk_udfOnEmptyVariable_onError
  return 0
 }
 #******
@@ -351,8 +353,8 @@ udfThrowOnEmptyVariable() {
 #    iErrorEmptyOrMissingArgument - есть не инициализированные переменные
 #  EXAMPLE
 #    local sNoEmpty='test' sEmpty=''
-#    udfWarnOnEmptyVariable sNoEmpty                                             #? true
-#    udfWarnOnEmptyVariable sEmpty >| grep "Erro.*empty value are found: sEmpty" #? true
+#    udfWarnOnEmptyVariable sNoEmpty                                            #? true
+#    udfWarnOnEmptyVariable sEmpty >| grep "Error: empty or missing argument -" #? true
 #  SOURCE
 udfWarnOnEmptyVariable() {
  udfOnEmptyVariable Warn $*

@@ -1,5 +1,5 @@
 #
-# $Id: libtst.sh 534 2016-06-30 14:27:34+04:00 toor $
+# $Id: libtst.sh 535 2016-06-30 16:56:53+04:00 toor $
 #
 #****h* BASHLYK/libmsg
 #  DESCRIPTION
@@ -55,12 +55,10 @@
 #  RETURN VALUE
 #   return ${_bashlyk_iLastError[$BASHPID]} or last non zero return code or 255
 #  EXAMPLE
-#    local rc
+#    local rc=222
 #    echo $(false || udfThrow rc=$?; echo ok=$?) >| grep "^Error: rc=1 .. (1)$" #? true
-#    for rc in $( seq 1 255); do
 #    echo $rc
 #    echo $(udfSetLastError $rc || udfThrow $?; echo rc=$?) >| grep -w "$rc"    #? true
-#    done
 #  SOURCE
 udfThrow() {
 
