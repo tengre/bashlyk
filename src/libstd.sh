@@ -1,5 +1,5 @@
 #
-# $Id: libstd.sh 533 2016-06-30 00:11:10+04:00 toor $
+# $Id: libstd.sh 534 2016-06-30 14:38:45+04:00 toor $
 #
 #****h* BASHLYK/libstd
 #  DESCRIPTION
@@ -41,9 +41,6 @@
 _bashlyk_iMaxOutputLines=1000
 #
 : ${_bashlyk_onError:=throw}
-: ${_bashlyk_iLastError:=0}
-: ${_bashlyk_sLastError:=}
-: ${_bashlyk_sStackTrace:=}
 : ${_bashlyk_sArg:=$*}
 : ${_bashlyk_pathDat:=/tmp}
 : ${_bashlyk_sWSpaceAlias:=___}
@@ -63,12 +60,17 @@ _bashlyk_iMaxOutputLines=1000
 : ${_bashlyk_emailSubj:="${_bashlyk_sUser}@${HOSTNAME}::${_bashlyk_s0}"}
 : ${_bashlyk_reMetaRules:='34=":40=(:41=):59=;:91=[:92=\\:93=]:61=='}
 : ${_bashlyk_envXSession:=}
-: ${_bashlyk_aRequiredCmd_std:="[ basename cat cut chgrp chmod chown date dir echo false file grep kill ls mail md5sum pwd mkdir \
-  mktemp printf ps rm rmdir sed sleep tee tempfile touch true w which xargs"}
-: ${_bashlyk_aExport_std:="udfBaseId udfDate udfShowVariable udfIsNumber udfIsValidVariable udfQuoteIfNeeded udfWSpace2Alias     \
- udfAlias2WSpace udfMakeTemp  udfMakeTempV udfShellExec udfAddFile2Clean udfAddPath2Clean udfAddPid2Clean udfBashlykUnquote      \
- udfCheckCsv udfCleanQueue udfOnTrap _ARGUMENTS _s0 _pathDat _ _gete _getv _set udfGetMd5 udfGetPathMd5 udfXml udfPrepare2Exec   \
- udfSerialize udfSetLastError udfTimeStamp udfOnError"}
+: ${_bashlyk_aRequiredCmd_std:="cat chgrp chmod chown cut date echo false grep \
+  kill md5sum mkdir mktemp ps pwd rm rmdir sed sleep tempfile touch true which \
+  xargs"}
+: ${_bashlyk_aExport_std:="udfIsNumber udfBaseId udfTimeStamp udfDate          \
+  udfShowVariable udfIsValidVariable udfQuoteIfNeeded udfWSpace2Alias          \
+  udfAlias2WSpace udfMakeTemp udfMakeTempV udfPrepare2Exec udfShellExec        \
+  udfAddFile2Clean udfAddPath2Clean udfAddJob2Clean udfAddPid2Clean            \
+  udfCleanQueue udfOnTrap _ARGUMENTS _s0 _pathDat udfPrepareByType _ _getv     \
+  _gete _set udfCheckCsv udfGetMd5 udfGetPathMd5 udfXml udfSerialize           \
+  udfBashlykUnquote"}
+
 #******
 #****f* libstd/udfIsNumber
 #  SYNOPSIS
@@ -147,7 +149,7 @@ udfTimeStamp() {
 #    строка с заголовком в виде "штампа времени"
 #  EXAMPLE
 #    local re="[[:graph:]]+ [0-9]+ [0-9]+:[0-9]+:[[:digit:]]+ foo bar"
-#    udfDate foo bar >| grep -E "$re"                                                                                        #? true
+#    udfDate foo bar >| grep -E "$re"                                           #? true
 #  SOURCE
 udfDate() {
  date "+%b %d %H:%M:%S $*"

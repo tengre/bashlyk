@@ -1,5 +1,5 @@
 #
-# $Id: liberr.sh 533 2016-06-30 00:10:52+04:00 toor $
+# $Id: liberr.sh 534 2016-06-30 14:27:58+04:00 toor $
 #
 #****h* BASHLYK/liberr
 #  DESCRIPTION
@@ -57,8 +57,6 @@ _bashlyk_iErrorUserXsessionNotFound=171
 _bashlyk_iErrorXsessionNotFound=170
 _bashlyk_iErrorIncompatibleVersion=169
 
-declare -A _bashlyk_hError
-
 _bashlyk_hError[$_bashlyk_iErrorUnknown]="unknown (unexpected) error"
 _bashlyk_hError[$_bashlyk_iErrorEmptyOrMissingArgument]="empty or missing argument"
 _bashlyk_hError[$_bashlyk_iErrorNonValidArgument]="non valid argument"
@@ -79,37 +77,10 @@ _bashlyk_hError[$_bashlyk_iErrorXsessionNotFound]="X-Session not found"
 _bashlyk_hError[$_bashlyk_iErrorIncompatibleVersion]="incompatible version"
 
 #
-_bashlyk_iMaxOutputLines=1000
-#
 : ${_bashlyk_onError:=throw}
-: ${_bashlyk_iLastError:=0}
-: ${_bashlyk_sLastError:=}
-: ${_bashlyk_sStackTrace:=}
 : ${_bashlyk_sArg:=$*}
-: ${_bashlyk_pathDat:=/tmp}
-: ${_bashlyk_sWSpaceAlias:=___}
-: ${_bashlyk_sUnnamedKeyword:=_bashlyk_unnamed_key_}
-: ${_bashlyk_s0:=${0##*/}}
-: ${_bashlyk_sId:=${_bashlyk_s0%.sh}}
-: ${_bashlyk_afnClean:=}
-: ${_bashlyk_apathClean:=}
-: ${_bashlyk_ajobClean:=}
-: ${_bashlyk_apidClean:=}
-: ${_bashlyk_pidLogSock:=}
-: ${_bashlyk_sUser:=$USER}
-: ${_bashlyk_sLogin:=$(logname 2>/dev/null)}
-: ${HOSTNAME:=$(hostname 2>/dev/null)}
-: ${_bashlyk_bNotUseLog:=1}
-: ${_bashlyk_emailRcpt:=postmaster}
-: ${_bashlyk_emailSubj:="${_bashlyk_sUser}@${HOSTNAME}::${_bashlyk_s0}"}
-: ${_bashlyk_reMetaRules:='34=":40=(:41=):59=;:91=[:92=\\:93=]:61=='}
-: ${_bashlyk_envXSession:=}
-: ${_bashlyk_aRequiredCmd_std:="[ basename cat cut chgrp chmod chown date dir echo false file grep kill ls mail md5sum pwd mkdir \
-  mktemp printf ps rm rmdir sed sleep tee tempfile touch true w which xargs"}
-: ${_bashlyk_aExport_std:="udfBaseId udfDate udfShowVariable udfIsNumber udfIsValidVariable udfQuoteIfNeeded udfWSpace2Alias     \
- udfAlias2WSpace udfMakeTemp  udfMakeTempV udfShellExec udfAddFile2Clean udfAddPath2Clean udfAddPid2Clean udfBashlykUnquote      \
- udfCheckCsv udfCleanQueue udfOnTrap _ARGUMENTS _s0 _pathDat _ _gete _getv _set udfGetMd5 udfGetPathMd5 udfXml udfPrepare2Exec   \
- udfSerialize udfSetLastError udfTimeStamp udfOnError"}
+: ${_bashlyk_aRequiredCmd_err:="echo printf sed"}
+: ${_bashlyk_aExport_err:="udfSetLastError udfStackTrace udfOnError"}
 #******
 #****f* liberr/udfSetLastError
 #  SYNOPSIS
@@ -151,7 +122,7 @@ udfSetLastError() {
 
 	fi
 
-	[[ "$i" =~ ^[0-9]+$ && $i < 256 ]] && shift || i=$_bashlyk_iErrorUnknown
+	[[ "$i" =~ ^[0-9]+$ && $i -le 255 ]] && shift || i=$_bashlyk_iErrorUnknown
 
 	_bashlyk_iLastError[$BASHPID]=$i
 	_bashlyk_sLastError[$BASHPID]="$*"
@@ -233,11 +204,12 @@ udfStackTrace() {
 #    udfIsNumber 020h || eval $(udfOnError echo $? "020h")                               #? $_bashlyk_iErrorNonValidArgument
 #    udfIsValidVariable 1NonValid || eval $(udfOnError warn $? "1NonValid")              #? $_bashlyk_iErrorNonValidVariable
 #    udfIsValidVariable 2NonValid || eval $(udfOnError warn "2NonValid")                 #? $_bashlyk_iErrorNonValidVariable
-#    echo $(udfOnError exit    NonValidArgument "test unit") >| grep " exit \$?"         #? true
-#    echo $(udfOnError return  NonValidArgument "test unit") >| grep " return \$?"       #? true
-#    echo $(udfOnError retecho NonValidArgument "test unit") >| grep "echo.* return \$?" #? true
-#    echo $(udfOnError retwarn NonValidArgument "test unit") >| grep "Warn.* return \$?" #? true
-#    echo $(udfOnError throw   NonValidArgument "test unit") >| grep "dfWarn.* exit \$?" #? true
+#    udfOnError exit    NonValidArgument "test unit" >| grep " exit \$?"         #? true
+#    udfOnError return  NonValidArgument "test unit" >| grep " return \$?"       #? true
+#    udfOnError retecho NonValidArgument "test unit" >| grep "echo.* return \$?" #? true
+#    udfOnError retwarn NonValidArgument "test unit" >| grep "Warn.* return \$?" #? true
+#    udfOnError throw   NonValidArgument "test unit" >| grep "dfWarn.* exit \$?" #? true
+#    eval $(udfOnError exitecho EmptyOrMissingArgument) >| grep "E.*: em.*o.*mi" #? true
 #    _ onError warn
 #    eval $(udfOnError iErrorNonValidArgument "test unit")                               #? $_bashlyk_iErrorNonValidArgument
 #  SOURCE

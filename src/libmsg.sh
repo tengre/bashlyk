@@ -1,5 +1,5 @@
 #
-# $Id: libmsg.sh 533 2016-06-30 00:11:40+04:00 toor $
+# $Id: libmsg.sh 534 2016-06-30 14:27:52+04:00 toor $
 #
 #****h* BASHLYK/libmsg
 #  DESCRIPTION
@@ -33,10 +33,12 @@
 : ${_bashlyk_emailRcpt:=postmaster}
 : ${_bashlyk_emailSubj:="${_bashlyk_sUser}@${HOSTNAME}::${_bashlyk_s0}"}
 : ${_bashlyk_envXSession:=}
-: ${_bashlyk_aRequiredCmd_msg:="[ "}
-: ${_bashlyk_aExport_msg:="udfEcho udfWarn udfThrow udfOnEmptyVariable udfThrowOnEmptyVariable udfWarnOnEmptyVariable udfMail \
-    udfMessage udfNotify2X udfNotifyCommand udfGetXSessionProperties udfOnCommandNotFound udfThrowOnCommandNotFound           \
-    udfWarnOnCommandNotFound"}
+: ${_bashlyk_aRequiredCmd_msg:="cat cut echo exit grep head mail printf ps rm  \
+  sort tee uniq which write notify-send|kdialog|zenity|xmessage"}
+: ${_bashlyk_aExport_msg:="udfEcho udfWarn udfThrow udfOnCommandNotFound       \
+  udfThrowOnCommandNotFound udfWarnOnCommandNotFound udfOnEmptyVariable        \
+  udfThrowOnEmptyVariable udfWarnOnEmptyVariable udfMail udfMessage            \
+  udfNotify2X udfGetXSessionProperties udfNotifyCommand"}
 #******
 #****f* libmsg/udfEcho
 #  SYNOPSIS
@@ -115,23 +117,19 @@ udfWarn() {
 #  RETURN VALUE
 #   return ${_bashlyk_iLastError[$BASHPID]} or last non zero return code or 255
 #  EXAMPLE
-#    local rc=222
-#    echo $(false || udfThrow error=$?; echo rc=$?) >| grep "^error=1$"         #? true
+#    local rc=$(echo "$RANDOM / 256" | bc)
+#    echo $(false || udfThrow rc=$?; echo ok=$?) >| grep "^Error: rc=1 .. (1)$" #? true
 #    echo $(udfSetLastError $rc || udfThrow $?; echo rc=$?) >| grep -w "$rc"    #? true
 #  SOURCE
 udfThrow() {
 
 	local i=$? rc
 
-	(( $i == 0 )) && i=255
-
 	rc=${_bashlyk_iLastError[$BASHPID]}
-
-	udfWarn $*
 
 	udfIsNumber $rc || rc=$i
 
-	exit $rc
+	eval $(udfOnError exitwarn $rc $*)
 
 }
 #******
@@ -470,7 +468,7 @@ udfNotify2X() {
  #
  [[ -n "$1" ]] || eval $(udfOnError return iErrorEmptyOrMissingArgument)
  #
- [[ -s "$*" ]] && s="$(cat "$*")" || s="$(echo -e "$*")"
+ [[ -s "$*" ]] && s="$(< "$*")" || s="$(echo -e "$*")"
 
  for cmd in notify-send kdialog zenity xmessage; do
   udfNotifyCommand $cmd "$(_ emailSubj)" "$s" "$iTimeout" && break

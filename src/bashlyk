@@ -1,6 +1,6 @@
 #!/bin/bash
 #
-# $Id$
+# $Id: bashlyk 534 2016-06-30 14:28:04+04:00 toor $
 #
 #****h* BASHLYK/bashlyk
 #  DESCRIPTION
@@ -143,5 +143,5 @@ udfMain() {
 #  DESCRIPTION
 #    Вызов udfMain - подключение системы BASHLYK к сценарию
 #  SOURCE
-udfMain $*
+udfMain
 #******
