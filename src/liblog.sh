@@ -1,5 +1,5 @@
 #
-# $Id$
+# $Id: liblog.sh 537 2016-08-17 01:29:33+04:00 toor $
 #
 #****h* BASHLYK/liblog
 #  DESCRIPTION
@@ -383,7 +383,7 @@ udfDebug() {
  shift
  [[ "$i" =~ ^[0-9]+$ ]] || i=0
  (( $DEBUGLEVEL >= $i )) || return 1
- [[ -n "$*" ]] && echo "$*"
+ [[ -n "$*" ]] && echo "$*" >&2
  return 0
 }
 #******

@@ -1,4 +1,4 @@
-# $Id: TODO 536 2016-08-16 17:09:34+04:00 toor $
+# $Id: TODO 537 2016-08-17 01:29:16+04:00 toor $
 + liblog.sh: не проходит тест udfWarn без терминала (в не интерактивном режиме)
 + libini.sh: при тесте с другими модулями в ini файлах оказывается вывод других
   тестовых блоков (решено в версии 1.57)
@@ -88,19 +88,18 @@ Fri, 06 Mar 2015 12:44:00 +0400
 - 1.83 - таблицы сообщений
 
 --------------------------------------------------------------------------------
-! #150306 - table of error messages
-! #160701 - udfDebug - use stderr
-! #160702 - udfOnError - stderr support
-- #160703 - udfMakeTemp - fifo support
++ #150306 - table of error messages
++ #160701 - udfDebug - use stderr
++ #160702 - udfOnError - stderr support !!! added new wrapper udfOnError2
+- #160703 - udfMakeTemp - temporary fifo files support
 ! #160704 - udfThrowOnEmptyArgument
 - #160705 - udfChangeIni - loss % contain substring
 - #160706 - check for configuration files permissions
 - #160707 - hashes can be used instead of CSV? testing required
 - #160708 - libopt.sh - support of short options
-! #160709 - udfOnError - quote required for ()
++ #160709 - udfOnError - quote required for ()
 ! #160710 - simplify the usage of udfOnError
-! #160711 - new error code iErrorNonSupported
++ #160711 - new error code iErrorNonSupported
 ! #160712 - use aliases to simplify the code reading
-! #160713 - udfSetLastError - use array for store iLastError, items indexed by $BASHPID
-- #160714 - udfMakeTemp - make temporary fifo files
++ #160713 - udfSetLastError - use array for store iLastError, items indexed by $BASHPID
 
