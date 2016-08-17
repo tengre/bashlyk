@@ -1,5 +1,5 @@
 #
-# $Id: liberr.sh 537 2016-08-17 01:37:18+04:00 toor $
+# $Id: liberr.sh 538 2016-08-17 17:13:44+04:00 toor $
 #
 #****h* BASHLYK/liberr
 #  DESCRIPTION
@@ -47,6 +47,7 @@ _bashlyk_iErrorNotPermitted=240
 _bashlyk_iErrorBrokenIntegrity=230
 _bashlyk_iErrorAbortedBySignal=220
 _bashlyk_iErrorNonValidVariable=200
+_bashlyk_iErrorEmptyVariable=199
 _bashlyk_iErrorNotExistNotCreated=190
 _bashlyk_iErrorNoSuchFileOrDir=185
 _bashlyk_iErrorNoSuchProcess=184
@@ -60,6 +61,7 @@ _bashlyk_iErrorIncompatibleVersion=169
 _bashlyk_hError[$_bashlyk_iErrorUnknown]="unknown (unexpected) error"
 _bashlyk_hError[$_bashlyk_iErrorEmptyOrMissingArgument]="empty or missing argument"
 _bashlyk_hError[$_bashlyk_iErrorNonValidArgument]="non valid argument"
+_bashlyk_hError[$_bashlyk_iErrorEmptyVariable]="empty variable"
 _bashlyk_hError[$_bashlyk_iErrorEmptyResult]="empty Result"
 _bashlyk_hError[$_bashlyk_iErrorNotSupported]="not supported"
 _bashlyk_hError[$_bashlyk_iErrorNotPermitted]="not permitted"
@@ -310,20 +312,20 @@ udfOnError() {
 #  INPUTS
 #    <action> - directly determines how the error handling. Possible actions:
 #
-#     echo     - just prepare a message from the string argument to STDOUT
+#     echo     - just prepare a message from the string argument to STDERR
 #     warn     - prepare a message from the string argument for transmission to
-#                the notification system
+#                the notification system (STDERR interactive)
 #     return   - set return from the function. In the global context - the end
 #                of the script (exit)
 #     retecho  - the combined action of 'echo'+'return', however, if the code is
 #                not within the function, it is only the transfer of messages
-#                from a string of arguments to STDOUT
+#                from a string of arguments to STDERR
 #     retwarn  - the combined action of 'warn'+'return', however, if the code is
 #                not within the function, it is only the transfer of messages
 #                from a string of arguments to the notification system
 #     exit     - set unconditional completion of the script
 #     exitecho - the same as 'exit', but with the transfer of messages from a
-#                string of arguments to STDOUT
+#                string of arguments to STDERR
 #     exitwarn - the same as 'exitecho', but with the transfer of messages to
 #                the notification system
 #     throw    - the same as 'exitwarn', but with the transfer of messages and
@@ -347,18 +349,18 @@ udfOnError() {
 #  OUTPUT
 #    command line, which can be performed using the eval <...>
 #  EXAMPLE
-#    eval $(udfOnError2 echo iErrorNonValidArgument "test unit")                          #? $_bashlyk_iErrorNonValidArgument
-#    udfIsNumber 020h || eval $(udfOnError2 echo $? "020h")                               #? $_bashlyk_iErrorNonValidArgument
-#    udfIsValidVariable 1NonValid || eval $(udfOnError2 warn $? "1NonValid")              #? $_bashlyk_iErrorNonValidVariable
-#    udfIsValidVariable 2NonValid || eval $(udfOnError2 warn "2NonValid")                 #? $_bashlyk_iErrorNonValidVariable
-#    udfOnError2 exit    NonValidArgument "test unit" >| grep " exit \$?"         #? true
-#    udfOnError2 return  NonValidArgument "test unit" >| grep " return \$?"       #? true
-#    udfOnError2 retecho NonValidArgument "test unit" >| grep "echo.* return \$?" #? true
-#    udfOnError2 retwarn NonValidArgument "test unit" >| grep "Warn.* return \$?" #? true
-#    udfOnError2 throw   NonValidArgument "test unit" >| grep "dfWarn.* exit \$?" #? true
+#    eval $(udfOnError2 echo iErrorNonValidArgument "test unit")                       #? $_bashlyk_iErrorNonValidArgument
+#    udfIsNumber 020h || eval $(udfOnError2 echo $? "020h")                            #? $_bashlyk_iErrorNonValidArgument
+#    udfIsValidVariable 1NonValid || eval $(udfOnError2 warn $? "1NonValid")           #? $_bashlyk_iErrorNonValidVariable
+#    udfIsValidVariable 2NonValid || eval $(udfOnError2 warn "2NonValid")              #? $_bashlyk_iErrorNonValidVariable
+#    udfOnError2 exit    NonValidArgument "test unit" >| grep " exit \$?"              #? true
+#    udfOnError2 return  NonValidArgument "test unit" >| grep " return \$?"            #? true
+#    udfOnError2 retecho NonValidArgument "test unit" >| grep "echo.* return \$?"      #? true
+#    udfOnError2 retwarn NonValidArgument "test unit" >| grep "Warn.* return \$?"      #? true
+#    udfOnError2 throw   NonValidArgument "test unit" >| grep "dfWarn.* exit \$?"      #? true
 #    eval $(udfOnError2 exitecho EmptyOrMissingArgument) 2>&1 >| grep "E.*: em.*o.*mi" #? true
 #    _ onError warn
-#    eval $(udfOnError2 iErrorNonValidArgument "test unit")                               #? $_bashlyk_iErrorNonValidArgument
+#    eval $(udfOnError2 iErrorNonValidArgument "test unit")                            #? $_bashlyk_iErrorNonValidArgument
 #  SOURCE
 udfOnError2() {
 
