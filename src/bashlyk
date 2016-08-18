@@ -1,6 +1,6 @@
 #!/bin/bash
 #
-# $Id: bashlyk 534 2016-06-30 14:28:04+04:00 toor $
+# $Id: bashlyk 539 2016-08-18 14:20:33+04:00 toor $
 #
 #****h* BASHLYK/bashlyk
 #  DESCRIPTION
@@ -22,7 +22,7 @@
 #    Блок инициализации глобальных переменных
 #  SOURCE
 [[ -s "/etc/bashlyk/bashlyk.conf" ]] && . /etc/bashlyk/bashlyk.conf
-: ${_bashlyk_aLib:="std,pid,cnf,ini,opt,log,msg"}
+: ${_bashlyk_aLib:="std,err,pid,cnf,ini,opt,log,msg"}
 : ${_bashlyk_pathLib:="/usr/share/bashlyk"}
 : ${_bashlyk_sArg:=$*}
 : ${_bashlyk_bInteract:=1}

@@ -1,5 +1,5 @@
 #
-# $Id: liblog.sh 537 2016-08-17 01:29:33+04:00 toor $
+# $Id: liblog.sh 539 2016-08-18 14:20:34+04:00 toor $
 #
 #****h* BASHLYK/liblog
 #  DESCRIPTION
@@ -36,8 +36,8 @@
 : ${HOSTNAME:=$(hostname)}
 : ${DEBUGLEVEL:=0}
 : ${_bashlyk_pathLog:=/tmp}
-: ${_bashlyk_s0:=$(basename $0)}
-: ${_bashlyk_sId:=$(basename $0 .sh)}
+: ${_bashlyk_s0:=${0##*/}}
+: ${_bashlyk_sId:=${_bashlyk_s0%.sh}}
 : ${_bashlyk_pathRun:=/tmp}
 : ${_bashlyk_pidLogSock:=}
 : ${_bashlyk_fnLogSock:=}
@@ -49,8 +49,8 @@
 : ${_bashlyk_bUseSyslog:=0}
 : ${_bashlyk_bNotUseLog:=1}
 : ${_bashlyk_sCond4Log:=redirect}
-: ${_bashlyk_aRequiredCmd_log:="basename date echo hostname false printf logger\
-  mail mkfifo sleep tee true jobs ["}
+: ${_bashlyk_aRequiredCmd_log:="date dirname echo hostname logger mkdir mkfifo \
+  printf rm touch tty"}
 : ${_bashlyk_aExport_log:="udfLogger udfLog udfIsInteract udfIsTerminal _fnLog \
   udfCheck4LogUse udfFinally udfSetLogSocket udfSetLog  udfUptime udfDebug"}
 #******

@@ -1,5 +1,5 @@
 #
-# $Id$
+# $Id: libini.sh 539 2016-08-18 14:20:34+04:00 toor $
 #
 #****h* BASHLYK/libini
 #  DESCRIPTION
@@ -37,8 +37,8 @@
 : ${_bashlyk_bSetOptions:=}
 : ${_bashlyk_csvOptions2Ini:=}
 : ${_bashlyk_sUnnamedKeyword:=_bashlyk_ini_void_autoKey_}
-: ${_bashlyk_aRequiredCmd_ini:="[ awk cat cut dirname echo false grep mawk mv  \
-  printf pwd rm sed sort touch tr true uniq w xargs"}
+: ${_bashlyk_aRequiredCmd_ini:="awk cat cut dirname echo false grep mawk mkdir \
+  mv printf pwd rm sed sort touch tr true uniq xargs"}
 : ${_bashlyk_aExport_ini:="udfGetIniSection udfReadIniSection                  \
   udfReadIniSection2Var udfCsvOrder udfAssembly udfSetVarFromCsv               \
   udfSetVarFromIni udfCsvKeys udfIniWrite udfIniChange udfGetIni               \

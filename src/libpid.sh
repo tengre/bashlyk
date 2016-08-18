@@ -1,5 +1,5 @@
 #
-# $Id$
+# $Id: libpid.sh 539 2016-08-18 14:20:34+04:00 toor $
 #
 #****h* BASHLYK/libpid
 #  DESCRIPTION
@@ -35,10 +35,10 @@
 : ${_bashlyk_apathClean:=}
 : ${_bashlyk_fnPid:=}
 : ${_bashlyk_fnSock:=}
-: ${_bashlyk_s0:=$(basename $0)}
+: ${_bashlyk_s0:=${0##*/}}
 : ${_bashlyk_pathRun:=/tmp}
 : ${_bashlyk_sArg:=$*}
-: ${_bashlyk_aRequiredCmd_pid:="[ echo file grep head mkdir ps rm rmdir w"}
+: ${_bashlyk_aRequiredCmd_pid:="head mkdir printf ps rm rmdir"}
 : ${_bashlyk_aExport_pid:="udfCheckStarted udfSetPid udfExitIfAlreadyStarted"}
 #******
 #****f* libpid/udfCheckStarted

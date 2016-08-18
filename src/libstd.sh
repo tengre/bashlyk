@@ -1,5 +1,5 @@
 #
-# $Id: libstd.sh 534 2016-06-30 14:38:45+04:00 toor $
+# $Id: libstd.sh 539 2016-08-18 14:20:35+04:00 toor $
 #
 #****h* BASHLYK/libstd
 #  DESCRIPTION
@@ -61,8 +61,8 @@ _bashlyk_iMaxOutputLines=1000
 : ${_bashlyk_reMetaRules:='34=":40=(:41=):59=;:91=[:92=\\:93=]:61=='}
 : ${_bashlyk_envXSession:=}
 : ${_bashlyk_aRequiredCmd_std:="cat chgrp chmod chown cut date echo false grep \
-  kill md5sum mkdir mktemp ps pwd rm rmdir sed sleep tempfile touch true which \
-  xargs"}
+  hostname kill logname md5sum mkdir mktemp ps pwd rm rmdir sed sleep tempfile \
+  touch true tr which xargs"}
 : ${_bashlyk_aExport_std:="udfIsNumber udfBaseId udfTimeStamp udfDate          \
   udfShowVariable udfIsValidVariable udfQuoteIfNeeded udfWSpace2Alias          \
   udfAlias2WSpace udfMakeTemp udfMakeTempV udfPrepare2Exec udfShellExec        \
