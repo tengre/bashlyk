@@ -1,5 +1,5 @@
 #
-# $Id: liberr.sh 540 2016-08-18 17:23:11+04:00 toor $
+# $Id: liberr.sh 541 2016-08-18 22:45:26+04:00 toor $
 #
 #****h* BASHLYK/liberr
 #  DESCRIPTION
@@ -465,6 +465,17 @@ udfOn() {
 	j=0
 	IFS=$' \t\n'
 	e=$1
+
+	if [[ $1 =~ ^(CommandNotFound|Empty(Variable|OrMissingArgument))$ ]]; then
+
+		e=$1
+
+	else
+
+		eval $( udfOnError iErrorNonValidArgument "1" )
+		return $( _ iErrorNonValidArgument )
+
+	fi
 
 	shift
 
