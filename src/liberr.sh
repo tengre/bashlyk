@@ -1,5 +1,5 @@
 #
-# $Id: liberr.sh 539 2016-08-18 14:50:19+04:00 toor $
+# $Id: liberr.sh 540 2016-08-18 17:23:11+04:00 toor $
 #
 #****h* BASHLYK/liberr
 #  DESCRIPTION
@@ -355,6 +355,67 @@ udfThrow() {
 	udfIsNumber $rc || rc=$i
 
 	eval $(udfOnError exitwarn $rc $*)
+
+}
+#******
+shopt -s expand_aliases
+alias try-every-line="udfTryEveryLine <<-catch-every-line"
+#****f* liberr/udfTryEveryLine
+#  SYNOPSIS
+#    try-every-line
+#    <commands>
+#    ...
+#    catch-every-line
+#  DESCRIPTION
+#    evaluate every line on fly between try... and catch...
+#    expected that these lines are independent external commands.
+#    expected that these lines are independent external commands, the output of
+#    which is suppressed.
+#    Successful execution of the every command marked by the dot without
+#    linefeed, on error execution stopped and displayed description of the error
+#    and generated call stack
+#  EXAMPLE
+#    local fmt='. bashlyk\ntry-every-line\nuname -a\ndate -R\nfalse\ntrue\ncatch-every-line\n' fn s
+#    fn=$(mktemp --suffix=.sh || tempfile -s test.sh)                           #? true
+#    printf -- "$fmt" > $fn                                                     #-
+#    chmod +x $fn
+#    bash -c $fn >| grep 'Error: line: 3 :: code: false :: show: .. (255)'	#? true
+#    rm -f $fn
+#  SOURCE
+udfTryEveryLine() {
+
+	local b fn i s
+
+	b=true
+	i=0
+
+	udfMakeTemp fn
+	#
+	while read s; do
+
+		i=$((i+1))
+
+		[[ -n "$s" ]] || continue
+
+		eval "$s" >$fn 2>&1 && echo -n "." || {
+
+			_ iTryBlockLine $i
+			b=false
+			break
+		}
+
+	done
+
+	if ! $b; then
+
+		echo "?"
+ 		eval $( udfOnError throw "line: $i :: code: $s :: show: $(< $fn)" )
+
+	else
+
+		echo "ok."
+
+	fi
 
 }
 #******
