@@ -1,5 +1,5 @@
 #
-# $Id: liblog.sh 539 2016-08-18 14:20:34+04:00 toor $
+# $Id: liblog.sh 543 2016-08-19 14:43:43+04:00 toor $
 #
 #****h* BASHLYK/liblog
 #  DESCRIPTION
@@ -103,7 +103,7 @@ udfLogger() {
  local bSysLog bUseLog sTagLog IFS=$' \t\n'
  bSysLog=0
  bUseLog=0
- sTagLog="${_bashlyk_s0}[$(printf "%05d" $$)]"
+ sTagLog="${_bashlyk_s0}[$(printf -- "%05d" $$)]"
  [[ -z "$_bashlyk_bUseSyslog" || "$_bashlyk_bUseSyslog" -eq 0 ]] && bSysLog=0 || bSysLog=1
  if [[ -z "$_bashlyk_bNotUseLog" ]]; then
   udfCheck4LogUse && bUseLog=1 || bUseLog=0

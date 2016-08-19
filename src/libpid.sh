@@ -1,5 +1,5 @@
 #
-# $Id: libpid.sh 539 2016-08-18 14:20:34+04:00 toor $
+# $Id: libpid.sh 543 2016-08-19 14:43:44+04:00 toor $
 #
 #****h* BASHLYK/libpid
 #  DESCRIPTION
@@ -109,7 +109,7 @@ udfSetPid() {
    eval $(udfOnError retecho iErrorAlreadyStarted '$0 : Already started with pid = $pid')
   }
  fi
- printf "%s\n%s\n" "$$" "$0 ${_bashlyk_sArg}" > $fnPid \
+ printf -- "%s\n%s\n" "$$" "$0 ${_bashlyk_sArg}" > $fnPid \
   || eval $(udfOnError rewarn iErrorNotExistNotCreated 'pid file $fnPid is not created...')
  _bashlyk_fnPid=$fnPid
  udfAddFile2Clean $fnPid

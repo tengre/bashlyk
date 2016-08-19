@@ -1,5 +1,5 @@
 #
-# $Id: libmsg.sh 539 2016-08-18 14:20:34+04:00 toor $
+# $Id: libmsg.sh 543 2016-08-19 14:43:43+04:00 toor $
 #
 #****h* BASHLYK/libmsg
 #  DESCRIPTION
@@ -58,7 +58,7 @@
 udfEcho() {
  if [[ "$1" == "-" ]]; then
   shift
-  [[ -n "$1" ]] && printf "%s\n----\n" "$*"
+  [[ -n "$1" ]] && printf -- "%s\n----\n" "$*"
   ## TODO alarm required...
   cat
  else
@@ -308,11 +308,11 @@ udfNotifyCommand() {
  [[ -n "$(_ sXSessionProp)" ]] || udfGetXSessionProperties || return $?
  X=$(_ sXSessionProp)
  #
- declare -A h=(                                                                                \
-  [notify-send]="$X $1 -t $t \"$2 via $1\" \"$(printf "$3")\""                                 \
-  [kdialog]="$X $1 --title \"$2 via $1\" --passivepopup \"$(printf "$3")\" $t"                 \
-  [zenity]="$X $1 --notification --timeout $(($t/2)) --text \"$(printf "$2 via $1\n\n$3\n")\"" \
-  [xmessage]="$X $1 -center -timeout $t \"$(printf "$2 via $1\n\n$3\n")\" 2>/dev/null"         \
+ declare -A h=(                                                                                                  \
+  [notify-send]="$X $1 -t $t \"$2 via $1\" \"$(printf -- "%s" "$3")\""                                           \
+  [kdialog]="$X $1 --title \"$2 via $1\" --passivepopup \"$(printf -- "%s" "$3")\" $t"                           \
+  [zenity]="$X $1 --notification --timeout $(($t/2)) --text \"$(printf -- "%s via %s\n\n%s\n" "$2" "$1" "$3")\"" \
+  [xmessage]="$X $1 -center -timeout $t \"$(printf -- "%s via %s\n\n%s\n" "$2" "$1" "$3")\" 2>/dev/null"         \
  )
 
  if [[ -x "$(which "$1")" ]]; then

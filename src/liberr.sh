@@ -1,5 +1,5 @@
 #
-# $Id: liberr.sh 542 2016-08-19 12:34:37+04:00 toor $
+# $Id: liberr.sh 543 2016-08-19 14:43:41+04:00 toor $
 #
 #****h* BASHLYK/liberr
 #  DESCRIPTION
@@ -303,7 +303,7 @@ udfOnError() {
 
 	esac
 
-	printf "%s udfSetLastError %s %s%s\n" "$sMessage" "$s" "$rs" "${sAction}"
+	printf -- "%s udfSetLastError %s %s%s\n" "$sMessage" "$s" "$rs" "${sAction}"
 
 }
 #******

@@ -1,5 +1,5 @@
 #
-# $Id: libini.sh 539 2016-08-18 14:20:34+04:00 toor $
+# $Id: libini.sh 543 2016-08-19 14:43:42+04:00 toor $
 #
 #****h* BASHLYK/libini
 #  DESCRIPTION
@@ -525,7 +525,7 @@ udfIniWrite() {
  for s in $csv; do
   k="${s%%=*}"
   v="${s#*=}"
-  [[ "$k" == "$v" ]] && echo "$v" || printf "\t${k}\t=\t${v}\n"
+  [[ "$k" == "$v" ]] && echo "$v" || printf -- "\t%s\t=\t%s\n" "$k" "$v"
  ## TODO продумать перенос уничтожения автоключей в udfBashlykUnquote
  done | sed -e "s/\t\?_bashlyk_ini_.*_autoKey_[0-9]\+\t\?=\t\?//g" | udfBashlykUnquote > "$ini"
  #
