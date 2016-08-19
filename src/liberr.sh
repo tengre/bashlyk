@@ -1,5 +1,5 @@
 #
-# $Id: liberr.sh 541 2016-08-18 22:45:26+04:00 toor $
+# $Id: liberr.sh 542 2016-08-19 12:34:37+04:00 toor $
 #
 #****h* BASHLYK/liberr
 #  DESCRIPTION
@@ -57,6 +57,7 @@ _bashlyk_iErrorCommandNotFound=180
 _bashlyk_iErrorUserXsessionNotFound=171
 _bashlyk_iErrorXsessionNotFound=170
 _bashlyk_iErrorIncompatibleVersion=169
+_bashlyk_iErrorTryBoxException=168
 
 _bashlyk_hError[$_bashlyk_iErrorUnknown]="unknown (unexpected) error"
 _bashlyk_hError[$_bashlyk_iErrorEmptyOrMissingArgument]="empty or missing argument"
@@ -77,7 +78,7 @@ _bashlyk_hError[$_bashlyk_iErrorCommandNotFound]="command not found"
 _bashlyk_hError[$_bashlyk_iErrorUserXsessionNotFound]="user X-Session not found"
 _bashlyk_hError[$_bashlyk_iErrorXsessionNotFound]="X-Session not found"
 _bashlyk_hError[$_bashlyk_iErrorIncompatibleVersion]="incompatible version"
-
+_bashlyk_hError[$_bashlyk_iErrorTryBoxException]="try box exception"
 #
 : ${_bashlyk_onError:=throw}
 : ${_bashlyk_sArg:=$*}
@@ -375,11 +376,20 @@ alias try-every-line="udfTryEveryLine <<-catch-every-line"
 #    linefeed, on error execution stopped and displayed description of the error
 #    and generated call stack
 #  EXAMPLE
-#    local fmt='. bashlyk\ntry-every-line\nuname -a\ndate -R\nfalse\ntrue\ncatch-every-line\n' fn s
+#    local fn s                                                                 #-
 #    fn=$(mktemp --suffix=.sh || tempfile -s test.sh)                           #? true
-#    printf -- "$fmt" > $fn                                                     #-
+#    s='Error: try box exception - internal line: 3, code: touch /not.*(168)'
+#    cat <<-EOF > $fn                                                           #-
+#     . bashlyk                                                                 #-
+#     try-every-line                                                            #-
+#      uname -a                                                                 #-
+#      date -R                                                                  #-
+#      touch /not-exist.$fn/file                                                #-
+#      true                                                                     #-
+#     catch-every-line                                                          #-
+#    EOF                                                                        #-
 #    chmod +x $fn
-#    bash -c $fn >| grep 'Error: line: 3 :: code: false :: show: .. (255)'	#? true
+#    bash -c $fn 2>&1 >| grep "$s"                                              #? true
 #    rm -f $fn
 #  SOURCE
 udfTryEveryLine() {
@@ -409,7 +419,8 @@ udfTryEveryLine() {
 	if ! $b; then
 
 		echo "?"
- 		eval $( udfOnError throw "line: $i :: code: $s :: show: $(< $fn)" )
+		[[ -s $fn ]] && udfDebug 0 "Error: try box exception output: $(< $fn)"
+ 		eval $( udfOnError throw TryBoxException "internal line: ${i}, code: ${s}" )
 
 	else
 
