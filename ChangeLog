@@ -1,3 +1,82 @@
+Mon, 22 Aug 2016 00:20:18 +0400
+	Fix bugs
+	New upstream release
+	Version 1.85
+
+ - added new library liberr.sh with error message table
+ - added tool get-external-commands-and-export-list.sh for show all function
+   names and search used external binaries, get main external commands list from
+   system (Debian)
+ - updated and fixed external commands list and export list of functions
+   for all libraries
+ - safety using of a printf - separated options and arguments, transferred
+   variables from format to arguments
+ - added the library template libtst.sh for additional testing
+ - removed unused libppp.sh
+ - rewrited same robodoc section from russian to english
+
+liberr.sh:
+ - moved from libmsg.sh functions and wrappers:
+   * udfThrow
+   * udf{,Throw,Warn}OnCommandNotFound
+   * udf{,Throw,Warn}OnEmptyVariable
+ - added new function udfOn for replace udfOn{CommandNotFound,EmptyVariable}
+ - added new functions udf{CommandNotFound,EmptyVariable,EmptyOrMissingArgument}
+   for single condition testing. Used from udfOn
+ - refactored wrappers udf{Throw,Warn}On.. by using udfOn
+ - added new wrappers udf{Throw,Warn}OnEmptyOrMissingArgument
+ - udfThrowOnEmptyVariable - test fixed
+ - added table of error messages $_bashlyk_hError, that used as ordinary array
+ - udfSetLastError:
+   * fixed bug of return code validation
+   * added support for xLastError separated by processes
+   * added support for predefined names like 'XXX' ($_bashlyk_iErrorXXX)
+   * improved test unit
+ - udfOnError:
+   * added new embedded commands 'exitecho' and 'exitwarn'
+   * added support for table of error messages ($_bashlyk_hError)
+   * changed message format
+   * improved test unit
+ - added new function udfOnError2 - wrapper for udfOnError that output sent to
+   stderr, ROBOdoc refers to the udfOnError
+ - udfThrow:
+   * added support for $_bashlyk_sLastError[$BASHPID]
+   * used the last command error code (or 255) if the value of the variable
+     ${_bashlyk_iLastError[$BASHPID]} is not a number
+   * improved tests
+   * used 'eval $(udfOnError ..' instead 'udfWarn ..' and 'exit ..'
+ - added for testing function 'udfTryEveryLine' and alias 'try-every-line'
+   this applied control like 'try .. catch' for every lines between
+   'try-every-line' and 'catch-every-line', supress stdout for successfully
+   processing (show 'dot' only) and abort for error with stacktrace and error
+   message, used heredoc for clarity into test unit
+ - added error states - Unknown,NotSupported,EmptyVariable,TryBoxException
+ - iErrorUnknown equal iErrorUnexpected
+ - $_bashlyk_sBehaviorOnError renamed to $_bashlyk_onError
+ - removed unused global variables
+
+libmsg.sh:
+ - udfNotify2X - used '=$(< ..)' instead '=$(cat ..)'
+ - udfWarn:
+   * added support for $_bashlyk_sLastError[$BASHPID]
+   * improved test unit, but it requires more work
+
+libstd.sh:
+ - removed unused global variables
+ - udfTimeStamp - changed test identation
+ - added function udfPrepareByType - present argument 'Array[item]' as
+   '{Array[item]}'
+ - _ (function) - added support for items of array ( as 'Array[item]' )
+
+liblog.sh:
+ - udfDebug output sent to stderr
+
+bashlyk:
+ - added liberr.sh as one of the main libraries
+ - udfMain (the entry point) can be called without arguments
+debian/control
+ - added bc dependency (used by testunit.sh)
+
 Thu, 25 Jun 2015 14:28:10 +0400
 	Fix bugs
 	Version 1.84
