@@ -1,13 +1,13 @@
 #
-# $Id: libtst.sh 535 2016-06-30 16:56:53+04:00 toor $
+# $Id: libtst.sh 545 2016-08-22 02:05:53+04:00 toor $
 #
-#****h* BASHLYK/libmsg
+#****h* BASHLYK/libtst
 #  DESCRIPTION
-#    стандартный набор функций, включает автоматически управляемые функции вывода сообщений
+#    template for testing
 #  AUTHOR
 #    Damir Sh. Yakupov <yds@bk.ru>
 #******
-#****d* libmsg/Once required
+#****d* libtst/Once required
 #  DESCRIPTION
 #    Эта глобальная переменная обеспечивает защиту от повторного использования данного модуля
 #    Отсутствие значения $BASH_VERSION предполагает несовместимость c текущим командным интерпретатором
@@ -16,16 +16,16 @@
 
 [[ -n "$_BASHLYK_LIBTST" ]] && return 0 || _BASHLYK_LIBTST=1
 #******
-#****** libmsg/External Modules
+#****** libtst/External Modules
 # DESCRIPTION
 #   Using modules section
 #   Здесь указываются модули, код которых используется данной библиотекой
 # SOURCE
 : ${_bashlyk_pathLib:=/usr/share/bashlyk}
 [[ -s ${_bashlyk_pathLib}/libstd.sh ]] && . "${_bashlyk_pathLib}/libstd.sh"
-[[ -s ${_bashlyk_pathLib}/libmsg.sh ]] && . "${_bashlyk_pathLib}/libmsg.sh"
+[[ -s ${_bashlyk_pathLib}/liberr.sh ]] && . "${_bashlyk_pathLib}/liberr.sh"
 #******
-#****v* libmsg/Init section
+#****v* libtst/Init section
 #  DESCRIPTION
 : ${_bashlyk_sUser:=$USER}
 : ${_bashlyk_sLogin:=$(logname 2>/dev/null)}
@@ -35,37 +35,23 @@
 : ${_bashlyk_emailSubj:="${_bashlyk_sUser}@${HOSTNAME}::${_bashlyk_s0}"}
 : ${_bashlyk_envXSession:=}
 : ${_bashlyk_aRequiredCmd_msg:="[ "}
-: ${_bashlyk_aExport_msg:="udfEcho udfWarn udfThrow udfOnEmptyVariable udfThrowOnEmptyVariable udfWarnOnEmptyVariable udfMail \
-    udfMessage udfNotify2X udfNotifyCommand udfGetXSessionProperties udfOnCommandNotFound udfThrowOnCommandNotFound           \
-    udfWarnOnCommandNotFound"}
+: ${_bashlyk_aExport_msg:="udfTest"}
 #******
-#****f* libmsg/udfThrow
+#****f* libtst/udfTest
 #  SYNOPSIS
-#    udfThrow [-] args
+#    udfTest args
 #  DESCRIPTION
-#    Stop the script. Returns an error code of the last command if value of
-#    the special variable $_bashlyk_iLastError[$BASHPID] not defined
-#    Perhaps set the the message. In the case of non-interactive execution
-#    message is sent notification system.
+#    ...
 #  INPUTS
-#    -    - read message from stdin
-#    args - message string. With stdin data ("-" option required) used as header
+#    ...
 #  OUTPUT
-#    show input message or data from special variable
+#    ...
 #  RETURN VALUE
-#   return ${_bashlyk_iLastError[$BASHPID]} or last non zero return code or 255
+#    ...
 #  EXAMPLE
-#    local rc=222
-#    echo $(false || udfThrow rc=$?; echo ok=$?) >| grep "^Error: rc=1 .. (1)$" #? true
-#    echo $rc
-#    echo $(udfSetLastError $rc || udfThrow $?; echo rc=$?) >| grep -w "$rc"    #? true
+#    ...
 #  SOURCE
-udfThrow() {
-
-	local i=$? rc
-	rc=${_bashlyk_iLastError[$BASHPID]}
-	udfIsNumber $rc || rc=$i
-	eval $(udfOnError exitwarn $rc $*)
-
+udfTest() {
+ return 0
 }
 #******

@@ -1,8 +1,6 @@
-Mon, 22 Aug 2016 00:20:18 +0400
-	Fix bugs
+Mon, 22 Aug 2016 02:06:21 +0400
 	New upstream release
 	Version 1.85
-
  - added new library liberr.sh with error message table
  - added tool get-external-commands-and-export-list.sh for show all function
    names and search used external binaries, get main external commands list from
@@ -13,8 +11,6 @@ Mon, 22 Aug 2016 00:20:18 +0400
    variables from format to arguments
  - added the library template libtst.sh for additional testing
  - removed unused libppp.sh
- - rewrited same robodoc section from russian to english
-
 liberr.sh:
  - moved from libmsg.sh functions and wrappers:
    * udfThrow
@@ -54,23 +50,19 @@ liberr.sh:
  - iErrorUnknown equal iErrorUnexpected
  - $_bashlyk_sBehaviorOnError renamed to $_bashlyk_onError
  - removed unused global variables
-
 libmsg.sh:
  - udfNotify2X - used '=$(< ..)' instead '=$(cat ..)'
  - udfWarn:
    * added support for $_bashlyk_sLastError[$BASHPID]
    * improved test unit, but it requires more work
-
 libstd.sh:
  - removed unused global variables
  - udfTimeStamp - changed test identation
  - added function udfPrepareByType - present argument 'Array[item]' as
    '{Array[item]}'
  - _ (function) - added support for items of array ( as 'Array[item]' )
-
 liblog.sh:
  - udfDebug output sent to stderr
-
 bashlyk:
  - added liberr.sh as one of the main libraries
  - udfMain (the entry point) can be called without arguments
