@@ -1,4 +1,4 @@
-# $Id: TODO 538 2016-08-17 17:13:27+04:00 toor $
+# $Id: TODO 546 2016-09-13 17:13:16+04:00 toor $
 + liblog.sh: не проходит тест udfWarn без терминала (в не интерактивном режиме)
 + libini.sh: при тесте с другими модулями в ini файлах оказывается вывод других
   тестовых блоков (решено в версии 1.57)
@@ -92,7 +92,7 @@ Fri, 06 Mar 2015 12:44:00 +0400
 + #160701 - udfDebug - use stderr
 + #160702 - udfOnError - stderr support !!! added new wrapper udfOnError2
 - #160703 - udfMakeTemp - temporary fifo files support
-+ #160704 - udfThrowOnEmptyArgument !!! Use udfOn EmptyOrMissingArgument throw|warn|... 
++ #160704 - udfThrowOnEmptyArgument !!! Use udfOn EmptyOrMissingArgument throw|warn|...
 - #160705 - udfChangeIni - loss % contain substring
 - #160706 - check for configuration files permissions
 - #160707 - hashes can be used instead of CSV? testing required
@@ -102,4 +102,9 @@ Fri, 06 Mar 2015 12:44:00 +0400
 + #160711 - new error code iErrorNonSupported
 ! #160712 - use aliases to simplify the code reading
 + #160713 - udfSetLastError - use array for store iLastError, items indexed by $BASHPID
+- #160901 - udfCheckStarted - check pid as number
+- #160911 - add alias iErrorInvalid{Argument,Variable} to iErrorNonValid{Argument,Variable}
+- #160912 - add force "notuse" option for disable logging
+- #160913 - add alias iErrorMissingArgument to iErrorMissingOrEmptyArgument
+
 
