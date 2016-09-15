@@ -1,5 +1,5 @@
 #
-# $Id: liberr.sh 543 2016-08-19 14:43:41+04:00 toor $
+# $Id: liberr.sh 549 2016-09-15 17:17:09+04:00 toor $
 #
 #****h* BASHLYK/liberr
 #  DESCRIPTION
@@ -37,16 +37,21 @@
 #    * $_bashlyk_aRequiredCmd_opt - список используемых в данном модуле внешних
 #    утилит
 #  SOURCE
-_bashlyk_iErrorUnknown=255
-_bashlyk_iErrorUnexpected=255
-_bashlyk_iErrorEmptyOrMissingArgument=254
-_bashlyk_iErrorNonValidArgument=253
-_bashlyk_iErrorEmptyResult=252
+_bashlyk_iErrorUnknown=254
+_bashlyk_iErrorUnexpected=254
+_bashlyk_iErrorEmptyOrMissingArgument=253
+_bashlyk_iErrorMissingArgument=253
+_bashlyk_iErrorEmptyArgument=253
+_bashlyk_iErrorNonValidArgument=252
+_bashlyk_iErrorNotValidArgument=252
+_bashlyk_iErrorInvalidArgument=252
+_bashlyk_iErrorEmptyResult=251
 _bashlyk_iErrorNotSupported=241
 _bashlyk_iErrorNotPermitted=240
 _bashlyk_iErrorBrokenIntegrity=230
 _bashlyk_iErrorAbortedBySignal=220
 _bashlyk_iErrorNonValidVariable=200
+_bashlyk_iErrorInvalidVariable=200
 _bashlyk_iErrorEmptyVariable=199
 _bashlyk_iErrorNotExistNotCreated=190
 _bashlyk_iErrorNoSuchFileOrDir=185

@@ -1,5 +1,5 @@
 #
-# $Id: libpid.sh 543 2016-08-19 14:43:44+04:00 toor $
+# $Id: libpid.sh 549 2016-09-15 17:17:09+04:00 toor $
 #
 #****h* BASHLYK/libpid
 #  DESCRIPTION
@@ -45,33 +45,114 @@
 #  SYNOPSIS
 #    udfCheckStarted PID [command [args]]
 #  DESCRIPTION
-#    Проверка наличия процесса с указанными PID и командной строкой
-#    PID процесса, в котором производится проверка, исключается из рассмотрения
+#    Checking process with given PID and the command line
+#    PID of the process in which a check is excluded from an examination
 #  INPUTS
 #    PID     - PID
 #    command - command
 #    args    - arguments
 #  RETURN VALUE
-#    0                    - Процесс существует для указанной командной строки
-#    iErrorNoSuchProcess  - Процесс для указанной командной строки не обнаружен.
-#    iErrorCurrentProcess - Процесс для данной командной строки идентичен PID
-#                           текущего процесса
+#    0                 - Process PID exists for the specified command line
+#    NoSuchProcess     - Process for the specified command line is not detected.
+#    CurrentProcess    - The process for this command line is identical to the
+#                        PID of the current process
+#    iErrorNotValid... - PID is not number
+#    EmptyOrMissing... - no arguments
 #  EXAMPLE
 #    (sleep 8)&
 #    local pid=$!
 #    ps -p $pid -o pid= -o args=
+#    udfCheckStarted                                                            #? $_bashlyk_iErrorEmptyOrMissingArgument
 #    udfCheckStarted $pid sleep 8                                               #? true
 #    udfCheckStarted $pid sleep 88                                              #? $_bashlyk_iErrorNoSuchProcess
 #    udfCheckStarted $$ $0                                                      #? $_bashlyk_iErrorCurrentProcess
+#    udfCheckStarted notvalid $0                                                #? $_bashlyk_iErrorInvalidArgument
+
 #  SOURCE
 udfCheckStarted() {
- local pid="$1" IFS=$' \t\n'
- #
- [[ -n "$*"      ]] || eval $(udfOnError return iErrorEmptyOrMissingArgument)
- [[ "$$" == "$1" ]] && return $(_ iErrorCurrentProcess)
- shift
- [[ "$(ps -p $pid -o args=)" =~ ${*}$ ]] && return 0 || return $(_ iErrorNoSuchProcess)
- return 0
+
+	udfOn EmptyOrMissingArgument "$*" || return $?
+
+	local pid="$1" IFS=$' \t\n'
+
+	udfIsNumber $1 || return $( _ iErrorNotValidArgument )
+
+	[[ "$$" == "$1" ]] && return $( _ iErrorCurrentProcess )
+
+	shift
+
+	[[ "$(ps -p $pid -o args=)" =~ ${*}$ ]] && return 0 || return $(_ iErrorNoSuchProcess)
+
+	return 0
+
+}
+#******
+#****f* libpid/udfStopProcess
+#  SYNOPSIS
+#    udfStopProcess [PID] command [args]
+#  DESCRIPTION
+#    stop process with given PID (optional) and the command line
+#    PID of the process in which a check is excluded from an examination
+#  INPUTS
+#    PID     - PID
+#    command - command
+#    args    - arguments
+#  RETURN VALUE
+#    0                 - Process PID stopped for the specified command line
+#    NoSuchProcess     - Process for the specified command line is not detected.
+#    CurrentProcess    - The process for this command line is identical to the
+#                        PID of the current process
+#    iErrorNotValid... - PID is not number
+#    EmptyOrMissing... - no arguments
+#  EXAMPLE
+#    (sleep 8)&
+#    local pid=$!
+#    ps -p $pid -o pid= -o args=
+#    udfStopProcess                                                             #? $_bashlyk_iErrorEmptyOrMissingArgument
+#    udfStopProcess $pid sleep 8                                                #? true
+#    udfStopProcess $pid sleep 88                                               #? $_bashlyk_iErrorNoSuchProcess
+#    udfStopProcess sleep 88                                                    #? $_bashlyk_iErrorNoSuchProcess
+#    udfStopProcess $$ $0                                                       #? $_bashlyk_iErrorCurrentProcess
+#    udfStopProcess notvalid $0                                                 #? $_bashlyk_iErrorNoSuchProcess
+
+#  SOURCE
+udfStopProcess() {
+
+	udfOn EmptyOrMissingArgument "$*" || return $?
+
+	local b pid rc s
+
+	if udfIsNumber $1; then
+
+		pid=$1
+		shift
+
+	else
+
+		pid="$( ps -C "$*" -o pid= | xargs )"
+		udfOn EmptyOrMissingArgument "$pid" || return $( _ iErrorNoSuchProcess )
+
+	fi
+
+	for s in 15 9; do
+
+		udfIsNumber $pid || continue
+
+		udfCheckStarted $pid $*
+		rc=$?
+
+		if [[ $rc == 0 ]]; then
+
+			kill -${s} $pid
+			b=$?
+			sleep 1
+
+		fi
+
+	done
+
+	[[ $b == 0 ]] && return $b || return $rc
+
 }
 #******
 #****f* libpid/udfSetPid

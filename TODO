@@ -102,10 +102,12 @@ Fri, 06 Mar 2015 12:44:00 +0400
 + #160711 - new error code iErrorNonSupported
 ! #160712 - use aliases to simplify the code reading
 + #160713 - udfSetLastError - use array for store iLastError, items indexed by $BASHPID
-- #160901 - udfCheckStarted - check pid as number
-- #160911 - add alias iErrorInvalid{Argument,Variable} to iErrorNonValid{Argument,Variable}
++ #160901 - udfCheckStarted - check pid as number
+- #160910 - add new library libnet
++ #160911 - add alias iErrorInvalid{Argument,Variable} to iErrorNonValid{Argument,Variable}
 - #160912 - add force "notuse" option for disable logging
-- #160913 - add alias iErrorMissingArgument to iErrorMissingOrEmptyArgument
++ #160913 - add alias iErrorMissingArgument to iErrorMissingOrEmptyArgument
++ #160914 - add udfStopProcess to libpid
 - #160915 - add NotValidArgument handling for udfOn
 
 
