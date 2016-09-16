@@ -1,5 +1,5 @@
 #
-# $Id: liberr.sh 549 2016-09-15 17:17:09+04:00 toor $
+# $Id: liberr.sh 550 2016-09-16 16:10:45+04:00 toor $
 #
 #****h* BASHLYK/liberr
 #  DESCRIPTION
@@ -63,6 +63,7 @@ _bashlyk_iErrorUserXsessionNotFound=171
 _bashlyk_iErrorXsessionNotFound=170
 _bashlyk_iErrorIncompatibleVersion=169
 _bashlyk_iErrorTryBoxException=168
+_bashlyk_Success=0
 
 _bashlyk_hError[$_bashlyk_iErrorUnknown]="unknown (unexpected) error"
 _bashlyk_hError[$_bashlyk_iErrorEmptyOrMissingArgument]="empty or missing argument"
@@ -470,26 +471,29 @@ udfTryEveryLine() {
 #    $(udfOn CommandNotFound  Exit $cmdNo1 >/dev/null 2>&1; true)              #? $_bashlyk_iErrorCommandNotFound
 #    $(udfOn CommandNotFound Throw $cmdNo2 >/dev/null 2>&1; true)              #? $_bashlyk_iErrorCommandNotFound
 #    udfOn CommandNotFound $cmdYes                                             #? true
+#    udfOn MissingArgument ""                                                  #? $_bashlyk_iErrorMissingArgument
+#    udfOn EmptyResult ""                                                      #? $_bashlyk_iErrorEmptyResult
+#    udfOn EmptyResult return ""                                               #? $_bashlyk_iErrorEmptyResult
 #  SOURCE
 
 udfOn() {
 
 	local cmd csv e i IFS j s
 
-	cmd=return
+	cmd='return'
 	i=0
 	j=0
 	IFS=$' \t\n'
 	e=$1
 
-	if [[ $1 =~ ^(CommandNotFound|Empty(Variable|OrMissingArgument))$ ]]; then
+	if [[ $1 =~ ^(CommandNotFound|Empty(Variable|Argument|OrMissingArgument|Result)|Invalid(Argument|Variable)|MissingArgument)$ ]]; then
 
 		e=$1
 
 	else
 
-		eval $( udfOnError iErrorNonValidArgument "1" )
-		return $( _ iErrorNonValidArgument )
+		eval $( udfOnError iErrorInvalidArgument "1" )
+		return $( _ iErrorInvalidArgument )
 
 	fi
 
@@ -502,11 +506,19 @@ udfOn() {
 	        [Ww][Aa][Rr][Nn]) cmd='retwarn'; shift;;
 	    [Tt][Hh][Rr][Oo][Ww]) cmd='throw';   shift;;
 	[Rr][Ee][Tt][Uu][Rr][Nn]) cmd='return';  shift;;
-	                      '') eval $( udfOnError $cmd EmptyOrMissingArgument 'no arguments' )
+	                      '')
+				  [[ $e =~ ^(Empty|Missing) && ! $e =~ EmptyVariable ]] || e='EmptyOrMissingArgument'
+				  eval $( udfOnError $cmd $e 'no arguments' )
+				  ;;
 
 	esac
 
-	[[ -n "$@" ]] || eval $( udfOnError $cmd EmptyOrMissingArgument 'no arguments' )
+	if [[ -z "$@" ]]; then
+
+		[[ $e =~ ^(Empty|Missing) && ! $e =~ ^EmptyVariable ]] || e='EmptyOrMissingArgument'
+		eval $( udfOnError $cmd $e 'no arguments' )
+
+	fi
 
 	for s in "$@"; do
 
@@ -605,6 +617,21 @@ udfEmptyOrMissingArgument() {
 
 }
 #******
+udfEmptyArgument() {
+
+	[[ -n "$1" ]] && return 1 || return 0
+
+}
+udfMissingArgument() {
+
+	[[ -n "$1" ]] && return 1 || return 0
+
+}
+udfEmptyResult() {
+
+	[[ -n "$1" ]] && return 1 || return 0
+
+}
 #****f* liberr/udfOnCommandNotFound
 #  SYNOPSIS
 #    udfOnCommandNotFound [<action>] <filenames>

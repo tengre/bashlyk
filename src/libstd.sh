@@ -1,5 +1,5 @@
 #
-# $Id: libstd.sh 539 2016-08-18 14:20:35+04:00 toor $
+# $Id: libstd.sh 550 2016-09-16 16:10:45+04:00 toor $
 #
 #****h* BASHLYK/libstd
 #  DESCRIPTION
@@ -1147,5 +1147,32 @@ udfBashlykUnquote() {
  #cmd+=" -e \"s/\t\?_bashlyk_ini_.*_autoKey_[0-9]\+\t\?=\t\?//g\""
  cmd+=' -e "s/^\"\(.*\)\"$/\1/"'
  eval "$cmd"
+}
+#******
+#****f* libstd/_defLocal
+#  SYNOPSIS
+#    _defLocal <args>
+#  DESCRIPTION
+#    prepare arguments to evaluate with expression 'eval local ...'
+#  EXAMPLE
+#    _defLocal a1 b2 c3                                                         #? true
+#    _defLocal a1 b2 c3                                                         #? true
+#    _defLocal a1 b2 c3                                                         #? true
+#    echo $( _defLocal a1 b2 c3 4d 2>/dev/null ) >| grep '^local'               #? false
+#  SOURCE
+_defLocal() {
+
+	local s
+	local -A h
+
+	for s in ${*//[;,]/ }; do
+
+		udfIsValidVariable $s || eval $( udfOnError2 throw iErrorNonValidVariable "$s" )
+		h[$s]="$s"
+
+	done
+
+	echo "local ${h[@]}"
+
 }
 #******
