@@ -1,5 +1,5 @@
 #
-# $Id: libtst.sh 552 2016-09-19 21:35:49+04:00 toor $
+# $Id: libtst.sh 553 2016-09-20 00:26:19+04:00 toor $
 #
 #****h* BASHLYK/libtst
 #  DESCRIPTION
@@ -69,11 +69,11 @@
 #  EXAMPLE
 #    local foTemp
 #    udfMakeTemp -v foTemp path=$HOME prefix=pre. suffix=.suf
-#    ls $foTemp >| grep -w "$HOME/pre\.........\.suf"                           #? true
+#    ls $foTemp >| grep -w "$HOME/pre\..*\.suf"                                 #? true
 #    udfMakeTemp -v foTemp type=dir mode=0751
-#    ls -ld $foTemp >| grep "^drwxr-x--x.*${foTemp}$"                           #? true
+#    ls -ld $foTemp >| grep "^drwxr-x--x.*${s}$"                                #? true
 #    foTemp=$(udfMakeTemp prefix=pre. suffix=.suf)
-#    ls $foTemp >| grep "pre\.........\.suf$"                                   #? true
+#    ls $foTemp >| grep "pre\..*\.suf$"                                         #? true
 #    rm -f $foTemp
 #    $(udfMakeTemp -v foTemp prefix=pre. suffix=.suf)
 #    test -f $foTemp                                                            #? false
@@ -81,7 +81,10 @@
 #    foTemp=$(udfMakeTemp)                                                      #? true
 #    test -f $foTemp                                                            #? true
 #    rm -f $foTemp
-#    udfMakeTemp 2t                                                             #? ${_bashlyk_iErrorNonValidVariable}
+#    udfMakeTemp -v foTemp type=pipe											#? true
+#    test -p $foTemp															#? true
+#    ls -l $foTemp
+#    udfMakeTemp -v 2t                                                          #? ${_bashlyk_iErrorInvalidVariable}
 #    udfMakeTemp path=/proc                                                     #? ${_bashlyk_iErrorNotExistNotCreated}
 #  SOURCE
 udfMakeTemp() {
@@ -90,14 +93,15 @@ udfMakeTemp() {
 
 		shift
 
-		udfIsValidVariable "$1" || eval $( udfOnError2 InvalidArgument "$2" )
+		udfIsValidVariable "$1" || eval $( udfOnError2 return InvalidVariable "$2" )
 
 		eval 'export $1="$( udfMakeTemp $* )"'
 
-		[[ -n ${!1} ]] || eval $( udfOnError2 iErrorEmptyResult "$2" )
+		[[ -n ${!1} ]] || eval $( udfOnError2 return iErrorEmptyResult "$2" )
 
 		if [[ $* =~ keep=false ]]; then
 
+			## TODO udfAddFObj2Clean ${!1}
 			case $* in
 
 				*type=d*) udfAddPath2Clean ${!1};;
@@ -127,8 +131,6 @@ udfMakeTemp() {
     type=p*) bPipe=1;;
      user=*) sUser=${s#*=};;
     group=*) sGroup=${s#*=};;
-    keep=t*) bNoKeep=false;;
-    keep=f*) bNoKeep=true;;
   varname=*) sVar=${s#*=};;
           *)
             sVar="$1"
@@ -154,29 +156,27 @@ udfMakeTemp() {
 
 	fi
 
+
+	if [[ -z "$path" ]]; then
+
+		if [[ -z $bPipe ]]; then
+
+			path="/tmp"
+
+		else
+
+			path=$( _ pathRun )
+
+		fi
+
+	fi
+	mkdir -p $path
+
 	case "$sCreateMode" in
 
 	direct)
 
-		if [[ -n "$path" ]]; then
-
-			s="${path}/"
-
-		else
-
-			if [[ -z $bPipe ]]; then
-
-				s="/tmp/"
-			else
-
-				mkdir -p $( _ pathRun )
-				s=$( _ pathRun )
-
-			fi
-
-		fi
-
-		s+="${sPrefix}${$}${sSuffix}"
+		s="${path}/${sPrefix}${RANDOM}${sSuffix}"
 
 		[[ -n "$optDir" ]] && mkdir -p $s || touch $s
 
@@ -184,39 +184,7 @@ udfMakeTemp() {
 
 	mktemp)
 
-		if [[ -n "$path" ]]; then
-
-			mkdir -p ${path}
-			path="--tmpdir=${path}"
-
-		else
-
-			if [[ -z $bPipe ]]; then
-
-				path="--tmpdir=/tmp"
-
-			else
-
-				mkdir -p $( _ pathRun )
-				path="--tmpdir=$( _ pathRun )"
-
-			fi
-
-		fi
-
-		if [[ -n "$sPrefix" ]]; then
-
-			sPrefix=$(echo $sPrefix | tr -d '/')
-
-		fi
-
-		if [[ -n "${sSuffix}" ]]; then
-
-			sSuffix="--suffix=$(echo ${sSuffix} | tr -d '/')"
-
-		fi
-
-		s=$(mktemp $path $optDir ${sSuffix} "${sPrefix}XXXXXXXX")
+		s=$(mktemp --tmpdir=${path} $optDir --suffix=${sSuffix//\//} "${sPrefix//\//}XXXXXXXX")
 
 	;;
 
@@ -224,7 +192,8 @@ udfMakeTemp() {
 
 		[[ -n "$sPrefix" ]] && sPrefix="-p $sPrefix"
 		[[ -n "$sSuffix" ]] && sSuffix="-s $sSuffix"
-		s=$(tempfile $optDir $sPrefix $sSuffix)
+
+		s=$(tempfile -d $path $sPrefix $sSuffix)
 
 	;;
 
@@ -245,16 +214,19 @@ udfMakeTemp() {
 	[[ -n "$octMode" ]] && chmod $octMode $s
 
  ## TODO обработка ошибок
- [[ -n "$sUser"  ]] && chown $sUser  $s
- [[ -n "$sGroup" ]] && chgrp $sGroup $s
+	[[ -n "$sUser"  ]] && chown $sUser  $s
+	[[ -n "$sGroup" ]] && chgrp $sGroup $s
 
- if ! [[ -f "$s" || -p "$s" || -d "$s" ]]; then
-  eval $(udfOnError return iErrorNotExistNotCreated $s)
- fi
+	if ! [[ -f "$s" || -p "$s" || -d "$s" ]]; then
 
- echo $s
+		eval $(udfOnError return iErrorNotExistNotCreated $s)
 
- return 0
+	fi
+
+	echo $s
+
+	[[ -n $s ]] && return 0 || return $( _ iErrorEmptyResult )
+
 }
 #******
 #****f* libtst/udfTest
