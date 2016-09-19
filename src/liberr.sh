@@ -1,5 +1,5 @@
 #
-# $Id: liberr.sh 550 2016-09-16 16:10:45+04:00 toor $
+# $Id: liberr.sh 551 2016-09-19 16:13:22+04:00 toor $
 #
 #****h* BASHLYK/liberr
 #  DESCRIPTION
@@ -52,7 +52,8 @@ _bashlyk_iErrorBrokenIntegrity=230
 _bashlyk_iErrorAbortedBySignal=220
 _bashlyk_iErrorNonValidVariable=200
 _bashlyk_iErrorInvalidVariable=200
-_bashlyk_iErrorEmptyVariable=199
+_bashlyk_iErrorInvalidFunction=199
+_bashlyk_iErrorEmptyVariable=198
 _bashlyk_iErrorNotExistNotCreated=190
 _bashlyk_iErrorNoSuchFileOrDir=185
 _bashlyk_iErrorNoSuchProcess=184
@@ -66,15 +67,16 @@ _bashlyk_iErrorTryBoxException=168
 _bashlyk_Success=0
 
 _bashlyk_hError[$_bashlyk_iErrorUnknown]="unknown (unexpected) error"
-_bashlyk_hError[$_bashlyk_iErrorEmptyOrMissingArgument]="empty or missing argument"
-_bashlyk_hError[$_bashlyk_iErrorNonValidArgument]="non valid argument"
+_bashlyk_hError[$_bashlyk_iErrorMissingArgument]="empty or missing argument"
+_bashlyk_hError[$_bashlyk_iErrorInvalidArgument]="invalid argument"
 _bashlyk_hError[$_bashlyk_iErrorEmptyVariable]="empty variable"
 _bashlyk_hError[$_bashlyk_iErrorEmptyResult]="empty Result"
 _bashlyk_hError[$_bashlyk_iErrorNotSupported]="not supported"
 _bashlyk_hError[$_bashlyk_iErrorNotPermitted]="not permitted"
 _bashlyk_hError[$_bashlyk_iErrorBrokenIntegrity]="broken integrity"
 _bashlyk_hError[$_bashlyk_iErrorAbortedBySignal]="aborted by signal"
-_bashlyk_hError[$_bashlyk_iErrorNonValidVariable]="non valid variable"
+_bashlyk_hError[$_bashlyk_iErrorInvalidVariable]="invalid variable"
+_bashlyk_hError[$_bashlyk_iErrorInvalidFunction]="invalid function"
 _bashlyk_hError[$_bashlyk_iErrorNotExistNotCreated]="not exist and not created"
 _bashlyk_hError[$_bashlyk_iErrorNoSuchFileOrDir]="no such file or directory"
 _bashlyk_hError[$_bashlyk_iErrorNoSuchProcess]="no such process"
@@ -462,6 +464,7 @@ udfTryEveryLine() {
 #    Error or warning message with listing the arguments on which the error is
 #    triggered by the condition
 #  EXAMPLE
+#    ## TODO improved tests
 #    local cmdYes='sh' cmdNo1="bin_${RANDOM}" cmdNo2="bin_${RANDOM}"
 #    udfOn CommandNotFound                                                     #? $_bashlyk_iErrorEmptyOrMissingArgument
 #    udfOn CommandNotFound $cmdNo1                                             #? $_bashlyk_iErrorCommandNotFound
@@ -472,6 +475,7 @@ udfTryEveryLine() {
 #    $(udfOn CommandNotFound Throw $cmdNo2 >/dev/null 2>&1; true)              #? $_bashlyk_iErrorCommandNotFound
 #    udfOn CommandNotFound $cmdYes                                             #? true
 #    udfOn MissingArgument ""                                                  #? $_bashlyk_iErrorMissingArgument
+#    udfOn EmptyArgument ""                                                    #? $_bashlyk_iErrorMissingArgument
 #    udfOn EmptyResult ""                                                      #? $_bashlyk_iErrorEmptyResult
 #    udfOn EmptyResult return ""                                               #? $_bashlyk_iErrorEmptyResult
 #  SOURCE
@@ -524,6 +528,13 @@ udfOn() {
 
 		: $(( j++ ))
 
+		if ! typeset -f "udf${e}" >/dev/null 2>&1; then
+
+			eval $( udfOnError2 InvalidFunction "udf${e}" )
+			continue
+
+		fi
+
 		if udf${e} $s; then
 
 			[[ -n "$s" ]] || s=$j
@@ -562,6 +573,29 @@ udfOn() {
 udfCommandNotFound() {
 
 	[[ -n "$1" && -n "$( which $1 )" ]] && return 1 || return 0
+
+}
+#******
+#****f* liberr/udfInvalidVariable
+#  SYNOPSIS
+#    udfInvalidVariable <variable>
+#  DESCRIPTION
+#    return true if argument is empty, non valid variable, designed to check the
+#    conditions in the function udfOn
+#  INPUTS
+#    variable - expected variable name
+#  RETURN VALUE
+#    0 - argument is empty, non valid variable
+#    1 - valid variable
+#  EXAMPLE
+#    udfInvalidVariable                                                         #? true
+#    udfInvalidVariable a1                                                      #? false
+#    $(udfInvalidVariable 2b && exit 123)                                       #? 123
+#    $(udfInvalidVariable c3 || exit 123)                                       #? 123
+#  SOURCE
+udfInvalidVariable() {
+
+	[[ -n "$1" ]] && udfIsValidVariable "$1" && return 1 || return 0
 
 }
 #******
@@ -617,21 +651,9 @@ udfEmptyOrMissingArgument() {
 
 }
 #******
-udfEmptyArgument() {
-
-	[[ -n "$1" ]] && return 1 || return 0
-
-}
-udfMissingArgument() {
-
-	[[ -n "$1" ]] && return 1 || return 0
-
-}
-udfEmptyResult() {
-
-	[[ -n "$1" ]] && return 1 || return 0
-
-}
+alias udfMissingArgument='udfEmptyOrMissingArgument'
+alias udfEmptyArgument='udfEmptyOrMissingArgument'
+alias udfEmptyResult='udfEmptyOrMissingArgument'
 #****f* liberr/udfOnCommandNotFound
 #  SYNOPSIS
 #    udfOnCommandNotFound [<action>] <filenames>

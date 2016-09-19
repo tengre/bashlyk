@@ -1,5 +1,5 @@
 #
-# $Id: libstd.sh 550 2016-09-16 16:10:45+04:00 toor $
+# $Id: libstd.sh 551 2016-09-19 16:13:22+04:00 toor $
 #
 #****h* BASHLYK/libstd
 #  DESCRIPTION
@@ -1149,18 +1149,24 @@ udfBashlykUnquote() {
  eval "$cmd"
 }
 #******
-#****f* libstd/_defLocal
+#****f* libstd/udfLocalVarFromCSV
 #  SYNOPSIS
-#    _defLocal <args>
+#    udfLocalVarFromCSV CSV1 CSV2 ...
 #  DESCRIPTION
-#    prepare arguments to evaluate with expression 'eval local ...'
+#    Prepare string from comma separated lists (ex. INI options) for definition
+#    of the local variables by using eval
+#  RETURN VALUE
+#    iErrorEmptyOrMissingArgument - аргумент не задан
+#    0                            - успешная операция
 #  EXAMPLE
-#    _defLocal a1 b2 c3                                                         #? true
-#    _defLocal a1 b2 c3                                                         #? true
-#    _defLocal a1 b2 c3                                                         #? true
-#    echo $( _defLocal a1 b2 c3 4d 2>/dev/null ) >| grep '^local'               #? false
+#    udfLocalVarFromCSV a1,b2,c3                                                #? true
+#    udfLocalVarFromCSV a1 b2,c3                                                #? true
+#    udfLocalVarFromCSV a1,b2 c3                                                #? true
+#    echo $( udfLocalVarFromCSV a1,b2 c3,4d 2>/dev/null ) >| grep '^local'      #? false
 #  SOURCE
-_defLocal() {
+udfLocalVarFromCSV() {
+
+	udfOn EmptyOrMissingArgument throw "$@"
 
 	local s
 	local -A h
@@ -1172,6 +1178,7 @@ _defLocal() {
 
 	done
 
+	udfOn EmptyResult throw "${h[@]}"
 	echo "local ${h[@]}"
 
 }
