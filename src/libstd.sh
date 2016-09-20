@@ -1,5 +1,5 @@
 #
-# $Id: libstd.sh 551 2016-09-19 16:13:22+04:00 toor $
+# $Id: libstd.sh 554 2016-09-20 21:37:14+04:00 toor $
 #
 #****h* BASHLYK/libstd
 #  DESCRIPTION
@@ -47,6 +47,7 @@ _bashlyk_iMaxOutputLines=1000
 : ${_bashlyk_sUnnamedKeyword:=_bashlyk_unnamed_key_}
 : ${_bashlyk_s0:=${0##*/}}
 : ${_bashlyk_sId:=${_bashlyk_s0%.sh}}
+: ${_bashlyk_afoClean:=}
 : ${_bashlyk_afnClean:=}
 : ${_bashlyk_apathClean:=}
 : ${_bashlyk_ajobClean:=}
@@ -642,6 +643,25 @@ udfCleanQueue() {
  udfAddFile2Clean $*
 }
 #******
+#****f* libstd/udfAddFObj2Clean
+#  SYNOPSIS
+#    udfAddFObj2Clean args
+#  DESCRIPTION
+#    list file system objects
+#  INPUTS
+#    args - files or directories for cleaning on exit
+#  SOURCE
+udfAddFObj2Clean() {
+
+	udfOn MissingArgument return $*
+
+	_bashlyk_afoClean[$BASHPID]+=" $*"
+
+	 trap "udfOnTrap" 1 2 5 9 15 EXIT
+
+}
+#******
+
 #****f* libstd/udfOnTrap
 #  SYNOPSIS
 #    udfOnTrap
@@ -677,6 +697,15 @@ udfOnTrap() {
    }
   done
  done
+ #
+	for s in ${_bashlyk_afoClean[$BASHPID]}; do
+
+		[[ -f $s ]] && rm -f $s && continue
+		[[ -p $s ]] && rm -f $s && continue
+		[[ -d $s ]] && rmdir --ignore-fail-on-non-empty $s 2>/dev/null && continue
+
+	done
+
  #
  if (( ${#_bashlyk_afnClean[$BASHPID]} > 0 )); then
   rm -f ${_bashlyk_afnClean[$BASHPID]}

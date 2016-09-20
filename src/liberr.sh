@@ -1,5 +1,5 @@
 #
-# $Id: liberr.sh 551 2016-09-19 16:13:22+04:00 toor $
+# $Id: liberr.sh 554 2016-09-20 21:37:14+04:00 toor $
 #
 #****h* BASHLYK/liberr
 #  DESCRIPTION
@@ -651,9 +651,9 @@ udfEmptyOrMissingArgument() {
 
 }
 #******
-alias udfMissingArgument='udfEmptyOrMissingArgument'
-alias udfEmptyArgument='udfEmptyOrMissingArgument'
-alias udfEmptyResult='udfEmptyOrMissingArgument'
+udfMissingArgument() { udfEmptyOrMissingArgument $@; }
+udfEmptyArgument()   { udfEmptyOrMissingArgument $@; }
+udfEmptyResult()     { udfEmptyOrMissingArgument $@; }
 #****f* liberr/udfOnCommandNotFound
 #  SYNOPSIS
 #    udfOnCommandNotFound [<action>] <filenames>
