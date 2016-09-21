@@ -1,5 +1,5 @@
 #
-# $Id: libtst.sh 554 2016-09-20 21:37:15+04:00 toor $
+# $Id: libtst.sh 555 2016-09-21 22:18:23+04:00 toor $
 #
 #****h* BASHLYK/libtst
 #  DESCRIPTION
@@ -72,11 +72,11 @@
 #    ## TODO improve tests
 #    local foTemp
 #    _ onError return
-#    udfMakeTemp -v foTemp path=$HOME prefix=pre. suffix=.suf1                  #? true
+#    udfMakeTemp foTemp path=$HOME prefix=pre. suffix=.suf1                  #? true
 #    ls $foTemp >| grep -w "$HOME/pre\..*\.suf1"                                #? true
 #    udfMakeTemp foTemp path=$HOME prefix=pre. suffix=.suf2                     #? true
 #    ls $foTemp >| grep -w "$HOME/pre\..*\.suf2"                                #? true
-#    udfMakeTemp -v foTemp type=dir mode=0751
+#    udfMakeTemp foTemp type=dir mode=0751
 #    ls -ld $foTemp >| grep "^drwxr-x--x.*${s}$"                                #? true
 #    foTemp=$(udfMakeTemp prefix=pre. suffix=.suf3)                             #? true
 #    ls $foTemp >| grep "pre\..*\.suf3$"                                        #? true
@@ -85,17 +85,17 @@
 #    echo $foTemp
 #    test -f $foTemp                                                            #? false
 #    rm -f $foTemp
-#    $(udfMakeTemp -v foTemp path=/tmp prefix=pre. suffix=.suf5)
+#    $(udfMakeTemp foTemp path=/tmp prefix=pre. suffix=.suf5)
 #    ls -l /tmp/*.noex 2>/dev/null >| grep .*\.*suf5                            #? false
 #    unset foTemp
 #    foTemp=$(udfMakeTemp)                                                      #? true
 #    ls -l $foTemp 2>/dev/null                                                  #? true
 #    test -f $foTemp                                                            #? true
 #    rm -f $foTemp
-#    udfMakeTemp -v foTemp type=pipe						#? true
+#    udfMakeTemp foTemp type=pipe						#? true
 #    test -p $foTemp								#? true
 #    ls -l $foTemp
-#    udfMakeTemp -v 2t                                                          #? ${_bashlyk_iErrorInvalidVariable}
+#    udfMakeTemp 2t                                                             #? ${_bashlyk_iErrorInvalidVariable}
 #    udfMakeTemp path=/proc                                                     #? ${_bashlyk_iErrorNotExistNotCreated}
 #  SOURCE
 udfMakeTemp() {
@@ -106,7 +106,7 @@ udfMakeTemp() {
 
 		udfIsValidVariable $1 || eval $( udfOnError2 InvalidVariable "$1" )
 
-		eval 'export $1="$( shift; udfMakeTemp --show-only $@ )"'
+		eval 'export $1="$( shift; udfMakeTemp stdout-mode $@ )"'
 
 		[[ -n ${!1} ]] || eval $( udfOnError2 iErrorEmptyResult "$1" )
 
@@ -134,7 +134,16 @@ udfMakeTemp() {
 			 type=p*) bPipe=1;;
 			  user=*) sUser=${s#*=};;
 			 group=*) sGroup=${s#*=};;
+			  keep=*) bKeep=${s#*=};;
+	             stdout-mode) continue;;
 			       *)
+
+			        if [[ $1 == $s ]]; then
+
+					udfIsValidVariable $1 || eval $( udfOnError2 InvalidVariable "$s" )
+
+			        fi
+
 				if udfIsNumber "$2" && [[ -z "$3" ]] ; then
 
 					# compatibility with ancient version
@@ -158,7 +167,6 @@ udfMakeTemp() {
 		[[ -z "$optDir" ]] && cmd=tempfile || cmd=direct
 
 	fi
-
 
 	if [[ -z "$path" ]]; then
 
@@ -207,6 +215,7 @@ udfMakeTemp() {
 
 		rm -f  $s
 		mkfifo $s
+		: ${octMode:=0600}
 
 	fi >&2
 
