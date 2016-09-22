@@ -91,7 +91,7 @@ Fri, 06 Mar 2015 12:44:00 +0400
 + #150306 - table of error messages
 + #160701 - udfDebug - use stderr
 + #160702 - udfOnError - stderr support !!! added new wrapper udfOnError2
-- #160703 - udfMakeTemp - temporary fifo files support
++ #160703 - udfMakeTemp - temporary fifo files support
 + #160704 - udfThrowOnEmptyArgument !!! Use udfOn EmptyOrMissingArgument throw|warn|...
 + #160705 - udfChangeIni - loss % contain substring
 - #160706 - check for configuration files permissions

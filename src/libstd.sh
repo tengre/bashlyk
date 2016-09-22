@@ -1,5 +1,5 @@
 #
-# $Id: libstd.sh 555 2016-09-21 22:18:24+04:00 toor $
+# $Id: libstd.sh 556 2016-09-22 12:19:38+04:00 toor $
 #
 #****h* BASHLYK/libstd
 #  DESCRIPTION
@@ -48,8 +48,6 @@ _bashlyk_iMaxOutputLines=1000
 : ${_bashlyk_s0:=${0##*/}}
 : ${_bashlyk_sId:=${_bashlyk_s0%.sh}}
 : ${_bashlyk_afoClean:=}
-: ${_bashlyk_afnClean:=}
-: ${_bashlyk_apathClean:=}
 : ${_bashlyk_ajobClean:=}
 : ${_bashlyk_apidClean:=}
 : ${_bashlyk_pidLogSock:=}
@@ -363,7 +361,7 @@ udfMakeTemp() {
 
 	fi
 
-	local bKeep bPipe cmd IFS octMode optDir path s sGroup sPrefix sSuffix sUser
+	local bPipe cmd IFS octMode optDir path s sGroup sPrefix sSuffix sUser
 
 	cmd=direct
 	IFS=$' \t\n'
@@ -383,7 +381,6 @@ udfMakeTemp() {
 			 group=*) sGroup=${s#*=};;
 			  keep=*) continue;;
 	             stdout-mode) continue;;
-	             force-clean) continue;;
 			       *)
 
 			        if [[ $1 == $s ]]; then
@@ -418,15 +415,7 @@ udfMakeTemp() {
 
 	if [[ -z "$path" ]]; then
 
-		if [[ -z $bPipe ]]; then
-
-			path="/tmp"
-
-		else
-
-			path=$( _ pathRun )
-
-		fi
+		[[ -z $bPipe ]] && path="/tmp" || path=$( _ pathRun )
 
 	fi
 
@@ -623,11 +612,7 @@ udfShellExec() {
 #    echo $(udfAddFile2Clean $a )
 #    ls -l /tmp/*.${s}3 2>/dev/null >| grep ".*\.${s}3"                         #? false
 #  SOURCE
-udfAddFile2Clean() {
- [[ -n "$1" ]] || return 0
- _bashlyk_afnClean[$BASHPID]+=" $*"
- trap "udfOnTrap" 1 2 5 9 15 EXIT
-}
+udfAddFile2Clean() { udfAddFObj2Clean $@; }
 #******
 #****f* libstd/udfAddPath2Clean
 #  SYNOPSIS
@@ -651,11 +636,7 @@ udfAddFile2Clean() {
 #    echo $(udfAddPath2Clean $a )
 #    ls -1ld /tmp/*.${s}3 2>/dev/null >| grep ".*\.${s}3"                       #? false
 #  SOURCE
-udfAddPath2Clean() {
- [[ -n "$1" ]] || return 0
- _bashlyk_apathClean[$BASHPID]+=" $*"
- trap "udfOnTrap" 1 2 5 9 15 EXIT
-}
+udfAddPath2Clean() { udfAddFObj2Clean $@; }
 #******
 #****f* libstd/udfAddJob2Clean
 #  SYNOPSIS
@@ -665,9 +646,7 @@ udfAddPath2Clean() {
 #  DESCRIPTION
 #    функция удалена, осталась только заглушка
 #  SOURCE
-udfAddJob2Clean() {
- return 0
-}
+udfAddJob2Clean() { return 0; }
 #******
 #****f* libstd/udfAddPid2Clean
 #  SYNOPSIS
@@ -700,9 +679,7 @@ udfAddPid2Clean() {
 #  INPUTS
 #    args - имена файлов
 #  SOURCE
-udfCleanQueue() {
- udfAddFile2Clean $*
-}
+udfCleanQueue() { udfAddFile2Clean $@; }
 #******
 #****f* libstd/udfAddFObj2Clean
 #  SYNOPSIS
@@ -722,7 +699,6 @@ udfAddFObj2Clean() {
 
 }
 #******
-
 #****f* libstd/udfOnTrap
 #  SYNOPSIS
 #    udfOnTrap
@@ -748,17 +724,27 @@ udfAddFObj2Clean() {
 #    ps -p $pid -o pid= >| grep -w $pid                                         #? false
 #  SOURCE
 udfOnTrap() {
- local i s IFS=$' \t\n'
- #
- for s in ${_bashlyk_apidClean[$BASHPID]}; do
-  for i in 15 9; do
-   [[ -n "$(ps -o pid= --ppid $$ | xargs | grep -w $s)" ]] && {
-    kill -${i} $s 2>/dev/null
-    sleep 0.2
-   }
-  done
- done
- #
+
+	local i s IFS=$' \t\n'
+	local -a a
+
+	a=( ${_bashlyk_apidClean[$BASHPID]} )
+
+	for (( i=${#a[@]}-1; i>=0 ; i-- )) ; do
+
+		for s in 15 9; do
+
+			if [[ -n "$( ps -o pid= --ppid $$ | xargs | grep -w ${a[i]} )" ]]; then
+
+				kill -${s} ${a[i]} 2>/dev/null
+				sleep 0.2
+
+			fi
+
+		done
+
+	done
+
 	for s in ${_bashlyk_afoClean[$BASHPID]}; do
 
 		[[ -f $s ]] && rm -f $s && continue
@@ -767,21 +753,13 @@ udfOnTrap() {
 
 	done
 
- #
- if (( ${#_bashlyk_afnClean[$BASHPID]} > 0 )); then
-  rm -f ${_bashlyk_afnClean[$BASHPID]}
-  unset _bashlyk_afnClean[$BASHPID]
- fi
- #
- if (( ${#_bashlyk_apathClean[$BASHPID]} > 0 )); then
-  rmdir --ignore-fail-on-non-empty ${_bashlyk_apathClean[$BASHPID]} 2>/dev/null
-  unset _bashlyk_apathClean[$BASHPID]
- fi
- #
- [[ -n "${_bashlyk_pidLogSock}" ]] && {
-  exec >/dev/null 2>&1
-  wait ${_bashlyk_pidLogSock}
- }
+	if [[ -n "${_bashlyk_pidLogSock}" ]]; then
+
+		exec >/dev/null 2>&1
+		wait ${_bashlyk_pidLogSock}
+
+	fi
+
 }
 #******
 #****f* libstd/_ARGUMENTS

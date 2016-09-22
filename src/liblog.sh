@@ -1,5 +1,5 @@
 #
-# $Id: liblog.sh 543 2016-08-19 14:43:43+04:00 toor $
+# $Id: liblog.sh 556 2016-09-22 12:19:38+04:00 toor $
 #
 #****h* BASHLYK/liblog
 #  DESCRIPTION
@@ -115,7 +115,7 @@ udfLogger() {
 
  case "${bSysLog}${bUseLog}" in
   00)
-   echo "$*"
+   echo "$@"
   ;;
   01)
    udfTimeStamp "$HOSTNAME $sTagLog: ${*//%/%%}" >> $_bashlyk_fnLog
@@ -231,12 +231,9 @@ udfCheck4LogUse() {
 #  INPUTS
 #    args - префикс для выводимого сообщения о прошедших секундах
 #  EXAMPLE
-#    udfUptime test >| grep "test (.* sec)"                                     #? true
+#    udfUptime >| grep -w "^[[:digit:]]*$"                                      #? true
 #  SOURCE
-udfUptime() {
- local iDiffTime=$(($(date "+%s")-${_bashlyk_iStartTimeStamp}))
- [[ -n "$1" ]] && echo "$* ($iDiffTime sec)" || echo $iDiffTime
-}
+udfUptime() { echo $(($(date "+%s")-${_bashlyk_iStartTimeStamp})); }
 #******
 #****f* liblog/udfFinally
 #  SYNOPSIS
@@ -246,11 +243,9 @@ udfUptime() {
 #  INPUTS
 #    args - префикс для выводимого сообщения о прошедших секундах
 #  EXAMPLE
-#    udfFinally test >| grep "test (.* sec)"                                    #? true
+#    udfFinally $RANDOM >| grep "^[[:digit:]]* uptime [[:digit:]]* sec$"        #? true
 #  SOURCE
-udfFinally() {
- udfUptime $*
-}
+udfFinally() { echo "$@ uptime $( udfUptime ) sec"; }
 #******
 #****f* liblog/udfSetLogSocket
 #  SYNOPSIS

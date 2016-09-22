@@ -1,5 +1,5 @@
 #
-# $Id: liberr.sh 554 2016-09-20 21:37:14+04:00 toor $
+# $Id: liberr.sh 556 2016-09-22 12:19:38+04:00 toor $
 #
 #****h* BASHLYK/liberr
 #  DESCRIPTION
@@ -175,7 +175,7 @@ udfStackTrace() {
 #    Flexible error handling. Processing is controlled by global variables or
 #    arguments, and consists in a warning message, the function returns, or the
 #    end of the script with a certain return code. Messages may include a stack
-#    trace.
+#    trace and printed to stderr
 #  INPUTS
 #    <action> - directly determines how the error handling. Possible actions:
 #
@@ -216,18 +216,19 @@ udfStackTrace() {
 #  OUTPUT
 #    command line, which can be performed using the eval <...>
 #  EXAMPLE
-#    eval $(udfOnError echo iErrorNonValidArgument "test unit")                          #? $_bashlyk_iErrorNonValidArgument
-#    udfIsNumber 020h || eval $(udfOnError echo $? "020h")                               #? $_bashlyk_iErrorNonValidArgument
-#    udfIsValidVariable 1NonValid || eval $(udfOnError warn $? "1NonValid")              #? $_bashlyk_iErrorNonValidVariable
-#    udfIsValidVariable 2NonValid || eval $(udfOnError warn "2NonValid")                 #? $_bashlyk_iErrorNonValidVariable
-#    udfOnError exit    NonValidArgument "test unit" >| grep " exit \$?"         #? true
-#    udfOnError return  NonValidArgument "test unit" >| grep " return \$?"       #? true
-#    udfOnError retecho NonValidArgument "test unit" >| grep "echo.* return \$?" #? true
-#    udfOnError retwarn NonValidArgument "test unit" >| grep "Warn.* return \$?" #? true
-#    udfOnError throw   NonValidArgument "test unit" >| grep "dfWarn.* exit \$?" #? true
-#    eval $(udfOnError exitecho EmptyOrMissingArgument) >| grep "E.*: em.*o.*mi" #? true
+#    local cmd=udfOnError e=InvalidArgument s="$RANDOM $RANDOM"
+#    eval $($cmd echo $e "$s a")                                                #? $_bashlyk_iErrorInvalidArgument
+#    udfIsNumber 020h || eval $($cmd echo $? "020h")                            #? $_bashlyk_iErrorInvalidArgument
+#    udfIsValidVariable 1Invalid || eval $($cmd warn $? "1Invalid")             #? $_bashlyk_iErrorInvalidVariable
+#    udfIsValidVariable 2Invalid || eval $($cmd warn "2Invalid")                #? $_bashlyk_iErrorInvalidVariable
+#    $cmd exit    $e "$s b" >| grep " exit \$?"                                 #? true
+#    $cmd return  $e "$s c" >| grep " return \$?"                               #? true
+#    $cmd retecho $e "$s d" >| grep "echo.* return \$?"                         #? true
+#    $cmd retwarn $e "$s e" >| grep "Warn.* return \$?"                         #? true
+#    $cmd throw   $e "$s f" >| grep "dfWarn.* exit \$?"                         #? true
+#    eval $($cmd exitecho MissingArgument) 2>&1 >| grep "E.*: em.*o.*mi"        #? true
 #    _ onError warn
-#    eval $(udfOnError iErrorNonValidArgument "test unit")                               #? $_bashlyk_iErrorNonValidArgument
+#    eval $($cmd $e "$s g")                                                     #? $_bashlyk_iErrorInvalidArgument
 #  SOURCE
 udfOnError() {
 
@@ -300,13 +301,13 @@ udfOnError() {
 
 	case "$sAction" in
 
-		       echo) sAction="";               sMessage="echo  Warn: ${rs};";;
-		    retecho) sAction="; return \$?";   sMessage="echo Error: ${rs};";;
-		   exitecho) sAction="; exit \$?";     sMessage="echo Error: ${rs};";;
-		       warn) sAction="";               sMessage="udfWarn Warn: ${rs};";;
-		    retwarn) sAction="; return \$?";   sMessage="udfWarn Error: ${rs};";;
-		   exitwarn) sAction="; exit \$?";     sMessage="udfWarn Error: ${rs};";;
-		      throw) sAction="; exit \$?";     sMessage="udfStackTrace | udfWarn - Error: ${rs};";;
+		       echo) sAction="";               sMessage="echo  Warn: ${rs} >&2;";;
+		    retecho) sAction="; return \$?";   sMessage="echo Error: ${rs} >&2;";;
+		   exitecho) sAction="; exit \$?";     sMessage="echo Error: ${rs} >&2;";;
+		       warn) sAction="";               sMessage="udfWarn  Warn: ${rs} >&2;";;
+		    retwarn) sAction="; return \$?";   sMessage="udfWarn Error: ${rs} >&2;";;
+		   exitwarn) sAction="; exit \$?";     sMessage="udfWarn Error: ${rs} >&2;";;
+		      throw) sAction="; exit \$?";     sMessage="udfStackTrace | udfWarn - Error: ${rs} >&2;";;
 		exit|return) sAction="; $sAction \$?"; sMessage="";;
 
 	esac
@@ -315,23 +316,24 @@ udfOnError() {
 
 }
 #******
-#****f* liberr/udfOnError2
+udfOnError2() { udfOnError "$@"; }
+#****f* liberr/udfOnError1
 #  SYNOPSIS
-#    udfOnError2 [<action>] [<state>] [<message>]
+#    udfOnError1 [<action>] [<state>] [<message>]
 #  DESCRIPTION
-#    Same as udfOnError except output to stderr
+#    Same as udfOnError except output printed to stdout
 #  INPUTS
 #    see udfOnError
 #  OUTPUT
 #    see udfOnError
 #  EXAMPLE
 #    #see udfOnError
-#    eval $(udfOnError2 exitecho EmptyOrMissingArgument) 2>&1 >| grep "E.*: em.*o.*mi" #? true
-#    _ onError warn
+#    eval $(udfOnError1 exitecho EmptyOrMissingArgument) >| grep "E.*: em.*o.*mi" #? true
+#    #_ onError warn
 #  SOURCE
-udfOnError2() {
+udfOnError1() {
 
-	udfOnError "$@" | sed -re "s/;/ >\&2;/"
+	udfOnError "$@" | sed -re "s/ >\&2;/;/"
 
 }
 #******
@@ -351,9 +353,9 @@ udfOnError2() {
 #  RETURN VALUE
 #   return ${_bashlyk_iLastError[$BASHPID]} or last non zero return code or 255
 #  EXAMPLE
-#    local rc=$(echo "$RANDOM / 256" | bc)
-#    echo $(false || udfThrow rc=$?; echo ok=$?) >| grep "^Error: rc=1 .. (1)$" #? true
-#    echo $(udfSetLastError $rc || udfThrow $?; echo rc=$?) >| grep -w "$rc"    #? true
+#    local rc=$(echo "$RANDOM / 256" | bc) cmd=udfSetLastError
+#    echo $(false || udfThrow rc=$? 2>&1; echo ok=$?) >| grep "^Error: rc=1 .. (1)$" #? true
+#    echo $($cmd $rc || udfThrow $? 2>&1; echo rc=$?) >| grep -w "$rc"          #? true
 #  SOURCE
 udfThrow() {
 
@@ -465,19 +467,19 @@ udfTryEveryLine() {
 #    triggered by the condition
 #  EXAMPLE
 #    ## TODO improved tests
-#    local cmdYes='sh' cmdNo1="bin_${RANDOM}" cmdNo2="bin_${RANDOM}"
-#    udfOn CommandNotFound                                                     #? $_bashlyk_iErrorEmptyOrMissingArgument
-#    udfOn CommandNotFound $cmdNo1                                             #? $_bashlyk_iErrorCommandNotFound
-#    $(udfOn CommandNotFound $cmdNo2 || exit 123)                              #? 123
-#    udfOn CommandNotFound WARN $cmdYes $cmdNo1 $cmdNo2 >| grep "Error.*bin.*" #? true
-#    udfOn CommandNotFound Echo $cmdYes $cmdNo1 $cmdNo2 >| grep ', bin'        #? true
-#    $(udfOn CommandNotFound  Exit $cmdNo1 >/dev/null 2>&1; true)              #? $_bashlyk_iErrorCommandNotFound
-#    $(udfOn CommandNotFound Throw $cmdNo2 >/dev/null 2>&1; true)              #? $_bashlyk_iErrorCommandNotFound
-#    udfOn CommandNotFound $cmdYes                                             #? true
-#    udfOn MissingArgument ""                                                  #? $_bashlyk_iErrorMissingArgument
-#    udfOn EmptyArgument ""                                                    #? $_bashlyk_iErrorMissingArgument
-#    udfOn EmptyResult ""                                                      #? $_bashlyk_iErrorEmptyResult
-#    udfOn EmptyResult return ""                                               #? $_bashlyk_iErrorEmptyResult
+#    local cmdYes='sh' cmdNo1="bin_${RANDOM}" cmdNo2="bin_${RANDOM}" e=CommandNotFound
+#    udfOn $e                                                                   #? $_bashlyk_iErrorEmptyOrMissingArgument
+#    udfOn $e $cmdNo1                                                           #? $_bashlyk_iErrorCommandNotFound
+#    $(udfOn $e $cmdNo2 || exit 123)                                            #? 123
+#    udfOn $e WARN $cmdYes $cmdNo1 $cmdNo2 2>&1 >| grep "Error.*bin.*"          #? true
+#    udfOn $e Echo $cmdYes $cmdNo1 $cmdNo2 2>&1 >| grep ', bin'                 #? true
+#    $(udfOn $e  Exit $cmdNo1 >/dev/null 2>&1; true)                            #? $_bashlyk_iErrorCommandNotFound
+#    $(udfOn $e Throw $cmdNo2 >/dev/null 2>&1; true)                            #? $_bashlyk_iErrorCommandNotFound
+#    udfOn $e $cmdYes                                                           #? true
+#    udfOn MissingArgument ""                                                   #? $_bashlyk_iErrorMissingArgument
+#    udfOn EmptyArgument ""                                                     #? $_bashlyk_iErrorMissingArgument
+#    udfOn EmptyResult ""                                                       #? $_bashlyk_iErrorEmptyResult
+#    udfOn EmptyResult return ""                                                #? $_bashlyk_iErrorEmptyResult
 #  SOURCE
 
 udfOn() {
@@ -542,7 +544,6 @@ udfOn() {
 			(( i++ == 0 )) && csv=$s || csv+=", $s"
 
 		fi
-
 
 	done
 
@@ -672,19 +673,15 @@ udfEmptyResult()     { udfEmptyOrMissingArgument $@; }
 #    0                      - all specified filenames are found and executable
 #  EXAMPLE
 #    # see also udfOn CommandNotFound ...
-#    local cmdYes='sh' cmdNo1="bin_${RANDOM}" cmdNo2="bin_${RANDOM}"
-#    udfOnCommandNotFound                                                       #? $_bashlyk_iErrorEmptyOrMissingArgument
-#    udfOnCommandNotFound $cmdNo1                                               #? $_bashlyk_iErrorCommandNotFound
-#    $(udfOnCommandNotFound $cmdNo2 || exit 123)                                #? 123
-#    udfOnCommandNotFound WARN $cmdYes $cmdNo1 $cmdNo2 >| grep "Error.*bin.*"   #? true
-#    $(udfOnCommandNotFound Throw $cmdNo2 >/dev/null 2>&1; true)                #? $_bashlyk_iErrorCommandNotFound
-#    udfOnCommandNotFound $cmdYes                                               #? true
+#    local cmd=udfOnCommandNotFound cmdYes='sh' cmdNo1="bin_${RANDOM}" cmdNo2="bin_${RANDOM}"
+#    $cmd                                                                       #? $_bashlyk_iErrorEmptyOrMissingArgument
+#    $cmd $cmdNo1                                                               #? $_bashlyk_iErrorCommandNotFound
+#    $($cmd $cmdNo2 || exit 123)                                                #? 123
+#    $cmd WARN $cmdYes $cmdNo1 $cmdNo2 2>&1 >| grep "Error.*bin.*"              #? true
+#    $($cmd Throw $cmdNo2 >/dev/null 2>&1; true)                                #? $_bashlyk_iErrorCommandNotFound
+#    $cmd $cmdYes                                                               #? true
 #  SOURCE
-udfOnCommandNotFound() {
-
-	udfOn CommandNotFound "$@"
-
-}
+udfOnCommandNotFound() { udfOn CommandNotFound "$@"; }
 #******
 #****f* liberr/udfThrowOnCommandNotFound
 #  SYNOPSIS
@@ -704,11 +701,7 @@ udfOnCommandNotFound() {
 #    $(udfThrowOnCommandNotFound >/dev/null 2>&1)                               #? $_bashlyk_iErrorEmptyOrMissingArgument
 #    $(udfThrowOnCommandNotFound $cmdNo >/dev/null 2>&1)                        #? $_bashlyk_iErrorCommandNotFound
 #  SOURCE
-udfThrowOnCommandNotFound() {
-
-	udfOnCommandNotFound throw $*
-
-}
+udfThrowOnCommandNotFound() { udfOnCommandNotFound throw $@; }
 #******
 #****f* liberr/udfWarnOnCommandNotFound
 #  SYNOPSIS
@@ -723,16 +716,12 @@ udfThrowOnCommandNotFound() {
 #  RETURN VALUE
 #    same as udfOnCommandNotFound
 #  EXAMPLE
-#    local cmdYes="sh" cmdNo="bin_${RANDOM}"
-#    udfWarnOnCommandNotFound $cmdYes                                           #? true
-#    udfWarnOnCommandNotFound $cmdNo >| grep "Error.* command not found - bin_" #? true
-#    udfWarnOnCommandNotFound                                                   #? $_bashlyk_iErrorEmptyOrMissingArgument
+#    local cmd=udfWarnOnCommandNotFound cmdYes="sh" cmdNo="bin_${RANDOM}"
+#    $cmd $cmdYes                                                               #? true
+#    $cmd $cmdNo 2>&1 >| grep "Error.* command not found - bin_"                #? true
+#    $cmd                                                                       #? $_bashlyk_iErrorEmptyOrMissingArgument
 #  SOURCE
-udfWarnOnCommandNotFound() {
-
-	udfOnCommandNotFound warn $*
-
-}
+udfWarnOnCommandNotFound() { udfOnCommandNotFound warn $@; }
 #******
 #****f* liberr/udfOnEmptyVariable
 #  SYNOPSIS
@@ -752,21 +741,17 @@ udfWarnOnCommandNotFound() {
 #    see udfOn
 #  EXAMPLE
 #    # see also udfOn EmptyVariable
-#    local sNoEmpty='test' sEmpty='' sMoreEmpty=''
-#    udfOnEmptyVariable                                                         #? $_bashlyk_iErrorEmptyOrMissingArgument
-#    udfOnEmptyVariable sEmpty                                                  #? $_bashlyk_iErrorEmptyVariable
-#    $(udfOnEmptyVariable sEmpty || exit 111)                                   #? 111
-#    udfOnEmptyVariable WARN sEmpty sNoEmpty sMoreEmpty >| grep "Error.*y, s"   #? true
-#    udfOnEmptyVariable Echo sEmpty sMoreEmpty >| grep 'y, s'                   #? true
-#    $(udfOnEmptyVariable  Exit sEmpty >/dev/null 2>&1; true)                   #? $_bashlyk_iErrorEmptyVariable
-#    $(udfOnEmptyVariable Throw sEmpty >/dev/null 2>&1; true)                   #? $_bashlyk_iErrorEmptyVariable
-#    udfOnEmptyVariable sNoEmpty                                                #? true
+#    local cmd=udfOnEmptyVariable sNoEmpty='test' sEmpty='' sMoreEmpty=''
+#    $cmd                                                                       #? $_bashlyk_iErrorEmptyOrMissingArgument
+#    $cmd sEmpty                                                                #? $_bashlyk_iErrorEmptyVariable
+#    $($cmd sEmpty || exit 111)                                                 #? 111
+#    $cmd WARN sEmpty sNoEmpty sMoreEmpty 2>&1 >| grep "Error.*y, s"            #? true
+#    $cmd Echo sEmpty sMoreEmpty 2>&1 >| grep 'y, s'                            #? true
+#    $($cmd  Exit sEmpty >/dev/null 2>&1; true)                                 #? $_bashlyk_iErrorEmptyVariable
+#    $($cmd Throw sEmpty >/dev/null 2>&1; true)                                 #? $_bashlyk_iErrorEmptyVariable
+#    $cmd sNoEmpty                                                              #? true
 #  SOURCE
-udfOnEmptyVariable() {
-
-	udfOn EmptyVariable "$@"
-
-}
+udfOnEmptyVariable() { udfOn EmptyVariable "$@"; }
 #******
 #****f* liberr/udfThrowOnEmptyVariable
 #  SYNOPSIS
@@ -786,10 +771,7 @@ udfOnEmptyVariable() {
 #    udfThrowOnEmptyVariable sNoEmpty                                           #? true
 #    $(udfThrowOnEmptyVariable sEmpty >/dev/null 2>&1)                          #? $_bashlyk_iErrorEmptyVariable
 #  SOURCE
-udfThrowOnEmptyVariable() {
-
-	udfOnEmptyVariable throw "$@"
-}
+udfThrowOnEmptyVariable() { udfOnEmptyVariable throw "$@"; }
 #******
 #****f* liberr/udfWarnOnEmptyVariable
 #  SYNOPSIS
@@ -805,15 +787,11 @@ udfThrowOnEmptyVariable() {
 #  RETURN VALUE
 #    same as udfOnEmptyVariable
 #  EXAMPLE
-#    local sNoEmpty='test' sEmpty=''
-#    udfWarnOnEmptyVariable sNoEmpty                                            #? true
-#    udfWarnOnEmptyVariable sEmpty >| grep "Error: empty variable - sEmpty.*"   #? true
+#    local cmd=udfWarnOnEmptyVariable sNoEmpty='test' sEmpty=''
+#    $cmd sNoEmpty                                                              #? true
+#    $cmd sEmpty 2>&1 >| grep "Error: empty variable - sEmpty.*"                     #? true
 #  SOURCE
-udfWarnOnEmptyVariable() {
-
-	udfOnEmptyVariable Warn "$@"
-
-}
+udfWarnOnEmptyVariable() { udfOnEmptyVariable Warn "$@"; }
 #******
 #****f* liberr/udfOnEmptyOrMissingArgument
 #  SYNOPSIS
@@ -830,23 +808,19 @@ udfWarnOnEmptyVariable() {
 #  OUTPUT
 #   see udfOn
 #  EXAMPLE
-#    local sNoEmpty='test' sEmpty='' sMoreEmpty=''
-#    udfOnEmptyOrMissingArgument                                                #? $_bashlyk_iErrorEmptyOrMissingArgument
-#    udfOnEmptyOrMissingArgument "$sEmpty"                                      #? $_bashlyk_iErrorEmptyOrMissingArgument
-#    $(udfOnEmptyOrMissingArgument "$sEmpty" || exit 111)                       #? 111
-#    udfOnEmptyOrMissingArgument WARN "$sEmpty" "$sNoEmpty" "$sMoreEmpty" >| grep "Error.*1, 3" #? true
-#    udfOnEmptyOrMissingArgument Echo "$sEmpty" "$sMoreEmpty" >| grep '1, 2'    #? true
-#    udfOnEmptyOrMissingArgument WARN "$sEmpty" "$sNoEmpty" "$sMoreEmpty"       #? $_bashlyk_iErrorEmptyOrMissingArgument
-#    udfOnEmptyOrMissingArgument Echo "$sEmpty" "$sMoreEmpty"                   #? $_bashlyk_iErrorEmptyOrMissingArgument
-#    $(udfOnEmptyOrMissingArgument Exit "$sEmpty" >/dev/null 2>&1; true)        #? $_bashlyk_iErrorEmptyOrMissingArgument
-#    $(udfOnEmptyOrMissingArgument Throw "$sEmpty" >/dev/null 2>&1; true)       #? $_bashlyk_iErrorEmptyOrMissingArgument
-#    udfOnEmptyOrMissingArgument "$sNoEmpty"                                    #? true
+#    local cmd=udfOnEmptyOrMissingArgument sNoEmpty='test' sEmpty='' sMoreEmpty=''
+#    $cmd                                                                       #? $_bashlyk_iErrorEmptyOrMissingArgument
+#    $cmd "$sEmpty"                                                             #? $_bashlyk_iErrorEmptyOrMissingArgument
+#    $($cmd "$sEmpty" || exit 111)                                              #? 111
+#    $cmd WARN "$sEmpty" "$sNoEmpty" "$sMoreEmpty" 2>&1 >| grep "Error.*1, 3"   #? true
+#    $cmd Echo "$sEmpty" "$sMoreEmpty" 2>&1 >| grep '1, 2'                      #? true
+#    $cmd WARN "$sEmpty" "$sNoEmpty" "$sMoreEmpty" 2>&1                         #? $_bashlyk_iErrorEmptyOrMissingArgument
+#    $cmd Echo "$sEmpty" "$sMoreEmpty" 2>&1                                     #? $_bashlyk_iErrorEmptyOrMissingArgument
+#    $($cmd Exit "$sEmpty" >/dev/null 2>&1; true)                               #? $_bashlyk_iErrorEmptyOrMissingArgument
+#    $($cmd Throw "$sEmpty" >/dev/null 2>&1; true)                              #? $_bashlyk_iErrorEmptyOrMissingArgument
+#    $cmd "$sNoEmpty"                                                           #? true
 #  SOURCE
-udfOnEmptyOrMissingArgument() {
-
-	udfOn EmptyOrMissingArgument "$@"
-
-}
+udfOnEmptyOrMissingArgument() { udfOn EmptyOrMissingArgument "$@"; }
 #******
 #****f* liberr/udfThrowOnEmptyMissingArgument
 #  SYNOPSIS
@@ -865,11 +839,7 @@ udfOnEmptyOrMissingArgument() {
 #    udfThrowOnEmptyVariable sNoEmpty                                           #? true
 #    $(udfThrowOnEmptyOrMissingArgument "$sEmpty" >/dev/null 2>&1)              #? $_bashlyk_iErrorEmptyOrMissingArgument
 #  SOURCE
-udfThrowOnEmptyOrMissingArgument() {
-
-	udfOnEmptyOrMissingArgument throw "$@"
-
-}
+udfThrowOnEmptyOrMissingArgument() { udfOnEmptyOrMissingArgument throw "$@"; }
 #******
 #****f* liberr/udfWarnOnEmptyOrMissingArgument
 #  SYNOPSIS
@@ -886,11 +856,7 @@ udfThrowOnEmptyOrMissingArgument() {
 #  EXAMPLE
 #    local sNoEmpty='test' sEmpty=''
 #    udfWarnOnEmptyOrMissingArgument "$sNoEmpty"                                #? true
-#    udfWarnOnEmptyOrMissingArgument "$sEmpty" >| grep "Error: empty or miss.*" #? true
+#    udfWarnOnEmptyOrMissingArgument "$sEmpty" 2>&1 >| grep "Error: empty or miss.*" #? true
 #  SOURCE
-udfWarnOnEmptyOrMissingArgument() {
-
-	udfOnEmptyOrMissingArgument Warn "$@"
-
-}
+udfWarnOnEmptyOrMissingArgument() { udfOnEmptyOrMissingArgument warn "$@"; }
 #******
