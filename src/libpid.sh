@@ -1,5 +1,5 @@
 #
-# $Id: libpid.sh 549 2016-09-15 17:17:09+04:00 toor $
+# $Id: libpid.sh 556 2016-09-22 13:56:01+04:00 toor $
 #
 #****h* BASHLYK/libpid
 #  DESCRIPTION
@@ -38,8 +38,8 @@
 : ${_bashlyk_s0:=${0##*/}}
 : ${_bashlyk_pathRun:=/tmp}
 : ${_bashlyk_sArg:=$*}
-: ${_bashlyk_aRequiredCmd_pid:="head mkdir printf ps rm rmdir"}
-: ${_bashlyk_aExport_pid:="udfCheckStarted udfSetPid udfExitIfAlreadyStarted"}
+: ${_bashlyk_aRequiredCmd_pid:="head kill mkdir printf ps rm rmdir sleep xargs"}
+: ${_bashlyk_aExport_pid:="udfCheckStarted udfClean udfExitIfAlreadyStarted udfSetPid udfStopProcess"}
 #******
 #****f* libpid/udfCheckStarted
 #  SYNOPSIS

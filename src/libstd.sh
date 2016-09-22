@@ -1,5 +1,5 @@
 #
-# $Id: libstd.sh 556 2016-09-22 12:19:38+04:00 toor $
+# $Id: libstd.sh 557 2016-09-22 17:22:39+04:00 toor $
 #
 #****h* BASHLYK/libstd
 #  DESCRIPTION
@@ -59,17 +59,15 @@ _bashlyk_iMaxOutputLines=1000
 : ${_bashlyk_emailSubj:="${_bashlyk_sUser}@${HOSTNAME}::${_bashlyk_s0}"}
 : ${_bashlyk_reMetaRules:='34=":40=(:41=):59=;:91=[:92=\\:93=]:61=='}
 : ${_bashlyk_envXSession:=}
-: ${_bashlyk_aRequiredCmd_std:="cat chgrp chmod chown cut date echo false grep \
-  hostname kill logname md5sum mkdir mktemp ps pwd rm rmdir sed sleep tempfile \
-  touch true tr which xargs"}
-: ${_bashlyk_aExport_std:="udfIsNumber udfBaseId udfTimeStamp udfDate          \
-  udfShowVariable udfIsValidVariable udfQuoteIfNeeded udfWSpace2Alias          \
-  udfAlias2WSpace udfMakeTemp udfMakeTempV udfPrepare2Exec udfShellExec        \
-  udfAddFile2Clean udfAddPath2Clean udfAddJob2Clean udfAddPid2Clean            \
-  udfCleanQueue udfOnTrap _ARGUMENTS _s0 _pathDat udfPrepareByType _ _getv     \
-  _gete _set udfCheckCsv udfGetMd5 udfGetPathMd5 udfXml udfSerialize           \
-  udfBashlykUnquote"}
-
+: ${_bashlyk_aRequiredCmd_std:="cat chgrp chmod chown cut date echo grep hostname kill \
+  logname md5sum mkdir mkfifo mktemp ps pwd rm rmdir sed sleep tempfile touch tr which \
+  xargs"}
+: ${_bashlyk_aExport_std:="_ _ARGUMENTS _gete _getv _pathDat _s0 _set udfAddFile2Clean  \
+  udfAddFObj2Clean udfAddJob2Clean udfAddPath2Clean udfAddPid2Clean udfAlias2WSpace     \
+  udfBaseId udfBashlykUnquote udfCheckCsv udfCleanQueue udfDate udfGetMd5 udfGetPathMd5 \
+  udfIsNumber udfIsValidVariable udfLocalVarFromCSV udfMakeTemp udfMakeTempV udfOnTrap  \
+  udfPrepare2Exec udfPrepareByType udfQuoteIfNeeded udfSerialize udfShellExec           \
+  udfShowVariable udfTimeStamp udfWSpace2Alias udfXml"}
 #******
 #****f* libstd/udfIsNumber
 #  SYNOPSIS
@@ -886,7 +884,9 @@ udfPrepareByType() {
 #    iErrorNonValidVariable       - не валидный идентификатор
 #    0                            - успешная операция
 #  EXAMPLE
-#    local sS sWSpaceAlias pid=$BASHPID
+#    local sS sWSpaceAlias pid=$BASHPID k=key1 v=val1
+#    _ k=sWSpaceAlias
+#    echo "$k" >| grep "^${_bashlyk_sWSpaceAlias}$"                             #? true
 #    _ sS=sWSpaceAlias
 #    echo "$sS" >| grep "^${_bashlyk_sWSpaceAlias}$"                            #? true
 #    _ =sWSpaceAlias
@@ -905,12 +905,11 @@ udfPrepareByType() {
 #  SOURCE
 _(){
 
-	local IFS=$' \t\n' k v
-
-	[[ -n "$1" ]] || eval $(udfOnError return iErrorEmptyOrMissingArgument)
+	udfOn MissingArgument $1 || return $?
 
 	if (( $# > 1 )); then
 
+		## TODO check for valid required
 		eval "_bashlyk_${1##*=}=\"$2\""
 
 	else
@@ -918,17 +917,23 @@ _(){
 		case "$1" in
 
 		*=*)
-			k=${1%=*}
-			v=${1##*=}
-			[[ -n "$k" ]] || k="$( udfPrepareByType "$v" )"
-			udfIsValidVariable $k || eval $(udfOnError return $? $k)
-			v="$( udfPrepareByType "_bashlyk_${v}" )"
-			eval "export $k=\$${v}"
+
+			if [[ -n "${1%=*}" ]]; then
+
+				udfOn InvalidVariable ${1%=*} || return $?
+				eval "export ${1%=*}=\$$( udfPrepareByType "_bashlyk_${1##*=}" )"
+
+			else
+
+				udfOn InvalidVariable $( udfPrepareByType "${1##*=}" ) || return $?
+				eval "export $( udfPrepareByType "${1##*=}" )=\$$( udfPrepareByType "_bashlyk_${1##*=}" )"
+
+			fi
+
         ;;
 
 		*)
-			k="$( udfPrepareByType "_bashlyk_${1}" )"
-			eval "echo \$${k}"
+			eval "echo \$$( udfPrepareByType "_bashlyk_${1}" )"
 		;;
   esac
  fi
@@ -1014,7 +1019,7 @@ _set() {
 #******
 #****f* libstd/udfCheckCsv
 #  SYNOPSIS
-#    udfCheckCsv "<csv;>" [<varname>]
+#    udfCheckCsv "<csv;>" [[-v] <varname>]
 #  DESCRIPTION
 #    Нормализация CSV-строки <csv;>. Приведение к виду "ключ=значение" полей.
 #    В случае если поле не содержит ключа или ключ содержит пробел, то к полю
@@ -1046,33 +1051,55 @@ _set() {
 #    udfCheckCsv                                                                #? ${_bashlyk_iErrorEmptyOrMissingArgument}
 #  SOURCE
 udfCheckCsv() {
- local IFS=$' \t\n'
- [[ -n "$1" ]] || eval $(udfOnError return iErrorEmptyOrMissingArgument)
- local bashlyk_s_Q1eiphgO bashlyk_k_Q1eiphgO bashlyk_v_Q1eiphgO bashlyk_i_Q1eiphgO bashlyk_csvResult_Q1eiphgO
- #
- IFS=';'
- bashlyk_i_Q1eiphgO=0
- bashlyk_csvResult_Q1eiphgO=''
- #
- for bashlyk_s_Q1eiphgO in $1; do
-  bashlyk_s_Q1eiphgO=$(echo $bashlyk_s_Q1eiphgO | tr -d "'" | tr -d '"' | sed -e "s/^\[.*\];//")
-  bashlyk_k_Q1eiphgO="$(echo ${bashlyk_s_Q1eiphgO%%=*}|xargs)"
-  bashlyk_v_Q1eiphgO="$(echo ${bashlyk_s_Q1eiphgO#*=}|xargs)"
-  [[ -n "$bashlyk_k_Q1eiphgO" ]] || continue
-  if [[ "$bashlyk_k_Q1eiphgO" == "$bashlyk_v_Q1eiphgO" || -n "$(echo "$bashlyk_k_Q1eiphgO" | grep '.*[[:space:]+].*')" ]]; then
-   bashlyk_k_Q1eiphgO=${_bashlyk_sUnnamedKeyword}${bashlyk_i_Q1eiphgO}
-   bashlyk_i_Q1eiphgO=$((bashlyk_i_Q1eiphgO+1))
-  fi
-  IFS=' ' bashlyk_csvResult_Q1eiphgO+="$bashlyk_k_Q1eiphgO=$(udfQuoteIfNeeded $bashlyk_v_Q1eiphgO);"
- done
- IFS=$' \t\n'
- if [[ -n "$2" ]]; then
-  udfIsValidVariable "$2" || eval $(udfOnError return iErrorNonValidVariable '$2')
-  eval 'export ${2}="${bashlyk_csvResult_Q1eiphgO}"'
- else
-  echo "$bashlyk_csvResult_Q1eiphgO"
- fi
- return 0
+
+	if [[ -n "$2" ]]; then
+
+		[[ "$2" == "-v" ]] && shift
+
+		udfIsValidVariable $2 || eval $( udfOnError return InvalidVariable "$2" )
+
+		eval 'export $2="$( udfCheckCsv "$1" )"'
+
+		[[ -n ${!2} ]] || eval $( udfOnError return iErrorEmptyResult "$2" )
+
+		return 0
+
+	fi
+
+	udfOn MissingArgument $1 || return $?
+
+	local csvResult i IFS k s v
+
+	IFS=';'
+	i=0
+	csvResult=''
+	
+	for s in $1; do
+
+		s=${s/\[*\][;]/}
+		s=${s//[\'\"]/}
+
+		k="$(echo ${s%%=*}|xargs)"
+		v="$(echo ${s#*=}|xargs)"
+
+		[[ -n "$k" ]] || continue
+		if [[ "$k" == "$v" || -n "$(echo "$k" | grep '.*[[:space:]+].*')" ]]; then
+
+			k=${_bashlyk_sUnnamedKeyword}${i}
+			i=$((i+1))
+
+		fi
+
+		IFS=' ' csvResult+="$k=$(udfQuoteIfNeeded $v);"
+
+	done
+
+	IFS=$' \t\n'
+
+	echo "$csvResult"
+
+	[[ -n $csvResult ]] && return 0 || return $( _ iErrorEmptyResult )
+
 }
 #******
 #****f* libstd/udfGetMd5

@@ -1,5 +1,5 @@
 #
-# $Id: liberr.sh 556 2016-09-22 12:19:38+04:00 toor $
+# $Id: liberr.sh 557 2016-09-22 17:22:39+04:00 toor $
 #
 #****h* BASHLYK/liberr
 #  DESCRIPTION
@@ -90,13 +90,13 @@ _bashlyk_hError[$_bashlyk_iErrorTryBoxException]="try box exception"
 #
 : ${_bashlyk_onError:=throw}
 : ${_bashlyk_sArg:=$*}
-: ${_bashlyk_aRequiredCmd_err:="echo exit printf sed which"}
-: ${_bashlyk_aExport_err:="udfCommandNotFound udfEmptyOrMissingArgument udfOn  \
-  udfEmptyVariable udfOnCommandNotFound udfOnEmptyOrMissingArgument            \
-  udfOnEmptyVariable udfOnError udfOnError2 udfSetLastError udfStackTrace      \
-  udfThrow udfThrowOnCommandNotFound udfThrowOnEmptyOrMissingArgument          \
-  udfThrowOnEmptyVariable udfWarnOnCommandNotFound                             \
-  udfWarnOnEmptyOrMissingArgument udfWarnOnEmptyVariable"}
+: ${_bashlyk_aRequiredCmd_err:="echo printf sed which"}
+: ${_bashlyk_aExport_err:="udfCommandNotFound udfEmptyArgument udfEmptyOrMissingArgument   \
+  udfEmptyResult udfEmptyVariable udfInvalidVariable udfMissingArgument udfOn              \
+  udfOnCommandNotFound udfOnEmptyOrMissingArgument udfOnEmptyVariable udfOnError           \
+  udfOnError1 udfOnError2 udfSetLastError udfStackTrace udfThrow udfThrowOnCommandNotFound \
+  udfThrowOnEmptyOrMissingArgument udfThrowOnEmptyVariable udfTryEveryLine                 \
+  udfWarnOnCommandNotFound udfWarnOnEmptyOrMissingArgument udfWarnOnEmptyVariable"}
 #******
 #****f* liberr/udfSetLastError
 #  SYNOPSIS
@@ -480,6 +480,7 @@ udfTryEveryLine() {
 #    udfOn EmptyArgument ""                                                     #? $_bashlyk_iErrorMissingArgument
 #    udfOn EmptyResult ""                                                       #? $_bashlyk_iErrorEmptyResult
 #    udfOn EmptyResult return ""                                                #? $_bashlyk_iErrorEmptyResult
+#    udfOn InvalidVariable invalid+variable                                     #? $_bashlyk_iErrorInvalidVariable
 #  SOURCE
 
 udfOn() {

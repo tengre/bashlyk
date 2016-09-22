@@ -1,5 +1,5 @@
 #
-# $Id: libini.sh 543 2016-08-19 14:43:42+04:00 toor $
+# $Id: libini.sh 556 2016-09-22 13:56:00+04:00 toor $
 #
 #****h* BASHLYK/libini
 #  DESCRIPTION
@@ -39,13 +39,13 @@
 : ${_bashlyk_sUnnamedKeyword:=_bashlyk_ini_void_autoKey_}
 : ${_bashlyk_aRequiredCmd_ini:="awk cat cut dirname echo false grep mawk mkdir \
   mv printf pwd rm sed sort touch tr true uniq xargs"}
-: ${_bashlyk_aExport_ini:="udfGetIniSection udfReadIniSection                  \
-  udfReadIniSection2Var udfCsvOrder udfAssembly udfSetVarFromCsv               \
-  udfSetVarFromIni udfCsvKeys udfIniWrite udfIniChange udfGetIni               \
-  udfGetCsvSection udfGetCsvSection2Var udfGetIniSection2Var udfCsvOrder2Var   \
-  udfCsvKeys2Var udfGetIni2Var udfSelectEnumFromCsvHash udfIniGroupSection2Csv \
-  udfIniGroupSection2CsvVar udfIni2Csv udfIni2CsvVar udfIniGroup2Csv           \
-  udfIniGroup2CsvVar udfIni udfCsvHash2Raw udfOptions2Ini"}
+: ${_bashlyk_aExport_ini:="udfAssembly udfCsvHash2Raw udfCsvKeys udfCsvKeys2Var       \
+  udfCsvOrder udfCsvOrder2Var udfGetCsvSection udfGetCsvSection2Var udfGetIni         \
+  udfGetIni2Var udfGetIniSection udfGetIniSection2Var udfIni udfIni2Csv udfIni2CsvVar \
+  udfIniChange udfIniGroup2Csv udfIniGroup2CsvVar udfIniGroupSection2Csv              \
+  udfIniGroupSection2CsvVar udfIniSection2Csv udfIniSection2CsvVar udfIniWrite        \
+  udfOptions2Ini udfReadIniSection udfReadIniSection2Var udfSelectEnumFromCsvHash     \
+  udfSetVarFromCsv udfSetVarFromIni"}
 #******
 #****f* libini/udfGetIniSection
 #  SYNOPSIS

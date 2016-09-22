@@ -1,5 +1,5 @@
 #
-# $Id: liblog.sh 556 2016-09-22 12:19:38+04:00 toor $
+# $Id: liblog.sh 556 2016-09-22 13:56:00+04:00 toor $
 #
 #****h* BASHLYK/liblog
 #  DESCRIPTION
@@ -51,8 +51,8 @@
 : ${_bashlyk_sCond4Log:=redirect}
 : ${_bashlyk_aRequiredCmd_log:="date dirname echo hostname logger mkdir mkfifo \
   printf rm touch tty"}
-: ${_bashlyk_aExport_log:="udfLogger udfLog udfIsInteract udfIsTerminal _fnLog \
-  udfCheck4LogUse udfFinally udfSetLogSocket udfSetLog  udfUptime udfDebug"}
+: ${_bashlyk_aExport_log:="_fnLog udfCheck4LogUse udfDebug udfFinally udfIsInteract \
+  udfIsTerminal udfLog udfLogger udfSetLog udfSetLogSocket udfUptime"}
 #******
 #****f* liblog/udfLogger
 #  SYNOPSIS
