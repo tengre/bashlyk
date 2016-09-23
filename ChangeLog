@@ -1,3 +1,52 @@
+Fri, 23 Sep 2016 15:36:50 +0400
+	New upstream release
+	Version 1.86
+
+ - added flag _bashlyk_log=nouse for for the unconditional disabling of logging
+ - added new library libnet with functions udfGetValid{IPsOnly,CIDR}
+ - updated external command and exported functions lists
+
+libstd.sh:
+ - enhanced udfMakeTemp with temporary pipe creating feature:
+   * used recursive call for assign result to variable
+   * randomized local variables not required
+   * added bash printf like syntax support for variable assign - '-v'
+   * rewrited robodoc and test units
+   * supported old version behavior when used first argument as valid variable
+   * used single function udfAddFObj2Clean instead udfAdd{File,Path}2Clean
+   * improved code, used 5 letters constraint for prefix (tempfile behavior)
+   * chown, chgrp executed only by root
+ - updated dependence udfMakeTempV (absolete function)
+ - rewrited udfCheckCsv:
+   * randomized local variable not required
+   * used  recursive call for assign result to variable
+   * added bash printf like syntax support for variable assign - '-v'
+ - fixed function _() bug of mask external $k and $v variables, local variables
+   do not used now
+ - added function udfAddFObj2Clean and global variable _bashlyk_afoClean for
+   collect temporary filesystem objects to single list
+ - udfAdd{File,Path}2Clean now aliases for udfAddFObj2Clean
+ - improved udfOntrap - child processes terminate in reverse order, handled
+   common list of temporary objects
+ - added function udfLocalVarFromCSV for define local variables from CSV-string,
+   e.g. INI options list for libini::udfIni function
+liberr.sh:
+ - udfOnError now (and alias udfOnError2) printed messages to stderr
+ - added function udOnfError1 that printed messages to stdout
+ - updated test units for support changes, increased perceptivity
+ - udfOn - check handler for the state by using 'typeset -f', added support for:
+   * Empty{Argument,Result}
+   * Invalid{Argument,Variable}
+ - removed error code 255 from table ( used as 'out by range' by system), states
+   shifted
+ - added new error state InvalidFunction
+liblog.sh:
+ - udfUptime - shows only decimal number of seconds
+ - udfFinally - shows the text of runtime
+libpid.sh:
+ - add new function udfStopProcess
+ - improved udfCheckProcess - PID checked as number, updated test and robodoc
+
 Mon, 22 Aug 2016 02:06:21 +0400
 	New upstream release
 	Version 1.85

@@ -1,5 +1,5 @@
 #
-# $Id: libstd.sh 557 2016-09-22 17:22:39+04:00 toor $
+# $Id: libstd.sh 558 2016-09-23 15:40:27+04:00 toor $
 #
 #****h* BASHLYK/libstd
 #  DESCRIPTION
@@ -1019,48 +1019,56 @@ _set() {
 #******
 #****f* libstd/udfCheckCsv
 #  SYNOPSIS
-#    udfCheckCsv "<csv;>" [[-v] <varname>]
+#    udfCheckCsv [[-v] <varname>] "<csv>;"
 #  DESCRIPTION
-#    Нормализация CSV-строки <csv;>. Приведение к виду "ключ=значение" полей.
-#    В случае если поле не содержит ключа или ключ содержит пробел, то к полю
-#    добавляется ключ вида _bashlyk_unnamed_key_<инкремент>, всё содержимое поля
-#    становится значением.
-#    Результат выводится в стандартный вывод или в переменную, если имеется
-#    второй аргумент функции <varname>
+#    Bringing the format "key = value" fields of the CSV-line. If the field does
+#    not contain a key or key contains a space, then the field receives key
+#    species _bashlyk_unnamed_key_<increment>, and all the contents of the field
+#    becomes the value. The result is printed to stdout or assigned to the <var>
+#    variable if the first argument is listed as -v <var> ( -v can be skipped )
 #  INPUTS
-#    csv;    - CSV-строка, разделённая ";"
-#    varname - идентификатор переменной (без "$ "). При его наличии результат
-#              будет помещен в соответствующую переменную. При отсутствии такого
-#              идентификатора результат будет выдан на стандартный вывод
-#    Важно! Экранировать аргументы двойными кавычками, если есть вероятность
-#    наличия в них пробелов
+#    csv;    - CSV-string, separated by ';'
+#    Important! Enclose the string in double quotes if it can contain spaces
+#    Important! The string must contain the field sign ";"
+#    varname - variable identifier (without the "$"). If present the result will
+#    be assigned to this variable, otherwise result will be printed to stdout
 #  OUTPUT
-#              разделенный символом ";" строка, в полях которого содержатся
-#              данные в формате "<key>=<value>;..."
+#    separated by a ";" CSV-string in fields that contain data in the format
+#    "<key> = <value>; ..."
 #  RETURN VALUE
-#    iErrorEmptyOrMissingArgument - аргумент не задан
-#    iErrorNonValidVariable       - не валидный идентификатор
-#    0                            - успешная операция
+#    EmptyResult     - empty result
+#    MissingArgument - no arguments
+#    InvalidArgument - invalid argument
+#    InvalidVariable - invalid variable for output assign
+#    0               - success
 #  EXAMPLE
-#    local s="a=b;a=c;s=a b c d e f;test value" r
-#    local csv='^a=b;a=c;s="a b c d e f";_bashlyk_unnamed_key_0="test value";$'
-#    udfCheckCsv "$s" >| grep "$csv"                                            #? true
-#    udfCheckCsv "$s" r                                                         #? true
-#    echo $r >| grep "$csv"                                                     #? true
-#    udfCheckCsv "$s" 2r                                                        #? ${_bashlyk_iErrorNonValidVariable}
-#    udfCheckCsv                                                                #? ${_bashlyk_iErrorEmptyOrMissingArgument}
+#    local cmd=udfCheckCsv csv="a=b;a=c;s=a b c d e f;test value" v1 v2
+#    local re='^a=b;a=c;s="a b c d e f";_bashlyk_unnamed_key_0="test value";$'
+#    $cmd "$csv" >| grep "$re"                                                  #? true
+#    $cmd -v v1 "$csv"                                                          #? true
+#    echo $v1 >| grep "$re"                                                     #? true
+#    $cmd  v2 "$csv"                                                            #? true
+#    echo $v2 >| grep "$re"                                                     #? true
+#    $cmd  v2 ""                                                                #? ${_bashlyk_iErrorEmptyResult}
+#    echo $v2 >| grep "$re"                                                     #? false
+#    $cmd -v invalid+variable "$csv"                                            #? ${_bashlyk_iErrorInvalidVariable}
+#    $cmd    invalid+variable "$csv"                                            #? ${_bashlyk_iErrorInvalidVariable}
+#    $cmd invalid+variable                                                      #? ${_bashlyk_iErrorInvalidArgument}
+#    $cmd _valid_variable_                                                      #? ${_bashlyk_iErrorInvalidArgument}
+#    $cmd 'csv data;' | grep '^_bashlyk_unnamed_key_0="csv data";$'             #? true
+#    $cmd                                                                       #? ${_bashlyk_iErrorMissingArgument}
 #  SOURCE
 udfCheckCsv() {
 
-	if [[ -n "$2" ]]; then
+	if (( $# > 1 )); then
 
-		[[ "$2" == "-v" ]] && shift
+		[[ "$1" == "-v" ]] && shift
 
-		udfIsValidVariable $2 || eval $( udfOnError return InvalidVariable "$2" )
+		udfIsValidVariable $1 || eval $( udfOnError return InvalidVariable "$1" )
 
-		eval 'export $2="$( udfCheckCsv "$1" )"'
+		eval 'export $1="$( shift; udfCheckCsv "$1" )"'
 
-		[[ -n ${!2} ]] || eval $( udfOnError return iErrorEmptyResult "$2" )
+		[[ -n ${!1} ]] || eval $( udfOnError return EmptyResult "$1" )
 
 		return 0
 
@@ -1068,12 +1076,14 @@ udfCheckCsv() {
 
 	udfOn MissingArgument $1 || return $?
 
-	local csvResult i IFS k s v
+	[[ $1 =~ \; ]] || return $( _ iErrorInvalidArgument )
+
+	local csv i IFS k s v
 
 	IFS=';'
 	i=0
-	csvResult=''
-	
+	csv=''
+
 	for s in $1; do
 
 		s=${s/\[*\][;]/}
@@ -1090,15 +1100,15 @@ udfCheckCsv() {
 
 		fi
 
-		IFS=' ' csvResult+="$k=$(udfQuoteIfNeeded $v);"
+		IFS=' ' csv+="$k=$(udfQuoteIfNeeded $v);"
 
 	done
 
 	IFS=$' \t\n'
 
-	echo "$csvResult"
+	echo "$csv"
 
-	[[ -n $csvResult ]] && return 0 || return $( _ iErrorEmptyResult )
+	[[ -n $csv ]] && return 0 || return $( _ iErrorEmptyResult )
 
 }
 #******
