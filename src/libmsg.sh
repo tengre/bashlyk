@@ -1,5 +1,5 @@
 #
-# $Id: libmsg.sh 543 2016-08-19 14:43:43+04:00 toor $
+# $Id: libmsg.sh 556 2016-09-22 13:56:00+04:00 toor $
 #
 #****h* BASHLYK/libmsg
 #  DESCRIPTION
@@ -34,8 +34,8 @@
 : ${_bashlyk_emailRcpt:=postmaster}
 : ${_bashlyk_emailSubj:="${_bashlyk_sUser}@${HOSTNAME}::${_bashlyk_s0}"}
 : ${_bashlyk_envXSession:=}
-: ${_bashlyk_aRequiredCmd_msg:="cat cut echo grep head mail printf ps rm sort  \
-  stat tee uniq which write notify-send|kdialog|zenity|xmessage"}
+: ${_bashlyk_aRequiredCmd_msg:="cat cut echo grep head hostname logname mail printf \
+  ps rm sort stat tee uniq which write notify-send|kdialog|zenity|xmessage"}
 : ${_bashlyk_aExport_msg:="udfEcho udfGetXSessionProperties udfMail udfMessage \
   udfNotify2X udfNotifyCommand udfWarn"}
 #******

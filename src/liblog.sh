@@ -1,5 +1,5 @@
 #
-# $Id: liblog.sh 543 2016-08-19 14:43:43+04:00 toor $
+# $Id: liblog.sh 556 2016-09-22 13:56:00+04:00 toor $
 #
 #****h* BASHLYK/liblog
 #  DESCRIPTION
@@ -51,8 +51,8 @@
 : ${_bashlyk_sCond4Log:=redirect}
 : ${_bashlyk_aRequiredCmd_log:="date dirname echo hostname logger mkdir mkfifo \
   printf rm touch tty"}
-: ${_bashlyk_aExport_log:="udfLogger udfLog udfIsInteract udfIsTerminal _fnLog \
-  udfCheck4LogUse udfFinally udfSetLogSocket udfSetLog  udfUptime udfDebug"}
+: ${_bashlyk_aExport_log:="_fnLog udfCheck4LogUse udfDebug udfFinally udfIsInteract \
+  udfIsTerminal udfLog udfLogger udfSetLog udfSetLogSocket udfUptime"}
 #******
 #****f* liblog/udfLogger
 #  SYNOPSIS
@@ -115,7 +115,7 @@ udfLogger() {
 
  case "${bSysLog}${bUseLog}" in
   00)
-   echo "$*"
+   echo "$@"
   ;;
   01)
    udfTimeStamp "$HOSTNAME $sTagLog: ${*//%/%%}" >> $_bashlyk_fnLog
@@ -231,12 +231,9 @@ udfCheck4LogUse() {
 #  INPUTS
 #    args - префикс для выводимого сообщения о прошедших секундах
 #  EXAMPLE
-#    udfUptime test >| grep "test (.* sec)"                                     #? true
+#    udfUptime >| grep -w "^[[:digit:]]*$"                                      #? true
 #  SOURCE
-udfUptime() {
- local iDiffTime=$(($(date "+%s")-${_bashlyk_iStartTimeStamp}))
- [[ -n "$1" ]] && echo "$* ($iDiffTime sec)" || echo $iDiffTime
-}
+udfUptime() { echo $(($(date "+%s")-${_bashlyk_iStartTimeStamp})); }
 #******
 #****f* liblog/udfFinally
 #  SYNOPSIS
@@ -246,11 +243,9 @@ udfUptime() {
 #  INPUTS
 #    args - префикс для выводимого сообщения о прошедших секундах
 #  EXAMPLE
-#    udfFinally test >| grep "test (.* sec)"                                    #? true
+#    udfFinally $RANDOM >| grep "^[[:digit:]]* uptime [[:digit:]]* sec$"        #? true
 #  SOURCE
-udfFinally() {
- udfUptime $*
-}
+udfFinally() { echo "$@ uptime $( udfUptime ) sec"; }
 #******
 #****f* liblog/udfSetLogSocket
 #  SYNOPSIS

@@ -1,5 +1,5 @@
 #
-# $Id: libopt.sh 539 2016-08-18 14:20:34+04:00 toor $
+# $Id: libopt.sh 556 2016-09-22 13:56:00+04:00 toor $
 #
 #****h* BASHLYK/libopt
 #  DESCRIPTION
@@ -40,7 +40,7 @@
 : ${_bashlyk_sArg:=$*}
 : ${_bashlyk_bSetOptions:=}
 : ${_bashlyk_aRequiredCmd_opt:="echo getopt rm"}
-: ${_bashlyk_aExport_opt:="udfGetOptHash udfSetOptHash udfGetOpt udfExcludePairFromHash"}
+: ${_bashlyk_aExport_opt:="udfExcludePairFromHash udfGetOpt udfGetOptHash udfSetOptHash"}
 #******
 #****f* libopt/udfGetOptHash
 #  SYNOPSIS

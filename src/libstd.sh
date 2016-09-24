@@ -1,5 +1,5 @@
 #
-# $Id: libstd.sh 539 2016-08-18 14:20:35+04:00 toor $
+# $Id: libstd.sh 559 2016-09-24 21:48:48+04:00 toor $
 #
 #****h* BASHLYK/libstd
 #  DESCRIPTION
@@ -47,8 +47,7 @@ _bashlyk_iMaxOutputLines=1000
 : ${_bashlyk_sUnnamedKeyword:=_bashlyk_unnamed_key_}
 : ${_bashlyk_s0:=${0##*/}}
 : ${_bashlyk_sId:=${_bashlyk_s0%.sh}}
-: ${_bashlyk_afnClean:=}
-: ${_bashlyk_apathClean:=}
+: ${_bashlyk_afoClean:=}
 : ${_bashlyk_ajobClean:=}
 : ${_bashlyk_apidClean:=}
 : ${_bashlyk_pidLogSock:=}
@@ -60,17 +59,15 @@ _bashlyk_iMaxOutputLines=1000
 : ${_bashlyk_emailSubj:="${_bashlyk_sUser}@${HOSTNAME}::${_bashlyk_s0}"}
 : ${_bashlyk_reMetaRules:='34=":40=(:41=):59=;:91=[:92=\\:93=]:61=='}
 : ${_bashlyk_envXSession:=}
-: ${_bashlyk_aRequiredCmd_std:="cat chgrp chmod chown cut date echo false grep \
-  hostname kill logname md5sum mkdir mktemp ps pwd rm rmdir sed sleep tempfile \
-  touch true tr which xargs"}
-: ${_bashlyk_aExport_std:="udfIsNumber udfBaseId udfTimeStamp udfDate          \
-  udfShowVariable udfIsValidVariable udfQuoteIfNeeded udfWSpace2Alias          \
-  udfAlias2WSpace udfMakeTemp udfMakeTempV udfPrepare2Exec udfShellExec        \
-  udfAddFile2Clean udfAddPath2Clean udfAddJob2Clean udfAddPid2Clean            \
-  udfCleanQueue udfOnTrap _ARGUMENTS _s0 _pathDat udfPrepareByType _ _getv     \
-  _gete _set udfCheckCsv udfGetMd5 udfGetPathMd5 udfXml udfSerialize           \
-  udfBashlykUnquote"}
-
+: ${_bashlyk_aRequiredCmd_std:="cat chgrp chmod chown cut date echo grep hostname kill \
+  logname md5sum mkdir mkfifo mktemp ps pwd rm rmdir sed sleep tempfile touch tr which \
+  xargs"}
+: ${_bashlyk_aExport_std:="_ _ARGUMENTS _gete _getv _pathDat _s0 _set udfAddFile2Clean  \
+  udfAddFObj2Clean udfAddJob2Clean udfAddPath2Clean udfAddPid2Clean udfAlias2WSpace     \
+  udfBaseId udfBashlykUnquote udfCheckCsv udfCleanQueue udfDate udfGetMd5 udfGetPathMd5 \
+  udfIsNumber udfIsValidVariable udfLocalVarFromCSV udfMakeTemp udfMakeTempV udfOnTrap  \
+  udfPrepare2Exec udfPrepareByType udfQuoteIfNeeded udfSerialize udfShellExec           \
+  udfShowVariable udfTimeStamp udfWSpace2Alias udfXml"}
 #******
 #****f* libstd/udfIsNumber
 #  SYNOPSIS
@@ -281,212 +278,257 @@ udfAlias2WSpace() {
 #******
 #****f* libstd/udfMakeTemp
 #  SYNOPSIS
-#    udfMakeTemp [varname] options...
+#    udfMakeTemp [ [-v] <valid variable> ] <named options>...
 #  DESCRIPTION
-#    Создание временного файла или каталога
+#    make temporary file object - file, pipe or directory
 #  INPUTS
-#    varname=[<varid>] - идентификатор переменной для возврата результата, если
-#                        аргумент не именной, то должен быть всегда первый
-#    path=<path>       - каталог, в котором будут создаваться временные объекты
-#    prefix=<prefix>   - префикс имени временного объекта
-#    suffix=<suffix>   - суффикс имени временного объекта
-#    mode=<mode>       - права на временный объект
-#    owner=<owner>     - владелец временного объекта
-#    group=<group>     - группа временного объекта
-#    type=file|dir     - тип объекта: файл (по умолчанию) или каталог
-#    keep=true|false   - удалять/не удалять временные объекты после завершения
-#                        сценария. По умолчанию, удаляется, если имя временного
-#                        объекта передается аргументу-переменной, если оно
-#                        выдается на stdout, то не удаляется
+#    [-v] <variable>    - the output assigned to the <variable> (as bash printf)
+#                         option -v can be omitted, variable must be correct and
+#                         this options must be first
+#    path=<path>        - place the temporary filesystem objects in the <path>
+#    prefix=<prefix>    - prefix (up to 5 characters for compatibility) for the
+#                         generated name
+#    suffix=<suffix>    - suffix for the generated name of temporary object
+#    mode=<octal>       - the right of access to the temporary facility in octal
+#    owner=<owner>      - owner of temporary object
+#    group=<group>      - group of temporary object
+#    type=file|pipe|dir - object type: file (the default), pipe or directory
+#    keep=true|false    - temporary object is deleted by default at the end if
+#                         its name is stored in a variable.
+#                         true  - do not remove
+#                         false - delete
 #  OUTPUT
-#    вывод происходит если нет аргументов или отсутствует именной аргумент
-#    varname, если временный объект не создан, то ничего не выдается
+#    if -v option or valid variable is omitted then name of created temporary
+#    filesystem object being printed to the standard output
 #
 #  RETURN VALUE
-#    0                        - выполнено успешно
-#    iErrorNotExistNotCreated - временный объект файловой системы не создан
-#    iErrorNonValidVariable   - аргумент <varname> не является валидным
-#                               идентификатором переменной
+#    0                  - success
+#    NotExistNotCreated - temporary file system object is not created
+#    InvalidVariable    - used invalid variable name
+#    EmptyResult        - name for temporary object missing
 #
 #  EXAMPLE
-#    local foTemp
-#    udfMakeTemp foTemp path=$HOME prefix=pre. suffix=.suf
-#    ls $foTemp >| grep -w "$HOME/pre\.........\.suf"                           #? true
-#    udfMakeTemp foTemp type=dir mode=0751
-#    ls -ld $foTemp >| grep "^drwxr-x--x.*${foTemp}$"                           #? true
-#    foTemp=$(udfMakeTemp prefix=pre. suffix=.suf)
-#    ls $foTemp >| grep "pre\.........\.suf$"                                   #? true
+#    ## TODO improve tests
+#    local foTemp s=$RANDOM
+#    _ onError return
+#    udfMakeTemp foTemp path=/tmp prefix=pre. suffix=.${s}1                     #? true
+#    ls -1 /tmp/pre.*.${s}1 2>/dev/null >| grep "/tmp/pre\..*\.${s}1"           #? true
 #    rm -f $foTemp
-#    $(udfMakeTemp foTemp prefix=pre. suffix=.suf)
+#    udfMakeTemp foTemp path=/tmp type=dir mode=0751 suffix=.${s}2              #? true
+#    ls -ld $foTemp 2>/dev/null >| grep "^drwxr-x--x.*${s}2$"                   #? true
+#    rmdir $foTemp
+#    foTemp=$(udfMakeTemp prefix=pre. suffix=.${s}3)
+#    ls -1 $foTemp 2>/dev/null >| grep "pre\..*\.${s}3$"                        #? true
+#    rm -f $foTemp
+#    foTemp=$(udfMakeTemp prefix=pre. suffix=.${s}4 keep=false)                 #? true
+#    echo $foTemp | grep "/tmp/pre\..*\.${s}4"                                  #? true
 #    test -f $foTemp                                                            #? false
+#    rm -f $foTemp
+#    $(udfMakeTemp foTemp path=/tmp prefix=pre. suffix=.${s}5 keep=true)
+#    ls -1 /tmp/pre.*.${s}5 2>/dev/null >| grep "/tmp/pre\..*\.${s}5"           #? true
+#    rm -f /tmp/pre.*.${s}5
+#    $(udfMakeTemp foTemp path=/tmp prefix=pre. suffix=.${s}6)
+#    ls -1 /tmp/pre.*.${s}6 2>/dev/null >| grep "/tmp/pre\..*\.${s}6"           #? false
 #    unset foTemp
 #    foTemp=$(udfMakeTemp)                                                      #? true
+#    ls -1l $foTemp 2>/dev/null                                                 #? true
 #    test -f $foTemp                                                            #? true
 #    rm -f $foTemp
-#    udfMakeTemp 2t                                                             #? ${_bashlyk_iErrorNonValidVariable}
+#    udfMakeTemp foTemp type=pipe						#? true
+#    test -p $foTemp								#? true
+#    rm -f $foTemp
+#    udfMakeTemp invalid+variable                                               #? ${_bashlyk_iErrorInvalidVariable}
 #    udfMakeTemp path=/proc                                                     #? ${_bashlyk_iErrorNotExistNotCreated}
 #  SOURCE
 udfMakeTemp() {
- local bashlyk_foResult_ioAUaE5R bashlyk_optDir_ioAUaE5R bashlyk_s_ioAUaE5R
- local bashlyk_bNoKeep_ioAUaE5R bashlyk_sVar_ioAUaE5R bashlyk_sGroup_ioAUaE5R
- local bashlyk_sCreateMode_ioAUaE5R bashlyk_path_ioAUaE5R bashlyk_sUser_ioAUaE5R
- local bashlyk_sPrefix_ioAUaE5R bashlyk_sSuffix_ioAUaE5R bashlyk_rc_ioAUaE5R
- local bashlyk_octMode_ioAUaE5R IFS=$' \t\n'
- #
- bashlyk_bNoKeep_ioAUaE5R=true
- bashlyk_sCreateMode_ioAUaE5R=direct
- #
- for bashlyk_s_ioAUaE5R in $*; do
-  case "$bashlyk_s_ioAUaE5R" in
-     path=*) bashlyk_path_ioAUaE5R=${bashlyk_s_ioAUaE5R#*=};;
-   prefix=*) bashlyk_sPrefix_ioAUaE5R=${bashlyk_s_ioAUaE5R#*=};;
-   suffix=*) bashlyk_sSuffix_ioAUaE5R=${bashlyk_s_ioAUaE5R#*=};;
-     mode=*) bashlyk_octMode_ioAUaE5R=${bashlyk_s_ioAUaE5R#*=};;
-    type=d*) bashlyk_optDir_ioAUaE5R='-d';;
-    type=f*) bashlyk_optDir_ioAUaE5R='';;
-     user=*) bashlyk_sUser_ioAUaE5R=${bashlyk_s_ioAUaE5R#*=};;
-    group=*) bashlyk_sGroup_ioAUaE5R=${bashlyk_s_ioAUaE5R#*=};;
-    keep=t*) bashlyk_bNoKeep_ioAUaE5R=false;;
-    keep=f*) bashlyk_bNoKeep_ioAUaE5R=true;;
-  varname=*) bashlyk_sVar_ioAUaE5R=${bashlyk_s_ioAUaE5R#*=};;
-          *)
-            bashlyk_sVar_ioAUaE5R="$1"
-            udfIsNumber "$2"
-            bashlyk_rc_ioAUaE5R=$?
-            if [[ -z "$3" && -n "$2" && $bashlyk_rc_ioAUaE5R -eq 0 ]]; then
-             # oldstyle
-             bashlyk_octMode_ioAUaE5R="$2"
-             bashlyk_sVar_ioAUaE5R=''
-             bashlyk_sPrefix_ioAUaE5R="$1"
-            fi
-          ;;
-  esac
- done
 
- if [[ -n "$bashlyk_sVar_ioAUaE5R" ]]; then
-  udfIsValidVariable "$bashlyk_sVar_ioAUaE5R" || eval $(udfOnError return $? $bashlyk_sVar_ioAUaE5R)
- else
-  bashlyk_bNoKeep_ioAUaE5R=false
- fi
+	if [[ "$1" == "-v" ]] || udfIsValidVariable $1; then
 
- if [[ -f "$(which mktemp)" ]]; then
-  bashlyk_sCreateMode_ioAUaE5R=mktemp
- elif [[ -f "$(which tempfile)" ]]; then
-  [[ -z "$bashlyk_optDir_ioAUaE5R" ]] \
-   && bashlyk_sCreateMode_ioAUaE5R=tempfile \
-   || bashlyk_sCreateMode_ioAUaE5R=direct
- fi
+		[[ "$1" == "-v" ]] && shift
 
- case "$bashlyk_sCreateMode_ioAUaE5R" in
-    direct)
-   [[ -n "$bashlyk_path_ioAUaE5R" ]] \
-    && bashlyk_s_ioAUaE5R="${bashlyk_path_ioAUaE5R}/" \
-    || bashlyk_s_ioAUaE5R="/tmp/"
-   bashlyk_s_ioAUaE5R+="${bashlyk_sPrefix_ioAUaE5R}${$}${bashlyk_sSuffix_ioAUaE5R}"
-   [[ -n "$bashlyk_optDir_ioAUaE5R" ]] \
-    && mkdir -p $bashlyk_s_ioAUaE5R \
-    || touch $bashlyk_s_ioAUaE5R
-   [[ -n "$bashlyk_octMode_ioAUaE5R" ]] \
-    && chmod $bashlyk_octMode_ioAUaE5R $bashlyk_s_ioAUaE5R
-  ;;
-    mktemp)
-   if [[ -n "$bashlyk_path_ioAUaE5R" ]]; then
-    mkdir -p ${bashlyk_path_ioAUaE5R}
-    bashlyk_path_ioAUaE5R="--tmpdir=${bashlyk_path_ioAUaE5R}"
-   else
-    bashlyk_path_ioAUaE5R="--tmpdir=/tmp"
-   fi
-   if [[ -n "$bashlyk_sPrefix_ioAUaE5R" ]]; then
-    bashlyk_sPrefix_ioAUaE5R=$(echo $bashlyk_sPrefix_ioAUaE5R | tr -d '/')
-   fi
-   if [[ -n "${bashlyk_sSuffix_ioAUaE5R}" ]]; then
-    bashlyk_sSuffix_ioAUaE5R="--suffix=$(echo ${bashlyk_sSuffix_ioAUaE5R} | tr -d '/')"
-   fi
-   bashlyk_s_ioAUaE5R=$(mktemp $bashlyk_path_ioAUaE5R $bashlyk_optDir_ioAUaE5R \
-    ${bashlyk_sSuffix_ioAUaE5R} "${bashlyk_sPrefix_ioAUaE5R}XXXXXXXX")
+		udfIsValidVariable $1 || eval $( udfOnError2 InvalidVariable "$1" )
 
-   [[ -n "$bashlyk_octMode_ioAUaE5R" ]] \
-    && chmod $bashlyk_octMode_ioAUaE5R $bashlyk_s_ioAUaE5R
-  ;;
-  tempfile)
-   [[ -n "$bashlyk_sPrefix_ioAUaE5R" ]] \
-    && bashlyk_sPrefix_ioAUaE5R="-p $bashlyk_sPrefix_ioAUaE5R"
-   [[ -n "$bashlyk_sSuffix_ioAUaE5R" ]] \
-    && bashlyk_sSuffix_ioAUaE5R="-s $bashlyk_sSuffix_ioAUaE5R"
-   bashlyk_s_ioAUaE5R=$(tempfile $bashlyk_optDir_ioAUaE5R \
-    $bashlyk_sPrefix_ioAUaE5R $bashlyk_sSuffix_ioAUaE5R)
-  ;;
-  *)
-    ## не достижимое состояние
-    eval $(udfOnError return iErrorUnexpected $bashlyk_sCreateMode_ioAUaE5R)
-  ;;
- esac
- ## TODO обработка ошибок
- [[ -n "$bashlyk_sUser_ioAUaE5R"  ]] \
-  && chown $bashlyk_sUser_ioAUaE5R  $bashlyk_s_ioAUaE5R
- [[ -n "$bashlyk_sGroup_ioAUaE5R" ]] \
-  && chgrp $bashlyk_sGroup_ioAUaE5R $bashlyk_s_ioAUaE5R
+		eval 'export $1="$( shift; udfMakeTemp stdout-mode ${@//keep=false/} )"'
 
- if   [[ -f "$bashlyk_s_ioAUaE5R" ]]; then
-  $bashlyk_bNoKeep_ioAUaE5R && udfAddFile2Clean $bashlyk_s_ioAUaE5R
- elif [[ -d "$bashlyk_s_ioAUaE5R" ]]; then
-  $bashlyk_bNoKeep_ioAUaE5R && udfAddPath2Clean $bashlyk_s_ioAUaE5R
- else
-  eval $(udfOnError return iErrorNotExistNotCreated $bashlyk_s_ioAUaE5R)
- fi
+		[[ -n ${!1} ]] || eval $( udfOnError2 iErrorEmptyResult "$1" )
 
- bashlyk_foResult_ioAUaE5R=$bashlyk_s_ioAUaE5R
- if [[ -n "$bashlyk_sVar_ioAUaE5R" ]]; then
-  eval 'export ${bashlyk_sVar_ioAUaE5R}=${bashlyk_foResult_ioAUaE5R}'
- else
-  echo ${bashlyk_foResult_ioAUaE5R}
- fi
- return 0
+		[[ $* =~ keep=false ]] && udfAddFObj2Clean ${!1}
+		[[ $* =~ keep=true  ]] || udfAddFObj2Clean ${!1}
+
+		return 0
+
+	fi
+
+	local bPipe cmd IFS octMode optDir path s sGroup sPrefix sSuffix sUser
+
+	cmd=direct
+	IFS=$' \t\n'
+
+	for s in $*; do
+
+		case "$s" in
+
+			  path=*) path=${s#*=};;
+			prefix=*) sPrefix=${s#*=};;
+			suffix=*) sSuffix=${s#*=};;
+			  mode=*) octMode=${s#*=};;
+			 type=d*) optDir='-d';;
+			 type=f*) optDir='';;
+			 type=p*) bPipe=1;;
+			  user=*) sUser=${s#*=};;
+			 group=*) sGroup=${s#*=};;
+			  keep=*) continue;;
+	             stdout-mode) continue;;
+			       *)
+
+			        if [[ $1 == $s ]]; then
+
+					udfIsValidVariable $1 || eval $( udfOnError2 InvalidVariable "$s" )
+
+			        fi
+
+				if udfIsNumber "$2" && [[ -z "$3" ]] ; then
+
+					# compatibility with ancient version
+					octMode="$2"
+					sPrefix="$1"
+
+				fi
+				;;
+		esac
+	done
+
+	sPrefix=${sPrefix//\//}
+	sSuffix=${sSuffix//\//}
+
+	if   [[ -f "$(which mktemp)" ]]; then
+
+		cmd=mktemp
+
+	elif [[ -f "$(which tempfile)" ]]; then
+
+		[[ -z "$optDir" ]] && cmd=tempfile || cmd=direct
+
+	fi
+
+	if [[ -z "$path" ]]; then
+
+		[[ -z $bPipe ]] && path="/tmp" || path=$( _ pathRun )
+
+	fi
+
+	mkdir -p $path || eval $( udfOnError2 NotExistNotCreated "$path" )
+
+	case "$cmd" in
+
+	direct)
+
+		s="${path}/${sPrefix:0:5}${RANDOM}${sSuffix}"
+
+		[[ -n "$optDir" ]] && mkdir -p $s || touch $s
+
+	;;
+
+	mktemp)
+
+		s=$(mktemp --tmpdir=${path} $optDir --suffix=${sSuffix} "${sPrefix:0:5}XXXXXXXX")
+
+	;;
+
+	tempfile)
+
+		[[ -n "$sPrefix" ]] && sPrefix="-p ${sPrefix:0:5}"
+		[[ -n "$sSuffix" ]] && sSuffix="-s $sSuffix"
+
+		s=$(tempfile -d $path $sPrefix $sSuffix)
+
+	;;
+
+	esac
+
+	if [[ -n $bPipe ]]; then
+
+		rm -f  $s
+		mkfifo $s
+		: ${octMode:=0600}
+
+	fi >&2
+
+	[[ -n "$octMode" ]] && chmod $octMode $s
+
+	## TODO обработка ошибок
+	if [[ $UID == 0 ]]; then
+
+		[[ -n "$sUser"  ]] && chown $sUser  $s
+		[[ -n "$sGroup" ]] && chgrp $sGroup $s
+
+	fi >&2
+
+	if ! [[ -f "$s" || -p "$s" || -d "$s" ]]; then
+
+		eval $(udfOnError2 NotExistNotCreated $s)
+
+	fi
+
+	[[ $* =~ keep=false ]] && udfAddFObj2Clean $s
+
+	echo $s
+
+	[[ -n $s ]] && return 0 || return $( _ iErrorEmptyResult )
+
 }
 #******
 #****f* libstd/udfMakeTempV
 #  SYNOPSIS
 #    udfMakeTempV <var> [file|dir|keep|keepf[ile*]|keepd[ir]] [<prefix>]
 #  DESCRIPTION
-#    Создание временного файла или каталога с автоматическим удалением
-#    по завершению сценария
-#    устаревшая - заменяется udfMakeTemp
+#    Create a temporary file or directory with automatic removal upon completion
+#    of the script, the object name assigned to the variable.
+#    Obsolete - replaced by a udfMakeTemp
 #  INPUTS
-#    var        - переменная (без $) для имени временного объекта
-#    file       - создавать файл (по умолчанию)
-#    dir        - создавать каталог
-#    keep[file] - не включать автоматическое удаление временного файла
-#    keepdir    - не включать автоматическое удаление временного каталога
-#    prefix     - префикс имени временного файла
+#    <var>      - the output assigned to the <variable> (as bash printf)
+#                 option -v can be omitted, variable must be correct and this
+#                 options must be first
+#    file       - create file
+#    dir        - create directory
+#    keep[file] - create file, keep after done
+#    keepdir    - create directory, keep after done
+#    prefix     - prefix for name (5 letters)
 #  RETURN VALUE
-#    iErrorEmptyOrMissingArgument - аргумент не задан
-#    iErrorNonValidVariable       - ошибка идентификатора для временного объекта
-#    0                            - Выполнено успешно
+#    0                  - success
+#    NotExistNotCreated - temporary file system object is not created
+#    InvalidVariable    - used invalid variable name
+#    EmptyResult        - name for temporary object missing
 #  EXAMPLE
 #    local foTemp
-#    udfMakeTempV foTemp file testfile                                          #? true
-#    ls $foTemp >| grep "testfile"                                              #? true
+#    udfMakeTempV foTemp file prefix                                            #? true
+#    ls $foTemp >| grep "prefi"                                                 #? true
 #    udfMakeTempV foTemp dir                                                    #? true
 #    ls -ld $foTemp >| grep "^drwx------.*${foTemp}$"                           #? true
-#    echo $(udfMakeTempV foTemp)
-#    test -f $foTemp                                                            #? false
+#    echo $(udfAddPath2Clean $foTemp)
+#    test -d $foTemp                                                            #? false
 #  SOURCE
 udfMakeTempV() {
- local sKeep sType sPrefix IFS=$' \t\n'
- #
- [[ -n "$1" ]] || eval $(udfOnError throw iErrorEmptyOrMissingArgument "$1")
- udfIsValidVariable "$1" || eval $(udfOnError throw iErrorNonValidVariable "$1")
- #
- [[ -n "$3" ]] && sPrefix="prefix=$3"
- case "$2" in
-          dir) sType="type=dir" ; sKeep="keep=false" ;;
-         file) sType="type=file"; sKeep="keep=false" ;;
-  keep|keepf*) sType="type=file"; sKeep="keep=true"  ;;
-       keepd*) sType="type=dir" ; sKeep="keep=true"  ;;
-           '') sType="type=file"; sKeep="keep=false" ;;
-            *) sPrefix="prefix=$2"                   ;;
- esac
- udfMakeTemp $1 $sType $sKeep $sPrefix
+
+	local sKeep sType sPrefix IFS=$' \t\n'
+
+	[[ -n "$1" ]] || eval $(udfOnError throw iErrorEmptyOrMissingArgument "$1")
+
+	udfIsValidVariable "$1" || eval $(udfOnError throw iErrorNonValidVariable "$1")
+
+	[[ -n "$3" ]] && sPrefix="prefix=$3"
+
+	case "$2" in
+
+		 dir) sType="type=dir" ; sKeep="keep=false" ;;
+		file) sType="type=file"; sKeep="keep=false" ;;
+	 keep|keepf*) sType="type=file"; sKeep="keep=true"  ;;
+	      keepd*) sType="type=dir" ; sKeep="keep=true"  ;;
+		  '') sType="type=file"; sKeep="keep=false" ;;
+		   *) sPrefix="prefix=$2"                   ;;
+	esac
+
+	udfMakeTemp $1 $sType $sKeep $sPrefix
 }
 #******
 #****f* libstd/udfPrepare2Exec
@@ -555,20 +597,20 @@ udfShellExec() {
 #  INPUTS
 #    args - имена файлов
 #  EXAMPLE
-#    local fnTemp rc
-#    udfMakeTemp fnTemp keep=true
-#    test -f $fnTemp                                                            #? true
-#    echo $(udfAddFile2Clean $fnTemp)
-#    test -f $fnTemp                                                            #? false
-#    udfMakeTemp rc keep=false
-#    echo $(udfMakeTemp rc suffix=.debug)
-#    test -f $rc                                                                #? true
+#    local a fnTemp1 fnTemp2 s=$RANDOM
+#    udfMakeTemp fnTemp1 keep=true suffix=.${s}1
+#    test -f $fnTemp1                                                           #? true
+#    echo $(udfAddFile2Clean $fnTemp1 )
+#    ls -l /tmp/*.${s}1 2>/dev/null >| grep ".*\.${s}1"                         #? false
+#    echo $(udfMakeTemp fnTemp2 suffix=.${s}2)
+#    ls -l /tmp/*.${s}2 2>/dev/null >| grep ".*\.${s}2"                         #? false
+#    echo $(udfMakeTemp fnTemp2 suffix=.${s}3 keep=true)
+#    ls -l /tmp/*.${s}3 2>/dev/null >| grep ".*\.${s}3"                         #? true
+#    a=$(ls -1 /tmp/*.${s}3)
+#    echo $(udfAddFile2Clean $a )
+#    ls -l /tmp/*.${s}3 2>/dev/null >| grep ".*\.${s}3"                         #? false
 #  SOURCE
-udfAddFile2Clean() {
- [[ -n "$1" ]] || return 0
- _bashlyk_afnClean[$BASHPID]+=" $*"
- trap "udfOnTrap" 1 2 5 9 15 EXIT
-}
+udfAddFile2Clean() { udfAddFObj2Clean $@; }
 #******
 #****f* libstd/udfAddPath2Clean
 #  SYNOPSIS
@@ -579,21 +621,20 @@ udfAddFile2Clean() {
 #  INPUTS
 #    args - имена каталогов
 #  EXAMPLE
-#    local pathTemp rc
-#    udfMakeTemp pathTemp keep=true type=dir
-#    test -d $pathTemp                                                          #? true
-#    echo $(udfAddPath2Clean $pathTemp)
-#    test -d $pathTemp                                                          #? false
-#    udfMakeTemp rc keep=false type=dir
-#    echo $(udfMakeTemp rc suffix=.debug type=dir)
-#    test -d $rc                                                                #? true
-#    ls -ld $rc
+#    local a pathTemp1 pathTemp2 s=$RANDOM
+#    udfMakeTemp pathTemp1 keep=true suffix=.${s}1 type=dir
+#    test -d $pathTemp1                                                         #? true
+#    echo $(udfAddPath2Clean $pathTemp1 )
+#    ls -1ld /tmp/*.${s}1 2>/dev/null >| grep ".*\.${s}1"                       #? false
+#    echo $(udfMakeTemp pathTemp2 suffix=.${s}2 type=dir)
+#    ls -1ld /tmp/*.${s}2 2>/dev/null >| grep ".*\.${s}2"                       #? false
+#    echo $(udfMakeTemp pathTemp2 suffix=.${s}3 keep=true type=dir)
+#    ls -1ld /tmp/*.${s}3 2>/dev/null >| grep ".*\.${s}3"                       #? true
+#    a=$(ls -1ld /tmp/*.${s}3)
+#    echo $(udfAddPath2Clean $a )
+#    ls -1ld /tmp/*.${s}3 2>/dev/null >| grep ".*\.${s}3"                       #? false
 #  SOURCE
-udfAddPath2Clean() {
- [[ -n "$1" ]] || return 0
- _bashlyk_apathClean[$BASHPID]+=" $*"
- trap "udfOnTrap" 1 2 5 9 15 EXIT
-}
+udfAddPath2Clean() { udfAddFObj2Clean $@; }
 #******
 #****f* libstd/udfAddJob2Clean
 #  SYNOPSIS
@@ -603,9 +644,7 @@ udfAddPath2Clean() {
 #  DESCRIPTION
 #    функция удалена, осталась только заглушка
 #  SOURCE
-udfAddJob2Clean() {
- return 0
-}
+udfAddJob2Clean() { return 0; }
 #******
 #****f* libstd/udfAddPid2Clean
 #  SYNOPSIS
@@ -638,8 +677,24 @@ udfAddPid2Clean() {
 #  INPUTS
 #    args - имена файлов
 #  SOURCE
-udfCleanQueue() {
- udfAddFile2Clean $*
+udfCleanQueue() { udfAddFile2Clean $@; }
+#******
+#****f* libstd/udfAddFObj2Clean
+#  SYNOPSIS
+#    udfAddFObj2Clean args
+#  DESCRIPTION
+#    list file system objects
+#  INPUTS
+#    args - files or directories for cleaning on exit
+#  SOURCE
+udfAddFObj2Clean() {
+
+	udfOn MissingArgument return $*
+
+	_bashlyk_afoClean[$BASHPID]+=" $*"
+
+	 trap "udfOnTrap" 1 2 5 9 15 EXIT
+
 }
 #******
 #****f* libstd/udfOnTrap
@@ -667,31 +722,42 @@ udfCleanQueue() {
 #    ps -p $pid -o pid= >| grep -w $pid                                         #? false
 #  SOURCE
 udfOnTrap() {
- local i s IFS=$' \t\n'
- #
- for s in ${_bashlyk_apidClean[$BASHPID]}; do
-  for i in 15 9; do
-   [[ -n "$(ps -o pid= --ppid $$ | xargs | grep -w $s)" ]] && {
-    kill -${i} $s 2>/dev/null
-    sleep 0.2
-   }
-  done
- done
- #
- if (( ${#_bashlyk_afnClean[$BASHPID]} > 0 )); then
-  rm -f ${_bashlyk_afnClean[$BASHPID]}
-  unset _bashlyk_afnClean[$BASHPID]
- fi
- #
- if (( ${#_bashlyk_apathClean[$BASHPID]} > 0 )); then
-  rmdir --ignore-fail-on-non-empty ${_bashlyk_apathClean[$BASHPID]} 2>/dev/null
-  unset _bashlyk_apathClean[$BASHPID]
- fi
- #
- [[ -n "${_bashlyk_pidLogSock}" ]] && {
-  exec >/dev/null 2>&1
-  wait ${_bashlyk_pidLogSock}
- }
+
+	local i s IFS=$' \t\n'
+	local -a a
+
+	a=( ${_bashlyk_apidClean[$BASHPID]} )
+
+	for (( i=${#a[@]}-1; i>=0 ; i-- )) ; do
+
+		for s in 15 9; do
+
+			if [[ -n "$( ps -o pid= --ppid $$ | xargs | grep -w ${a[i]} )" ]]; then
+
+				kill -${s} ${a[i]} 2>/dev/null
+				sleep 0.2
+
+			fi
+
+		done
+
+	done
+
+	for s in ${_bashlyk_afoClean[$BASHPID]}; do
+
+		[[ -f $s ]] && rm -f $s && continue
+		[[ -p $s ]] && rm -f $s && continue
+		[[ -d $s ]] && rmdir --ignore-fail-on-non-empty $s 2>/dev/null && continue
+
+	done
+
+	if [[ -n "${_bashlyk_pidLogSock}" ]]; then
+
+		exec >/dev/null 2>&1
+		wait ${_bashlyk_pidLogSock}
+
+	fi
+
 }
 #******
 #****f* libstd/_ARGUMENTS
@@ -818,7 +884,9 @@ udfPrepareByType() {
 #    iErrorNonValidVariable       - не валидный идентификатор
 #    0                            - успешная операция
 #  EXAMPLE
-#    local sS sWSpaceAlias pid=$BASHPID
+#    local sS sWSpaceAlias pid=$BASHPID k=key1 v=val1
+#    _ k=sWSpaceAlias
+#    echo "$k" >| grep "^${_bashlyk_sWSpaceAlias}$"                             #? true
 #    _ sS=sWSpaceAlias
 #    echo "$sS" >| grep "^${_bashlyk_sWSpaceAlias}$"                            #? true
 #    _ =sWSpaceAlias
@@ -837,12 +905,11 @@ udfPrepareByType() {
 #  SOURCE
 _(){
 
-	local IFS=$' \t\n' k v
-
-	[[ -n "$1" ]] || eval $(udfOnError return iErrorEmptyOrMissingArgument)
+	udfOn MissingArgument $1 || return $?
 
 	if (( $# > 1 )); then
 
+		## TODO check for valid required
 		eval "_bashlyk_${1##*=}=\"$2\""
 
 	else
@@ -850,17 +917,23 @@ _(){
 		case "$1" in
 
 		*=*)
-			k=${1%=*}
-			v=${1##*=}
-			[[ -n "$k" ]] || k="$( udfPrepareByType "$v" )"
-			udfIsValidVariable $k || eval $(udfOnError return $? $k)
-			v="$( udfPrepareByType "_bashlyk_${v}" )"
-			eval "export $k=\$${v}"
+
+			if [[ -n "${1%=*}" ]]; then
+
+				udfOn InvalidVariable ${1%=*} || return $?
+				eval "export ${1%=*}=\$$( udfPrepareByType "_bashlyk_${1##*=}" )"
+
+			else
+
+				udfOn InvalidVariable $( udfPrepareByType "${1##*=}" ) || return $?
+				eval "export $( udfPrepareByType "${1##*=}" )=\$$( udfPrepareByType "_bashlyk_${1##*=}" )"
+
+			fi
+
         ;;
 
 		*)
-			k="$( udfPrepareByType "_bashlyk_${1}" )"
-			eval "echo \$${k}"
+			eval "echo \$$( udfPrepareByType "_bashlyk_${1}" )"
 		;;
   esac
  fi
@@ -946,65 +1019,97 @@ _set() {
 #******
 #****f* libstd/udfCheckCsv
 #  SYNOPSIS
-#    udfCheckCsv "<csv;>" [<varname>]
+#    udfCheckCsv [[-v] <varname>] "<csv>;"
 #  DESCRIPTION
-#    Нормализация CSV-строки <csv;>. Приведение к виду "ключ=значение" полей.
-#    В случае если поле не содержит ключа или ключ содержит пробел, то к полю
-#    добавляется ключ вида _bashlyk_unnamed_key_<инкремент>, всё содержимое поля
-#    становится значением.
-#    Результат выводится в стандартный вывод или в переменную, если имеется
-#    второй аргумент функции <varname>
+#    Bringing the format "key = value" fields of the CSV-line. If the field does
+#    not contain a key or key contains a space, then the field receives key
+#    species _bashlyk_unnamed_key_<increment>, and all the contents of the field
+#    becomes the value. The result is printed to stdout or assigned to the <var>
+#    variable if the first argument is listed as -v <var> ( -v can be skipped )
 #  INPUTS
-#    csv;    - CSV-строка, разделённая ";"
-#    varname - идентификатор переменной (без "$ "). При его наличии результат
-#              будет помещен в соответствующую переменную. При отсутствии такого
-#              идентификатора результат будет выдан на стандартный вывод
-#    Важно! Экранировать аргументы двойными кавычками, если есть вероятность
-#    наличия в них пробелов
+#    csv;    - CSV-string, separated by ';'
+#    Important! Enclose the string in double quotes if it can contain spaces
+#    Important! The string must contain the field sign ";"
+#    varname - variable identifier (without the "$"). If present the result will
+#    be assigned to this variable, otherwise result will be printed to stdout
 #  OUTPUT
-#              разделенный символом ";" строка, в полях которого содержатся
-#              данные в формате "<key>=<value>;..."
+#    separated by a ";" CSV-string in fields that contain data in the format
+#    "<key> = <value>; ..."
 #  RETURN VALUE
-#    iErrorEmptyOrMissingArgument - аргумент не задан
-#    iErrorNonValidVariable       - не валидный идентификатор
-#    0                            - успешная операция
+#    EmptyResult     - empty result
+#    MissingArgument - no arguments
+#    InvalidArgument - invalid argument
+#    InvalidVariable - invalid variable for output assign
+#    0               - success
 #  EXAMPLE
-#    local s="a=b;a=c;s=a b c d e f;test value" r
-#    local csv='^a=b;a=c;s="a b c d e f";_bashlyk_unnamed_key_0="test value";$'
-#    udfCheckCsv "$s" >| grep "$csv"                                            #? true
-#    udfCheckCsv "$s" r                                                         #? true
-#    echo $r >| grep "$csv"                                                     #? true
-#    udfCheckCsv "$s" 2r                                                        #? ${_bashlyk_iErrorNonValidVariable}
-#    udfCheckCsv                                                                #? ${_bashlyk_iErrorEmptyOrMissingArgument}
+#    local cmd=udfCheckCsv csv="a=b;a=c;s=a b c d e f;test value" v1 v2
+#    local re='^a=b;a=c;s="a b c d e f";_bashlyk_unnamed_key_0="test value";$'
+#    $cmd "$csv" >| grep "$re"                                                  #? true
+#    $cmd -v v1 "$csv"                                                          #? true
+#    echo $v1 >| grep "$re"                                                     #? true
+#    $cmd  v2 "$csv"                                                            #? true
+#    echo $v2 >| grep "$re"                                                     #? true
+#    $cmd  v2 ""                                                                #? ${_bashlyk_iErrorEmptyResult}
+#    echo $v2 >| grep "$re"                                                     #? false
+#    $cmd -v invalid+variable "$csv"                                            #? ${_bashlyk_iErrorInvalidVariable}
+#    $cmd    invalid+variable "$csv"                                            #? ${_bashlyk_iErrorInvalidVariable}
+#    $cmd invalid+variable                                                      #? ${_bashlyk_iErrorInvalidArgument}
+#    $cmd _valid_variable_                                                      #? ${_bashlyk_iErrorInvalidArgument}
+#    $cmd 'csv data;' | grep '^_bashlyk_unnamed_key_0="csv data";$'             #? true
+#    $cmd                                                                       #? ${_bashlyk_iErrorMissingArgument}
 #  SOURCE
 udfCheckCsv() {
- local IFS=$' \t\n'
- [[ -n "$1" ]] || eval $(udfOnError return iErrorEmptyOrMissingArgument)
- local bashlyk_s_Q1eiphgO bashlyk_k_Q1eiphgO bashlyk_v_Q1eiphgO bashlyk_i_Q1eiphgO bashlyk_csvResult_Q1eiphgO
- #
- IFS=';'
- bashlyk_i_Q1eiphgO=0
- bashlyk_csvResult_Q1eiphgO=''
- #
- for bashlyk_s_Q1eiphgO in $1; do
-  bashlyk_s_Q1eiphgO=$(echo $bashlyk_s_Q1eiphgO | tr -d "'" | tr -d '"' | sed -e "s/^\[.*\];//")
-  bashlyk_k_Q1eiphgO="$(echo ${bashlyk_s_Q1eiphgO%%=*}|xargs)"
-  bashlyk_v_Q1eiphgO="$(echo ${bashlyk_s_Q1eiphgO#*=}|xargs)"
-  [[ -n "$bashlyk_k_Q1eiphgO" ]] || continue
-  if [[ "$bashlyk_k_Q1eiphgO" == "$bashlyk_v_Q1eiphgO" || -n "$(echo "$bashlyk_k_Q1eiphgO" | grep '.*[[:space:]+].*')" ]]; then
-   bashlyk_k_Q1eiphgO=${_bashlyk_sUnnamedKeyword}${bashlyk_i_Q1eiphgO}
-   bashlyk_i_Q1eiphgO=$((bashlyk_i_Q1eiphgO+1))
-  fi
-  IFS=' ' bashlyk_csvResult_Q1eiphgO+="$bashlyk_k_Q1eiphgO=$(udfQuoteIfNeeded $bashlyk_v_Q1eiphgO);"
- done
- IFS=$' \t\n'
- if [[ -n "$2" ]]; then
-  udfIsValidVariable "$2" || eval $(udfOnError return iErrorNonValidVariable '$2')
-  eval 'export ${2}="${bashlyk_csvResult_Q1eiphgO}"'
- else
-  echo "$bashlyk_csvResult_Q1eiphgO"
- fi
- return 0
+
+	if (( $# > 1 )); then
+
+		[[ "$1" == "-v" ]] && shift
+
+		udfIsValidVariable $1 || eval $( udfOnError return InvalidVariable "$1" )
+
+		eval 'export $1="$( shift; udfCheckCsv "$1" )"'
+
+		[[ -n ${!1} ]] || eval $( udfOnError return EmptyResult "$1" )
+
+		return 0
+
+	fi
+
+	udfOn MissingArgument $1 || return $?
+
+	[[ $1 =~ \; ]] || return $( _ iErrorInvalidArgument )
+
+	local csv i IFS k s v
+
+	IFS=';'
+	i=0
+	csv=''
+
+	for s in $1; do
+
+		s=${s/\[*\][;]/}
+		s=${s//[\'\"]/}
+
+		k="$(echo ${s%%=*}|xargs)"
+		v="$(echo ${s#*=}|xargs)"
+
+		[[ -n "$k" ]] || continue
+		if [[ "$k" == "$v" || -n "$(echo "$k" | grep '.*[[:space:]+].*')" ]]; then
+
+			k=${_bashlyk_sUnnamedKeyword}${i}
+			i=$((i+1))
+
+		fi
+
+		IFS=' ' csv+="$k=$(udfQuoteIfNeeded $v);"
+
+	done
+
+	IFS=$' \t\n'
+
+	echo "$csv"
+
+	[[ -n $csv ]] && return 0 || return $( _ iErrorEmptyResult )
+
 }
 #******
 #****f* libstd/udfGetMd5
@@ -1147,5 +1252,39 @@ udfBashlykUnquote() {
  #cmd+=" -e \"s/\t\?_bashlyk_ini_.*_autoKey_[0-9]\+\t\?=\t\?//g\""
  cmd+=' -e "s/^\"\(.*\)\"$/\1/"'
  eval "$cmd"
+}
+#******
+#****f* libstd/udfLocalVarFromCSV
+#  SYNOPSIS
+#    udfLocalVarFromCSV CSV1 CSV2 ...
+#  DESCRIPTION
+#    Prepare string from comma separated lists (ex. INI options) for definition
+#    of the local variables by using eval
+#  RETURN VALUE
+#    iErrorEmptyOrMissingArgument - аргумент не задан
+#    0                            - успешная операция
+#  EXAMPLE
+#    udfLocalVarFromCSV a1,b2,c3                                                #? true
+#    udfLocalVarFromCSV a1 b2,c3                                                #? true
+#    udfLocalVarFromCSV a1,b2 c3                                                #? true
+#    echo $( udfLocalVarFromCSV a1,b2 c3,4d 2>/dev/null ) >| grep '^local'      #? false
+#  SOURCE
+udfLocalVarFromCSV() {
+
+	udfOn EmptyOrMissingArgument throw "$@"
+
+	local s
+	local -A h
+
+	for s in ${*//[;,]/ }; do
+
+		udfIsValidVariable $s || eval $( udfOnError2 throw iErrorNonValidVariable "$s" )
+		h[$s]="$s"
+
+	done
+
+	udfOn EmptyResult throw "${h[@]}"
+	echo "local ${h[@]}"
+
 }
 #******

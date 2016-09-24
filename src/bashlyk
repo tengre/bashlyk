@@ -1,6 +1,6 @@
 #!/bin/bash
 #
-# $Id: bashlyk 539 2016-08-18 14:20:33+04:00 toor $
+# $Id: bashlyk 559 2016-09-23 15:58:33+04:00 toor $
 #
 #****h* BASHLYK/bashlyk
 #  DESCRIPTION
@@ -22,7 +22,7 @@
 #    Блок инициализации глобальных переменных
 #  SOURCE
 [[ -s "/etc/bashlyk/bashlyk.conf" ]] && . /etc/bashlyk/bashlyk.conf
-: ${_bashlyk_aLib:="std,err,pid,cnf,ini,opt,log,msg"}
+: ${_bashlyk_aLib:="std,err,pid,cnf,ini,opt,log,net,msg"}
 : ${_bashlyk_pathLib:="/usr/share/bashlyk"}
 : ${_bashlyk_sArg:=$*}
 : ${_bashlyk_bInteract:=1}
@@ -101,42 +101,55 @@ udfInit() {
 #******
 #****f* bashlyk/udfMain
 #  SYNOPSIS
-#    udfMain <args>
+#    udfMain
 #  DESCRIPTION
 #    Инициализация, подключение модулей, запуск процесса протоколирования
 #    в случае наличия перенаправления стандартных устройств или потери терминала
 #    в зависимости от значения $_bashlyk_sCond4Log ("noterm" по умолчанию).
 #  SOURCE
 udfMain() {
- local cmd fn s IFS=$' \t\n'
- #
- udfInit
- #
- if [[ "$_bashlyk_sMode" == "test" ]]; then
-  cmd=${_bashlyk_pathLib}/testunit.sh
-  [[ -x "$cmd" ]] || eval 'echo "Error: $cmd not found..."; exit 255'
-  for s in $_bashlyk_aUnit; do
-   $cmd $s
-  done
-  exit $?
- else
-  for s in $_bashlyk_aUnit; do
-   fn=${_bashlyk_pathLib}/lib${s}.sh
-   [[ -s "$fn" ]] && . $fn || eval 'echo "Error: $fn not found..."; exit 255'
-  done
- fi
- unset _bashlyk_aUnit _bashlyk_sMode
 
- case ${_bashlyk_sCond4Log} in
-  redirect)
-           _bashlyk_bNotUseLog=$_bashlyk_bInteract ;;
-    noterm)
-           _bashlyk_bNotUseLog=$_bashlyk_bTerminal ;;
-         *)
-           _bashlyk_bNotUseLog=$_bashlyk_bInteract ;;
- esac
- [[ "$_bashlyk_bNotUseLog" != "0" ]] || udfSetLog
- return 0
+	local cmd fn s IFS=$' \t\n'
+
+	udfInit
+
+	if [[ "$_bashlyk_sMode" == "test" ]]; then
+
+		cmd=${_bashlyk_pathLib}/testunit.sh
+
+		[[ -x "$cmd" ]] || eval 'echo "Error: $cmd not found..."; exit 255'
+
+		for s in $_bashlyk_aUnit; do $cmd $s; done
+
+		exit $?
+
+	else
+
+		for s in $_bashlyk_aUnit; do
+
+			fn=${_bashlyk_pathLib}/lib${s}.sh
+			[[ -s "$fn" ]] && . $fn || eval 'echo "Error: $fn not found..."; exit 255'
+
+		done
+
+	fi
+
+	unset _bashlyk_aUnit _bashlyk_sMode
+
+	[[ $_bashlyk_log == "nouse" ]] && return 0
+
+	case ${_bashlyk_sCond4Log} in
+
+		redirect) _bashlyk_bNotUseLog=$_bashlyk_bInteract ;;
+		  noterm) _bashlyk_bNotUseLog=$_bashlyk_bTerminal ;;
+		       *) _bashlyk_bNotUseLog=$_bashlyk_bInteract ;;
+
+	esac
+
+	[[ "$_bashlyk_bNotUseLog" != "0" ]] || udfSetLog
+
+	return 0
+
 }
 #******
 #****** bashlyk/Main section

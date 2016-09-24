@@ -1,5 +1,5 @@
 #
-# $Id: libtst.sh 545 2016-08-22 02:05:53+04:00 toor $
+# $Id: libtst.sh 558 2016-09-23 15:40:27+04:00 toor $
 #
 #****h* BASHLYK/libtst
 #  DESCRIPTION
@@ -49,7 +49,7 @@
 #  RETURN VALUE
 #    ...
 #  EXAMPLE
-#    ...
+#    udfTest #? true
 #  SOURCE
 udfTest() {
  return 0
