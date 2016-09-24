@@ -4,7 +4,7 @@
 
 <!--
 
-$Id$
+$Id: bashlyk7.xml 559 2016-09-24 21:49:45+04:00 toor $
 
 `xsltproc -''-nonet \
           -''-param man.charmap.use.subset "0" \
@@ -112,8 +112,15 @@ man(1), man(7), http://www.tldp.org/HOWTO/Man-Page/
      <term><filename>libstd.sh</filename></term>
      <listitem>
       <para>
-       functions for handling temp objects (file, folder), autocleaning,
-       validations, exceptions
+       functions for handling temporary objects (files, folders), autocleaning
+      </para>
+     </listitem>
+    </varlistentry>
+    <varlistentry>
+     <term><filename>liberr.sh</filename></term>
+     <listitem>
+      <para>
+       functions for data validations, error handling
       </para>
      </listitem>
     </varlistentry>
@@ -153,7 +160,23 @@ man(1), man(7), http://www.tldp.org/HOWTO/Man-Page/
      <term><filename>libini.sh</filename></term>
      <listitem>
       <para>
-       ini configuration files control
+       ini configuration management
+      </para>
+     </listitem>
+    </varlistentry>
+    <varlistentry>
+     <term><filename>libmsg.sh</filename></term>
+     <listitem>
+      <para>
+       notification tools
+      </para>
+     </listitem>
+    </varlistentry>
+    <varlistentry>
+     <term><filename>libnet.sh</filename></term>
+     <listitem>
+      <para>
+       networking tools
       </para>
      </listitem>
     </varlistentry>

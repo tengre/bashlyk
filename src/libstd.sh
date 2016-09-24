@@ -1,5 +1,5 @@
 #
-# $Id: libstd.sh 558 2016-09-23 15:40:27+04:00 toor $
+# $Id: libstd.sh 559 2016-09-24 21:48:48+04:00 toor $
 #
 #****h* BASHLYK/libstd
 #  DESCRIPTION
@@ -326,7 +326,7 @@ udfAlias2WSpace() {
 #    rm -f $foTemp
 #    $(udfMakeTemp foTemp path=/tmp prefix=pre. suffix=.${s}5 keep=true)
 #    ls -1 /tmp/pre.*.${s}5 2>/dev/null >| grep "/tmp/pre\..*\.${s}5"           #? true
-#    rm -f $foTemp
+#    rm -f /tmp/pre.*.${s}5
 #    $(udfMakeTemp foTemp path=/tmp prefix=pre. suffix=.${s}6)
 #    ls -1 /tmp/pre.*.${s}6 2>/dev/null >| grep "/tmp/pre\..*\.${s}6"           #? false
 #    unset foTemp
