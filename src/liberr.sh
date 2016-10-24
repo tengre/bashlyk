@@ -1,5 +1,5 @@
 #
-# $Id: liberr.sh 557 2016-09-22 17:22:39+04:00 toor $
+# $Id: liberr.sh 561 2016-10-24 17:26:27+04:00 toor $
 #
 #****h* BASHLYK/liberr
 #  DESCRIPTION
@@ -59,6 +59,7 @@ _bashlyk_iErrorNoSuchFileOrDir=185
 _bashlyk_iErrorNoSuchProcess=184
 _bashlyk_iErrorCurrentProcess=183
 _bashlyk_iErrorAlreadyStarted=182
+_bashlyk_iErrorNotChildProcess=181
 _bashlyk_iErrorCommandNotFound=180
 _bashlyk_iErrorUserXsessionNotFound=171
 _bashlyk_iErrorXsessionNotFound=170
@@ -80,6 +81,7 @@ _bashlyk_hError[$_bashlyk_iErrorInvalidFunction]="invalid function"
 _bashlyk_hError[$_bashlyk_iErrorNotExistNotCreated]="not exist and not created"
 _bashlyk_hError[$_bashlyk_iErrorNoSuchFileOrDir]="no such file or directory"
 _bashlyk_hError[$_bashlyk_iErrorNoSuchProcess]="no such process"
+_bashlyk_hError[$_bashlyk_iErrorNotChildProcess]="not child process"
 _bashlyk_hError[$_bashlyk_iErrorCurrentProcess]="this current process"
 _bashlyk_hError[$_bashlyk_iErrorAlreadyStarted]="already started"
 _bashlyk_hError[$_bashlyk_iErrorCommandNotFound]="command not found"

@@ -1,5 +1,5 @@
 #
-# $Id: libpid.sh 556 2016-09-22 13:56:01+04:00 toor $
+# $Id: libpid.sh 561 2016-10-24 17:26:28+04:00 toor $
 #
 #****h* BASHLYK/libpid
 #  DESCRIPTION
@@ -89,17 +89,20 @@ udfCheckStarted() {
 #******
 #****f* libpid/udfStopProcess
 #  SYNOPSIS
-#    udfStopProcess [PID] command [args]
+#    udfStopProcess [pid=PID[,PID,..]] [childs] [noargs] <command-line>
 #  DESCRIPTION
 #    stop process with given PID (optional) and the command line
 #    PID of the process in which a check is excluded from an examination
 #  INPUTS
-#    PID     - PID
-#    command - command
-#    args    - arguments
+#    pid=PID[,..]   - comma separated list of PID
+#    childs         - stop only child processes
+#    noargs         - check only main command (without arguments)
+#    <command-line> - command line for checking
 #  RETURN VALUE
 #    0                 - Process PID stopped for the specified command line
 #    NoSuchProcess     - Process for the specified command line is not detected.
+#    NoChildProcess    - Child processes for the specified command line is not
+#                        detected.
 #    CurrentProcess    - The process for this command line is identical to the
 #                        PID of the current process
 #    iErrorNotValid... - PID is not number
@@ -109,49 +112,88 @@ udfCheckStarted() {
 #    local pid=$!
 #    ps -p $pid -o pid= -o args=
 #    udfStopProcess                                                             #? $_bashlyk_iErrorEmptyOrMissingArgument
-#    udfStopProcess $pid sleep 8                                                #? true
-#    udfStopProcess $pid sleep 88                                               #? $_bashlyk_iErrorNoSuchProcess
+#    udfStopProcess pid=$pid sleep 8                                            #? true
+#    udfStopProcess pid=$pid sleep 88                                           #? $_bashlyk_iErrorNoSuchProcess
 #    udfStopProcess sleep 88                                                    #? $_bashlyk_iErrorNoSuchProcess
-#    udfStopProcess $$ $0                                                       #? $_bashlyk_iErrorCurrentProcess
-#    udfStopProcess notvalid $0                                                 #? $_bashlyk_iErrorNoSuchProcess
+#    udfStopProcess pid=$$ $0                                                   #? $_bashlyk_iErrorCurrentProcess
+#    udfStopProcess pid=invalid $0                                              #? $_bashlyk_iErrorInvalidArgument
 
 #  SOURCE
 udfStopProcess() {
 
-	udfOn EmptyOrMissingArgument "$*" || return $?
+	udfOn EmptyOrMissingArgument "$@" || return $?
 
-	local b pid rc s
+	local bChild i pid rc s sMode=args
+	local -a a
 
-	if udfIsNumber $1; then
+	for s in $*; do
 
-		pid=$1
-		shift
+		case "$s" in
 
-	else
+			pid=*)
+				i="${s#*=}"
+				a=( ${i//,/ } )
+				shift
+			;;
 
-		pid="$( ps -C "$*" -o pid= | xargs )"
-		udfOn EmptyOrMissingArgument "$pid" || return $( _ iErrorNoSuchProcess )
+			childs)
+				bChild=1
+				shift
+			;;
 
-	fi
+			noargs)
+				sMode=comm
+				shift
+			;;
 
-	for s in 15 9; do
-
-		udfIsNumber $pid || continue
-
-		udfCheckStarted $pid $*
-		rc=$?
-
-		if [[ $rc == 0 ]]; then
-
-			kill -${s} $pid
-			b=$?
-			sleep 1
-
-		fi
+		esac
 
 	done
 
-	[[ $b == 0 ]] && return $b || return $rc
+	udfOn EmptyOrMissingArgument "${a[*]}" || a=( $( ps -C "$*" -o pid= | xargs ) )
+	udfOn EmptyOrMissingArgument "${a[*]}" || return $( _ iErrorNoSuchProcess )
+
+	for (( i=0; i<${#a[*]}; i++ )) ; do
+
+		rc=$( _ iErrorInvalidArgument )
+
+		pid=${a[i]}
+
+		udfIsNumber $pid || continue
+
+		if (( pid == $$ )); then
+
+			rc=$( _ iErrorCurrentProcess )
+			continue
+
+		fi
+
+		for s in 15 9; do
+
+			if [[ -n "$bChild" && -z "$( ps --ppid $$ -o pid= | xargs | grep -w $pid )" ]]; then
+
+				rc=$( _ iErrorNotChildProcess )
+				continue
+
+			fi
+
+			[[ "$( ps -p $pid -o ${sMode}= )" =~ ${*}$ ]] && rc=0 || rc=$( _ iErrorNoSuchProcess )
+
+			if [[ $rc == 0 ]]; then
+
+				kill -${s} $pid
+				rc=$?
+				a[i]=""
+				sleep 0.5
+
+			fi
+
+		done
+
+	done
+
+	s="${a[*]}"
+	[[ -z "${s// /}" ]] && return 0 || return $rc
 
 }
 #******
