@@ -1,5 +1,5 @@
 #
-# $Id: libpid.sh 561 2016-10-24 17:26:28+04:00 toor $
+# $Id: libpid.sh 562 2016-10-24 22:23:26+04:00 toor $
 #
 #****h* BASHLYK/libpid
 #  DESCRIPTION
@@ -96,28 +96,37 @@ udfCheckStarted() {
 #  INPUTS
 #    pid=PID[,..]   - comma separated list of PID
 #    childs         - stop only child processes
-#    noargs         - check only main command (without arguments)
+#    noargs         - check only command name (without arguments)
 #    <command-line> - command line for checking
 #  RETURN VALUE
-#    0                 - Process PID stopped for the specified command line
-#    NoSuchProcess     - Process for the specified command line is not detected.
-#    NoChildProcess    - Child processes for the specified command line is not
+#    0                 - stopped all inctances of the specified command line
+#    NoSuchProcess     - processes for the specified command is not detected
+#    NoChildProcess    - child processes for the specified command line is not
 #                        detected.
-#    CurrentProcess    - The process for this command line is identical to the
-#                        PID of the current process
-#    iErrorNotValid... - PID is not number
+#    CurrentProcess    - process for this command line is identical to the PID
+#                        of the current process
+#    InvalidArgument   - PID is not number
 #    EmptyOrMissing... - no arguments
 #  EXAMPLE
-#    (sleep 8)&
-#    local pid=$!
-#    ps -p $pid -o pid= -o args=
+#    ## TODO - required unique command for testing                              #-
+#    local a fn i pid                                                           #-
+#    for i in 800 700 600 500; do                                               #-
+#    sleep $i &                                                                 #-
+#    done                                                                       #-
+#    (sleep 400)&
+#    pid=$!
+#    udfMakeTemp fn
+#    printf '#!/bin/sh\nfor i in 900 700 600 500; do\nsleep $i &\ndone\n' | tee $fn
+#    sh $fn
 #    udfStopProcess                                                             #? $_bashlyk_iErrorEmptyOrMissingArgument
-#    udfStopProcess pid=$pid sleep 8                                            #? true
+#    udfStopProcess childs pid=$pid sleep 400                                   #? true
 #    udfStopProcess pid=$pid sleep 88                                           #? $_bashlyk_iErrorNoSuchProcess
 #    udfStopProcess sleep 88                                                    #? $_bashlyk_iErrorNoSuchProcess
 #    udfStopProcess pid=$$ $0                                                   #? $_bashlyk_iErrorCurrentProcess
 #    udfStopProcess pid=invalid $0                                              #? $_bashlyk_iErrorInvalidArgument
-
+#    udfStopProcess childs pid=$a sleep 800                                     #? true
+#    udfStopProcess childs pid=$a sleep 600                                     #? $_bashlyk_iErrorNotChildProcess
+#    udfStopProcess noargs sleep                                                #? true
 #  SOURCE
 udfStopProcess() {
 
@@ -150,7 +159,7 @@ udfStopProcess() {
 
 	done
 
-	udfOn EmptyOrMissingArgument "${a[*]}" || a=( $( ps -C "$*" -o pid= | xargs ) )
+	udfOn EmptyOrMissingArgument "${a[*]}" || a=( $( ps -C "$1" -o pid,args= | grep "$*" | cut -f 1 -d' ' | xargs ) )
 	udfOn EmptyOrMissingArgument "${a[*]}" || return $( _ iErrorNoSuchProcess )
 
 	for (( i=0; i<${#a[*]}; i++ )) ; do
@@ -184,7 +193,7 @@ udfStopProcess() {
 				kill -${s} $pid
 				rc=$?
 				a[i]=""
-				sleep 0.5
+				sleep 0.1
 
 			fi
 
