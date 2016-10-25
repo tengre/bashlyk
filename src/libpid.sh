@@ -1,5 +1,5 @@
 #
-# $Id: libpid.sh 562 2016-10-24 22:23:26+04:00 toor $
+# $Id: libpid.sh 563 2016-10-25 11:11:17+04:00 toor $
 #
 #****h* BASHLYK/libpid
 #  DESCRIPTION
@@ -159,7 +159,7 @@ udfStopProcess() {
 
 	done
 
-	udfOn EmptyOrMissingArgument "${a[*]}" || a=( $( ps -C "$1" -o pid,args= | grep "$*" | cut -f 1 -d' ' | xargs ) )
+	udfOn EmptyOrMissingArgument "${a[*]}" || a=( $( pgrep -f "$*") )
 	udfOn EmptyOrMissingArgument "${a[*]}" || return $( _ iErrorNoSuchProcess )
 
 	for (( i=0; i<${#a[*]}; i++ )) ; do
@@ -179,7 +179,7 @@ udfStopProcess() {
 
 		for s in 15 9; do
 
-			if [[ -n "$bChild" && -z "$( ps --ppid $$ -o pid= | xargs | grep -w $pid )" ]]; then
+			if [[ -n "$bChild" && -z "$( echo $(pgrep -P $$) | grep -w $pid )" ]]; then
 
 				rc=$( _ iErrorNotChildProcess )
 				continue
@@ -190,9 +190,7 @@ udfStopProcess() {
 
 			if [[ $rc == 0 ]]; then
 
-				kill -${s} $pid
-				rc=$?
-				a[i]=""
+				kill -${s} $pid && a[i]="" || rc=$?
 				sleep 0.1
 
 			fi
