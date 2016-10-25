@@ -1,5 +1,5 @@
 #
-# $Id: libstd.sh 559 2016-09-24 21:48:48+04:00 toor $
+# $Id: libstd.sh 564 2016-10-25 15:47:13+04:00 toor $
 #
 #****h* BASHLYK/libstd
 #  DESCRIPTION
@@ -1285,6 +1285,71 @@ udfLocalVarFromCSV() {
 
 	udfOn EmptyResult throw "${h[@]}"
 	echo "local ${h[@]}"
+
+}
+#******
+#****f* libstd/udfGetTimeInSec
+#  SYNOPSIS
+#    udfGetTimeInSec [-v <var>] <number>[sec|min|hour|...]
+#  DESCRIPTION
+#    get a time value in the seconds from a string in the human-readable format
+#  OPTIONS
+#    -v <var>                    - set the result to valid variable <var>
+#  ARGUMENTS
+#    <numbers>[sec,min,hour,...] - human-readable string of date&time
+#  RETURN VALUE
+#    InvalidArgument              - invalid or missing arguments, number with
+#                                   a time suffix expected
+#    EmptyResult                  - no result
+#    0                            - success
+#  EXAMPLE
+#    local v s=${RANDOM:0:2} #-
+#    udfGetTimeInSec                                                            #? $_bashlyk_iErrorInvalidArgument
+#    udfGetTimeInSec SeventenFourSec                                            #? $_bashlyk_iErrorInvalidArgument
+#    udfGetTimeInSec 59seconds >| grep -w 59                                    #? true
+#    udfGetTimeInSec -v v ${s}minutes                                           #? true
+#    echo $v >| grep -w $(( s * 60 ))                                           #? true
+#    udfGetTimeInSec -v 123s                                                    #? $_bashlyk_iErrorInvalidVariable
+#    udfGetTimeInSec -v -v                                                      #? $_bashlyk_iErrorInvalidVariable
+#    udfGetTimeInSec -v v -v v                                                  #? $_bashlyk_iErrorInvalidArgument
+#    udfGetTimeInSec $RANDOM                                                    #? true
+#  SOURCE
+udfGetTimeInSec() {
+
+	if [[ "$1" == "-v" ]]; then
+
+		udfIsValidVariable "$2" || eval $( udfOnError InvalidVariable "$2" )
+
+		[[ "$3" == "-v" ]] && eval $( udfOnError InvalidArgument "$3 - number with time suffix expected" )
+
+		eval 'export $2="$( udfGetTimeInSec $3 )"'
+
+		[[ -n ${!2} ]] || eval 'export $2="$( udfGetTimeInSec $4 )"'
+		[[ -n ${!2} ]] || eval $( udfOnError EmptyResult "$2" )
+
+		return $?
+
+	fi
+
+	local i=${1%%[[:alpha:]]*}
+
+	udfIsNumber $i || eval $( udfOnError InvalidArgument "$i - number expected" )
+
+	case ${1##*[[:digit:]]} in
+
+		seconds|second|sec|s|'') echo $i;;
+		   minutes|minute|min|m) echo $(( i*60 ));;
+		        hours|hour|hr|h) echo $(( i*3600 ));;
+		             days|day|d) echo $(( i*3600*24 ));;
+		           weeks|week|w) echo $(( i*3600*24*7 ));;
+		       months|month|mon) echo $(( i*3600*24*30 ));;
+		           years|year|y) echo $(( i*3600*24*365 ));;
+	                              *) echo ""
+                                       eval $( udfOnError InvalidArgument "$1 - number with time suffix expected" )
+
+	esac
+
+    return $?
 
 }
 #******

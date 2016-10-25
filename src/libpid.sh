@@ -1,5 +1,5 @@
 #
-# $Id: libpid.sh 563 2016-10-25 11:11:17+04:00 toor $
+# $Id: libpid.sh 564 2016-10-25 15:47:13+04:00 toor $
 #
 #****h* BASHLYK/libpid
 #  DESCRIPTION
@@ -91,10 +91,12 @@ udfCheckStarted() {
 #  SYNOPSIS
 #    udfStopProcess [pid=PID[,PID,..]] [childs] [noargs] <command-line>
 #  DESCRIPTION
-#    stop process with given PID (optional) and the command line
+#    Stop the processes associated with the specified command line. Options
+#    allow you to manage the list of processes to stop.
 #    PID of the process in which a check is excluded from an examination
-#  INPUTS
-#    pid=PID[,..]   - comma separated list of PID
+#  ARGUMENTS
+#    pid=PID[,..]   - comma separated list of PID. Only these processes will be
+#                     stopped if they are associated with the command line
 #    childs         - stop only child processes
 #    noargs         - check only command name (without arguments)
 #    <command-line> - command line for checking
@@ -104,7 +106,7 @@ udfCheckStarted() {
 #    NoChildProcess    - child processes for the specified command line is not
 #                        detected.
 #    CurrentProcess    - process for this command line is identical to the PID
-#                        of the current process
+#                        of the current process, do not stopped
 #    InvalidArgument   - PID is not number
 #    EmptyOrMissing... - no arguments
 #  EXAMPLE

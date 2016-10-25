@@ -1,3 +1,22 @@
+Tue, 25 Oct 2016 11:29:59 +0400
+	Fix bugs
+	Version 1.87
+
+libpid.sh:
+ - fixed and improved udfStopProcess - added the ability to delete a group of
+   processes associated with the command line:
+    * PID argument replaced by the options "pid=<PID>[,..]"
+    * added option "childs" - stop only child processes
+    * added option "noargs" - stop by command name (without arguments)
+    * improved tests
+
+libstd.sh:
+ - added new function udfGetTimeInSec from project "kurenma"
+
+liberr.sh:
+ - added new error state iErrorNotChildProcess
+
+
 Sat, 24 Sep 2016 21:53:04 +0400
 	New upstream release
 	Version 1.86
@@ -46,6 +65,7 @@ liblog.sh:
 libpid.sh:
  - add new function udfStopProcess
  - improved udfCheckProcess - PID checked as number, updated test and robodoc
+
 
 Mon, 22 Aug 2016 02:06:21 +0400
 	New upstream release
@@ -118,6 +138,7 @@ bashlyk:
 debian/control
  - added bc dependency (used by testunit.sh)
 
+
 Thu, 25 Jun 2015 14:28:10 +0400
 	Fix bugs
 	Version 1.84
@@ -140,6 +161,7 @@ Thu, 25 Jun 2015 14:28:10 +0400
  - в сборку добавлена генерация robodoc HTML-документации и замены её заголовка
    (логотипа)
 
+
 Fri, 13 Mar 2015 14:55:31 +0400
 	Fix bugs
 	Version 1.83
@@ -150,6 +172,7 @@ Fri, 13 Mar 2015 14:55:31 +0400
    udfGetXSessionProperties
  - udfMessage - если не работает и write для вывода сообщения, то текст выдается
    на стандартный вывод сценария
+
 
 Wed, 18 Feb 2015 15:26:18 +0400
 	Fix bugs
@@ -197,6 +220,7 @@ Wed, 18 Feb 2015 15:26:18 +0400
  - udfSetOptHash - исправлена ошибка нерандомизированных локальных переменных
  - udfGetOptHash - stderr вывод getopt подавляется
 
+
 Wed, 03 Dec 2014 15:33:45 +0400
 	New upstream release
 	Version 1.81
@@ -221,6 +245,7 @@ Wed, 03 Dec 2014 15:33:45 +0400
    * код статуса от описания ошибки отделяется "-"
    * более строгое определение наличия внешней вложенной функции
    * команда warn не генерирует стек вызовов
+
 
 Fri, 05 Sep 2014 14:59:31 +0400
 	New upstream release
@@ -258,6 +283,7 @@ Fri, 05 Sep 2014 14:59:31 +0400
  - добавлен вывод ${FUNCNAME[1]} в журнал ошибок
  bashlyk.conf:
  - в список библиотек по умолчанию добавлен вызов libmsg.sh
+
 
 Mon, 04 Aug 2014 15:04:47 +0400
 	New upstream release
@@ -336,6 +362,7 @@ Mon, 04 Aug 2014 15:04:47 +0400
  - скорректировано описание пакета
  debian/postinst:
  - применены рекомендации утилиты lintian
+
 
 Mon, 09 Jun 2014 11:51:31 +0400
 	New upstream release
@@ -457,6 +484,7 @@ Mon, 09 Jun 2014 11:51:31 +0400
  debian/postinst:
  - при установке автоматически выполняются тесты (bashlyk --bashlyk-test)
 
+
 Tue, 06 May 2014 15:30:35 +0400
 	Fix bugs
 	Version 1.77
@@ -473,6 +501,7 @@ Tue, 06 May 2014 15:30:35 +0400
  testunit.awk:
  - исправлена ошибка перенаправления по умолчанию при обработке тестовых блоков
 
+
 Wed, 16 Apr 2014 13:03:58 +0400
 	Fix bugs
 	Version 1.76
@@ -487,6 +516,7 @@ Wed, 16 Apr 2014 13:03:58 +0400
  debian/control:
  - добавлена зависимость от пакета docbook-xsl в секции build-depends
 
+
 Tue, 11 Mar 2014 23:31:14 +0400
 	Fix bugs
 	Version 1.75
@@ -496,11 +526,13 @@ Tue, 11 Mar 2014 23:31:14 +0400
  - libini.sh: исправлена ошибка - создание временного файла в текущем каталоге в
    тестовых блоках функций udfIni, udfIni2Csv
 
+
 Fri, 07 Mar 2014 12:54:54 +0400
 	Fix bugs
 	Version 1.74
  - libini.sh: явное указание вызова mawk для обработки файлов сценариев
    ini2csv.awk и inisection2csv.awk
+
 
 Thu, 11 Feb 2014 15:46:22 +0400
 	Fix bugs
@@ -541,6 +573,7 @@ Thu, 11 Feb 2014 15:46:22 +0400
    управляющих режимом вывода переменных
  - более точный тест для udfLog
 
+
 Mon, 13 Jan 2014 23:23:23 +0400
 	New upstream release
 	Version 1.72
@@ -580,6 +613,7 @@ Mon, 13 Jan 2014 23:23:23 +0400
  ini2csv.awk:
  - счетчик "неименованных" значений теперь инициализируется для каждой секции
 
+
 Sat, 14 Dec 2013 23:09:21 +0400
 	New upstream release
 	Version 1.71
@@ -613,6 +647,7 @@ Sat, 14 Dec 2013 23:09:21 +0400
    автоматических ключей для неименованных значений
    udfGetEnum2Csv -> udfSelectEnumFromCsvHash - получить только неименованные
    значения
+
 
 Mon, 18 Nov 2013 14:30:56 +0400
 	New upstream release
@@ -649,6 +684,7 @@ Mon, 18 Nov 2013 14:30:56 +0400
  - Исправлена ошибка в udfCheckStarted - слишком жесткий фильтр при проверке
    командной строки. Дополнена документация (код возврата 2)
 
+
 Fri, 07 Jun 2013 12:27:16 +0400
 	New upstream release
 	Version 1.69
@@ -666,6 +702,7 @@ Fri, 07 Jun 2013 12:27:16 +0400
  - исправление ошибок документации и тестирования
  - изменение вывода журнала тестирования - логи создаются в домашних каталогах
    пользователей или /var/log/ для root
+
 
 Mon, 06 May 2013 16:07:21 +0400
 	New upstream release
@@ -691,6 +728,7 @@ Mon, 06 May 2013 16:07:21 +0400
    формирования безымянных ключей для строк данных без ключей
  - библиотеки libxml и libmd5 ликвидированы, их функции перенесены в libstd
 
+
 Thu, 11 Apr 2013 22:41:58 +0400
 	New upstream release
 	Version 1.67
@@ -698,12 +736,14 @@ Thu, 11 Apr 2013 22:41:58 +0400
    udfMakeTemp
  - тестовые блоки формируются в секциях EXAMPLE встроенной Robodoc документации
 
+
 Wed, 03 Apr 2013 11:34:32 +0400
 	New upstream release
 	Version 1.66
  - объекты файловой системы рабочего сценария, помимо стандарта FHS, создаются
    также с учётом стандарта "XDG Base Directory Specification"
  - формирование man страниц пакета
+
 
 Mon, 28 Jan 2013 23:32:22 +0400
 	Fix bugs
@@ -722,6 +762,7 @@ Mon, 28 Jan 2013 23:32:22 +0400
    зарегистрированных библиотек, рабочий сценарий при этом не выполняется
  - от утилиты grep теперь не требуется поддержка perl регулярных выражений (-P)
 
+
 Mon, 21 Jan 2013 16:26:12 +0400
 	Fix bugs
 	Version 1.64
@@ -735,11 +776,13 @@ Mon, 21 Jan 2013 16:26:12 +0400
    отбрасываются, а поля (строки) их содержащие, обрабатываются как "безымянный"
    элемент массива (со служебным автоматически инкрементируемым ключом)
 
+
 Mon, 14 Jan 2013 23:55:48 +0400
 	New upstream release
 	Version 1.63
  - в функции модуля libini включена возможность чтения/записи данных ini-файлов
    в виде обычных строк, ранее обрабатывались только строки "ключ = значение"
+
 
 Thu, 26 Jul 2012 16:06:01 +0400
 	Fix bugs
