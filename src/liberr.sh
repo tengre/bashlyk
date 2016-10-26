@@ -1,5 +1,5 @@
 #
-# $Id: liberr.sh 561 2016-10-24 17:26:27+04:00 toor $
+# $Id: liberr.sh 566 2016-10-26 22:21:06+04:00 toor $
 #
 #****h* BASHLYK/liberr
 #  DESCRIPTION
@@ -355,7 +355,7 @@ udfOnError1() {
 #  RETURN VALUE
 #   return ${_bashlyk_iLastError[$BASHPID]} or last non zero return code or 255
 #  EXAMPLE
-#    local rc=$(echo "$RANDOM / 256" | bc) cmd=udfSetLastError
+#    local rc=$(( RANDOM / 256 )) cmd=udfSetLastError
 #    echo $(false || udfThrow rc=$? 2>&1; echo ok=$?) >| grep "^Error: rc=1 .. (1)$" #? true
 #    echo $($cmd $rc || udfThrow $? 2>&1; echo rc=$?) >| grep -w "$rc"          #? true
 #  SOURCE
