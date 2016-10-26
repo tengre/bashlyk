@@ -1,5 +1,5 @@
 #
-# $Id: libpid.sh 564 2016-10-25 15:47:13+04:00 toor $
+# $Id: libpid.sh 567 2016-10-26 22:50:23+04:00 toor $
 #
 #****h* BASHLYK/libpid
 #  DESCRIPTION
@@ -238,7 +238,7 @@ udfSetPid() {
  [[ -f "$fnPid" ]] && pid=$(head -n 1 "$fnPid")
  if [[ -n "$pid" ]]; then
   udfCheckStarted $pid ${_bashlyk_s0} ${_bashlyk_sArg} && {
-   eval $(udfOnError retecho iErrorAlreadyStarted '$0 : Already started with pid = $pid')
+   eval $(udfOnError retecho iErrorAlreadyStarted '$pid')
   }
  fi
  printf -- "%s\n%s\n" "$$" "$0 ${_bashlyk_sArg}" > $fnPid \
