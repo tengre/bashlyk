@@ -1,5 +1,5 @@
 #
-# $Id: liberr.sh 567 2016-10-26 22:50:23+04:00 toor $
+# $Id: liberr.sh 568 2016-10-27 17:11:41+04:00 toor $
 #
 #****h* BASHLYK/liberr
 #  DESCRIPTION
@@ -61,6 +61,7 @@ _bashlyk_iErrorCurrentProcess=183
 _bashlyk_iErrorAlreadyStarted=182
 _bashlyk_iErrorNotChildProcess=181
 _bashlyk_iErrorCommandNotFound=180
+_bashlyk_iErrorAlreadyLocked=179
 _bashlyk_iErrorUserXsessionNotFound=171
 _bashlyk_iErrorXsessionNotFound=170
 _bashlyk_iErrorIncompatibleVersion=169
@@ -85,6 +86,7 @@ _bashlyk_hError[$_bashlyk_iErrorNotChildProcess]="not child process"
 _bashlyk_hError[$_bashlyk_iErrorCurrentProcess]="this current process"
 _bashlyk_hError[$_bashlyk_iErrorAlreadyStarted]="already started with PID"
 _bashlyk_hError[$_bashlyk_iErrorCommandNotFound]="command not found"
+_bashlyk_hError[$_bashlyk_iErrorAlreadyLocked]="already locked"
 _bashlyk_hError[$_bashlyk_iErrorUserXsessionNotFound]="user X-Session not found"
 _bashlyk_hError[$_bashlyk_iErrorXsessionNotFound]="X-Session not found"
 _bashlyk_hError[$_bashlyk_iErrorIncompatibleVersion]="incompatible version"

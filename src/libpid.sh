@@ -1,5 +1,5 @@
 #
-# $Id: libpid.sh 567 2016-10-26 22:50:23+04:00 toor $
+# $Id: libpid.sh 568 2016-10-27 17:19:16+04:00 toor $
 #
 #****h* BASHLYK/libpid
 #  DESCRIPTION
@@ -31,15 +31,15 @@
 #  DESCRIPTION
 #    Блок инициализации глобальных переменных
 #  SOURCE
-: ${_bashlyk_afnClean:=}
-: ${_bashlyk_apathClean:=}
+: ${_bashlyk_afoClean:=}
+: ${_bashlyk_afdClean:=}
 : ${_bashlyk_fnPid:=}
 : ${_bashlyk_fnSock:=}
 : ${_bashlyk_s0:=${0##*/}}
 : ${_bashlyk_pathRun:=/tmp}
 : ${_bashlyk_sArg:=$*}
-: ${_bashlyk_aRequiredCmd_pid:="head kill mkdir printf ps rm rmdir sleep xargs"}
-: ${_bashlyk_aExport_pid:="udfCheckStarted udfClean udfExitIfAlreadyStarted udfSetPid udfStopProcess"}
+: ${_bashlyk_aRequiredCmd_pid:="head kill mkdir printf pgrep ps rm rmdir sleep xargs"}
+: ${_bashlyk_aExport_pid:="udfCheckStarted udfExitIfAlreadyStarted udfGetFreeFD udfSetPid udfStopProcess"}
 #******
 #****f* libpid/udfCheckStarted
 #  SYNOPSIS
@@ -59,8 +59,8 @@
 #    iErrorNotValid... - PID is not number
 #    EmptyOrMissing... - no arguments
 #  EXAMPLE
-#    (sleep 8)&
-#    local pid=$!
+#    (sleep 8)&                                                                 #-
+#    local pid=$!                                                               #-
 #    ps -p $pid -o pid= -o args=
 #    udfCheckStarted                                                            #? $_bashlyk_iErrorEmptyOrMissingArgument
 #    udfCheckStarted $pid sleep 8                                               #? true
@@ -73,7 +73,7 @@ udfCheckStarted() {
 
 	udfOn EmptyOrMissingArgument "$*" || return $?
 
-	local pid="$1" IFS=$' \t\n'
+	local pid=$1
 
 	udfIsNumber $1 || return $( _ iErrorNotValidArgument )
 
@@ -115,7 +115,7 @@ udfCheckStarted() {
 #    for i in 800 700 600 500; do                                               #-
 #    sleep $i &                                                                 #-
 #    done                                                                       #-
-#    (sleep 400)&
+#    (sleep 400)&                                                               #-
 #    pid=$!
 #    udfMakeTemp fn
 #    printf '#!/bin/sh\nfor i in 900 700 600 500; do\nsleep $i &\ndone\n' | tee $fn
@@ -210,42 +210,89 @@ udfStopProcess() {
 #  SYNOPSIS
 #    udfSetPid
 #  DESCRIPTION
-#    Защита от повторного вызова сценария с данными аргументами.
-#    Если такой скрипт не запущен, то создается PID файл.
-#    Причём, если скрипт имеет аргументы, то этот файл создаётся в отдельном
-#    подкаталоге
-#    с именем файла в виде md5-хеша командной строки, иначе pid файл создается в
-#    самом каталоге для PID-файлов с именем, производным от имени скрипта.
+#    Protection against re-run the script with the given arguments. PID file is
+#    created when this script is not already running. If the script has
+#    arguments, the PID file is created with the name of a MD5-hash this command
+#    line, or it is derived from the name of the script.
 #  RETURN VALUE
-#    0                        - PID file for command line successfully created
-#    iErrorAlreadyStarted     - PID file exist and command line process already
-#                               started
-#    iErrorNotExistNotCreated - PID file don't created
+#    AlreadyStarted     - process of command line already started
+#    AlreadyLocked      - PID file locked by flock
+#    NotExistNotCreated - PID file don't created
+#    0                  - PID file for command line successfully created
 #  EXAMPLE
+#    local fn s='#!/bin/bash\n_bashlyk_log=nouse . bashlyk\nudfSetPid || exit $?\nsleep 8\n' #-
+#    udfMakeTemp fn                                                             #? true
+#    export _bashlyk_pathLib                                                    #? true
+#    printf -- "$s" > $fn                                                       #-
+#    chmod +x $fn                                                               #? true
+#    ($fn)&                                                                     #? true
+#    sleep 0.1
+#    $fn                                                                        #? $_bashlyk_iErrorAlreadyStarted
 #    udfSetPid                                                                  #? true
 #    test -f $_bashlyk_fnPid                                                    #? true
 #    head -n 1 $_bashlyk_fnPid >| grep -w $$                                    #? true
+#    rm -f $_bashlyk_fnPid
 #    ## TODO проверить коды возврата
 #  SOURCE
 udfSetPid() {
- local fnPid pid IFS=$' \t\n'
- if [[ -n "$_bashlyk_sArg" ]]; then
-  fnPid="${_bashlyk_pathRun}/$(udfGetMd5 ${_bashlyk_s0} ${_bashlyk_sArg}).pid"
- else
-  fnPid="${_bashlyk_pathRun}/${_bashlyk_s0}.pid"
- fi
- mkdir -p "${_bashlyk_pathRun}" || eval $(udfOnError return iErrorNotExistNotCreated '${_bashlyk_pathRun}')
- [[ -f "$fnPid" ]] && pid=$(head -n 1 "$fnPid")
- if [[ -n "$pid" ]]; then
-  udfCheckStarted $pid ${_bashlyk_s0} ${_bashlyk_sArg} && {
-   eval $(udfOnError retecho iErrorAlreadyStarted '$pid')
-  }
- fi
- printf -- "%s\n%s\n" "$$" "$0 ${_bashlyk_sArg}" > $fnPid \
-  || eval $(udfOnError rewarn iErrorNotExistNotCreated 'pid file $fnPid is not created...')
- _bashlyk_fnPid=$fnPid
- udfAddFile2Clean $fnPid
- return 0
+
+	local fnPid pid
+
+	if [[ -n "$( _ sArg )" ]]; then
+
+		fnPid="$( _ pathRun )/$( udfGetMd5 $( _ s0 ) $( _ sArg ) ).pid"
+
+	else
+
+		fnPid="$( _ pathRun )/$( _ s0 ).pid"
+
+	fi
+
+	mkdir -p "${fnPid%/*}" || eval $( udfOnError retecho NotExistNotCreated "${fnPid%/*}" )
+
+	fd=$( udfGetFreeFD )
+	udfThrowOnEmptyVariable fd
+
+	eval "exec $fd>>${fnPid}"
+
+	[[ -s $fnPid ]] && pid=$( head -n 1 $fnPid )
+
+	if eval "flock -n $fd"; then
+
+		if udfCheckStarted "$pid" $( _ s0 ) $( _ sArg ); then
+
+			eval $( udfOnError retecho AlreadyStarted "$pid" )
+
+		fi
+
+		if printf -- "%s\n%s\n" "$$" "$0 $( _ sArg )" > $fnPid; then
+
+			_ fnPid $fnPid
+			#udfAddFO2Clean $fnPid
+			udfAddFD2Clean $fd
+
+		else
+
+			eval $( udfOnError retecho NotExistNotCreated "$fnPid" )
+
+		fi
+
+	else
+
+		if udfCheckStarted "$pid" $( _ s0 ) $( _ sArg ); then
+
+			eval $( udfOnError retecho AlreadyStarted "$pid" )
+
+		else
+
+			eval $( udfOnError retecho AlreadyLocked "$fnPid" )
+
+		fi
+
+	fi
+
+	return 0
+
 }
 #******
 #****f* libpid/udfExitIfAlreadyStarted
@@ -266,28 +313,43 @@ udfSetPid() {
 #    ## TODO проверка кодов возврата
 #  SOURCE
 udfExitIfAlreadyStarted() {
- udfSetPid || exit $?
+
+	udfSetPid || exit $?
+
 }
 #******
-# TODO проверить на используемость
-#****f* libpid/udfClean
+# TODO проверить на используемость udfClean
+#****f* libpid/udfGetFreeFD
 #  SYNOPSIS
-#    udfClean
+#    udfGetFreeFD
 #  DESCRIPTION
-#    Remove files and folder listed on the variables
-#    $_bashlyk_afnClean and  $_bashlyk_apathClean
-#  RETURN VALUE
-#    Last delete operation status
+#    get unused filedescriptor
+#  OUTPUT
+#    show given filedescriptor
 #  EXAMPLE
-#    udfClean
+#    udfGetFreeFD | grep -P "^\d+$"                                             #? true
 #  SOURCE
-udfClean() {
- local fn IFS=$' \t\n' a="${_bashlyk_afnClean} ${_bashlyk_apathClean} $*"
- for fn in $a
- do
-  [[ -n "$fn" && -f "$fn" ]] && rm -f $1 "$fn"
-  [[ -n "$fn" && -d "$fn" ]] && rmdir "$fn" >/dev/null 2>&1
- done
- return $?
+udfGetFreeFD() {
+
+	local i=0 iMax=$(ulimit -n)
+	#
+	: ${iMax:=255}
+	#
+	for (( i = 3; i < iMax; i++ )); do
+
+		if [[ -e /proc/$$/fd/$i ]]; then
+
+			continue
+
+		else
+
+			echo $i
+			break
+
+		fi
+
+	done
+
 }
 #******
+

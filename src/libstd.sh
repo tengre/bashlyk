@@ -1,5 +1,5 @@
 #
-# $Id: libstd.sh 564 2016-10-25 15:47:13+04:00 toor $
+# $Id: libstd.sh 568 2016-10-27 17:11:42+04:00 toor $
 #
 #****h* BASHLYK/libstd
 #  DESCRIPTION
@@ -48,6 +48,7 @@ _bashlyk_iMaxOutputLines=1000
 : ${_bashlyk_s0:=${0##*/}}
 : ${_bashlyk_sId:=${_bashlyk_s0%.sh}}
 : ${_bashlyk_afoClean:=}
+: ${_bashlyk_afdClean:=}
 : ${_bashlyk_ajobClean:=}
 : ${_bashlyk_apidClean:=}
 : ${_bashlyk_pidLogSock:=}
@@ -60,14 +61,14 @@ _bashlyk_iMaxOutputLines=1000
 : ${_bashlyk_reMetaRules:='34=":40=(:41=):59=;:91=[:92=\\:93=]:61=='}
 : ${_bashlyk_envXSession:=}
 : ${_bashlyk_aRequiredCmd_std:="cat chgrp chmod chown cut date echo grep hostname kill \
-  logname md5sum mkdir mkfifo mktemp ps pwd rm rmdir sed sleep tempfile touch tr which \
-  xargs"}
+  logname md5sum mkdir mkfifo mktemp pgrep ps pwd rm rmdir sed sleep tempfile touch tr \
+  which xargs"}
 : ${_bashlyk_aExport_std:="_ _ARGUMENTS _gete _getv _pathDat _s0 _set udfAddFile2Clean  \
-  udfAddFObj2Clean udfAddJob2Clean udfAddPath2Clean udfAddPid2Clean udfAlias2WSpace     \
-  udfBaseId udfBashlykUnquote udfCheckCsv udfCleanQueue udfDate udfGetMd5 udfGetPathMd5 \
-  udfIsNumber udfIsValidVariable udfLocalVarFromCSV udfMakeTemp udfMakeTempV udfOnTrap  \
-  udfPrepare2Exec udfPrepareByType udfQuoteIfNeeded udfSerialize udfShellExec           \
-  udfShowVariable udfTimeStamp udfWSpace2Alias udfXml"}
+  udfAddFD2Clean udfAddFO2Clean udfAddFObj2Clean udfAddJob2Clean udfAddPath2Clean       \
+  udfAddPid2Clean udfAlias2WSpace udfBaseId udfBashlykUnquote udfCheckCsv udfCleanQueue \
+  udfDate udfGetMd5 udfGetPathMd5 udfIsNumber udfIsValidVariable udfLocalVarFromCSV     \
+  udfMakeTemp udfMakeTempV udfOnTrap udfPrepare2Exec udfPrepareByType udfQuoteIfNeeded  \
+  udfSerialize udfShellExec udfShowVariable udfTimeStamp udfWSpace2Alias udfXml"}
 #******
 #****f* libstd/udfIsNumber
 #  SYNOPSIS
@@ -352,8 +353,8 @@ udfMakeTemp() {
 
 		[[ -n ${!1} ]] || eval $( udfOnError2 iErrorEmptyResult "$1" )
 
-		[[ $* =~ keep=false ]] && udfAddFObj2Clean ${!1}
-		[[ $* =~ keep=true  ]] || udfAddFObj2Clean ${!1}
+		[[ $* =~ keep=false ]] && udfAddFO2Clean ${!1}
+		[[ $* =~ keep=true  ]] || udfAddFO2Clean ${!1}
 
 		return 0
 
@@ -470,7 +471,7 @@ udfMakeTemp() {
 
 	fi
 
-	[[ $* =~ keep=false ]] && udfAddFObj2Clean $s
+	[[ $* =~ keep=false ]] && udfAddFO2Clean $s
 
 	echo $s
 
@@ -610,7 +611,7 @@ udfShellExec() {
 #    echo $(udfAddFile2Clean $a )
 #    ls -l /tmp/*.${s}3 2>/dev/null >| grep ".*\.${s}3"                         #? false
 #  SOURCE
-udfAddFile2Clean() { udfAddFObj2Clean $@; }
+udfAddFile2Clean() { udfAddFO2Clean $@; }
 #******
 #****f* libstd/udfAddPath2Clean
 #  SYNOPSIS
@@ -634,7 +635,7 @@ udfAddFile2Clean() { udfAddFObj2Clean $@; }
 #    echo $(udfAddPath2Clean $a )
 #    ls -1ld /tmp/*.${s}3 2>/dev/null >| grep ".*\.${s}3"                       #? false
 #  SOURCE
-udfAddPath2Clean() { udfAddFObj2Clean $@; }
+udfAddPath2Clean() { udfAddFO2Clean $@; }
 #******
 #****f* libstd/udfAddJob2Clean
 #  SYNOPSIS
@@ -677,21 +678,40 @@ udfAddPid2Clean() {
 #  INPUTS
 #    args - имена файлов
 #  SOURCE
-udfCleanQueue() { udfAddFile2Clean $@; }
+udfCleanQueue()    { udfAddFile2Clean $@; }
+udfAddFObj2Clean() { udfAddFO2Clean   $@; }
 #******
-#****f* libstd/udfAddFObj2Clean
+#****f* libstd/udfAddFO2Clean
 #  SYNOPSIS
-#    udfAddFObj2Clean args
+#    udfAddFO2Clean <args>
 #  DESCRIPTION
-#    list file system objects
+#    add list of filesystem objects for cleaning on exit
 #  INPUTS
 #    args - files or directories for cleaning on exit
 #  SOURCE
-udfAddFObj2Clean() {
+udfAddFO2Clean() {
 
 	udfOn MissingArgument return $*
 
 	_bashlyk_afoClean[$BASHPID]+=" $*"
+
+	 trap "udfOnTrap" 1 2 5 9 15 EXIT
+
+}
+#******
+#****f* libstd/udfAddFD2Clean
+#  SYNOPSIS
+#    udfAddFD2Clean <args>
+#  DESCRIPTION
+#    add list of filedescriptors for cleaning on exit
+#  ARGUMENTS
+#    <args> - file descriptors
+#  SOURCE
+udfAddFD2Clean() {
+
+	udfOn MissingArgument return $*
+
+	_bashlyk_afdClean[$BASHPID]+=" $*"
 
 	 trap "udfOnTrap" 1 2 5 9 15 EXIT
 
@@ -732,7 +752,8 @@ udfOnTrap() {
 
 		for s in 15 9; do
 
-			if [[ -n "$( ps -o pid= --ppid $$ | xargs | grep -w ${a[i]} )" ]]; then
+#			if [[ -n "$( ps -o pid= --ppid $$ | xargs | grep -w ${a[i]} )" ]]; then
+			if [[ -n "$( echo $(pgrep -P $$) | grep -w ${a[i]} )" ]]; then
 
 				kill -${s} ${a[i]} 2>/dev/null
 				sleep 0.2
@@ -740,6 +761,12 @@ udfOnTrap() {
 			fi
 
 		done
+
+	done
+
+	for s in ${_bashlyk_afdClean[$BASHPID]}; do
+
+		udfIsNumber $s && eval "exec ${s}>&-"
 
 	done
 
