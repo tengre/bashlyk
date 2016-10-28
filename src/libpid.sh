@@ -1,5 +1,5 @@
 #
-# $Id: libpid.sh 569 2016-10-28 11:38:43+04:00 toor $
+# $Id: libpid.sh 571 2016-10-28 14:21:46+04:00 toor $
 #
 #****h* BASHLYK/libpid
 #  DESCRIPTION
@@ -199,7 +199,6 @@ udfStopProcess() {
 
 					a[i]=""
 					: $(( iStopped++ ))
-					rc=0
 
 				else
 
