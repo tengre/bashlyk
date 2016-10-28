@@ -1,5 +1,5 @@
 #
-# $Id: libstd.sh 568 2016-10-27 17:11:42+04:00 toor $
+# $Id: libstd.sh 569 2016-10-28 11:21:36+04:00 toor $
 #
 #****h* BASHLYK/libstd
 #  DESCRIPTION
@@ -63,12 +63,13 @@ _bashlyk_iMaxOutputLines=1000
 : ${_bashlyk_aRequiredCmd_std:="cat chgrp chmod chown cut date echo grep hostname kill \
   logname md5sum mkdir mkfifo mktemp pgrep ps pwd rm rmdir sed sleep tempfile touch tr \
   which xargs"}
-: ${_bashlyk_aExport_std:="_ _ARGUMENTS _gete _getv _pathDat _s0 _set udfAddFile2Clean  \
-  udfAddFD2Clean udfAddFO2Clean udfAddFObj2Clean udfAddJob2Clean udfAddPath2Clean       \
-  udfAddPid2Clean udfAlias2WSpace udfBaseId udfBashlykUnquote udfCheckCsv udfCleanQueue \
-  udfDate udfGetMd5 udfGetPathMd5 udfIsNumber udfIsValidVariable udfLocalVarFromCSV     \
-  udfMakeTemp udfMakeTempV udfOnTrap udfPrepare2Exec udfPrepareByType udfQuoteIfNeeded  \
-  udfSerialize udfShellExec udfShowVariable udfTimeStamp udfWSpace2Alias udfXml"}
+: ${_bashlyk_aExport_std:="_ _ARGUMENTS _gete _getv _pathDat _s0 _set udfAddFile2Clean    \
+  udfAddFD2Clean udfAddFO2Clean udfAddFObj2Clean udfAddJob2Clean udfAddPath2Clean         \
+  udfAddPid2Clean udfAlias2WSpace udfBaseId udfBashlykUnquote udfCheckCsv udfCleanQueue   \
+  udfDate udfGetFreeFD udfGetMd5 udfGetPathMd5 udfIsNumber udfIsValidVariable             \
+  udfLocalVarFromCSV udfMakeTemp udfMakeTempV udfOnTrap udfPrepare2Exec udfPrepareByType  \
+  udfQuoteIfNeeded udfSerialize udfShellExec udfShowVariable udfTimeStamp udfWSpace2Alias \
+  udfXml"}
 #******
 #****f* libstd/udfIsNumber
 #  SYNOPSIS
@@ -721,42 +722,58 @@ udfAddFD2Clean() {
 #  SYNOPSIS
 #    udfOnTrap
 #  DESCRIPTION
-#    Процедура очистки при завершении вызвавшего сценария.
-#    Предназначен только для вызова командой trap.
-#    * Производится удаление файлов и пустых каталогов; заданий и процессов,
-#    указанных в соответствующих глобальных переменных.
-#    Все процессы должны быть родственны и потомками процесса рабочего сценария
-#    * Закрывается сокет журнала сценария, если он использовался.
+#    The cleaning procedure at the end of the calling script.
+#    Suitable for trap command call.
+#    Produced deletion of files and empty directories; stop child processes,
+#    closure of open file descriptors listed in the corresponding global
+#    variables. All processes must be related and descended from the working
+#    script process. Closes the socket script log if it was used.
 #  EXAMPLE
-#    local fnTemp pathTemp pid
-#    udfMakeTemp fnTemp
-#    udfMakeTemp pathTemp type=dir
+#    local fd fn1 fn2 path pid pipe
+#    udfMakeTemp fn1
+#    udfMakeTemp fn2
+#    udfMakeTemp path type=dir
+#    udfMakeTemp pipe type=pipe
+#    fd=$( udfGetFreeFD )
+#    eval "exec ${fd}>$fn2"
 #    (sleep 1024)&
 #    pid=$!
+#    test -f $fn1
+#    test -d $path
+#    ps -p $pid -o pid= >| grep -w $pid
+#    ls /proc/$$/fd >| grep -w $fd
+#    udfAddFD2Clean $fd
 #    udfAddPid2Clean $pid
-#    udfAddFile2Clean $fnTemp
-#    udfAddPath2Clean $pathTemp
+#    udfAddFile2Clean $fn1
+#    udfAddPath2Clean $path
+#    udfAddFile2Clean $pipe
 #    udfOnTrap
-#    test -f $fnTemp                                                            #? false
-#    test -d $pathTemp                                                          #? false
+#    test -f $fn1                                                               #? false
+#    test -d $path                                                              #? false
 #    ps -p $pid -o pid= >| grep -w $pid                                         #? false
+#    ls /proc/$$/fd >| grep -w $fd                                              #? false
 #  SOURCE
 udfOnTrap() {
 
-	local i s IFS=$' \t\n'
+	local i IFS=$' \t\n' re s
 	local -a a
 
 	a=( ${_bashlyk_apidClean[$BASHPID]} )
 
 	for (( i=${#a[@]}-1; i>=0 ; i-- )) ; do
 
+		re="\\b${a[i]}\\b"
+
 		for s in 15 9; do
 
-#			if [[ -n "$( ps -o pid= --ppid $$ | xargs | grep -w ${a[i]} )" ]]; then
-			if [[ -n "$( echo $(pgrep -P $$) | grep -w ${a[i]} )" ]]; then
+			if [[  "$(pgrep -P $$)" =~ $re ]]; then
 
-				kill -${s} ${a[i]} 2>/dev/null
-				sleep 0.2
+				if ! kill -${s} ${a[i]}; then
+
+					udfSetLastError NotPermitted "${a[i]}"
+					sleep 0.1
+
+				fi
 
 			fi
 
@@ -1377,6 +1394,39 @@ udfGetTimeInSec() {
 	esac
 
     return $?
+
+}
+#******
+#****f* libpid/udfGetFreeFD
+#  SYNOPSIS
+#    udfGetFreeFD
+#  DESCRIPTION
+#    get unused filedescriptor
+#  OUTPUT
+#    show given filedescriptor
+#  EXAMPLE
+#    udfGetFreeFD | grep -P "^\d+$"                                             #? true
+#  SOURCE
+udfGetFreeFD() {
+
+	local i=0 iMax=$(ulimit -n)
+	#
+	: ${iMax:=255}
+	#
+	for (( i = 3; i < iMax; i++ )); do
+
+		if [[ -e /proc/$$/fd/$i ]]; then
+
+			continue
+
+		else
+
+			echo $i
+			break
+
+		fi
+
+	done
 
 }
 #******
