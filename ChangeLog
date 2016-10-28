@@ -1,20 +1,39 @@
-Tue, 25 Oct 2016 11:29:59 +0400
+Fri, 28 Oct 2016 12:30:59 +0400
 	Fix bugs
 	Version 1.87
 
+ - improved handling of processes through the use of pattern with the boundaries
+   used 'pgrep -f ...' with single PID pattern instead 'ps -p ...'
+ - improved tests and descriptions
+
 libpid.sh:
- - fixed and improved udfStopProcess - added the ability to delete a group of
-   processes associated with the command line:
-    * PID argument replaced by the options "pid=<PID>[,..]"
-    * added option "childs" - stop only child processes
-    * added option "noargs" - stop by command name (without arguments)
-    * improved tests
+ - fixed and improved udfStopProcess:
+   * added the ability to delete a group of processes associated with the
+     command line:
+     ** PID argument replaced by the option "pid=<PID>[,..]"
+     ** added option "childs" - stop only child processes
+   * return 0 if the resulting list of processes is empty and at least one
+     process has been stopped
+
+ - improved udfSetPid - fixed race condition by flock using for PID file locking
+ - removed deprecated udfClean
 
 libstd.sh:
- - added new function udfGetTimeInSec from project "kurenma"
+ - added new functions:
+   * udfGetTimeInSec from project "kurenma"
+   * udfGetFreeFD for getting free filedescriptor
+   * udfAddFD2Clean for collect open file descriptors
+ - improved udfOnTrap:
+   * handling open filedescriptors
+   * set {i,s}LastError on 'kill' fail
+ - udfAddFObj2Clean renamed to udfAddFO2Clean and aliased for compatibility
 
 liberr.sh:
- - added new error state iErrorNotChildProcess
+ - added error states:
+   * iErrorNotChildProcess
+   * iErrorAlreadyLocked
+ - changed error message for state iErrorAlreadyStarted
+ - fixed udfThrow test unit
 
 
 Sat, 24 Sep 2016 21:53:04 +0400
