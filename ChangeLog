@@ -1,4 +1,4 @@
-Fri, 28 Oct 2016 12:30:59 +0400
+Fri, 28 Oct 2016 15:33:51 +0400
 	Fix bugs
 	Version 1.87
 
@@ -7,16 +7,15 @@ Fri, 28 Oct 2016 12:30:59 +0400
  - improved tests and descriptions
 
 libpid.sh:
+ - improved udfSetPid - fixed race condition by flock using for PID file locking
+ - removed deprecated udfClean
  - fixed and improved udfStopProcess:
    * added the ability to delete a group of processes associated with the
      command line:
      ** PID argument replaced by the option "pid=<PID>[,..]"
      ** added option "childs" - stop only child processes
-   * return 0 if the resulting list of processes is empty and at least one
-     process has been stopped
-
- - improved udfSetPid - fixed race condition by flock using for PID file locking
- - removed deprecated udfClean
+   * successful return code is calculated implicitly - the resulting list of
+     processes is empty and at least one process has been stopped
 
 libstd.sh:
  - added new functions:
@@ -35,6 +34,12 @@ liberr.sh:
  - changed error message for state iErrorAlreadyStarted
  - fixed udfThrow test unit
 
+libmsg.sh:
+ - small fixes:
+   * udfMail - removed using '-v' for 'mail' command
+   * udfGetXSessionProperties:
+     ** used 'pgrep -f ..." instead 'ps -C ...'
+     ** ignored stderr from 'grep -az ...'
 
 Sat, 24 Sep 2016 21:53:04 +0400
 	New upstream release
