@@ -1,9 +1,9 @@
-Fri, 28 Oct 2016 15:33:51 +0400
+Sun, 30 Oct 2016 00:39:00 +0400
 	Fix bugs
 	Version 1.87
 
  - improved handling of processes through the use of pattern with the boundaries
-   used 'pgrep -f ...' with single PID pattern instead 'ps -p ...'
+   command-line pattern must contain the process name
  - improved tests and descriptions
 
 libpid.sh:
@@ -40,6 +40,7 @@ libmsg.sh:
    * udfGetXSessionProperties:
      ** used 'pgrep -f ..." instead 'ps -C ...'
      ** ignored stderr from 'grep -az ...'
+
 
 Sat, 24 Sep 2016 21:53:04 +0400
 	New upstream release

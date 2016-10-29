@@ -1,5 +1,5 @@
 #
-# $Id: libpid.sh 571 2016-10-28 14:21:46+04:00 toor $
+# $Id: libpid.sh 575 2016-10-30 00:48:10+04:00 toor $
 #
 #****h* BASHLYK/libpid
 #  DESCRIPTION
@@ -45,10 +45,11 @@
 #  SYNOPSIS
 #    udfCheckStarted <PID> <args>
 #  DESCRIPTION
-#    Compare the PID of the process with a command line pattern
+#    Compare the PID of the process with a command line pattern which must
+#    contain the process name
 #  ARGUMENTS
 #    <PID>  - process id
-#    <args> - command line pattern
+#    <args> - command line pattern with process name
 #  RETURN VALUE
 #    0                - Process PID exists for the specified command line
 #    NoSuchProcess    - Process for the specified command line is not detected.
@@ -79,7 +80,7 @@ udfCheckStarted() {
 
 	shift
 
-	[[ "$( pgrep -f "$*" )" =~ $re ]] || return $(_ iErrorNoSuchProcess)
+	[[ "$( pgrep -d' ' -f "$*" )" =~ $re && "$( pgrep -d' ' ${1##*/} )" =~ $re ]] || return $(_ iErrorNoSuchProcess)
 
 	return 0
 
@@ -89,14 +90,14 @@ udfCheckStarted() {
 #  SYNOPSIS
 #    udfStopProcess [pid=PID[,PID,..]] [childs] <command-line>
 #  DESCRIPTION
-#    Stop the processes associated with the specified command line. Options
-#    allow you to manage the list of processes to stop.
-#    PID of the process in which a check is excluded from an examination
+#    Stop the processes associated with the specified command line which must
+#    contain the process name. Options allow you to manage the list of processes
+#    to stop. The process of the script itself is excluded
 #  ARGUMENTS
 #    pid=PID[,..]   - comma separated list of PID. Only these processes will be
 #                     stopped if they are associated with the command line
 #    childs         - stop only child processes
-#    <command-line> - command line for checking
+#    <command-line> - command line pattern with process name
 #  RETURN VALUE
 #    0                 - stopped all inctances of the specified command line
 #    NoSuchProcess     - processes for the specified command is not detected
@@ -160,7 +161,8 @@ udfStopProcess() {
 	done
 
 	rc=$( _ iErrorNoSuchProcess )
-	udfOn EmptyOrMissingArgument "${a[*]}" || a=( $( pgrep -f "$*") )
+
+	udfOn EmptyOrMissingArgument "${a[*]}" || a=( $( pgrep -d' ' ${1##*/} ) )
 	udfOn EmptyOrMissingArgument "${a[*]}" || return $rc
 
 	iStopped=0
@@ -182,18 +184,18 @@ udfStopProcess() {
 
 		fi
 
+		re="\\b${pid}\\b"
+
+		if [[ -n "$bChild" && ! "$( pgrep -P $$ )" =~ $re ]]; then
+
+			rc=$( _ iErrorNotChildProcess )
+			continue
+
+		fi
+
 		for s in 15 9; do
 
-			re="\\b${pid}\\b"
-
-			if [[ -n "$bChild" && ! "$(pgrep -P $$)" =~ $re ]]; then
-
-				rc=$( _ iErrorNotChildProcess )
-				continue
-
-			fi
-
-			if [[ "$(pgrep -f "$*")" =~ $re ]]; then
+			if [[  "$( pgrep -d' ' ${1##*/} )" =~ $re && "$( pgrep -d' ' -f "$*" )" =~ $re ]]; then
 
 				if kill -${s} $pid; then
 
@@ -209,6 +211,7 @@ udfStopProcess() {
 			else
 
 				a[i]=""
+				break
 
 			fi
 
