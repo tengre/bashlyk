@@ -1,5 +1,5 @@
 #
-# $Id: libstd.sh 569 2016-10-28 11:21:36+04:00 toor $
+# $Id: libstd.sh 575 2016-10-30 00:36:53+04:00 toor $
 #
 #****h* BASHLYK/libstd
 #  DESCRIPTION
@@ -766,7 +766,7 @@ udfOnTrap() {
 
 		for s in 15 9; do
 
-			if [[  "$(pgrep -P $$)" =~ $re ]]; then
+			if [[  "$(pgrep -d' ' -P $$)" =~ $re ]]; then
 
 				if ! kill -${s} ${a[i]}; then
 
