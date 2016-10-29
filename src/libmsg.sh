@@ -1,5 +1,5 @@
 #
-# $Id: libmsg.sh 556 2016-09-22 13:56:00+04:00 toor $
+# $Id: libmsg.sh 572 2016-10-28 15:21:35+04:00 toor $
 #
 #****h* BASHLYK/libmsg
 #  DESCRIPTION
@@ -116,11 +116,11 @@ udfWarn() {
 #    iErrorCommandNotFound        - команда не найдена
 #  EXAMPLE
 ##  TODO уточнить по каждому варианту
-#    local emailOptions=$(_ emailOptions)
-#    _ emailOptions '-v'
+#    ##local emailOptions=$(_ emailOptions)
+#    ##_ emailOptions '-v'
 #    echo "notification testing" | udfMail - "bashlyk::libmsg::udfMail"
 #    [ $? -eq $(_ iErrorCommandNotFound) -o $? -eq 0 ] && true                  #? true
-#    _ emailOptions "$emailOptions"
+#    ##_ emailOptions "$emailOptions"
 #  SOURCE
 udfMail() {
  local sTo=$_bashlyk_sLogin IFS=$' \t\n'
@@ -244,7 +244,7 @@ udfGetXSessionProperties() {
  a+=" $(grep "Exec=.*" /usr/share/xsessions/*.desktop 2>/dev/null | cut -f 2 -d"=" | sort | uniq )"
 
  for s in $a; do
-  for pid in $(ps -C ${s##*/} -o pid=); do
+  for pid in $(pgrep -f "${s##*/}"); do
    userX=$(stat -c %U /proc/$pid)
    [[ -n "$userX" ]] || continue
    [[ "$user" == "$userX" || "$user" == "root" ]] || continue
@@ -254,7 +254,7 @@ udfGetXSessionProperties() {
    sX="$(grep -az XAUTHORITY= /proc/${pid}/environ)"
    [[ -n "$sB" && -n "$sD" && -n "$sX" ]] && break 2
   done
- done
+ done 2>/dev/null
 
  [[ -n "$userX" ]] || eval $(udfOnError return iErrorXsessionNotFound)
  [[ "$user" == "$userX" || "$user" == "root" ]] || eval $(udfOnError return iErrorNotPermitted)

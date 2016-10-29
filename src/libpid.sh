@@ -1,5 +1,5 @@
 #
-# $Id: libpid.sh 569 2016-10-27 23:32:44+04:00 toor $
+# $Id: libpid.sh 571 2016-10-28 14:21:46+04:00 toor $
 #
 #****h* BASHLYK/libpid
 #  DESCRIPTION
@@ -39,30 +39,28 @@
 : ${_bashlyk_pathRun:=/tmp}
 : ${_bashlyk_sArg:=$*}
 : ${_bashlyk_aRequiredCmd_pid:="head kill mkdir printf pgrep ps rm rmdir sleep xargs"}
-: ${_bashlyk_aExport_pid:="udfCheckStarted udfExitIfAlreadyStarted udfGetFreeFD udfSetPid udfStopProcess"}
+: ${_bashlyk_aExport_pid:="udfCheckStarted udfExitIfAlreadyStarted udfSetPid udfStopProcess"}
 #******
 #****f* libpid/udfCheckStarted
 #  SYNOPSIS
-#    udfCheckStarted PID [command [args]]
+#    udfCheckStarted <PID> <args>
 #  DESCRIPTION
-#    Checking process with given PID and the command line
-#    PID of the process in which a check is excluded from an examination
-#  INPUTS
-#    PID     - PID
-#    command - command
-#    args    - arguments
+#    Compare the PID of the process with a command line pattern
+#  ARGUMENTS
+#    <PID>  - process id
+#    <args> - command line pattern
 #  RETURN VALUE
-#    0                 - Process PID exists for the specified command line
-#    NoSuchProcess     - Process for the specified command line is not detected.
-#    CurrentProcess    - The process for this command line is identical to the
-#                        PID of the current process
-#    iErrorNotValid... - PID is not number
-#    EmptyOrMissing... - no arguments
+#    0                - Process PID exists for the specified command line
+#    NoSuchProcess    - Process for the specified command line is not detected.
+#    CurrentProcess   - The process for this command line is identical to the
+#                       PID of the current process
+#    NotValidArgument - PID is not number
+#    MissingArgument  - no arguments
 #  EXAMPLE
 #    (sleep 8)&                                                                 #-
 #    local pid=$!                                                               #-
 #    ps -p $pid -o pid= -o args=
-#    udfCheckStarted                                                            #? $_bashlyk_iErrorEmptyOrMissingArgument
+#    udfCheckStarted                                                            #? $_bashlyk_iErrorMissingArgument
 #    udfCheckStarted $pid sleep 8                                               #? true
 #    udfCheckStarted $pid sleep 88                                              #? $_bashlyk_iErrorNoSuchProcess
 #    udfCheckStarted $$ $0                                                      #? $_bashlyk_iErrorCurrentProcess
@@ -73,7 +71,7 @@ udfCheckStarted() {
 
 	udfOn EmptyOrMissingArgument "$*" || return $?
 
-	local pid=$1
+	local re="\\b${1}\\b"
 
 	udfIsNumber $1 || return $( _ iErrorNotValidArgument )
 
@@ -81,7 +79,7 @@ udfCheckStarted() {
 
 	shift
 
-	[[ "$(ps -p $pid -o args=)" =~ ${*}$ ]] && return 0 || return $(_ iErrorNoSuchProcess)
+	[[ "$( pgrep -f "$*" )" =~ $re ]] || return $(_ iErrorNoSuchProcess)
 
 	return 0
 
@@ -109,37 +107,37 @@ udfCheckStarted() {
 #    InvalidArgument   - PID is not number
 #    EmptyOrMissing... - no arguments
 #  EXAMPLE
-#    ## TODO - required unique command for testing                              #-
-#    local a cmd fn i pid                                                       #-
-#    udfMakeTemp cmd                                                            #-
-#    printf '#!/bin/sh\nread -t $1 -N 0 </dev/zero\n' | tee $cmd
-#    chmod +x $cmd                                                              #-
+#    local a cmd1 cmd2 fmt1 fmt2 i pid                                          #-
+#    fmt1='#!/bin/bash\nread -t %s -N 0 </dev/zero\n'
+#    fmt2='#!/bin/bash\nfor i in 900 700 600 500; do\n%s %s &\ndone\n'
+#    udfMakeTemp cmd1
+#    udfMakeTemp cmd2
+#    printf -- "$fmt1" '$1' | tee $cmd1
+#    chmod +x $cmd1
+#    printf -- "$fmt2" "$cmd1" '$i' | tee $cmd2
+#    chmod +x $cmd2
 #    for i in 800 700 600 500; do                                               #-
-#     $cmd $i &                                                                 #-
-#     a+="${!},"
+#    $cmd1 $i &                                                                 #-
+#    a+="${!},"                                                                 #-
 #    done                                                                       #-
-#    echo $a
-#    $cmd 400 &                                                                 #-
+#    $cmd2
+#    ($cmd1 400)&                                                               #-
 #    pid=$!
-#    udfMakeTemp fn
-#    printf -- "#!/bin/sh\nfor i in 900 700 600 500; do\n$cmd \$i &\ndone\n" | tee $fn
-#    chmod +x $fn
-#    $fn
 #    udfStopProcess                                                             #? $_bashlyk_iErrorEmptyOrMissingArgument
-#    udfStopProcess childs pid=$pid $cmd 400                                    #? true
-#    udfStopProcess pid=$pid $cmd 88                                            #? $_bashlyk_iErrorNoSuchProcess
-#    udfStopProcess $cmd 88                                                     #? $_bashlyk_iErrorNoSuchProcess
+#    udfStopProcess childs pid=$pid $cmd1 400                                   #? true
+#    udfStopProcess pid=$pid $cmd1 88                                           #? $_bashlyk_iErrorNoSuchProcess
+#    udfStopProcess $cmd1 88                                                    #? $_bashlyk_iErrorNoSuchProcess
 #    udfStopProcess pid=$$ $0                                                   #? $_bashlyk_iErrorCurrentProcess
 #    udfStopProcess pid=invalid $0                                              #? $_bashlyk_iErrorInvalidArgument
-#    udfStopProcess childs $cmd 800                                             #? true
-#    udfStopProcess childs $cmd 600                                             #? $_bashlyk_iErrorNotChildProcess
-#    udfStopProcess $cmd                                                        #? true
+#    udfStopProcess childs pid=$a $cmd1 800                                     #? true
+#    udfStopProcess childs pid=$a $cmd1 600                                     #? $_bashlyk_iErrorNotChildProcess
+#    udfStopProcess $cmd1                                                       #? true
 #  SOURCE
 udfStopProcess() {
 
 	udfOn EmptyOrMissingArgument "$@" || return $?
 
-	local bChild i pid rc s
+	local bChild i iStopped pid rc re s
 	local -a a
 
 	for s in $*; do
@@ -161,16 +159,21 @@ udfStopProcess() {
 
 	done
 
+	rc=$( _ iErrorNoSuchProcess )
 	udfOn EmptyOrMissingArgument "${a[*]}" || a=( $( pgrep -f "$*") )
-	udfOn EmptyOrMissingArgument "${a[*]}" || return $( _ iErrorNoSuchProcess )
+	udfOn EmptyOrMissingArgument "${a[*]}" || return $rc
 
+	iStopped=0
 	for (( i=0; i<${#a[*]}; i++ )) ; do
-
-		rc=$( _ iErrorInvalidArgument )
 
 		pid=${a[i]}
 
-		udfIsNumber $pid || continue
+		if ! udfIsNumber $pid; then
+
+			rc=$( _ iErrorInvalidArgument )
+			continue
+
+		fi
 
 		if (( pid == $$ )); then
 
@@ -181,7 +184,7 @@ udfStopProcess() {
 
 		for s in 15 9; do
 
-			local re="\\b${pid}\\b"
+			re="\\b${pid}\\b"
 
 			if [[ -n "$bChild" && ! "$(pgrep -P $$)" =~ $re ]]; then
 
@@ -195,19 +198,17 @@ udfStopProcess() {
 				if kill -${s} $pid; then
 
 					a[i]=""
-					rc=0
+					: $(( iStopped++ ))
 
 				else
 
 					rc=$( _ iErrorNotPermitted )
-					sleep 0.1
 
 				fi
 
 			else
 
-				rc=$( _ iErrorNoSuchProcess )
-				break
+				a[i]=""
 
 			fi
 
@@ -216,7 +217,10 @@ udfStopProcess() {
 	done
 
 	s="${a[*]}"
-	[[ -z "${s// /}" ]] && return 0 || return $rc
+
+	[[ $iStopped != 0 && -z "${s// /}" ]] || return $rc
+
+	return 0
 
 }
 #******
@@ -234,19 +238,17 @@ udfStopProcess() {
 #    NotExistNotCreated - PID file don't created
 #    0                  - PID file for command line successfully created
 #  EXAMPLE
-#    local fn s='#!/bin/bash\n_bashlyk_log=nouse . bashlyk\nudfSetPid || exit $?\nsleep 8\n' #-
-#    udfMakeTemp fn                                                             #? true
-#    export _bashlyk_pathLib                                                    #? true
-#    printf -- "$s" > $fn                                                       #-
-#    chmod +x $fn                                                               #? true
-#    ($fn)&                                                                     #? true
-#    sleep 0.1
-#    ( $fn || false )                                                           #? false
+#    local cmd fmt='#!/bin/bash\n%s . bashlyk\n%s || exit $?\n%s\n'             #-
+#    udfMakeTemp cmd                                                            #? true
+#    printf -- "$fmt" '_bashlyk_log=nouse' 'udfSetPid' 'sleep 8' | tee $cmd
+#    chmod +x $cmd                                                              #? true
+#    ($cmd)&                                                                    #? true
+#    sleep 0.5                                                                  #-
+#    ( $cmd || false )                                                          #? false
 #    udfSetPid                                                                  #? true
 #    test -f $_bashlyk_fnPid                                                    #? true
 #    head -n 1 $_bashlyk_fnPid >| grep -w $$                                    #? true
 #    rm -f $_bashlyk_fnPid
-#    ## TODO проверить коды возврата
 #  SOURCE
 udfSetPid() {
 
@@ -333,37 +335,4 @@ udfExitIfAlreadyStarted() {
 }
 #******
 # TODO проверить на используемость udfClean
-#****f* libpid/udfGetFreeFD
-#  SYNOPSIS
-#    udfGetFreeFD
-#  DESCRIPTION
-#    get unused filedescriptor
-#  OUTPUT
-#    show given filedescriptor
-#  EXAMPLE
-#    udfGetFreeFD | grep -P "^\d+$"                                             #? true
-#  SOURCE
-udfGetFreeFD() {
-
-	local i=0 iMax=$(ulimit -n)
-	#
-	: ${iMax:=255}
-	#
-	for (( i = 3; i < iMax; i++ )); do
-
-		if [[ -e /proc/$$/fd/$i ]]; then
-
-			continue
-
-		else
-
-			echo $i
-			break
-
-		fi
-
-	done
-
-}
-#******
 
