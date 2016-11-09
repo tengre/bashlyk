@@ -1,5 +1,5 @@
 #
-# $Id: libtst.sh 578 2016-11-09 17:22:43+04:00 toor $
+# $Id: libtst.sh 579 2016-11-10 00:08:49+04:00 toor $
 #
 #****h* BASHLYK/libtst
 #  DESCRIPTION
@@ -56,6 +56,8 @@ udfTest() {
 }
 #******
 declare -A ini_h
+declare -A ini_hS
+
 #****f* libtst/ini.read
 #  SYNOPSIS
 #    ini.read args
@@ -89,31 +91,40 @@ ini.read() {
 
 	local -a a
 	local -A h
-	local fh i p ph phC s sKeyLast
+	local bA fh i p ph phC s sKeyLast
 	#
 	i=0
-	s=""
+	s=" "
 
 #	seek($fh, 0, 0) or die "$!\n" unless $fh eq 'DATA';
 
-	$ph = ( $p->{$s} && $phC->{$s} && $phC->{$s} =~ /^[^!\-]/ ) ? $p->{$s} : {};
+	##$ph = ( $p->{$s} && $phC->{$s} && $phC->{$s} =~ /^[^!\-]/ ) ? $p->{$s} : {};
+	##push( @a, $s);
 
-	ph=
+	a[0]=$s
 
-	push( @a, $s);
-
-	while (<$fh>) {
+	#while (<$fh>) {
+	while read -t 8; do
 
 		if ( m/^\s*:?\[\s*(.+?)\s*\]:?\s*$/ ) {
 
-		    my $sNewSection = $1;
+		if [[ $REPLY =~ ^[[:space:]]*(:?)\[[[:space:]]*([^[:punct:]]+?)[[:space:]]*\](:?)[[:space:]]*$ ]]; then
+
+			## TODO h[section.key]=value ?
+		    #my $sNewSection = $1;
+		    sNewSection=${BASH_REMATCH[2]}
 
 			$ph->{__class_active}++ if m/^\s*:\[\s*(.+?)\s*\]\s*$/;
+			[[ ${BASH_REMATCH[1]} == ":" ]] && bA=1
+
 			$h{$s} = $ph if scalar keys %{$ph};
 
 			$s = $sNewSection;
 			$ph = ( $p->{$s} && $phC->{$s} && $phC->{$s} =~ /^[^!\-]/ ) ? $p->{$s} : {};
-			$ph->{__class_active}++ if m/^\s*\[\s*(.+?)\s*\]:\s*$/;
+
+			#$ph->{__class_active}++ if m/^\s*\[\s*(.+?)\s*\]:\s*$/;
+			[[ ${BASH_REMATCH[3]} == ":" ]] && bA=2
+
 			push( @a, $s );
 			$sKeyLast = undef;
 
