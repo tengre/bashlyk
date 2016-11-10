@@ -1,5 +1,5 @@
 #
-# $Id: libtst.sh 579 2016-11-10 00:08:49+04:00 toor $
+# $Id: libtst.sh 580 2016-11-10 17:23:57+04:00 toor $
 #
 #****h* BASHLYK/libtst
 #  DESCRIPTION
@@ -35,7 +35,9 @@
 : ${_bashlyk_emailSubj:="${_bashlyk_sUser}@${HOSTNAME}::${_bashlyk_s0}"}
 : ${_bashlyk_envXSession:=}
 : ${_bashlyk_aRequiredCmd_msg:="[ "}
-: ${_bashlyk_aExport_msg:="udfTest"}
+: ${_bashlyk_aExport_msg:="udfTest udfRead"}
+declare -A ini_h
+declare -A ini_hClass
 #******
 #****f* libtst/udfTest
 #  SYNOPSIS
@@ -55,10 +57,7 @@ udfTest() {
  return 0
 }
 #******
-declare -A ini_h
-declare -A ini_hS
-
-#****f* libtst/ini.read
+#****f* libtst/udfRead
 #  SYNOPSIS
 #    ini.read args
 #  DESCRIPTION
@@ -70,9 +69,40 @@ declare -A ini_hS
 #  RETURN VALUE
 #    ...
 #  EXAMPLE
-#    udfTest #? true
+#   local ini s=""                                                              #-
+#   udfMakeTemp ini                                                             #-
+#    cat <<'EOFini' > ${ini}                                                    #-
+#    void	=	1                                                       #-
+#[exec]:                                                                        #-
+#    TZ=UTC date -R --date='@12345678'                                          #-
+#    sUname="$(uname -a)"                                                       #-
+#:[exec]                                                                        #-
+#[main]                                                                         #-
+#    sTxt	=	$(date -R)                                              #-
+#    b		=	false                                                   #-
+#    iXo Xo	=	19                                                      #-
+#    iYo	=	80                                                      #-
+#    `simple line`                                                              #-
+#[replace]                                                                      #-
+#    before replacing                                                           #-
+#[unify]                                                                        #-
+#    *.bak                                                                      #-
+#    *.tmp                                                                      #-
+#[acc]                                                                          #-
+#    *.bak                                                                      #-
+#    *.tmp                                                                      #-
+#                                                                               #-
+#    EOFini                                                                     #-
+#   ini_hClass["__void__"]=""
+#   ini_hClass["exec"]="!"
+#   ini_hClass["main"]=""
+#   ini_hClass["replace"]="-"
+#   ini_hClass["unify"]="="
+#   ini_hClass["acc"]="+"
+#   cat $ini
+#   udfRead $ini ini_h ini_hClass                                               #? true
 #  SOURCE
-ini.read() {
+udfRead() {
 
 #	return undef unless @_ == 3
 #						&& defined( $_[0] )
@@ -82,8 +112,11 @@ ini.read() {
 #						&& defined( $_[2] )
 #						&&     ref( $_[2] ) eq 'HASH';
 #
-	udfOn MissingArgument $1 || return $?
-	typeset -A $2 || eval $( udfOnError return InvalidArgument "$2 must be hash" )
+	#udfOn NoSuchFileOrDir $1 || return $?
+	udfOn NoSuchFileOrDir throw $1
+	typeset -A $2 || eval $( udfOnError throw InvalidArgument "$2 must be hash" )
+	typeset -A $3 || eval $( udfOnError throw InvalidArgument "$3 must be hash" )
+	#udfOn MissingArgument $3 || return $?
 
 	#my ( $fh, $p, $phC ) = @_;
 	#my ( $i, $s, $ph, %h, @a ) = ( 0, "", {}, (), () );
@@ -91,11 +124,14 @@ ini.read() {
 
 	local -a a
 	local -A h
-	local bA fh i p ph phC s sKeyLast
+	local bA chClass fn i p ph s sKeyLast sNewSection
 	#
 	i=0
-	s=" "
-
+	## TODO - check unnamed section
+	s="__void__"
+	#
+	fn=$1
+	#chClass=$3
 #	seek($fh, 0, 0) or die "$!\n" unless $fh eq 'DATA';
 
 	##$ph = ( $p->{$s} && $phC->{$s} && $phC->{$s} =~ /^[^!\-]/ ) ? $p->{$s} : {};
@@ -104,80 +140,120 @@ ini.read() {
 	a[0]=$s
 
 	#while (<$fh>) {
-	while read -t 8; do
+	while read -t 4; do
 
-		if ( m/^\s*:?\[\s*(.+?)\s*\]:?\s*$/ ) {
-
+		#if ( m/^\s*:?\[\s*(.+?)\s*\]:?\s*$/ ) {
 		if [[ $REPLY =~ ^[[:space:]]*(:?)\[[[:space:]]*([^[:punct:]]+?)[[:space:]]*\](:?)[[:space:]]*$ ]]; then
 
 			## TODO h[section.key]=value ?
-		    #my $sNewSection = $1;
-		    sNewSection=${BASH_REMATCH[2]}
+			#my $sNewSection = $1;
 
-			$ph->{__class_active}++ if m/^\s*:\[\s*(.+?)\s*\]\s*$/;
-			[[ ${BASH_REMATCH[1]} == ":" ]] && bA=1
+			sNewSection=${BASH_REMATCH[2]}
 
-			$h{$s} = $ph if scalar keys %{$ph};
+			#$ph->{__class_active}++ if m/^\s*:\[\s*(.+?)\s*\]\s*$/;
+			[[ ${BASH_REMATCH[1]} == ":" ]] && h[${s}".__class_active"]=1
 
-			$s = $sNewSection;
-			$ph = ( $p->{$s} && $phC->{$s} && $phC->{$s} =~ /^[^!\-]/ ) ? $p->{$s} : {};
+			##$h{$s} = $ph if scalar keys %{$ph};
+			[[ "${!h[@]}" =~ ${s}\..* ]] && bOk=1
+
+			s=$sNewSection;
+			i=0
+			##$ph = ( $p->{$s} && $phC->{$s} && $phC->{$s} =~ /^[^!\-]/ ) ? $p->{$s} : {};
 
 			#$ph->{__class_active}++ if m/^\s*\[\s*(.+?)\s*\]:\s*$/;
-			[[ ${BASH_REMATCH[3]} == ":" ]] && bA=2
+			[[ ${BASH_REMATCH[3]} == ":" ]] && h[${s}".__class_active"]=2
 
-			push( @a, $s );
-			$sKeyLast = undef;
+			#push( @a, $s );
+			a[${#a[@]}]="$s"
+			#$sKeyLast = undef;
+			sKeyLast=""
 
-		} else {
+#		} else {
+		else
 
-			s/(^|\s+)[#;].*$//g if ( ! $phC->{$s} || $phC->{$s} ne '!' );
+			#s/(^|\s+)[#;].*$//g if ( ! $phC->{$s} || $phC->{$s} ne '!' );
+			#chomp();
+			#next unless length;
 
-			chomp();
-			next unless length;
+			[[ $REPLY =~ (^|[[:space:]]+)[\#\;].*$ && ! ${ini_hClass[$s]} =~ ^\!$ ]] && continue
 
-			if (
-				     ! $ph->{__class_active}
-				&& ( ! $phC->{$s} || $phC->{$s} !~ /[=!\-\+]/ )
-				&& /^\s*(\S+)\s*=\s*(.*)\s*$/
-			) {
+			#if (
+			#	     ! $ph->{__class_active}
+			#	&& ( ! $phC->{$s} || $phC->{$s} !~ /[=!\-\+]/ )
+			#	&& /^\s*(\S+)\s*=\s*(.*)\s*$/
+			#) {
+			## TODO line with multi '='
+			## TODO key with spaces...
+			## TODO active sections...
+			if [[ ! ${h[${s}".__class_active"]} =~ ^(1|2)$ && ! ${ini_hClass[$s]} =~ ^[=\!\-\+]$ && $REPLY =~ ^[[:space:]]*([[:print:]]+)[[:space:]]*=[[:space:]]*(.*)[[:space:]]*$ ]]; then
 
-				$ph->{$1} = $2;
-				$sKeyLast = $1;
+				#$ph->{$1} = $2;
+				#$sKeyLast = $1;
+				sKeyLast=${BASH_REMATCH[1]}
+				h[${s}.${sKeyLast}]=${BASH_REMATCH[2]}
 
-			} else {
+			#} else {
+			else
 
-				if (
-					     $sKeyLast
-					&& ! $ph->{__class_active}
-					&& ( ! $phC->{$s} || $phC->{$s} !~ /[=!\-\+]/ )
+#				if (
+#					     $sKeyLast
+#					&& ! $ph->{__class_active}
+#					&& ( ! $phC->{$s} || $phC->{$s} !~ /[=!\-\+]/ )
+#				) {
+#					$ph->{$sKeyLast} .= "\n$_" ;
+#				}
 
-				) {
+				if [[ -n "$sKeyLast" && ! ${h[${s}".__class_active"]} =~ ^(1|2)$ && ! ${ini_hClass[$s]} =~ ^[=!\-\+]$ ]]; then
 
-					$ph->{$sKeyLast} .= "\n$_" ;
+					h[${s}.${sKeyLast}]+="\n${REPLY}"
 
-				}
+				fi
 
-				if ( ! $phC->{$s} || $phC->{$s} =~ /^=$/ ) {
-					s/^\s+//;
-					s/\s+$//;
-				}
+#				if ( ! $phC->{$s} || $phC->{$s} =~ /^=$/ ) {
+#					s/^\s+//;
+#					s/\s+$//;
+#				}
 
-				$ph->{"__unnamed_idx_".$ph->{__unnamed_items}++} = $_;
+				if [[ ! $chClass =~ ^=$ ]]; then
 
-			}
-		}
-	}
+					REPLY=${REPLY##*( )}
+					REPLY=${REPLY%%*( )}
+				fi
 
-	$h{$s} = $ph if scalar keys %{$ph};
+				#$ph->{"__unnamed_idx_".$ph->{__unnamed_items}++} = $_;
+				: $(( i++ ))
+				h[${s}".__unnamed_idx_"${i}]=$REPLY
 
-	foreach $s ( keys %{$p} ) {
+			fi
+		fi
+	done < $fn
 
-		next if grep { $_ eq $s } @a;
+	#$h{$s} = $ph if scalar keys %{$ph};
 
-		$h{$s} = $p->{$s};
+#	foreach $s ( keys %{$p} ) {
+#
+#		next if grep { $_ eq $s } @a;
+#
+#		$h{$s} = $p->{$s};
+#
+#	}
+#
+#	for s in ${!h[@]}; do
+#
+#		[[ ${a[@]} =~ ^${s%%.*}$ ]] && continue
+#
+#		$h{$s} = $p->{$s};
+#
+#	done
 
-	}
+	#return \%h;
+	echo "dbg keys ${!h[@]} : ${#h[@]}"
+	echo "---"
+	echo "dbg vals ${h[@]}  : ${#h[@]}"
+	for s in ${!h[@]}; do
 
-	return \%h;
+		echo "pair: $s = ${h[$s]}"
+
+	done
 }
 #******

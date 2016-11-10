@@ -1,5 +1,5 @@
 #
-# $Id: liberr.sh 568 2016-10-27 17:11:41+04:00 toor $
+# $Id: liberr.sh 580 2016-11-10 17:23:58+04:00 toor $
 #
 #****h* BASHLYK/liberr
 #  DESCRIPTION
@@ -485,6 +485,7 @@ udfTryEveryLine() {
 #    udfOn EmptyResult ""                                                       #? $_bashlyk_iErrorEmptyResult
 #    udfOn EmptyResult return ""                                                #? $_bashlyk_iErrorEmptyResult
 #    udfOn InvalidVariable invalid+variable                                     #? $_bashlyk_iErrorInvalidVariable
+#    udfOn NoSuchFileOrDir "/$RANDOM/$RANDOM"                                   #? $_bashlyk_iErrorNoSuchFileOrDir
 #  SOURCE
 
 udfOn() {
@@ -497,7 +498,7 @@ udfOn() {
 	IFS=$' \t\n'
 	e=$1
 
-	if [[ $1 =~ ^(CommandNotFound|Empty(Variable|Argument|OrMissingArgument|Result)|Invalid(Argument|Variable)|MissingArgument)$ ]]; then
+	if [[ $1 =~ ^(CommandNotFound|Empty(Variable|Argument|OrMissingArgument|Result)|Invalid(Argument|Variable)|MissingArgument|NoSuchFileOrDir)$ ]]; then
 
 		e=$1
 
@@ -579,6 +580,30 @@ udfOn() {
 udfCommandNotFound() {
 
 	[[ -n "$1" && -n "$( which $1 )" ]] && return 1 || return 0
+
+}
+#******
+#****f* liberr/udfNoSuchFileOrDir
+#  SYNOPSIS
+#    udfNoSuchFileOrDir <filename>
+#  DESCRIPTION
+#    return true if argument is empty, nonexistent, designed to check the
+#    conditions in the function udfOn
+#  ARGUMENTS
+#    filename - filesystem object for checking
+#  RETURN VALUE
+#    0 - no arguments, specified filesystem object is nonexistent
+#    1 - specified filesystem object are found
+#  EXAMPLE
+#    local cmdYes='/bin/sh' cmdNo1="bin_${RANDOM}" cmdNo2="bin_${RANDOM}"
+#    udfNoSuchFileOrDir                                                         #? true
+#    udfNoSuchFileOrDir $cmdNo1                                                 #? true
+#    $(udfNoSuchFileOrDir $cmdNo2 && exit 123)                                  #? 123
+#    udfNoSuchFileOrDir $cmdYes                                                 #? false
+#  SOURCE
+udfNoSuchFileOrDir() {
+
+	[[ -n "$1" && -e "$1" ]] && return 1 || return 0
 
 }
 #******
