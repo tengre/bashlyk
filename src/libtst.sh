@@ -1,5 +1,5 @@
 #
-# $Id: libtst.sh 580 2016-11-10 17:23:57+04:00 toor $
+# $Id: libtst.sh 581 2016-11-11 01:03:23+04:00 toor $
 #
 #****h* BASHLYK/libtst
 #  DESCRIPTION
@@ -57,7 +57,7 @@ udfTest() {
  return 0
 }
 #******
-#****f* libtst/udfRead
+#****f* libtst/ini.read
 #  SYNOPSIS
 #    ini.read args
 #  DESCRIPTION
@@ -100,9 +100,10 @@ udfTest() {
 #   ini_hClass["unify"]="="
 #   ini_hClass["acc"]="+"
 #   cat $ini
-#   udfRead $ini ini_h ini_hClass                                               #? true
+#   ini.read $ini ini_h ini_hClass                                               #? true
 #  SOURCE
-udfRead() {
+#udfRead() {
+ini.read() {
 
 #	return undef unless @_ == 3
 #						&& defined( $_[0] )
@@ -124,132 +125,87 @@ udfRead() {
 
 	local -a a
 	local -A h
-	local bA chClass fn i p ph s sKeyLast sNewSection
+	local bA chClass fn i k p ph s sKeyLast sNewSection v
 	#
 	i=0
 	## TODO - check unnamed section
 	s="__void__"
 	#
 	fn=$1
-	#chClass=$3
-#	seek($fh, 0, 0) or die "$!\n" unless $fh eq 'DATA';
 
 	##$ph = ( $p->{$s} && $phC->{$s} && $phC->{$s} =~ /^[^!\-]/ ) ? $p->{$s} : {};
 	##push( @a, $s);
 
 	a[0]=$s
 
-	#while (<$fh>) {
 	while read -t 4; do
 
-		#if ( m/^\s*:?\[\s*(.+?)\s*\]:?\s*$/ ) {
 		if [[ $REPLY =~ ^[[:space:]]*(:?)\[[[:space:]]*([^[:punct:]]+?)[[:space:]]*\](:?)[[:space:]]*$ ]]; then
 
 			## TODO h[section.key]=value ?
-			#my $sNewSection = $1;
-
 			sNewSection=${BASH_REMATCH[2]}
 
-			#$ph->{__class_active}++ if m/^\s*:\[\s*(.+?)\s*\]\s*$/;
-			[[ ${BASH_REMATCH[1]} == ":" ]] && h[${s}".__class_active"]=1
-
 			##$h{$s} = $ph if scalar keys %{$ph};
-			[[ "${!h[@]}" =~ ${s}\..* ]] && bOk=1
+			##[[ "${!h[@]}" =~ ${s}\..* ]] && bOk=1
 
 			s=$sNewSection;
 			i=0
 			##$ph = ( $p->{$s} && $phC->{$s} && $phC->{$s} =~ /^[^!\-]/ ) ? $p->{$s} : {};
 
-			#$ph->{__class_active}++ if m/^\s*\[\s*(.+?)\s*\]:\s*$/;
-			[[ ${BASH_REMATCH[3]} == ":" ]] && h[${s}".__class_active"]=2
+			[[ ${BASH_REMATCH[1]} == ":" ]] && h[${s}".__class_active"]=2
+			[[ ${BASH_REMATCH[3]} == ":" ]] && h[${s}".__class_active"]=1
 
-			#push( @a, $s );
 			a[${#a[@]}]="$s"
-			#$sKeyLast = undef;
 			sKeyLast=""
 
-#		} else {
 		else
-
-			#s/(^|\s+)[#;].*$//g if ( ! $phC->{$s} || $phC->{$s} ne '!' );
-			#chomp();
-			#next unless length;
 
 			[[ $REPLY =~ (^|[[:space:]]+)[\#\;].*$ && ! ${ini_hClass[$s]} =~ ^\!$ ]] && continue
 
-			#if (
-			#	     ! $ph->{__class_active}
-			#	&& ( ! $phC->{$s} || $phC->{$s} !~ /[=!\-\+]/ )
-			#	&& /^\s*(\S+)\s*=\s*(.*)\s*$/
-			#) {
-			## TODO line with multi '='
-			## TODO key with spaces...
-			## TODO active sections...
-			if [[ ! ${h[${s}".__class_active"]} =~ ^(1|2)$ && ! ${ini_hClass[$s]} =~ ^[=\!\-\+]$ && $REPLY =~ ^[[:space:]]*([[:print:]]+)[[:space:]]*=[[:space:]]*(.*)[[:space:]]*$ ]]; then
+			#+ TODO line with multi '='
+			#+ TODO key with spaces...
+			#+ TODO active sections...
+			if [[ ! ${h[${s}".__class_active"]} =~ ^(1|2)$ && ! ${ini_hClass[$s]} =~ ^[=\!\-\+]$ && $REPLY =~ ^[[:space:]]*([[:alnum:]]+)[[:space:]]*=[[:space:]]*(.*)[[:space:]]*$ ]]; then
 
-				#$ph->{$1} = $2;
-				#$sKeyLast = $1;
-				sKeyLast=${BASH_REMATCH[1]}
-				h[${s}.${sKeyLast}]=${BASH_REMATCH[2]}
+				k=${BASH_REMATCH[1]}
+				v=${BASH_REMATCH[2]}
+				if [[ $k =~ "=" ]]; then
 
-			#} else {
-			else
+					k=${REPLY%%=*}
+					k=${k%% *}
+					v=${REPLY#*=}
+					v=${v#* }
+					h[${s}.${k}]=$v
+					sKeyLast=$k
 
-#				if (
-#					     $sKeyLast
-#					&& ! $ph->{__class_active}
-#					&& ( ! $phC->{$s} || $phC->{$s} !~ /[=!\-\+]/ )
-#				) {
-#					$ph->{$sKeyLast} .= "\n$_" ;
-#				}
+				else
 
-				if [[ -n "$sKeyLast" && ! ${h[${s}".__class_active"]} =~ ^(1|2)$ && ! ${ini_hClass[$s]} =~ ^[=!\-\+]$ ]]; then
-
-					h[${s}.${sKeyLast}]+="\n${REPLY}"
+					sKeyLast="$k"
+					h[${s}.${sKeyLast}]="$v"
 
 				fi
 
-#				if ( ! $phC->{$s} || $phC->{$s} =~ /^=$/ ) {
-#					s/^\s+//;
-#					s/\s+$//;
-#				}
+			else
 
+#				if [[ -n "$sKeyLast" && ! ${h[${s}".__class_active"]} =~ ^(1|2)$ && ! ${ini_hClass[$s]} =~ ^[=!\-\+]$ ]]; then
+#
+#					h[${s}.${sKeyLast}]+="\n${REPLY}"
+#
+#				fi
+#
 				if [[ ! $chClass =~ ^=$ ]]; then
 
 					REPLY=${REPLY##*( )}
 					REPLY=${REPLY%%*( )}
 				fi
 
-				#$ph->{"__unnamed_idx_".$ph->{__unnamed_items}++} = $_;
 				: $(( i++ ))
-				h[${s}".__unnamed_idx_"${i}]=$REPLY
+				h[${s}".__unnamed_idx_"${i}]="$REPLY"
 
 			fi
 		fi
 	done < $fn
 
-	#$h{$s} = $ph if scalar keys %{$ph};
-
-#	foreach $s ( keys %{$p} ) {
-#
-#		next if grep { $_ eq $s } @a;
-#
-#		$h{$s} = $p->{$s};
-#
-#	}
-#
-#	for s in ${!h[@]}; do
-#
-#		[[ ${a[@]} =~ ^${s%%.*}$ ]] && continue
-#
-#		$h{$s} = $p->{$s};
-#
-#	done
-
-	#return \%h;
-	echo "dbg keys ${!h[@]} : ${#h[@]}"
-	echo "---"
-	echo "dbg vals ${h[@]}  : ${#h[@]}"
 	for s in ${!h[@]}; do
 
 		echo "pair: $s = ${h[$s]}"
