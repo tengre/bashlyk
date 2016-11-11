@@ -1,5 +1,5 @@
 #
-# $Id: libtst.sh 581 2016-11-11 01:03:23+04:00 toor $
+# $Id: libtst.sh 582 2016-11-11 16:22:46+04:00 toor $
 #
 #****h* BASHLYK/libtst
 #  DESCRIPTION
@@ -57,6 +57,72 @@ udfTest() {
  return 0
 }
 #******
+#****f* libtst/udfEncode
+#  SYNOPSIS
+#    udfEncode args
+#  DESCRIPTION
+#    ...
+#  INPUTS
+#    ...
+#  OUTPUT
+#    ...
+#  RETURN VALUE
+#    ...
+#  EXAMPLE
+#    local s='if [[ re  =~  (a|b b|\") ]]; then ok; fi'
+#    udfEncode "$s" #? true
+#  SOURCE
+udfEncode() {
+
+  local s="$@"
+  s=${s//\"/_\&#34_}
+  s=${s//\(/_\&#40_}
+  s=${s//\)/_\&#41_}
+  s=${s//\;/_\&#59_}
+  s=${s//\=/_\&#61_}
+  s=${s//\|/_\&#7C_}
+  s=${s//\[/_\&#91_}
+  s=${s//\\/_\&#92_}
+  s=${s//\]/_\&#93_}
+  #s=${s//\$\(/-S-(}
+  #s=${s//\`/^_}
+
+  echo "$s"
+}
+#******
+#****f* libtst/udfDecode
+#  SYNOPSIS
+#    udfDecode args
+#  DESCRIPTION
+#    ...
+#  INPUTS
+#    ...
+#  OUTPUT
+#    ...
+#  RETURN VALUE
+#    ...
+#  EXAMPLE
+#    local s='if _&#91__&#91_ re  _&#61_~  _&#40_a_&#7C_b b_&#7C__&#92__&#34__&#41_ _&#93__&#93__&#59_ then ok_&#59_ fi'
+#    udfDecode "$s" #? true
+#  SOURCE
+udfDecode() {
+
+  local s="$@"
+  s=${s//_\&#34_/\"}
+  s=${s//_\&#40_/\(}
+  s=${s//_\&#41_/\)}
+  s=${s//_\&#59_/\;}
+  s=${s//_\&#61_/\=}
+  s=${s//_\&#7C_/\|}
+  s=${s//_\&#91_/\[}
+  s=${s//_\&#92_/\\}
+  s=${s//_\&#93_/\]}
+  #s=${s//\$\(/-S-(}
+  #s=${s//\`/^_}
+
+  echo "$s"
+}
+#******
 #****f* libtst/ini.read
 #  SYNOPSIS
 #    ini.read args
@@ -72,16 +138,19 @@ udfTest() {
 #   local ini s=""                                                              #-
 #   udfMakeTemp ini                                                             #-
 #    cat <<'EOFini' > ${ini}                                                    #-
-#    void	=	1                                                       #-
+#    void  =  1                                                                 #-
 #[exec]:                                                                        #-
 #    TZ=UTC date -R --date='@12345678'                                          #-
 #    sUname="$(uname -a)"                                                       #-
+#    if [[ -n "$HOSTNAME ]]; then                                               #-
+#      export HOSTNAME=$(hostname)                                              #-
+#    fi                                                                         #-
 #:[exec]                                                                        #-
 #[main]                                                                         #-
-#    sTxt	=	$(date -R)                                              #-
-#    b		=	false                                                   #-
-#    iXo Xo	=	19                                                      #-
-#    iYo	=	80                                                      #-
+#    sTxt  =  $(date -R)                                                        #-
+#    b    =  false                                                              #-
+#    iXo Xo  =  19                                                              #-
+#    iYo  =  80                                                                 #-
 #    `simple line`                                                              #-
 #[replace]                                                                      #-
 #    before replacing                                                           #-
@@ -102,114 +171,103 @@ udfTest() {
 #   cat $ini
 #   ini.read $ini ini_h ini_hClass                                               #? true
 #  SOURCE
-#udfRead() {
 ini.read() {
 
-#	return undef unless @_ == 3
-#						&& defined( $_[0] )
-#						&& udfIsFD( $_[0] )
-#						#&& defined( $_[1] )
-#						#&&     ref( $_[1] ) eq 'HASH'
-#						&& defined( $_[2] )
-#						&&     ref( $_[2] ) eq 'HASH';
+  udfOn NoSuchFileOrDir throw $1
+  typeset -A $2 || eval $( udfOnError throw InvalidArgument "$2 must be hash" )
+  typeset -A $3 || eval $( udfOnError throw InvalidArgument "$3 must be hash" )
+
+  local -a a
+  local -A h
+  local bActiveSection chClass fn i k p ph reComment reSection s sKeyLast sNewSection v
+  #
+  i=0
+  ## TODO - check unnamed section
+  s="__void__"
+  #
+  fn=$1
+  a[0]=$s
+
+  reSection='^[[:space:]]*(:?)\[[[:space:]]*([^[:punct:]]+?)[[:space:]]*\](:?)[[:space:]]*$'
+  reKey_Val='^[[:space:]]*([[:alnum:]]+)[[:space:]]*=[[:space:]]*(.*)[[:space:]]*$'
+  reComment='(^|[[:space:]]+)[\#\;].*$'
+  reRowType='^[=\!\-\+]$'
+
+  while read -t 4; do
+
+    if [[ $REPLY =~ $reSection ]]; then
+
+      sNewSection=${BASH_REMATCH[2]}
+
+      [[ ${BASH_REMATCH[1]} == ":" ]] && bActiveSection=
+      [[ ${BASH_REMATCH[3]} == ":" ]] && bActiveSection="test"
+
+      sKeyLast=""
+      s=$sNewSection
+      i=0
+
+      [[ $bActiveSection ]] && continue
+
+      a[${#a[@]}]="$s"
+
+    else
+
+      #+ TODO line with multi '='
+      #+ TODO key with spaces...
+      #+ TODO active sections...
+
+      [[ $REPLY =~ $reComment ]] && continue
+
+      if [[ ! $bActiveSection && ! ${ini_hClass[$s]} =~ $reRowType && $REPLY =~ $reKey_Val ]]; then
+
+        k=${BASH_REMATCH[1]}
+        v=${BASH_REMATCH[2]}
+
+        if [[ $k =~ "=" ]]; then
+
+          k=${REPLY%%=*}
+          k=${k%% *}
+          v=${REPLY#*=}
+          v=${v#* }
+          h[${s}.${k}]=$v
+          sKeyLast=$k
+
+        else
+
+          sKeyLast="$k"
+          h[${s}.${sKeyLast}]="$v"
+
+        fi
+
+      else
+
+#        if [[ -n "$sKeyLast" && ! ${h[${s}".__class_active"]} =~ ^(1|2)$ && ! ${ini_hClass[$s]} =~ ^[=!\-\+]$ ]]; then
+#          h[${s}.${sKeyLast}]+="\n${REPLY}"
+#        fi
 #
-	#udfOn NoSuchFileOrDir $1 || return $?
-	udfOn NoSuchFileOrDir throw $1
-	typeset -A $2 || eval $( udfOnError throw InvalidArgument "$2 must be hash" )
-	typeset -A $3 || eval $( udfOnError throw InvalidArgument "$3 must be hash" )
-	#udfOn MissingArgument $3 || return $?
 
-	#my ( $fh, $p, $phC ) = @_;
-	#my ( $i, $s, $ph, %h, @a ) = ( 0, "", {}, (), () );
-	#my $sKeyLast = undef;
 
-	local -a a
-	local -A h
-	local bA chClass fn i k p ph s sKeyLast sNewSection v
-	#
-	i=0
-	## TODO - check unnamed section
-	s="__void__"
-	#
-	fn=$1
+        if   [[ ${ini_hClass[$s]} =~ ^=$ ]]; then
 
-	##$ph = ( $p->{$s} && $phC->{$s} && $phC->{$s} =~ /^[^!\-]/ ) ? $p->{$s} : {};
-	##push( @a, $s);
+          REPLY=${REPLY##*( )}
+          REPLY=${REPLY%%*( )}
 
-	a[0]=$s
+        elif [[ $bActiveSection || ${ini_hClass[$s]} =~ ^\!$ ]]; then
 
-	while read -t 4; do
+          REPLY="$( udfEncode $REPLY )"
 
-		if [[ $REPLY =~ ^[[:space:]]*(:?)\[[[:space:]]*([^[:punct:]]+?)[[:space:]]*\](:?)[[:space:]]*$ ]]; then
+        fi
 
-			## TODO h[section.key]=value ?
-			sNewSection=${BASH_REMATCH[2]}
+        : $(( i++ ))
+        h[${s}".__unnamed_idx_"${i}]="$REPLY"
 
-			##$h{$s} = $ph if scalar keys %{$ph};
-			##[[ "${!h[@]}" =~ ${s}\..* ]] && bOk=1
+      fi
 
-			s=$sNewSection;
-			i=0
-			##$ph = ( $p->{$s} && $phC->{$s} && $phC->{$s} =~ /^[^!\-]/ ) ? $p->{$s} : {};
+    fi
 
-			[[ ${BASH_REMATCH[1]} == ":" ]] && h[${s}".__class_active"]=2
-			[[ ${BASH_REMATCH[3]} == ":" ]] && h[${s}".__class_active"]=1
+  done < $fn
 
-			a[${#a[@]}]="$s"
-			sKeyLast=""
+  declare -p h
 
-		else
-
-			[[ $REPLY =~ (^|[[:space:]]+)[\#\;].*$ && ! ${ini_hClass[$s]} =~ ^\!$ ]] && continue
-
-			#+ TODO line with multi '='
-			#+ TODO key with spaces...
-			#+ TODO active sections...
-			if [[ ! ${h[${s}".__class_active"]} =~ ^(1|2)$ && ! ${ini_hClass[$s]} =~ ^[=\!\-\+]$ && $REPLY =~ ^[[:space:]]*([[:alnum:]]+)[[:space:]]*=[[:space:]]*(.*)[[:space:]]*$ ]]; then
-
-				k=${BASH_REMATCH[1]}
-				v=${BASH_REMATCH[2]}
-				if [[ $k =~ "=" ]]; then
-
-					k=${REPLY%%=*}
-					k=${k%% *}
-					v=${REPLY#*=}
-					v=${v#* }
-					h[${s}.${k}]=$v
-					sKeyLast=$k
-
-				else
-
-					sKeyLast="$k"
-					h[${s}.${sKeyLast}]="$v"
-
-				fi
-
-			else
-
-#				if [[ -n "$sKeyLast" && ! ${h[${s}".__class_active"]} =~ ^(1|2)$ && ! ${ini_hClass[$s]} =~ ^[=!\-\+]$ ]]; then
-#
-#					h[${s}.${sKeyLast}]+="\n${REPLY}"
-#
-#				fi
-#
-				if [[ ! $chClass =~ ^=$ ]]; then
-
-					REPLY=${REPLY##*( )}
-					REPLY=${REPLY%%*( )}
-				fi
-
-				: $(( i++ ))
-				h[${s}".__unnamed_idx_"${i}]="$REPLY"
-
-			fi
-		fi
-	done < $fn
-
-	for s in ${!h[@]}; do
-
-		echo "pair: $s = ${h[$s]}"
-
-	done
 }
 #******
