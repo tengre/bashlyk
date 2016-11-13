@@ -1,5 +1,5 @@
 #
-# $Id: libtst.sh 582 2016-11-11 16:22:46+04:00 toor $
+# $Id: libtst.sh 583 2016-11-13 23:23:16+04:00 toor $
 #
 #****h* BASHLYK/libtst
 #  DESCRIPTION
@@ -142,15 +142,15 @@ udfDecode() {
 #[exec]:                                                                        #-
 #    TZ=UTC date -R --date='@12345678'                                          #-
 #    sUname="$(uname -a)"                                                       #-
-#    if [[ -n "$HOSTNAME ]]; then                                               #-
+#    if [[ $HOSTNAME ]]; then                                                   #-
 #      export HOSTNAME=$(hostname)                                              #-
 #    fi                                                                         #-
 #:[exec]                                                                        #-
 #[main]                                                                         #-
-#    sTxt  =  $(date -R)                                                        #-
-#    b    =  false                                                              #-
-#    iXo Xo  =  19                                                              #-
-#    iYo  =  80                                                                 #-
+#    sTxt   =  $(date-R)                                                        #-
+#    b      =  false                                                            #-
+#    iXo Xo =  19                                                               #-
+#    iYo    =  80                                                               #-
 #    `simple line`                                                              #-
 #[replace]                                                                      #-
 #    before replacing                                                           #-
@@ -169,7 +169,7 @@ udfDecode() {
 #   ini_hClass["unify"]="="
 #   ini_hClass["acc"]="+"
 #   cat $ini
-#   ini.read $ini ini_h ini_hClass                                               #? true
+#   ini.read $ini ini_h ini_hClass                                              #? true
 #  SOURCE
 ini.read() {
 
@@ -200,7 +200,7 @@ ini.read() {
       sNewSection=${BASH_REMATCH[2]}
 
       [[ ${BASH_REMATCH[1]} == ":" ]] && bActiveSection=
-      [[ ${BASH_REMATCH[3]} == ":" ]] && bActiveSection="test"
+      [[ ${BASH_REMATCH[3]} == ":" ]] && bActiveSection=true
 
       sKeyLast=""
       s=$sNewSection
