@@ -1,5 +1,5 @@
 #
-# $Id: libtst.sh 583 2016-11-13 23:23:16+04:00 toor $
+# $Id: libtst.sh 584 2016-11-14 17:22:45+04:00 toor $
 #
 #****h* BASHLYK/libtst
 #  DESCRIPTION
@@ -135,7 +135,8 @@ udfDecode() {
 #  RETURN VALUE
 #    ...
 #  EXAMPLE
-#   local ini s=""                                                              #-
+#   local ini s S                                                               #-
+#   local -A hTest
 #   udfMakeTemp ini                                                             #-
 #    cat <<'EOFini' > ${ini}                                                    #-
 #    void  =  1                                                                 #-
@@ -143,7 +144,7 @@ udfDecode() {
 #    TZ=UTC date -R --date='@12345678'                                          #-
 #    sUname="$(uname -a)"                                                       #-
 #    if [[ $HOSTNAME ]]; then                                                   #-
-#      export HOSTNAME=$(hostname)                                              #-
+#    _____export HOSTNAME=$(hostname)                                           #-
 #    fi                                                                         #-
 #:[exec]                                                                        #-
 #[main]                                                                         #-
@@ -162,6 +163,7 @@ udfDecode() {
 #    *.tmp                                                                      #-
 #                                                                               #-
 #    EOFini                                                                     #-
+#   sed -i -e "s/_____/     /" $ini                                             #-
 #   ini_hClass["__void__"]=""
 #   ini_hClass["exec"]="!"
 #   ini_hClass["main"]=""
@@ -169,7 +171,15 @@ udfDecode() {
 #   ini_hClass["unify"]="="
 #   ini_hClass["acc"]="+"
 #   cat $ini
-#   ini.read $ini ini_h ini_hClass                                              #? true
+#   s=$( ini.read $ini ini_h ini_hClass )                                       #? true
+#   echo ${s/h/hTest}
+#   eval "${s/h/hTest}"                                                         #-
+#   for S in ${hTest[__sections__]}; do                                         #-
+#     for s in $(echo ${!hTest[@]} | tr ' ' '\n' | grep "^${S}\." | sort); do   #-
+#       echo "$s = ${hTest[$s]}"
+#     done                                                                      #-
+#   done                                                                        #-
+#  cp $ini ${ini}.save
 #  SOURCE
 ini.read() {
 
@@ -177,16 +187,14 @@ ini.read() {
   typeset -A $2 || eval $( udfOnError throw InvalidArgument "$2 must be hash" )
   typeset -A $3 || eval $( udfOnError throw InvalidArgument "$3 must be hash" )
 
-  local -a a
   local -A h
-  local bActiveSection chClass fn i k p ph reComment reSection s sKeyLast sNewSection v
+  local bActiveSection chClass fn i k p ph reComment reSection s v
   #
   i=0
-  ## TODO - check unnamed section
-  s="__void__"
+  s="::unnamed::"
   #
   fn=$1
-  a[0]=$s
+  h[__sections__]="$s"
 
   reSection='^[[:space:]]*(:?)\[[[:space:]]*([^[:punct:]]+?)[[:space:]]*\](:?)[[:space:]]*$'
   reKey_Val='^[[:space:]]*([[:alnum:]]+)[[:space:]]*=[[:space:]]*(.*)[[:space:]]*$'
@@ -197,24 +205,18 @@ ini.read() {
 
     if [[ $REPLY =~ $reSection ]]; then
 
-      sNewSection=${BASH_REMATCH[2]}
+      s=${BASH_REMATCH[2]}
 
       [[ ${BASH_REMATCH[1]} == ":" ]] && bActiveSection=
       [[ ${BASH_REMATCH[3]} == ":" ]] && bActiveSection=true
 
-      sKeyLast=""
-      s=$sNewSection
       i=0
 
       [[ $bActiveSection ]] && continue
 
-      a[${#a[@]}]="$s"
+      h[__sections__]+=" $s"
 
     else
-
-      #+ TODO line with multi '='
-      #+ TODO key with spaces...
-      #+ TODO active sections...
 
       [[ $REPLY =~ $reComment ]] && continue
 
@@ -230,36 +232,27 @@ ini.read() {
           v=${REPLY#*=}
           v=${v#* }
           h[${s}.${k}]=$v
-          sKeyLast=$k
 
         else
 
-          sKeyLast="$k"
-          h[${s}.${sKeyLast}]="$v"
+          h[${s}.${k}]="$v"
 
         fi
 
       else
 
-#        if [[ -n "$sKeyLast" && ! ${h[${s}".__class_active"]} =~ ^(1|2)$ && ! ${ini_hClass[$s]} =~ ^[=!\-\+]$ ]]; then
-#          h[${s}.${sKeyLast}]+="\n${REPLY}"
-#        fi
+#        if   [[ ${ini_hClass[$s]} =~ ^=$ ]]; then
 #
+#          REPLY=${REPLY##*( )}
+#          REPLY=${REPLY%%*( )}
+#
+#        elif [[ $bActiveSection || ${ini_hClass[$s]} =~ ^\!$ ]]; then
+#          REPLY="$( udfEncode $REPLY )"
+#
+#        fi
 
-
-        if   [[ ${ini_hClass[$s]} =~ ^=$ ]]; then
-
-          REPLY=${REPLY##*( )}
-          REPLY=${REPLY%%*( )}
-
-        elif [[ $bActiveSection || ${ini_hClass[$s]} =~ ^\!$ ]]; then
-
-          REPLY="$( udfEncode $REPLY )"
-
-        fi
-
-        : $(( i++ ))
         h[${s}".__unnamed_idx_"${i}]="$REPLY"
+        : $(( i++ ))
 
       fi
 
