@@ -1,5 +1,5 @@
 #
-# $Id: libtst.sh 584 2016-11-14 17:22:45+04:00 toor $
+# $Id: libtst.sh 585 2016-11-14 23:44:21+04:00 toor $
 #
 #****h* BASHLYK/libtst
 #  DESCRIPTION
@@ -36,8 +36,6 @@
 : ${_bashlyk_envXSession:=}
 : ${_bashlyk_aRequiredCmd_msg:="[ "}
 : ${_bashlyk_aExport_msg:="udfTest udfRead"}
-declare -A ini_h
-declare -A ini_hClass
 #******
 #****f* libtst/udfTest
 #  SYNOPSIS
@@ -135,8 +133,9 @@ udfDecode() {
 #  RETURN VALUE
 #    ...
 #  EXAMPLE
-#   local ini s S                                                               #-
+#   local c ini s S                                                             #-
 #   local -A hTest
+#   c='([_:unnamed:_]="" [exec]="!" [main]="" [replace]="-" [unify]="=" [acc]="+")' #-
 #   udfMakeTemp ini                                                             #-
 #    cat <<'EOFini' > ${ini}                                                    #-
 #    void  =  1                                                                 #-
@@ -164,14 +163,8 @@ udfDecode() {
 #                                                                               #-
 #    EOFini                                                                     #-
 #   sed -i -e "s/_____/     /" $ini                                             #-
-#   ini_hClass["__void__"]=""
-#   ini_hClass["exec"]="!"
-#   ini_hClass["main"]=""
-#   ini_hClass["replace"]="-"
-#   ini_hClass["unify"]="="
-#   ini_hClass["acc"]="+"
 #   cat $ini
-#   s=$( ini.read $ini ini_h ini_hClass )                                       #? true
+#   s=$( ini.read $ini "" "$c" )                                                #? true
 #   echo ${s/h/hTest}
 #   eval "${s/h/hTest}"                                                         #-
 #   for S in ${hTest[__sections__]}; do                                         #-
@@ -179,27 +172,30 @@ udfDecode() {
 #       echo "$s = ${hTest[$s]}"
 #     done                                                                      #-
 #   done                                                                        #-
-#  cp $ini ${ini}.save
 #  SOURCE
 ini.read() {
 
   udfOn NoSuchFileOrDir throw $1
-  typeset -A $2 || eval $( udfOnError throw InvalidArgument "$2 must be hash" )
-  typeset -A $3 || eval $( udfOnError throw InvalidArgument "$3 must be hash" )
+  udfOn MissingArgument throw $3
+  #typeset -A $2 || eval $( udfOnError throw InvalidArgument "$2 must be hash" )
+  #typeset -A $3 || eval $( udfOnError throw InvalidArgument "$3 must be hash" )
 
-  local -A h
-  local bActiveSection chClass fn i k p ph reComment reSection s v
+  local -A h hRC
+  local bActiveSection fn i k reComment reKeyVal reRawClass reSection s v
+  #
+  [[ $2 ]] && eval "local -A h=$2"
+  eval "local -A hRC=$3"
   #
   i=0
-  s="::unnamed::"
+  s="_:unnamed:_"
   #
   fn=$1
   h[__sections__]="$s"
 
-  reSection='^[[:space:]]*(:?)\[[[:space:]]*([^[:punct:]]+?)[[:space:]]*\](:?)[[:space:]]*$'
-  reKey_Val='^[[:space:]]*([[:alnum:]]+)[[:space:]]*=[[:space:]]*(.*)[[:space:]]*$'
-  reComment='(^|[[:space:]]+)[\#\;].*$'
-  reRowType='^[=\!\-\+]$'
+   reSection='^[[:space:]]*(:?)\[[[:space:]]*([^[:punct:]]+?)[[:space:]]*\](:?)[[:space:]]*$'
+    reKeyVal='^[[:space:]]*([[:alnum:]]+)[[:space:]]*=[[:space:]]*(.*)[[:space:]]*$'
+   reComment='(^|[[:space:]]+)[\#\;].*$'
+  reRawClass='^[=\!\-\+]$'
 
   while read -t 4; do
 
@@ -220,7 +216,7 @@ ini.read() {
 
       [[ $REPLY =~ $reComment ]] && continue
 
-      if [[ ! $bActiveSection && ! ${ini_hClass[$s]} =~ $reRowType && $REPLY =~ $reKey_Val ]]; then
+      if [[ ! $bActiveSection && ! ${hRC[$s]} =~ $reRawClass && $REPLY =~ $reKeyVal ]]; then
 
         k=${BASH_REMATCH[1]}
         v=${BASH_REMATCH[2]}
@@ -246,9 +242,6 @@ ini.read() {
 #          REPLY=${REPLY##*( )}
 #          REPLY=${REPLY%%*( )}
 #
-#        elif [[ $bActiveSection || ${ini_hClass[$s]} =~ ^\!$ ]]; then
-#          REPLY="$( udfEncode $REPLY )"
-#
 #        fi
 
         h[${s}".__unnamed_idx_"${i}]="$REPLY"
@@ -262,5 +255,88 @@ ini.read() {
 
   declare -p h
 
+}
+#******
+#****f* libtst/ini.group
+#  SYNOPSIS
+#    ini.group args
+#  DESCRIPTION
+#    ...
+#  INPUTS
+#    ...
+#  OUTPUT
+#    ...
+#  RETURN VALUE
+#    ...
+#  EXAMPLE
+#  SOURCE
+ini.group() {
+#
+#	return undef unless @_ == 3
+#						&& defined( $_[0] )
+#						#&& defined( $_[1] )
+#						#&&     ref( $_[1] ) eq 'HASH'
+#						&& defined( $_[2] )
+#						&&     ref( $_[2] ) eq 'HASH';
+#
+
+  udfOn NoSuchFileOrDir throw $1
+  udfOn MissingArgument throw $3
+  #typeset -A $2 || eval $( udfOnError throw InvalidArgument "$2 must be hash" )
+  #typeset -A $3 || eval $( udfOnError throw InvalidArgument "$3 must be hash" )
+
+  local -A h hRC
+  local bActiveSection fn i k path pathIni reComment reKeyVal reRawClass reSection s v
+  [[ $2 ]] && eval "local -A h=$2"
+  eval "local -A hRC=$3"
+
+#	my ( $fn, $ph, $phClass, $fh, $path, $ini ) = ( $_[0], $_[1], $_[2], undef, "", "" );
+#
+#	$path = $_pathIni           if ( $fn !~ m{/} && -f "${_pathIni}/${fn}" );
+#	$path = $1                  if ( $fn =~ m{/} && -f "${fn}" && m{(.*)/.*} );
+#	$path = "/etc/$_pathPrefix" if ( $path eq "" && -f "/etc/${_pathPrefix}/${fn}" );
+#
+  [[ "$1" == "${1##*/}" && -f "$(_ pathIni)/$1" ]] && pathIni=$(_ pathIni)
+  [[ "$1" == "${1##*/}" && -f "$1"              ]] && pathIni=$(pwd)
+  [[ "$1" != "${1##*/}" && -f "$1"              ]] && pathIni=$(dirname $1)
+  #
+  if [[ -z "$pathIni" ]]; then
+   [[ -f "/etc/$(_ pathPrefix)/$1" ]] && pathIni="/etc/$(_ pathPrefix)"
+  fi
+
+#	if ( -d "$path" ) {
+#
+#		my @a = ( $fn =~ m{(.*/)?(.*)} ) ? reverse( split( /\./, $2 ) ) : ();
+#
+#		foreach ( @a ) {
+#
+#			next if $_ eq "";
+#			$ini = ( $ini ne "" ) ? "${_}.${ini}" : "$_";
+#			if ( -s "${path}/${ini}" ) {
+#
+#				open( $fh, "<${path}/${ini}" ) or die "${ini}: $!\n";
+#				$ph = readSource( $fh, $ph, $phClass );
+#				close( $fh );
+#
+#			}
+#		}
+#
+#		$ph->{configfile} = "${path}/${ini}";
+#
+#	}
+#
+#	if ( scalar keys %_hCLI ) {
+#
+#		( $fh, $fn ) = tempfile();
+#		writeTarget( $fh, \%_hCLI );
+#		seek( $fh, 0, 0 ) or die "${fn}: seek error $!\n";
+#		$ph = readSource( $fh, $ph, $phClass );
+#		close( $fh );
+#		unlink( $fn );
+#
+#	}
+#
+#	return $ph;
+#
 }
 #******
