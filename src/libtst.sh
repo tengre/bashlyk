@@ -1,5 +1,5 @@
 #
-# $Id: libtst.sh 586 2016-11-15 17:10:10+04:00 toor $
+# $Id: libtst.sh 587 2016-11-16 00:50:57+04:00 toor $
 #
 #****h* BASHLYK/libtst
 #  DESCRIPTION
@@ -136,7 +136,7 @@ udfDecode() {
 #   local c ini s S                                                             #-
 #   local -A hTest
 #   c='([_:unnamed:_]="" [exec]="!" [main]="" [replace]="-" [unify]="=" [acc]="+")' #-
-#   udfMakeTemp ini                                                             #-
+#   udfMakeTemp ini suffix=".ini"                                               #-
 #    cat <<'EOFini' > ${ini}                                                    #-
 #    void  =  1                                                                 #-
 #[exec]:                                                                        #-
@@ -168,7 +168,7 @@ udfDecode() {
 #   echo ${s/h/hTest}
 #   eval "${s/h/hTest}"                                                         #-
 #   for S in ${hTest[__sections__]}; do                                         #-
-#     for s in $(echo ${!hTest[@]} | tr ' ' '\n' | grep "^${S}\." | sort); do   #-
+#     for s in $(echo ${!hTest[@]} | tr ' ' '\n' | grep "^${S}\." | sort -n); do   #-
 #       echo "$s = ${hTest[$s]}"
 #     done                                                                      #-
 #   done                                                                        #-
@@ -213,27 +213,32 @@ ini.read() {
 
     if [[ $REPLY =~ $reSection ]]; then
 
-      (( i > 0 )) && h["${s}.__unnamed_cnt"]=$i
+      (( i > 0 )) && h[${s}".__unnamed_cnt"]=$i
       i=0
 
       s=${BASH_REMATCH[2]}
 
-      [[ ${BASH_REMATCH[1]} == ":" ]] && bActiveSection=
-      [[ ${BASH_REMATCH[3]} == ":" ]] && bActiveSection=true
+      [[ ${BASH_REMATCH[1]} == ":" ]] && bActiveSection=close
+      [[ ${BASH_REMATCH[3]} == ":" ]] && bActiveSection=open
 
-      [[ $bActiveSection ]] && continue
+      if [[ $bActiveSection == "close" ]]; then
+
+        bActiveSection=
+        continue
+
+      fi
 
       if udfIsNumber ${h[${s}".__unnamed_cnt"]}; then
 
-	case ${hRC[$s]} in
+        case ${hRC[$s]} in
 
-	 '!') i=${h[${s}".__unnamed_cnt"]};;
-	 '-') i=0;;
-	 '+') i=${h[${s}".__unnamed_cnt"]};;
-	 '=') i=${h[${s}".__unnamed_cnt"]};;
-	   *) i=${h[${s}".__unnamed_cnt"]};;
+          '!') i=0;;
+          '-') i=0;;
+          '+') i=${h[${s}".__unnamed_cnt"]};;
+          '=') i=${h[${s}".__unnamed_cnt"]};;
+            *) i=${h[${s}".__unnamed_cnt"]};;
 
-	esac
+        esac
 
       fi
 
@@ -364,7 +369,7 @@ ini.read() {
 #   echo ${s/h/hT}
 #   eval "${s/h/hT}"                                                            #-
 #   for S in ${hT[__sections__]}; do                                            #-
-#     for s in $(echo ${!hT[@]} | tr ' ' '\n' | grep "^${S}\." | sort); do      #-
+#     for s in $(echo ${!hT[@]} | tr ' ' '\n' | grep "^${S}\." | sort -n); do      #-
 #       echo "$s = ${hT[$s]}"
 #     done                                                                      #-
 #   done                                                                        #-
@@ -405,7 +410,6 @@ ini.group() {
       [[ ${a[i]} ]] || continue
       [[ $ini    ]] && ini="${a[i]}.${ini}" || ini="${a[i]}"
       [[ -s "${path}/${ini}" ]] && sIni="$( ini.read "${path}/${ini}" "$sIni" "$sRawClass" )"
-      echo "dbg ini=${ini} : $sIni" >> /tmp/ini.log
 
     done
 
