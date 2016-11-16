@@ -1,5 +1,5 @@
 #
-# $Id: libtst.sh 587 2016-11-16 00:50:57+04:00 toor $
+# $Id: libtst.sh 588 2016-11-16 17:22:04+04:00 toor $
 #
 #****h* BASHLYK/libtst
 #  DESCRIPTION
@@ -73,15 +73,17 @@ udfTest() {
 udfEncode() {
 
   local s="$@"
-  s=${s//\"/_\&#34_}
-  s=${s//\(/_\&#40_}
-  s=${s//\)/_\&#41_}
-  s=${s//\;/_\&#59_}
-  s=${s//\=/_\&#61_}
-  s=${s//\|/_\&#7C_}
-  s=${s//\[/_\&#91_}
-  s=${s//\\/_\&#92_}
-  s=${s//\]/_\&#93_}
+  s=${s// /_&#20_}
+  s=${s//\*/_&#2A_}
+  s=${s//\"/_&#34_}
+  s=${s//\(/_&#40_}
+  s=${s//\)/_&#41_}
+  s=${s//\;/_&#59_}
+  s=${s//\=/_&#61_}
+  s=${s//\|/_&#7C_}
+  s=${s//\[/_&#91_}
+  s=${s//\\/_&#92_}
+  s=${s//\]/_&#93_}
   #s=${s//\$\(/-S-(}
   #s=${s//\`/^_}
 
@@ -106,15 +108,17 @@ udfEncode() {
 udfDecode() {
 
   local s="$@"
-  s=${s//_\&#34_/\"}
-  s=${s//_\&#40_/\(}
-  s=${s//_\&#41_/\)}
-  s=${s//_\&#59_/\;}
-  s=${s//_\&#61_/\=}
-  s=${s//_\&#7C_/\|}
-  s=${s//_\&#91_/\[}
-  s=${s//_\&#92_/\\}
-  s=${s//_\&#93_/\]}
+  s=${s//_&#20_/ }
+  s=${s//_&#2A_/\*}
+  s=${s//_&#34_/\"}
+  s=${s//_&#40_/\(}
+  s=${s//_&#41_/\)}
+  s=${s//_&#59_/\;}
+  s=${s//_&#61_/\=}
+  s=${s//_&#7C_/\|}
+  s=${s//_&#91_/\[}
+  s=${s//_&#92_/\\}
+  s=${s//_&#93_/\]}
   #s=${s//\$\(/-S-(}
   #s=${s//\`/^_}
 
@@ -134,8 +138,8 @@ udfDecode() {
 #    ...
 #  EXAMPLE
 #   local c ini s S                                                             #-
-#   local -A hTest
-#   c='([_:unnamed:_]="" [exec]="!" [main]="" [replace]="-" [unify]="=" [acc]="+")' #-
+#   local -A hT
+#   c='([__global__]="" [exec]="!" [main]="" [replace]="-" [unify]="=" [acc]="+")' #-
 #   udfMakeTemp ini suffix=".ini"                                               #-
 #    cat <<'EOFini' > ${ini}                                                    #-
 #    void  =  1                                                                 #-
@@ -165,11 +169,11 @@ udfDecode() {
 #   sed -i -e "s/_____/     /" $ini                                             #-
 #   cat $ini
 #   s=$( ini.read $ini "" "$c" )                                                #? true
-#   echo ${s/h/hTest}
-#   eval "${s/h/hTest}"                                                         #-
-#   for S in ${hTest[__sections__]}; do                                         #-
-#     for s in $(echo ${!hTest[@]} | tr ' ' '\n' | grep "^${S}\." | sort -n); do   #-
-#       echo "$s = ${hTest[$s]}"
+#   echo ${s/h/hT}
+#   eval "${s/h/hT}"                                                            #-
+#   for S in ${hT[__sections__]}; do                                            #-
+#     for s in $(echo ${!hT[@]} | tr ' ' '\n' | grep "__${S}$" | sort -t= -k2n); do   #-
+#       echo "$s = ${hT[$s]}"
 #     done                                                                      #-
 #   done                                                                        #-
 #  SOURCE
@@ -199,7 +203,7 @@ ini.read() {
 
   #
   i=0
-  s="_:unnamed:_"
+  s="__global__"
   #
   fn=$1
   h[__sections__]="$s"
@@ -213,10 +217,10 @@ ini.read() {
 
     if [[ $REPLY =~ $reSection ]]; then
 
-      (( i > 0 )) && h[${s}".__unnamed_cnt"]=$i
+      (( i > 0 )) && h["__unnamed_cnt__${s}"]=$i
       i=0
 
-      s=${BASH_REMATCH[2]}
+      s=$( udfEncode ${BASH_REMATCH[2]} )
 
       [[ ${BASH_REMATCH[1]} == ":" ]] && bActiveSection=close
       [[ ${BASH_REMATCH[3]} == ":" ]] && bActiveSection=open
@@ -228,15 +232,15 @@ ini.read() {
 
       fi
 
-      if udfIsNumber ${h[${s}".__unnamed_cnt"]}; then
+      if udfIsNumber ${h["__unnamed_cnt__${s}"]}; then
 
         case ${hRC[$s]} in
 
           '!') i=0;;
           '-') i=0;;
-          '+') i=${h[${s}".__unnamed_cnt"]};;
-          '=') i=${h[${s}".__unnamed_cnt"]};;
-            *) i=${h[${s}".__unnamed_cnt"]};;
+          '+') i=${h["__unnamed_cnt__${s}"]};;
+          '=') i=${h["__unnamed_cnt__${s}"]};;
+            *) i=${h["__unnamed_cnt__${s}"]};;
 
         esac
 
@@ -259,11 +263,11 @@ ini.read() {
           k=${k%% *}
           v=${REPLY#*=}
           v=${v#* }
-          h[${s}.${k}]=$v
+          h["${k}__${s}"]=$v
 
         else
 
-          h[${s}.${k}]="$v"
+          h["${k}__${s}"]="$v"
 
         fi
 
@@ -273,11 +277,11 @@ ini.read() {
 
           REPLY=${REPLY##*( )}
           REPLY=${REPLY%%*( )}
-          h[${s}".data:"${REPLY}]="__unnamed_idx_${i}"
+          h["__unified_key=$(udfEncode $REPLY)__${s}"]="$REPLY"
 
         else
 
-          h[${s}".__unnamed_idx_"${i}]="$REPLY"
+          h["__unnamed_idx=${i}__${s}"]="$REPLY"
 
         fi
 
@@ -289,7 +293,7 @@ ini.read() {
 
   done < $fn
 
-  (( i > 0 )) && h["${s}.__unnamed_cnt"]=$i
+  (( i > 0 )) && h["__unnamed_cnt__${s}"]=$i
 
   declare -p h
 
@@ -309,7 +313,7 @@ ini.read() {
 #  EXAMPLE
 #   local c ini s S                                                             #-
 #   local -A hT                                                                 #-
-#   c='([_:unnamed:_]="" [exec]="!" [main]="" [replace]="-" [unify]="=" [acc]="+")'
+#   c='([__global__]="" [exec]="!" [main]="" [replace]="-" [unify]="=" [acc to ass]="+")'
 #   udfMakeTemp ini suffix=.ini                                                 #-
 #    cat <<'EOFini' > ${ini}                                                    #-
 #    void  =  1                                                                 #-
@@ -331,7 +335,7 @@ ini.read() {
 #[unify]                                                                        #-
 #    *.bak                                                                      #-
 #    *.tmp                                                                      #-
-#[acc]                                                                          #-
+#[acc to ass]                                                                   #-
 #    *.bak                                                                      #-
 #    *.tmp                                                                      #-
 #                                                                               #-
@@ -358,10 +362,16 @@ ini.read() {
 #[unify]                                                                        #-
 #    *.xxx                                                                      #-
 #    *.tmp                                                                      #-
-#[acc]                                                                          #-
+#[acc to ass]                                                                   #-
 #    *.bak                                                                      #-
 #    *.tmp                                                                      #-
-#    *.yyy                                                                      #-
+#    *.com                                                                      #-
+#    *.exe                                                                      #-
+#    *.jpg                                                                      #-
+#    *.png                                                                      #-
+#    *.mp3                                                                      #-
+#    *.dll                                                                      #-
+#    *.asp                                                                      #-
 #    EOFiniChild                                                                #-
 #   sed -i -e "s/_____/     /g" "${ini%/*}/child.${ini##*/}"                    #-
 #   cat $ini
@@ -369,7 +379,7 @@ ini.read() {
 #   echo ${s/h/hT}
 #   eval "${s/h/hT}"                                                            #-
 #   for S in ${hT[__sections__]}; do                                            #-
-#     for s in $(echo ${!hT[@]} | tr ' ' '\n' | grep "^${S}\." | sort -n); do      #-
+#     for s in $(echo ${!hT[@]} | tr ' ' '\n' | grep "__${S}$" | sort -t= -k2n); do   #-
 #       echo "$s = ${hT[$s]}"
 #     done                                                                      #-
 #   done                                                                        #-
@@ -432,3 +442,47 @@ ini.group() {
 #
 }
 #******
+#****f* libtst/ini.group
+#  SYNOPSIS
+#    ini.group args
+#  DESCRIPTION
+#    ...
+#  INPUTS
+#    ...
+#  OUTPUT
+#    ...
+#  RETURN VALUE
+#    ...
+#  EXAMPLE
+#
+#  SOURCE
+#sub prepare {
+#
+#	return undef unless @_ == 2
+#						&& defined( $_[0] )
+#						&&     ref( $_[0] )
+#						&& defined( $_[1] );
+#
+#	my ( $ph, $s ) = @_;
+#	my $p = undef;
+#	my %h = ();
+#	my @a = ();
+#
+#	if ( $s !~ /^[\-\+=!]/ ) {
+#
+#		my @aValidOptions = ( $s =~ m/^(.*)$/ ) ? split( ',', $1 ) : ();
+#		$h{$_} = $ph->{$_} foreach ( @aValidOptions );
+#		$p = \%h;
+#
+#	} else {
+#
+#		push( @a, $ph->{$_} ) foreach sort { substr( $a, 14 ) <=> substr( $b, 14 ) } ( grep { /__unnamed_idx_/ } keys %{$ph} );
+#		@a = grep { ! $h{$_}++ } @a if "$s" =~ /=/;
+#		$p = \@a;
+#
+#	}
+#
+#	return $p;
+#
+#}
+##******
