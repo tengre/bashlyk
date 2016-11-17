@@ -1,5 +1,5 @@
 #
-# $Id: libtst.sh 588 2016-11-16 17:22:04+04:00 toor $
+# $Id: libtst.sh 589 2016-11-17 17:25:09+04:00 toor $
 #
 #****h* BASHLYK/libtst
 #  DESCRIPTION
@@ -236,7 +236,6 @@ ini.read() {
 
         case ${hRC[$s]} in
 
-          '!') i=0;;
           '-') i=0;;
           '+') i=${h["__unnamed_cnt__${s}"]};;
           '=') i=${h["__unnamed_cnt__${s}"]};;
@@ -257,19 +256,7 @@ ini.read() {
         k=${BASH_REMATCH[1]}
         v=${BASH_REMATCH[2]}
 
-        if [[ $k =~ "=" ]]; then
-
-          k=${REPLY%%=*}
-          k=${k%% *}
-          v=${REPLY#*=}
-          v=${v#* }
-          h["${k}__${s}"]=$v
-
-        else
-
-          h["${k}__${s}"]="$v"
-
-        fi
+        h["${k}__${s}"]="$v"
 
       else
 
@@ -277,7 +264,7 @@ ini.read() {
 
           REPLY=${REPLY##*( )}
           REPLY=${REPLY%%*( )}
-          h["__unified_key=$(udfEncode $REPLY)__${s}"]="$REPLY"
+          h["__unnamed_idx=$(udfEncode $REPLY)__${s}"]="$REPLY"
 
         else
 
@@ -299,6 +286,188 @@ ini.read() {
 
 }
 #******
+#****f* libtst/ini.get
+#  SYNOPSIS
+#    ini.get args
+#  DESCRIPTION
+#    ...
+#  INPUTS
+#    ...
+#  OUTPUT
+#    ...
+#  RETURN VALUE
+#    ...
+#  EXAMPLE
+#   local c ini s S                                                             #-
+#   local -A hT
+#   c='([__global__]="" [exec]="!" [main]="" [replace]="-" [unify]="=" [acc]="+")' #-
+#   udfMakeTemp ini suffix=".ini"                                               #-
+#    cat <<'EOFini' > ${ini}                                                    #-
+#    void  =  1                                                                 #-
+#[exec]:                                                                        #-
+#    TZ=UTC date -R --date='@12345678'                                          #-
+#    sUname="$(uname -a)"                                                       #-
+#    if [[ $HOSTNAME ]]; then                                                   #-
+#    _____export HOSTNAME=$(hostname)                                           #-
+#    fi                                                                         #-
+#:[exec]                                                                        #-
+#[main]                                                                         #-
+#    sTxt   =  $(date-R)                                                        #-
+#    b      =  false                                                            #-
+#    iXo Xo =  19                                                               #-
+#    iYo    =  80                                                               #-
+#    `simple line`                                                              #-
+#[replace]                                                                      #-
+#    before replacing                                                           #-
+#[unify]                                                                        #-
+#    *.bak                                                                      #-
+#    *.tmp                                                                      #-
+#[acc]                                                                          #-
+#    *.bak                                                                      #-
+#    *.tmp                                                                      #-
+#                                                                               #-
+#    EOFini                                                                     #-
+#   sed -i -e "s/_____/     /" $ini                                             #-
+#   cat $ini
+#   s=$( ini.get $ini "" "$c" )                                                 #? true
+#   echo ${s/h=/hT=}
+#   eval "${s/h=/hT=}"                                                          #-
+#   for S in ${hT[__sections__]}; do                                            #-
+#     unset hS
+#     echo "section $S"
+#     eval "${hT[$S]}"
+#     for s in ${!hS[@]}; do                                                    #-
+#       echo "$s = ${hS[$s]}"
+#     done                                                                      #-
+#   done                                                                        #-
+#  SOURCE
+ini.get() {
+
+  udfOn NoSuchFileOrDir throw $1
+  udfOn MissingArgument throw $3
+  #typeset -A $2 || eval $( udfOnError throw InvalidArgument "$2 must be hash" )
+  #typeset -A $3 || eval $( udfOnError throw InvalidArgument "$3 must be hash" )
+
+  local -A h hRC hS
+  local bActiveSection fn i k reComment reKeyVal reRawClass reSection s v
+  #
+  if [[ $2 ]]; then
+
+    [[ $2 =~ ^declare.-A.[[:alnum:]]+= ]] && s="${2#*=}" || s="$2"
+    eval "local -A h=$s"
+
+  fi
+
+  if [[ $3 ]]; then
+
+   [[ $3 =~ ^declare.-A.[[:alnum:]]+= ]] && s="${3#*=}" || s="$3"
+   eval "local -A hRC=$s"
+
+  fi
+
+  #
+  i=0
+  s="__global__"
+  #
+  fn=$1
+  h[__sections__]="$s"
+
+   reSection='^[[:space:]]*(:?)\[[[:space:]]*([^[:punct:]]+?)[[:space:]]*\](:?)[[:space:]]*$'
+    reKeyVal='^[[:space:]]*([[:alnum:]]+)[[:space:]]*=[[:space:]]*(.*)[[:space:]]*$'
+   reComment='(^|[[:space:]]+)[\#\;].*$'
+  reRawClass='^[=\!\-\+]$'
+
+  while read -t 4; do
+
+    if [[ $REPLY =~ $reSection ]]; then
+
+      (( i > 0 )) && hS["__unnamed_cnt"]=$i
+      i=0
+
+      if (( ${#hS[@]} > 0 )); then
+        h[$s]=$(declare -p hS)
+
+      fi
+
+      unset hS
+
+      s=$( udfEncode ${BASH_REMATCH[2]} )
+
+      [[ ${BASH_REMATCH[1]} == ":" ]] && bActiveSection=close
+      [[ ${BASH_REMATCH[3]} == ":" ]] && bActiveSection=open
+
+      if [[ $bActiveSection == "close" ]]; then
+
+        bActiveSection=
+        continue
+
+      fi
+
+      sS=${h[$s]}
+
+      [[ $sS =~ ^declare.-A.[[:alnum:]]+= ]] && sS="${sS#*=}" || sS="()"
+      eval "local -A hS=$sS"
+
+      if udfIsNumber ${hS["__unnamed_cnt"]}; then
+
+        case ${hRC[$s]} in
+
+          '-') i=0;;
+          '+') i=${h["__unnamed_cnt"]};;
+          '=') i=${h["__unnamed_cnt"]};;
+            *) i=0;;
+
+        esac
+
+      fi
+
+      h["__sections__"]+=" $s"
+
+    else
+
+      [[ $REPLY =~ $reComment ]] && continue
+
+      if [[ ! $bActiveSection && ! ${hRC[$s]} =~ $reRawClass && $REPLY =~ $reKeyVal ]]; then
+
+        k=${BASH_REMATCH[1]}
+        v=${BASH_REMATCH[2]}
+
+        hS["${k}"]="$v"
+
+      else
+
+        if   [[ ${hRC[$s]} =~ ^=$ ]]; then
+
+          REPLY=${REPLY##*( )}
+          REPLY=${REPLY%%*( )}
+          hS["__unnamed_idx=$(udfEncode $REPLY)"]="$REPLY"
+
+        else
+
+          hS["__unnamed_idx=${i}"]="$REPLY"
+
+        fi
+
+        : $(( i++ ))
+
+      fi
+
+    fi
+
+  done < $fn
+
+  if (( ${#hS[@]} > 0 )); then
+
+    hS["__unnamed_cnt"]=$i
+    h[$s]=$(declare -p hS)
+    unset hS
+
+  fi
+
+  declare -p h
+
+}
+#******
 #****f* libtst/ini.group
 #  SYNOPSIS
 #    ini.group args
@@ -313,7 +482,7 @@ ini.read() {
 #  EXAMPLE
 #   local c ini s S                                                             #-
 #   local -A hT                                                                 #-
-#   c='([__global__]="" [exec]="!" [main]="" [replace]="-" [unify]="=" [acc to ass]="+")'
+#   c='([__global__]="" [exec]="-" [main]="" [replace]="-" [unify]="=" [acc to ass]="+")'
 #   udfMakeTemp ini suffix=.ini                                                 #-
 #    cat <<'EOFini' > ${ini}                                                    #-
 #    void  =  1                                                                 #-
@@ -352,7 +521,7 @@ ini.read() {
 #    echo $sUname                                                               #-
 #:[exec]                                                                        #-
 #[main]                                                                         #-
-#    sTxt   =  $(date "+%s")                                                    #-
+#    sTxt   =  $(date "+%s") =test = a =                                        #-
 #    b      =  true                                                             #-
 #    iXo Xo =  19                                                               #-
 #    iYo    =  81                                                               #-
@@ -380,6 +549,10 @@ ini.read() {
 #   eval "${s/h/hT}"                                                            #-
 #   for S in ${hT[__sections__]}; do                                            #-
 #     for s in $(echo ${!hT[@]} | tr ' ' '\n' | grep "__${S}$" | sort -t= -k2n); do   #-
+##     unset hS
+##     echo "section $S"
+##     eval "${hT[$S]}"
+##     for s in ${!hS[@]}; do                                                    #-
 #       echo "$s = ${hT[$s]}"
 #     done                                                                      #-
 #   done                                                                        #-
@@ -442,9 +615,9 @@ ini.group() {
 #
 }
 #******
-#****f* libtst/ini.group
+#****f* libtst/ini.getsafe
 #  SYNOPSIS
-#    ini.group args
+#    ini.getsafe args
 #  DESCRIPTION
 #    ...
 #  INPUTS
@@ -457,6 +630,7 @@ ini.group() {
 #
 #  SOURCE
 #sub prepare {
+#ini.getsafe() {
 #
 #	return undef unless @_ == 2
 #						&& defined( $_[0] )
@@ -468,15 +642,40 @@ ini.group() {
 #	my %h = ();
 #	my @a = ();
 #
-#	if ( $s !~ /^[\-\+=!]/ ) {
+#  local -a a
+#  local -A hI hO
+#  local s
+  #
+#  if [[ $1 ]]; then
 #
-#		my @aValidOptions = ( $s =~ m/^(.*)$/ ) ? split( ',', $1 ) : ();
-#		$h{$_} = $ph->{$_} foreach ( @aValidOptions );
-#		$p = \%h;
+#    [[ $1 =~ ^declare.-A.[[:alnum:]]+= ]] && s="${1#*=}" || s="$1"
+#    eval "local -A hI=$s"
 #
-#	} else {
+#  fi
 #
-#		push( @a, $ph->{$_} ) foreach sort { substr( $a, 14 ) <=> substr( $b, 14 ) } ( grep { /__unnamed_idx_/ } keys %{$ph} );
+#  s=$2
+#
+##	if ( $s !~ /^[\-\+=!]/ ) {
+#  if [[ ! $s =~ ^[\!\-\+=] ]]; then
+##
+##		my @aValidOptions = ( $s =~ m/^(.*)$/ ) ? split( ',', $1 ) : ();
+#                ## TODO keys without spaces!
+#    for s in ${s//,/ }; do
+#
+#      hO[$s]=${hI[$s]}
+#
+#    done
+#
+#    declare -p hO
+##		$h{$_} = $ph->{$_} foreach ( @aValidOptions );
+##		$p = \%h;
+##
+##	} else {
+#  else
+#
+##		push( @a, $ph->{$_} ) foreach sort { substr( $a, 14 ) <=> substr( $b, 14 ) } ( grep { /__unnamed_idx_/ } keys %{$ph} );
+#    for s in $( echo "${!h[@]}" | tr ' ' '\n' | grep "__unnamed_idx=${S}$" | sort -t= -k2n); do   #-
+#
 #		@a = grep { ! $h{$_}++ } @a if "$s" =~ /=/;
 #		$p = \@a;
 #
@@ -486,3 +685,77 @@ ini.group() {
 #
 #}
 ##******
+#****f* libtst/ini.getOnlyWhatYouNeed
+#  SYNOPSIS
+#    ini.getOnlyWhatYouNeed args
+#  DESCRIPTION
+#    ...
+#  INPUTS
+#    ...
+#  OUTPUT
+#    ...
+#  RETURN VALUE
+#    ...
+#  EXAMPLE
+#
+#  SOURCE
+#sub parse {
+#ini.getOnlyWhatYouNeed() {
+#
+#	return () unless @_ > 1;
+#  udfOn MissingArgument $@ || return $?
+#  udfOn NoSuchFileOrDir $1 || return $?
+#
+##
+##	my ( $fn, $ph, %h ) = ( "$_[0]", undef, () );
+#  local -a a
+#  local -A hI hO
+#  local csv fn s
+##
+#  fn=$1
+##
+##	shift;
+#  shift
+##
+#	foreach (@_) {
+#		my $s  = ( m/^(.*?):.*$/           ) ? $1 : "";
+#		$h{$s} = ( m/^.*?:([=\-\+\!]|.*)$/ ) ? $1 : "";
+#	}
+#
+#	$ph = readRelated( $fn, $ph, \%h );
+#	if ( defined $ph && scalar keys %{$ph} ) {
+#		$ph->{$_} = prepare( $ph->{$_}, $h{$_} ) foreach keys %{$ph};
+#	}
+#
+#  for s in "$@"; do
+#
+#    if [[ $s =~ ^(.*)?:([=+\-]?)([^=+\-].*)$ ]]; then
+#
+#     sSection=${BASH_REMATCH[1]}
+#     : ${sSection:=__global__}
+#     sRawClass=${BASH_REMATCH[2]}
+#     csvOptions=${BASH_REMATCH[3]}
+#
+#    else
+#
+#      udfOn InvalidArgument throw $s
+#
+#    fi
+#
+#    hRawClass[$sSection]="$sRawClass"
+#    hOptions[$sSection]="$csvOptions"
+#
+#  done
+#
+#  $sIni=$(ini.group $ini $sIni "$(declare -A hRawClass)" )
+#
+#  for sSection in ${!hOptions[@]}; do
+#
+#    for s in
+#
+#  done
+#
+#	return $ph;
+#
+#}
+#
