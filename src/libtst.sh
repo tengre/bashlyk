@@ -1,5 +1,5 @@
 #
-# $Id: libtst.sh 589 2016-11-17 17:25:09+04:00 toor $
+# $Id: libtst.sh 590 2016-11-18 00:46:55+04:00 toor $
 #
 #****h* BASHLYK/libtst
 #  DESCRIPTION
@@ -139,7 +139,7 @@ udfDecode() {
 #  EXAMPLE
 #   local c ini s S                                                             #-
 #   local -A hT
-#   c='([__global__]="" [exec]="!" [main]="" [replace]="-" [unify]="=" [acc]="+")' #-
+#   c='([__global__]="" [exec]="-" [main]="" [replace]="-" [unify]="=" [acc to ass]="+")' #-
 #   udfMakeTemp ini suffix=".ini"                                               #-
 #    cat <<'EOFini' > ${ini}                                                    #-
 #    void  =  1                                                                 #-
@@ -161,7 +161,7 @@ udfDecode() {
 #[unify]                                                                        #-
 #    *.bak                                                                      #-
 #    *.tmp                                                                      #-
-#[acc]                                                                          #-
+#[acc to ass]                                                                   #-
 #    *.bak                                                                      #-
 #    *.tmp                                                                      #-
 #                                                                               #-
@@ -169,13 +169,14 @@ udfDecode() {
 #   sed -i -e "s/_____/     /" $ini                                             #-
 #   cat $ini
 #   s=$( ini.read $ini "" "$c" )                                                #? true
-#   echo ${s/h/hT}
-#   eval "${s/h/hT}"                                                            #-
-#   for S in ${hT[__sections__]}; do                                            #-
-#     for s in $(echo ${!hT[@]} | tr ' ' '\n' | grep "__${S}$" | sort -t= -k2n); do   #-
-#       echo "$s = ${hT[$s]}"
+#   echo ${s/h=/hT=}
+#   eval "${s/h=/hT=}"                                                            #-
+##   for S in ${hT[__sections__]}; do                                            #-
+#     for s in "${!hT[@]}"; do                                                  #-
+##       [[ "$s" =~ __$S$ ]] || continue
+#       echo "$s = ${hT["$s"]}"
 #     done                                                                      #-
-#   done                                                                        #-
+##   done                                                                        #-
 #  SOURCE
 ini.read() {
 
@@ -211,7 +212,7 @@ ini.read() {
    reSection='^[[:space:]]*(:?)\[[[:space:]]*([^[:punct:]]+?)[[:space:]]*\](:?)[[:space:]]*$'
     reKeyVal='^[[:space:]]*([[:alnum:]]+)[[:space:]]*=[[:space:]]*(.*)[[:space:]]*$'
    reComment='(^|[[:space:]]+)[\#\;].*$'
-  reRawClass='^[=\!\-\+]$'
+  reRawClass='^[=\-\+]$'
 
   while read -t 4; do
 
@@ -220,7 +221,8 @@ ini.read() {
       (( i > 0 )) && h["__unnamed_cnt__${s}"]=$i
       i=0
 
-      s=$( udfEncode ${BASH_REMATCH[2]} )
+      #s=$( udfEncode ${BASH_REMATCH[2]} )
+      s="${BASH_REMATCH[2]}"
 
       [[ ${BASH_REMATCH[1]} == ":" ]] && bActiveSection=close
       [[ ${BASH_REMATCH[3]} == ":" ]] && bActiveSection=open
@@ -239,10 +241,11 @@ ini.read() {
           '-') i=0;;
           '+') i=${h["__unnamed_cnt__${s}"]};;
           '=') i=${h["__unnamed_cnt__${s}"]};;
-            *) i=${h["__unnamed_cnt__${s}"]};;
+            *) i=0;;
 
         esac
 
+        echo "dbg : $s : ${hRC[$s]} : $i" >> /tmp/class.log
       fi
 
       h["__sections__"]+=" $s"
@@ -253,8 +256,8 @@ ini.read() {
 
       if [[ ! $bActiveSection && ! ${hRC[$s]} =~ $reRawClass && $REPLY =~ $reKeyVal ]]; then
 
-        k=${BASH_REMATCH[1]}
-        v=${BASH_REMATCH[2]}
+        k="${BASH_REMATCH[1]}"
+        v="${BASH_REMATCH[2]}"
 
         h["${k}__${s}"]="$v"
 
@@ -264,7 +267,7 @@ ini.read() {
 
           REPLY=${REPLY##*( )}
           REPLY=${REPLY%%*( )}
-          h["__unnamed_idx=$(udfEncode $REPLY)__${s}"]="$REPLY"
+          h["__unnamed_key=${REPLY}__${s}"]="$REPLY"
 
         else
 
@@ -300,7 +303,7 @@ ini.read() {
 #  EXAMPLE
 #   local c ini s S                                                             #-
 #   local -A hT
-#   c='([__global__]="" [exec]="!" [main]="" [replace]="-" [unify]="=" [acc]="+")' #-
+#   c='([__global__]="" [exec]="-" [main]="" [replace]="-" [unify]="=" [acc to ass]="+")' #-
 #   udfMakeTemp ini suffix=".ini"                                               #-
 #    cat <<'EOFini' > ${ini}                                                    #-
 #    void  =  1                                                                 #-
@@ -322,7 +325,7 @@ ini.read() {
 #[unify]                                                                        #-
 #    *.bak                                                                      #-
 #    *.tmp                                                                      #-
-#[acc]                                                                          #-
+#[acc to ass]                                                                   #-
 #    *.bak                                                                      #-
 #    *.tmp                                                                      #-
 #                                                                               #-
@@ -336,8 +339,8 @@ ini.read() {
 #     unset hS
 #     echo "section $S"
 #     eval "${hT[$S]}"
-#     for s in ${!hS[@]}; do                                                    #-
-#       echo "$s = ${hS[$s]}"
+#     for s in "${!hS[@]}"; do                                                  #-
+#       echo "$s = ${hS["$s"]}"
 #     done                                                                      #-
 #   done                                                                        #-
 #  SOURCE
@@ -375,7 +378,7 @@ ini.get() {
    reSection='^[[:space:]]*(:?)\[[[:space:]]*([^[:punct:]]+?)[[:space:]]*\](:?)[[:space:]]*$'
     reKeyVal='^[[:space:]]*([[:alnum:]]+)[[:space:]]*=[[:space:]]*(.*)[[:space:]]*$'
    reComment='(^|[[:space:]]+)[\#\;].*$'
-  reRawClass='^[=\!\-\+]$'
+  reRawClass='^[=\-+]$'
 
   while read -t 4; do
 
@@ -385,13 +388,15 @@ ini.get() {
       i=0
 
       if (( ${#hS[@]} > 0 )); then
-        h[$s]=$(declare -p hS)
+
+        h[$s]="$(declare -p hS)"
 
       fi
 
       unset hS
 
-      s=$( udfEncode ${BASH_REMATCH[2]} )
+      #s=$( udfEncode ${BASH_REMATCH[2]} )
+      s="${BASH_REMATCH[2]}"
 
       [[ ${BASH_REMATCH[1]} == ":" ]] && bActiveSection=close
       [[ ${BASH_REMATCH[3]} == ":" ]] && bActiveSection=open
@@ -403,7 +408,7 @@ ini.get() {
 
       fi
 
-      sS=${h[$s]}
+      local sS=${h[$s]}
 
       [[ $sS =~ ^declare.-A.[[:alnum:]]+= ]] && sS="${sS#*=}" || sS="()"
       eval "local -A hS=$sS"
@@ -413,14 +418,18 @@ ini.get() {
         case ${hRC[$s]} in
 
           '-') i=0;;
-          '+') i=${h["__unnamed_cnt"]};;
-          '=') i=${h["__unnamed_cnt"]};;
-            *) i=0;;
+          '+') i=${hS["__unnamed_cnt"]};;
+          '=') i=${hS["__unnamed_cnt"]};;
+            *) i=${hS["__unnamed_cnt"]};;
 
         esac
 
-      fi
+      else
 
+        hS["__unnamed_cnt"]=0
+
+      fi
+      echo "dbg : $s : ${hRC[$s]} : $i" >> /tmp/classg.log
       h["__sections__"]+=" $s"
 
     else
@@ -440,7 +449,7 @@ ini.get() {
 
           REPLY=${REPLY##*( )}
           REPLY=${REPLY%%*( )}
-          hS["__unnamed_idx=$(udfEncode $REPLY)"]="$REPLY"
+          hS["__unnamed_key=${REPLY}"]="$REPLY"
 
         else
 
@@ -547,15 +556,15 @@ ini.get() {
 #   s=$( ini.group "${ini%/*}/child.${ini##*/}" "$c" )                          #? true
 #   echo ${s/h/hT}
 #   eval "${s/h/hT}"                                                            #-
-#   for S in ${hT[__sections__]}; do                                            #-
-#     for s in $(echo ${!hT[@]} | tr ' ' '\n' | grep "__${S}$" | sort -t= -k2n); do   #-
+##   for S in ${hT[__sections__]}; do                                           #-
+#     for s in "${!hT[@]}"; do                                                  #-
 ##     unset hS
 ##     echo "section $S"
 ##     eval "${hT[$S]}"
-##     for s in ${!hS[@]}; do                                                    #-
-#       echo "$s = ${hT[$s]}"
+##     for s in ${!hS[@]}; do                                                   #-
+#       echo "$s = ${hT["$s"]}"
 #     done                                                                      #-
-#   done                                                                        #-
+##   done                                                                       #-
 #  SOURCE
 ini.group() {
 
@@ -593,6 +602,153 @@ ini.group() {
       [[ ${a[i]} ]] || continue
       [[ $ini    ]] && ini="${a[i]}.${ini}" || ini="${a[i]}"
       [[ -s "${path}/${ini}" ]] && sIni="$( ini.read "${path}/${ini}" "$sIni" "$sRawClass" )"
+
+    done
+
+ fi
+
+ echo "$sIni"
+
+#	if ( scalar keys %_hCLI ) {
+#
+#		( $fh, $fn ) = tempfile();
+#		writeTarget( $fh, \%_hCLI );
+#		seek( $fh, 0, 0 ) or die "${fn}: seek error $!\n";
+#		$ph = readSource( $fh, $ph, $phClass );
+#		close( $fh );
+#		unlink( $fn );
+#
+#	}
+#
+#	return $ph;
+#
+}
+#******
+#****f* libtst/ini.group2
+#  SYNOPSIS
+#    ini.group2 args
+#  DESCRIPTION
+#    ...
+#  INPUTS
+#    ...
+#  OUTPUT
+#    ...
+#  RETURN VALUE
+#    ...
+#  EXAMPLE
+#   local c ini s S                                                             #-
+#   local -A hT hS                                                                #-
+#   c='([__global__]="" [exec]="-" [main]="" [replace]="-" [unify]="=" [acc to ass]="+")'
+#   udfMakeTemp ini suffix=.ini                                                 #-
+#    cat <<'EOFini' > ${ini}                                                    #-
+#    void  =  1                                                                 #-
+#[exec]:                                                                        #-
+#    TZ=UTC date -R --date='@12345678'                                          #-
+#    sUname="$(uname -a)"                                                       #-
+#    if [[ $HOSTNAME ]]; then                                                   #-
+#    _____export HOSTNAME=$(hostname)                                           #-
+#    fi                                                                         #-
+#:[exec]                                                                        #-
+#[main]                                                                         #-
+#    sTxt   =  $(date-R)                                                        #-
+#    b      =  false                                                            #-
+#    iXo Xo =  19                                                               #-
+#    iYo    =  80                                                               #-
+#    `simple line`                                                              #-
+#[replace]                                                                      #-
+#    before replacing                                                           #-
+#[unify]                                                                        #-
+#    *.bak                                                                      #-
+#    *.tmp                                                                      #-
+#[acc to ass]                                                                   #-
+#    *.bak                                                                      #-
+#    *.tmp                                                                      #-
+#                                                                               #-
+#    EOFini                                                                     #-
+#    cat <<'EOFiniChild' > "${ini%/*}/child.${ini##*/}"                         #-
+#    void  =  2                                                                 #-
+#    main  =  main                                                              #-
+#[exec]:                                                                        #-
+#    TZ=UTC date -R --date='@12345679'                                          #-
+#    sUname="$(uname)"                                                          #-
+#    if [[ $HOSTNAME ]]; then                                                   #-
+#    _____export HOSTNAME=$(hostname -f)                                        #-
+#    fi                                                                         #-
+#    echo $sUname                                                               #-
+#:[exec]                                                                        #-
+#[main]                                                                         #-
+#    sTxt   =  $(date "+%s") =test = a =                                        #-
+#    b      =  true                                                             #-
+#    iXo Xo =  19                                                               #-
+#    iYo    =  81                                                               #-
+#    simple line                                                                #-
+#[replace]                                                                      #-
+#    after replacing                                                            #-
+#[unify]                                                                        #-
+#    *.xxx                                                                      #-
+#    *.tmp                                                                      #-
+#[acc to ass]                                                                   #-
+#    *.bak                                                                      #-
+#    *.tmp                                                                      #-
+#    *.com                                                                      #-
+#    *.exe                                                                      #-
+#    *.jpg                                                                      #-
+#    *.png                                                                      #-
+#    *.mp3                                                                      #-
+#    *.dll                                                                      #-
+#    *.asp                                                                      #-
+#    EOFiniChild                                                                #-
+#   sed -i -e "s/_____/     /g" "${ini%/*}/child.${ini##*/}"                    #-
+#   cat $ini
+#   s=$( ini.group2 "${ini%/*}/child.${ini##*/}" "$c" )                          #? true
+#   echo ${s/h=/hT=}
+#   eval "${s/h=/hT=}"                                                            #-
+##   for S in ${hT[__sections__]}; do                                           #-
+#     for S in "${!hT[@]}"; do                                                  #-
+#     unset hS
+#     eval "${hT[$S]}"
+#     echo "section $S"
+#     for s in "${!hS[@]}"; do                                                  #-
+#       echo "$s = ${hS[$s]}"
+#     done                                                                      #-
+#   done                                                                       #-
+#  SOURCE
+ini.group2() {
+
+  udfOn NoSuchFileOrDir throw $1
+  udfOn MissingArgument throw $2
+
+  local -a a
+  local i ini path s sIni sRawClass
+
+  [[ $2 ]] && sRawClass="$2"
+
+  [[ "$1" == "${1##*/}" && -f "$(_ pathIni)/$1" ]] && path=$(_ pathIni)
+  [[ "$1" == "${1##*/}" && -f "$1"              ]] && path=$(pwd)
+  [[ "$1" != "${1##*/}" && -f "$1"              ]] && path=${1%/*}
+
+  if [[ ! $( stat -c %U ${path}/${1##*/} ) == $( _ sUser ) ]]; then
+
+	eval $( udfOnError NotPermitted throw "$1 owned by $( stat -c %U ${path}/${1##*/} )" )
+
+  fi
+  #
+  if [[ ! $path && -f "/etc/$(_ pathPrefix)/$1" ]]; then
+
+    path="/etc/$(_ pathPrefix)"
+
+  fi
+
+  if [[ $path ]]; then
+
+    s=${1##*/}
+    a=( ${s//./ } )
+
+    for (( i = ${#a[@]}-1; i >= 0; i-- )); do
+
+      [[ ${a[i]} ]] || continue
+      [[ $ini    ]] && ini="${a[i]}.${ini}" || ini="${a[i]}"
+      [[ -s "${path}/${ini}" ]] && sIni="$( ini.get "${path}/${ini}" "$sIni" "$sRawClass" )"
 
     done
 
