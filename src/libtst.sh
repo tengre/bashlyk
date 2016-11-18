@@ -1,5 +1,5 @@
 #
-# $Id: libtst.sh 591 2016-11-18 16:28:00+04:00 toor $
+# $Id: libtst.sh 592 2016-11-18 16:32:04+04:00 toor $
 #
 #****h* BASHLYK/libtst
 #  DESCRIPTION
@@ -143,8 +143,10 @@ if [[ ! ${_h[$1]} ]]; then
 fi
 
 #echo "ini.section() { case "\$1" in get) echo "\${$s[\$2]}";; set) $s[\$2]="\$3";; esac; }"
-eval "ini.section() { case "\$1" in get) echo "\${$s[\$2]}";; set) $s[\$2]="\$3";; esac; }"
+#eval "ini.section() { case "\$1" in get) echo "\${$s[\$2]}";; set) $s[\$2]="\$3";; esac; }"
 eval "ini.section.set() { $s[\$1]="\$2"; }; ini.section.get() { echo "\${$s[\$1]}"; };"
+
+}
 
 ini.md5.set() {
 
