@@ -1,5 +1,5 @@
 #
-# $Id: libtst.sh 590 2016-11-18 00:46:55+04:00 toor $
+# $Id: libtst.sh 591 2016-11-18 16:28:00+04:00 toor $
 #
 #****h* BASHLYK/libtst
 #  DESCRIPTION
@@ -16,6 +16,7 @@
 
 [[ $_BASHLYK_LIBTST ]] && return 0 || _BASHLYK_LIBTST=1
 #******
+declare -g -A _h
 #****** libtst/External Modules
 # DESCRIPTION
 #   Using modules section
@@ -125,6 +126,42 @@ udfDecode() {
   echo "$s"
 }
 #******
+ini.selectsection() {
+
+local s
+
+if [[ ! ${_h[$1]} ]]; then
+
+  s=$(md5sum <<< "$1")
+  s="_ini${s:0:32}"
+  _h[$1]="$s"
+
+  eval "declare -g -A -- $s"
+
+  declare -p _h
+
+fi
+
+#echo "ini.section() { case "\$1" in get) echo "\${$s[\$2]}";; set) $s[\$2]="\$3";; esac; }"
+eval "ini.section() { case "\$1" in get) echo "\${$s[\$2]}";; set) $s[\$2]="\$3";; esac; }"
+eval "ini.section.set() { $s[\$1]="\$2"; }; ini.section.get() { echo "\${$s[\$1]}"; };"
+
+ini.md5.set() {
+
+  local s="$( md5sum <<< "$*" )"
+  s=${s:0:32}
+  echo $s
+  _h[$s]="$*"
+
+  declare -p _h >&2
+
+}
+ini.md5.get() {
+
+  [[ ${_h[$*]} ]] && echo "${_h[$*]}" || echo "0"
+
+}
+
 #****f* libtst/ini.read
 #  SYNOPSIS
 #    ini.read args
@@ -170,13 +207,10 @@ udfDecode() {
 #   cat $ini
 #   s=$( ini.read $ini "" "$c" )                                                #? true
 #   echo ${s/h=/hT=}
-#   eval "${s/h=/hT=}"                                                            #-
-##   for S in ${hT[__sections__]}; do                                            #-
+#   eval "${s/h=/hT=}"                                                          #-
 #     for s in "${!hT[@]}"; do                                                  #-
-##       [[ "$s" =~ __$S$ ]] || continue
 #       echo "$s = ${hT["$s"]}"
 #     done                                                                      #-
-##   done                                                                        #-
 #  SOURCE
 ini.read() {
 
@@ -204,10 +238,11 @@ ini.read() {
 
   #
   i=0
-  s="__global__"
+  s=$( ini.md5.set "" )
   #
   fn=$1
   h[__sections__]="$s"
+  h[$s]=""
 
    reSection='^[[:space:]]*(:?)\[[[:space:]]*([^[:punct:]]+?)[[:space:]]*\](:?)[[:space:]]*$'
     reKeyVal='^[[:space:]]*([[:alnum:]]+)[[:space:]]*=[[:space:]]*(.*)[[:space:]]*$'
@@ -218,11 +253,10 @@ ini.read() {
 
     if [[ $REPLY =~ $reSection ]]; then
 
-      (( i > 0 )) && h["__unnamed_cnt__${s}"]=$i
+      (( i > 0 )) && h["${s}:unnamed_cnt"]=$i
       i=0
 
-      #s=$( udfEncode ${BASH_REMATCH[2]} )
-      s="${BASH_REMATCH[2]}"
+      s=$( ini.md5.set "${BASH_REMATCH[2]}" )
 
       [[ ${BASH_REMATCH[1]} == ":" ]] && bActiveSection=close
       [[ ${BASH_REMATCH[3]} == ":" ]] && bActiveSection=open
@@ -234,18 +268,17 @@ ini.read() {
 
       fi
 
-      if udfIsNumber ${h["__unnamed_cnt__${s}"]}; then
+      if udfIsNumber ${h["${s}:unnamed_cnt"]}; then
 
         case ${hRC[$s]} in
 
           '-') i=0;;
-          '+') i=${h["__unnamed_cnt__${s}"]};;
-          '=') i=${h["__unnamed_cnt__${s}"]};;
+          '+') i=${h["${s}:unnamed_cnt"]};;
+          '=') i=${h["${s}:unnamed_cnt"]};;
             *) i=0;;
 
         esac
 
-        echo "dbg : $s : ${hRC[$s]} : $i" >> /tmp/class.log
       fi
 
       h["__sections__"]+=" $s"
@@ -254,12 +287,14 @@ ini.read() {
 
       [[ $REPLY =~ $reComment ]] && continue
 
-      if [[ ! $bActiveSection && ! ${hRC[$s]} =~ $reRawClass && $REPLY =~ $reKeyVal ]]; then
+      echo "dbg $s : $(ini.md5.get $s ) " >&2
+      if [[ ! $bActiveSection && ! ${hRC["$(ini.md5.get $s )"]} =~ $reRawClass && $REPLY =~ $reKeyVal ]]; then
 
-        k="${BASH_REMATCH[1]}"
+        k=$( ini.md5.set "${BASH_REMATCH[1]}" )
+        k=$( ini.md5.set "${BASH_REMATCH[1]}" )
         v="${BASH_REMATCH[2]}"
 
-        h["${k}__${s}"]="$v"
+        h["${s}:${k}"]="$v"
 
       else
 
@@ -267,11 +302,12 @@ ini.read() {
 
           REPLY=${REPLY##*( )}
           REPLY=${REPLY%%*( )}
-          h["__unnamed_key=${REPLY}__${s}"]="$REPLY"
+          k=$( ini.md5.set "$REPLY" )
+          h["${s}:unnamed_key=${k}"]="$REPLY"
 
         else
 
-          h["__unnamed_idx=${i}__${s}"]="$REPLY"
+          h["${s}:unnamed_idx=${i}"]="$REPLY"
 
         fi
 
@@ -283,7 +319,7 @@ ini.read() {
 
   done < $fn
 
-  (( i > 0 )) && h["__unnamed_cnt__${s}"]=$i
+  (( i > 0 )) && h["${s}:unnamed_cnt"]=$i
 
   declare -p h
 
@@ -420,7 +456,7 @@ ini.get() {
           '-') i=0;;
           '+') i=${hS["__unnamed_cnt"]};;
           '=') i=${hS["__unnamed_cnt"]};;
-            *) i=${hS["__unnamed_cnt"]};;
+            *) i=0;;
 
         esac
 
@@ -429,7 +465,7 @@ ini.get() {
         hS["__unnamed_cnt"]=0
 
       fi
-      echo "dbg : $s : ${hRC[$s]} : $i" >> /tmp/classg.log
+      #echo "dbg : $s : ${hRC[$s]} : $i" >> /tmp/classg.log
       h["__sections__"]+=" $s"
 
     else
@@ -468,7 +504,7 @@ ini.get() {
   if (( ${#hS[@]} > 0 )); then
 
     hS["__unnamed_cnt"]=$i
-    h[$s]=$(declare -p hS)
+    h[$s]="$(declare -p hS)"
     unset hS
 
   fi
@@ -556,15 +592,9 @@ ini.get() {
 #   s=$( ini.group "${ini%/*}/child.${ini##*/}" "$c" )                          #? true
 #   echo ${s/h/hT}
 #   eval "${s/h/hT}"                                                            #-
-##   for S in ${hT[__sections__]}; do                                           #-
 #     for s in "${!hT[@]}"; do                                                  #-
-##     unset hS
-##     echo "section $S"
-##     eval "${hT[$S]}"
-##     for s in ${!hS[@]}; do                                                   #-
 #       echo "$s = ${hT["$s"]}"
 #     done                                                                      #-
-##   done                                                                       #-
 #  SOURCE
 ini.group() {
 
@@ -700,18 +730,17 @@ ini.group() {
 #    EOFiniChild                                                                #-
 #   sed -i -e "s/_____/     /g" "${ini%/*}/child.${ini##*/}"                    #-
 #   cat $ini
-#   s=$( ini.group2 "${ini%/*}/child.${ini##*/}" "$c" )                          #? true
+#   s=$( ini.group2 "${ini%/*}/child.${ini##*/}" "$c" )                         #? true
 #   echo ${s/h=/hT=}
-#   eval "${s/h=/hT=}"                                                            #-
-##   for S in ${hT[__sections__]}; do                                           #-
-#     for S in "${!hT[@]}"; do                                                  #-
-#     unset hS
-#     eval "${hT[$S]}"
-#     echo "section $S"
-#     for s in "${!hS[@]}"; do                                                  #-
-#       echo "$s = ${hS[$s]}"
-#     done                                                                      #-
-#   done                                                                       #-
+#   eval "${s/h=/hT=}"                                                          #-
+#   for S in "${!hT[@]}"; do                                                    #-
+#    unset hS
+#    eval "${hT[$S]}"
+#    echo "section $S"
+#    for s in "${!hS[@]}"; do                                                   #-
+#     echo "$s = ${hS[$s]}"
+#    done                                                                       #-
+#   done                                                                        #-
 #  SOURCE
 ini.group2() {
 
@@ -841,9 +870,9 @@ ini.group2() {
 #
 #}
 ##******
-#****f* libtst/ini.getOnlyWhatYouNeed
+#****f* libtst/ini.getOnlyWhatYouNeed2
 #  SYNOPSIS
-#    ini.getOnlyWhatYouNeed args
+#    ini.getOnlyWhatYouNeed2 args
 #  DESCRIPTION
 #    ...
 #  INPUTS
@@ -855,8 +884,7 @@ ini.group2() {
 #  EXAMPLE
 #
 #  SOURCE
-#sub parse {
-#ini.getOnlyWhatYouNeed() {
+ini.getOnlyWhatYouNeed2() {
 #
 #	return () unless @_ > 1;
 #  udfOn MissingArgument $@ || return $?
@@ -864,18 +892,18 @@ ini.group2() {
 #
 ##
 ##	my ( $fn, $ph, %h ) = ( "$_[0]", undef, () );
-#  local -a a
-#  local -A hI hO
-#  local csv fn s
-##
-#  fn=$1
-##
-##	shift;
-#  shift
-##
+  local -a a
+  local -A hI hO
+  local csv fn s
+#
+  fn=$1
+#
+#	shift;
+  shift
+#
 #	foreach (@_) {
 #		my $s  = ( m/^(.*?):.*$/           ) ? $1 : "";
-#		$h{$s} = ( m/^.*?:([=\-\+\!]|.*)$/ ) ? $1 : "";
+#		$h{$s} = ( m/^.*?:([=\-\+]|.*)$/ ) ? $1 : "";
 #	}
 #
 #	$ph = readRelated( $fn, $ph, \%h );
@@ -883,35 +911,44 @@ ini.group2() {
 #		$ph->{$_} = prepare( $ph->{$_}, $h{$_} ) foreach keys %{$ph};
 #	}
 #
-#  for s in "$@"; do
+  for s in "$@"; do
+
+    if [[ $s =~ ^(.*)?:([=+\-]?)([^=+\-].*)$ ]]; then
+
+     sSection=${BASH_REMATCH[1]}
+     : ${sSection:=__global__}
+     sRawClass=${BASH_REMATCH[2]}
+     csvOptions=${BASH_REMATCH[3]}
+
+    else
+
+      udfOn InvalidArgument throw $s
+
+    fi
+
+    hRawClass[$sSection]="$sRawClass"
+    hOptions[$sSection]="$csvOptions"
+
+  done
+
+  $sIni=$(ini.group2 $ini "$sIni" "$(declare -A hRawClass)" )
+
+#  [[ $sIni =~ ^declare.-A.[[:alnum:]]+= ]] && s="${sIni#*=}" || s="$sIni"
+#    eval "local -A hI=$s"
 #
-#    if [[ $s =~ ^(.*)?:([=+\-]?)([^=+\-].*)$ ]]; then
+#  eval "local -A h=$sIni"
 #
-#     sSection=${BASH_REMATCH[1]}
-#     : ${sSection:=__global__}
-#     sRawClass=${BASH_REMATCH[2]}
-#     csvOptions=${BASH_REMATCH[3]}
+#  for sSection in "${!hOptions[@]}"; do
+#    csv=${hOptions[$sSection]}
+#    for s in ${csv//,/ }; do
 #
-#    else
+#      ini.getOnlyWhatYouNeed2
 #
-#      udfOn InvalidArgument throw $s
-#
-#    fi
-#
-#    hRawClass[$sSection]="$sRawClass"
-#    hOptions[$sSection]="$csvOptions"
+#    done
 #
 #  done
-#
-#  $sIni=$(ini.group $ini $sIni "$(declare -A hRawClass)" )
-#
-#  for sSection in ${!hOptions[@]}; do
-#
-#    for s in
-#
-#  done
-#
-#	return $ph;
-#
-#}
+
+##	return $ph;
+
+}
 #
