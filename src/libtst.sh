@@ -1,5 +1,5 @@
 #
-# $Id: libtst.sh 593 2016-11-20 01:11:51+04:00 toor $
+# $Id: libtst.sh 594 2016-11-21 00:31:55+04:00 toor $
 #
 #****h* BASHLYK/libtst
 #  DESCRIPTION
@@ -127,18 +127,25 @@ udfDecode() {
 }
 #******
 ini.section.init() {
+
   local s
+
   for s in "${_h[@]}"; do
 
     unset -v $s
 
   done
+
+  unset -v _h
+  declare -A -g -- _h=()
+
 }
-ini.selectsection() {
+
+ini.section.select() {
 
 local s
 
-[[ $( declare -p _h 2>/dev/null) ]] || declare -A -g -- _h=()
+#[[ $( declare -p _h 2>/dev/null) ]] || declare -A -g -- _h=()
 
 if [[ ! ${_h[$1]} ]]; then
 
@@ -148,7 +155,6 @@ if [[ ! ${_h[$1]} ]]; then
 
   eval "declare -A -g -- $s"
 
-  #declare -p _h
 else
 
   s=${_h[$1]}
@@ -205,6 +211,7 @@ eval "ini.section.exists() { (( \${#$s[@]} > 0 )); return $?; };"
 #    EOFini                                                                     #-
 #   sed -i -e "s/_____/     /" $ini                                             #-
 #   cat $ini
+#   ini.section.init
 #   ini.get $ini "$c"                                                           #? true
 #    declare -p _h
 #    for s in "${!_h[@]}"; do                                                   #-
@@ -235,8 +242,7 @@ ini.get() {
   s="__global__"
   #
   fn=$1
-  #ini.section.init
-  ini.selectsection $s
+  ini.section.select $s
 
    reSection='^[[:space:]]*(:?)\[[[:space:]]*([^[:punct:]]+?)[[:space:]]*\](:?)[[:space:]]*$'
     reKeyVal='^[[:space:]]*([[:alnum:]]+)[[:space:]]*=[[:space:]]*(.*)[[:space:]]*$'
@@ -251,7 +257,7 @@ ini.get() {
       i=0
 
       s="${BASH_REMATCH[2]}"
-      ini.selectsection "$s"
+      ini.section.select "$s"
 
       [[ ${BASH_REMATCH[1]} == ":" ]] && bActiveSection=close
       [[ ${BASH_REMATCH[3]} == ":" ]] && bActiveSection=open
@@ -278,10 +284,7 @@ ini.get() {
 
       if [[ ! $bActiveSection && ! ${hRC[$s]} =~ $reRawClass && $REPLY =~ $reKeyVal ]]; then
 
-        k=${BASH_REMATCH[1]}
-        v=${BASH_REMATCH[2]}
-
-        ini.section.set "$k" "$v"
+        ini.section.set "${BASH_REMATCH[1]}" "${BASH_REMATCH[2]}"
 
       else
 
@@ -427,6 +430,8 @@ ini.group2() {
     s=${1##*/}
     a=( ${s//./ } )
 
+    ini.section.init
+
     for (( i = ${#a[@]}-1; i >= 0; i-- )); do
 
       [[ ${a[i]} ]] || continue
@@ -435,8 +440,9 @@ ini.group2() {
 
     done
 
- fi
+  fi
 
+  ## TODO add CLI config without temporary config
 # echo "$sIni"
 
 #	if ( scalar keys %_hCLI ) {
