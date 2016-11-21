@@ -1,5 +1,5 @@
 #
-# $Id: libtst.sh 594 2016-11-21 00:31:55+04:00 toor $
+# $Id: libtst.sh 595 2016-11-21 17:18:36+04:00 toor $
 #
 #****h* BASHLYK/libtst
 #  DESCRIPTION
@@ -36,7 +36,7 @@
 : ${_bashlyk_emailSubj:="${_bashlyk_sUser}@${HOSTNAME}::${_bashlyk_s0}"}
 : ${_bashlyk_envXSession:=}
 : ${_bashlyk_aRequiredCmd_msg:="[ "}
-: ${_bashlyk_aExport_msg:="udfTest udfRead"}
+: ${_bashlyk_aExport_msg:="udfTest ini.group"}
 #******
 #****f* libtst/udfTest
 #  SYNOPSIS
@@ -56,96 +56,33 @@ udfTest() {
  return 0
 }
 #******
-#****f* libtst/udfEncode
-#  SYNOPSIS
-#    udfEncode args
-#  DESCRIPTION
-#    ...
-#  INPUTS
-#    ...
-#  OUTPUT
-#    ...
-#  RETURN VALUE
-#    ...
-#  EXAMPLE
-#    local s='if [[ re  =~  (a|b b|\") ]]; then ok; fi'
-#    udfEncode "$s" #? true
-#  SOURCE
-udfEncode() {
-
-  local s="$@"
-  s=${s// /_&#20_}
-  s=${s//\*/_&#2A_}
-  s=${s//\"/_&#34_}
-  s=${s//\(/_&#40_}
-  s=${s//\)/_&#41_}
-  s=${s//\;/_&#59_}
-  s=${s//\=/_&#61_}
-  s=${s//\|/_&#7C_}
-  s=${s//\[/_&#91_}
-  s=${s//\\/_&#92_}
-  s=${s//\]/_&#93_}
-  #s=${s//\$\(/-S-(}
-  #s=${s//\`/^_}
-
-  echo "$s"
-}
-#******
-#****f* libtst/udfDecode
-#  SYNOPSIS
-#    udfDecode args
-#  DESCRIPTION
-#    ...
-#  INPUTS
-#    ...
-#  OUTPUT
-#    ...
-#  RETURN VALUE
-#    ...
-#  EXAMPLE
-#    local s='if _&#91__&#91_ re  _&#61_~  _&#40_a_&#7C_b b_&#7C__&#92__&#34__&#41_ _&#93__&#93__&#59_ then ok_&#59_ fi'
-#    udfDecode "$s" #? true
-#  SOURCE
-udfDecode() {
-
-  local s="$@"
-  s=${s//_&#20_/ }
-  s=${s//_&#2A_/\*}
-  s=${s//_&#34_/\"}
-  s=${s//_&#40_/\(}
-  s=${s//_&#41_/\)}
-  s=${s//_&#59_/\;}
-  s=${s//_&#61_/\=}
-  s=${s//_&#7C_/\|}
-  s=${s//_&#91_/\[}
-  s=${s//_&#92_/\\}
-  s=${s//_&#93_/\]}
-  #s=${s//\$\(/-S-(}
-  #s=${s//\`/^_}
-
-  echo "$s"
-}
-#******
-ini.section.init() {
+ini.section.free() {
 
   local s
 
   for s in "${_h[@]}"; do
+
+    [[ $s == '__id__' ]] && continue
 
     unset -v $s
 
   done
 
   unset -v _h
-  declare -A -g -- _h=()
 
 }
+#******
+ini.section.init() {
 
+  ini.section.free
+  #declare -A -g -- _h="()"
+  declare -A -g -- _h="( [__id__]=__id__ )"
+
+}
+#******
 ini.section.select() {
 
 local s
-
-#[[ $( declare -p _h 2>/dev/null) ]] || declare -A -g -- _h=()
 
 if [[ ! ${_h[$1]} ]]; then
 
@@ -153,7 +90,7 @@ if [[ ! ${_h[$1]} ]]; then
   s="_ini${s:0:32}"
   _h[$1]="$s"
 
-  eval "declare -A -g -- $s"
+  eval "declare -A -g -- $s=()"
 
 else
 
@@ -161,16 +98,13 @@ else
 
 fi
 
-#echo "ini.section() { case "\$1" in get) echo "\${$s[\$2]}";; set) $s[\$2]="\$3";; esac; }"
-#eval "ini.section() { case "\$1" in get) echo "\${$s[\$2]}";; set) $s[\$2]="\$3";; esac; }"
 eval "ini.section.set() { $s[\$1]="\$2"; }; ini.section.get() { echo "\${$s[\$1]}"; };"
 eval "ini.section.exists() { (( \${#$s[@]} > 0 )); return $?; };"
 
 }
-
-#****f* libtst/ini.get
+#****f* libtst/ini.read
 #  SYNOPSIS
-#    ini.get args
+#    ini.read args
 #  DESCRIPTION
 #    ...
 #  INPUTS
@@ -181,8 +115,7 @@ eval "ini.section.exists() { (( \${#$s[@]} > 0 )); return $?; };"
 #    ...
 #  EXAMPLE
 #   local c ini s S                                                             #-
-#   local -A hT
-#   c='([__global__]="" [exec]="-" [main]="" [replace]="-" [unify]="=" [acc to ass]="+")' #-
+#   c=':void,main exec:- main:sTxt,b,iYo replace:- unify:= asstoass:+'          #-
 #   udfMakeTemp ini suffix=".ini"                                               #-
 #    cat <<'EOFini' > ${ini}                                                    #-
 #    void  =  1                                                                 #-
@@ -204,50 +137,56 @@ eval "ini.section.exists() { (( \${#$s[@]} > 0 )); return $?; };"
 #[unify]                                                                        #-
 #    *.bak                                                                      #-
 #    *.tmp                                                                      #-
-#[acc to ass]                                                                   #-
+# #-
+#[asstoass]                                                                     #-
 #    *.bak                                                                      #-
 #    *.tmp                                                                      #-
-#                                                                               #-
 #    EOFini                                                                     #-
 #   sed -i -e "s/_____/     /" $ini                                             #-
 #   cat $ini
 #   ini.section.init
-#   ini.get $ini "$c"                                                           #? true
+#   ini.read $ini $c                                                            #? true
 #    declare -p _h
 #    for s in "${!_h[@]}"; do                                                   #-
+#      [[ $s == '__id__' ]] && continue                                         #-
 #      echo "section ${s}:"
 #      eval "declare -p ${_h[$s]}"
 #    done                                                                       #-
 #  SOURCE
-ini.get() {
+ini.read() {
 
   udfOn NoSuchFileOrDir throw $1
   udfOn MissingArgument throw $2
-  #typeset -A $2 || eval $( udfOnError throw InvalidArgument "$2 must be hash" )
-  #typeset -A $3 || eval $( udfOnError throw InvalidArgument "$3 must be hash" )
 
-  local -A h hRC hS
-  local bActiveSection fn i k reComment reKeyVal reRawClass reSection s v
-  #
-
-  if [[ $2 ]]; then
-
-   [[ $2 =~ ^declare.-A.[[:alnum:]]+= ]] && s="${2#*=}" || s="$2"
-   eval "local -A hRC=$s"
-
-  fi
-
-  #
-  i=0
-  s="__global__"
+  local -A h hRawMode hOptions
+  local bActiveSection csv fn i reComment reKeyVal reKVpair reRawClass reSection s
   #
   fn=$1
-  ini.section.select $s
+  shift
 
    reSection='^[[:space:]]*(:?)\[[[:space:]]*([^[:punct:]]+?)[[:space:]]*\](:?)[[:space:]]*$'
     reKeyVal='^[[:space:]]*([[:alnum:]]+)[[:space:]]*=[[:space:]]*(.*)[[:space:]]*$'
    reComment='(^|[[:space:]]+)[\#\;].*$'
   reRawClass='^[=\-+]$'
+
+  for s in "$@"; do
+
+    [[ $s =~ ^(.*)?:(([=+\-]?)|([^=+\-].*))$ ]] || udfOn InvalidArgument throw $s
+
+    sSection=${BASH_REMATCH[1]}
+    : ${sSection:=__global__}
+    hRawMode[$sSection]="${BASH_REMATCH[3]}"
+    s="${BASH_REMATCH[4]}"
+    s="${s//,/\|}"
+
+    [[ $s ]] && hOptions[$sSection]=${reKeyVal/\[\[:alnum:\]\]+/$s}
+
+  done
+
+  i=0
+  s="__global__"
+
+  ini.section.select $s
 
   while read -t 4; do
 
@@ -257,7 +196,6 @@ ini.get() {
       i=0
 
       s="${BASH_REMATCH[2]}"
-      ini.section.select "$s"
 
       [[ ${BASH_REMATCH[1]} == ":" ]] && bActiveSection=close
       [[ ${BASH_REMATCH[3]} == ":" ]] && bActiveSection=open
@@ -269,26 +207,30 @@ ini.get() {
 
       fi
 
+      ini.section.select "$s"
+
       i=$( ini.section.get __unnamed_cnt )
 
       if ! udfIsNumber $i; then
+
         i=0
         ini.section.set __unnamed_cnt $i
+
       fi
 
-      [[ ${hRC[$s]} =~ ^(\+|=)$ ]] || i=0
+      [[ ${hRawMode[$s]} =~ ^(\+|=)$ ]] || i=0
 
     else
 
       [[ $REPLY =~ $reComment ]] && continue
 
-      if [[ ! $bActiveSection && ! ${hRC[$s]} =~ $reRawClass && $REPLY =~ $reKeyVal ]]; then
+      if [[ ${hOptions[$s]} ]]; then
 
-        ini.section.set "${BASH_REMATCH[1]}" "${BASH_REMATCH[2]}"
+        [[ $REPLY =~ ${hOptions[$s]} ]] && ini.section.set "${BASH_REMATCH[1]}" "${BASH_REMATCH[2]}"
 
       else
 
-        if   [[ ${hRC[$s]} =~ ^=$ ]]; then
+        if [[ ${hRawMode[$s]} =~ ^=$ ]]; then
 
           REPLY=${REPLY##*( )}
           REPLY=${REPLY%%*( )}
@@ -311,14 +253,11 @@ ini.get() {
 
   [[ ini.section.exists ]] &&  ini.section.set __unnamed_cnt $i
 
-  #for s in "${_h[@]}"; do
-  #  eval "declare -p $s" >> /tmp/hashes.log
-  #done
 }
 #******
-#****f* libtst/ini.group2
+#****f* libtst/ini.group
 #  SYNOPSIS
-#    ini.group2 args
+#    ini.group args
 #  DESCRIPTION
 #    ...
 #  INPUTS
@@ -329,8 +268,7 @@ ini.get() {
 #    ...
 #  EXAMPLE
 #   local c ini s S                                                             #-
-#   local -A hT hS                                                                #-
-#   c='([__global__]="" [exec]="-" [main]="" [replace]="-" [unify]="=" [acc to ass]="+")'
+#   c=':void,main exec:- main:sTxt,b,iYo replace:- unify:= asstoass:+'          #-
 #   udfMakeTemp ini suffix=.ini                                                 #-
 #    cat <<'EOFini' > ${ini}                                                    #-
 #    void  =  1                                                                 #-
@@ -352,7 +290,7 @@ ini.get() {
 #[unify]                                                                        #-
 #    *.bak                                                                      #-
 #    *.tmp                                                                      #-
-#[acc to ass]                                                                   #-
+#[asstoass]                                                                     #-
 #    *.bak                                                                      #-
 #    *.tmp                                                                      #-
 #                                                                               #-
@@ -379,7 +317,7 @@ ini.get() {
 #[unify]                                                                        #-
 #    *.xxx                                                                      #-
 #    *.tmp                                                                      #-
-#[acc to ass]                                                                   #-
+#[asstoass]                                                                     #-
 #    *.bak                                                                      #-
 #    *.tmp                                                                      #-
 #    *.com                                                                      #-
@@ -392,22 +330,21 @@ ini.get() {
 #    EOFiniChild                                                                #-
 #   sed -i -e "s/_____/     /g" "${ini%/*}/child.${ini##*/}"                    #-
 #   cat $ini "${ini%/*}/child.${ini##*/}"
-#   ini.group2 "${ini%/*}/child.${ini##*/}" "$c"                                #? true
+#   ini.group "${ini%/*}/child.${ini##*/}" $c                                   #? true
 #    declare -p _h
 #    for s in "${!_h[@]}"; do                                                   #-
+#      [[ $s == '__id__' ]] && continue                                         #-
 #      echo "section ${s}:"
 #      eval "declare -p ${_h[$s]}"
 #    done                                                                       #-
 #  SOURCE
-ini.group2() {
+ini.group() {
 
   udfOn NoSuchFileOrDir throw $1
   udfOn MissingArgument throw $2
 
   local -a a
-  local i ini path s sIni sRawClass
-
-  [[ $2 ]] && sRawClass="$2"
+  local i ini path s
 
   [[ "$1" == "${1##*/}" && -f "$(_ pathIni)/$1" ]] && path=$(_ pathIni)
   [[ "$1" == "${1##*/}" && -f "$1"              ]] && path=$(pwd)
@@ -430,13 +367,15 @@ ini.group2() {
     s=${1##*/}
     a=( ${s//./ } )
 
+    shift
+
     ini.section.init
 
     for (( i = ${#a[@]}-1; i >= 0; i-- )); do
 
       [[ ${a[i]} ]] || continue
       [[ $ini    ]] && ini="${a[i]}.${ini}" || ini="${a[i]}"
-      [[ -s "${path}/${ini}" ]] && ini.get "${path}/${ini}" "$sRawClass"
+      [[ -s "${path}/${ini}" ]] && ini.read "${path}/${ini}" $@
 
     done
 
@@ -460,155 +399,3 @@ ini.group2() {
 #
 }
 #******
-#****f* libtst/ini.getsafe
-#  SYNOPSIS
-#    ini.getsafe args
-#  DESCRIPTION
-#    ...
-#  INPUTS
-#    ...
-#  OUTPUT
-#    ...
-#  RETURN VALUE
-#    ...
-#  EXAMPLE
-#
-#  SOURCE
-#sub prepare {
-#ini.getsafe() {
-#
-#	return undef unless @_ == 2
-#						&& defined( $_[0] )
-#						&&     ref( $_[0] )
-#						&& defined( $_[1] );
-#
-#	my ( $ph, $s ) = @_;
-#	my $p = undef;
-#	my %h = ();
-#	my @a = ();
-#
-#  local -a a
-#  local -A hI hO
-#  local s
-  #
-#  if [[ $1 ]]; then
-#
-#    [[ $1 =~ ^declare.-A.[[:alnum:]]+= ]] && s="${1#*=}" || s="$1"
-#    eval "local -A hI=$s"
-#
-#  fi
-#
-#  s=$2
-#
-##	if ( $s !~ /^[\-\+=!]/ ) {
-#  if [[ ! $s =~ ^[\!\-\+=] ]]; then
-##
-##		my @aValidOptions = ( $s =~ m/^(.*)$/ ) ? split( ',', $1 ) : ();
-#                ## TODO keys without spaces!
-#    for s in ${s//,/ }; do
-#
-#      hO[$s]=${hI[$s]}
-#
-#    done
-#
-#    declare -p hO
-##		$h{$_} = $ph->{$_} foreach ( @aValidOptions );
-##		$p = \%h;
-##
-##	} else {
-#  else
-#
-##		push( @a, $ph->{$_} ) foreach sort { substr( $a, 14 ) <=> substr( $b, 14 ) } ( grep { /__unnamed_idx_/ } keys %{$ph} );
-#    for s in $( echo "${!h[@]}" | tr ' ' '\n' | grep "__unnamed_idx=${S}$" | sort -t= -k2n); do   #-
-#
-#		@a = grep { ! $h{$_}++ } @a if "$s" =~ /=/;
-#		$p = \@a;
-#
-#	}
-#
-#	return $p;
-#
-#}
-##******
-#****f* libtst/ini.getOnlyWhatYouNeed2
-#  SYNOPSIS
-#    ini.getOnlyWhatYouNeed2 args
-#  DESCRIPTION
-#    ...
-#  INPUTS
-#    ...
-#  OUTPUT
-#    ...
-#  RETURN VALUE
-#    ...
-#  EXAMPLE
-#
-#  SOURCE
-ini.getOnlyWhatYouNeed2() {
-#
-#	return () unless @_ > 1;
-#  udfOn MissingArgument $@ || return $?
-#  udfOn NoSuchFileOrDir $1 || return $?
-#
-##
-##	my ( $fn, $ph, %h ) = ( "$_[0]", undef, () );
-  local -a a
-  local -A hI hO
-  local csv fn s
-#
-  fn=$1
-#
-#	shift;
-  shift
-#
-#	foreach (@_) {
-#		my $s  = ( m/^(.*?):.*$/           ) ? $1 : "";
-#		$h{$s} = ( m/^.*?:([=\-\+]|.*)$/ ) ? $1 : "";
-#	}
-#
-#	$ph = readRelated( $fn, $ph, \%h );
-#	if ( defined $ph && scalar keys %{$ph} ) {
-#		$ph->{$_} = prepare( $ph->{$_}, $h{$_} ) foreach keys %{$ph};
-#	}
-#
-  for s in "$@"; do
-
-    if [[ $s =~ ^(.*)?:([=+\-]?)([^=+\-].*)$ ]]; then
-
-     sSection=${BASH_REMATCH[1]}
-     : ${sSection:=__global__}
-     sRawClass=${BASH_REMATCH[2]}
-     csvOptions=${BASH_REMATCH[3]}
-
-    else
-
-      udfOn InvalidArgument throw $s
-
-    fi
-
-    hRawClass[$sSection]="$sRawClass"
-    hOptions[$sSection]="$csvOptions"
-
-  done
-
-  $sIni=$(ini.group2 $ini "$sIni" "$(declare -A hRawClass)" )
-
-#  [[ $sIni =~ ^declare.-A.[[:alnum:]]+= ]] && s="${sIni#*=}" || s="$sIni"
-#    eval "local -A hI=$s"
-#
-#  eval "local -A h=$sIni"
-#
-#  for sSection in "${!hOptions[@]}"; do
-#    csv=${hOptions[$sSection]}
-#    for s in ${csv//,/ }; do
-#
-#      ini.getOnlyWhatYouNeed2
-#
-#    done
-#
-#  done
-
-##	return $ph;
-
-}
-#
