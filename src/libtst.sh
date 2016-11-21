@@ -1,5 +1,5 @@
 #
-# $Id: libtst.sh 595 2016-11-21 17:18:36+04:00 toor $
+# $Id: libtst.sh 596 2016-11-21 23:21:04+04:00 toor $
 #
 #****h* BASHLYK/libtst
 #  DESCRIPTION
@@ -158,16 +158,16 @@ ini.read() {
   udfOn NoSuchFileOrDir throw $1
   udfOn MissingArgument throw $2
 
-  local -A h hRawMode hOptions
-  local bActiveSection csv fn i reComment reKeyVal reKVpair reRawClass reSection s
+  local -A h hKeyValue hRawMode
+  local bActiveSection csv fn i reComment reKeyValue reRawMode reSection s
   #
   fn=$1
   shift
 
    reSection='^[[:space:]]*(:?)\[[[:space:]]*([^[:punct:]]+?)[[:space:]]*\](:?)[[:space:]]*$'
-    reKeyVal='^[[:space:]]*([[:alnum:]]+)[[:space:]]*=[[:space:]]*(.*)[[:space:]]*$'
+  reKeyValue='^[[:space:]]*([[:alnum:]]+)[[:space:]]*=[[:space:]]*(.*)[[:space:]]*$'
    reComment='(^|[[:space:]]+)[\#\;].*$'
-  reRawClass='^[=\-+]$'
+   reRawMode='^[=\-+]$'
 
   for s in "$@"; do
 
@@ -179,7 +179,7 @@ ini.read() {
     s="${BASH_REMATCH[4]}"
     s="${s//,/\|}"
 
-    [[ $s ]] && hOptions[$sSection]=${reKeyVal/\[\[:alnum:\]\]+/$s}
+    [[ $s ]] && hKeyValue[$sSection]=${reKeyValue/\[\[:alnum:\]\]+/$s}
 
   done
 
@@ -193,7 +193,6 @@ ini.read() {
     if [[ $REPLY =~ $reSection ]]; then
 
       (( i > 0 )) && ini.section.set __unnamed_cnt $i
-      i=0
 
       s="${BASH_REMATCH[2]}"
 
@@ -224,11 +223,13 @@ ini.read() {
 
       [[ $REPLY =~ $reComment ]] && continue
 
-      if [[ ${hOptions[$s]} ]]; then
+      if [[ ${hKeyValue[$s]} ]]; then
 
-        [[ $REPLY =~ ${hOptions[$s]} ]] && ini.section.set "${BASH_REMATCH[1]}" "${BASH_REMATCH[2]}"
+        [[ $REPLY =~ ${hKeyValue[$s]} ]] && ini.section.set "${BASH_REMATCH[1]}" "${BASH_REMATCH[2]}"
 
       else
+
+        : ${i:=0}
 
         if [[ ${hRawMode[$s]} =~ ^=$ ]]; then
 
@@ -238,7 +239,6 @@ ini.read() {
 
         else
 
-          : ${i:=0}
           ini.section.set "__unnamed_idx=${i}" "$REPLY"
 
         fi
@@ -369,6 +369,7 @@ ini.group() {
 
     shift
 
+    ## TODO init hash per section here
     ini.section.init
 
     for (( i = ${#a[@]}-1; i >= 0; i-- )); do
