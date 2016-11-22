@@ -1,5 +1,5 @@
 #
-# $Id: libtst.sh 596 2016-11-21 23:21:04+04:00 toor $
+# $Id: libtst.sh 597 2016-11-22 22:59:36+04:00 toor $
 #
 #****h* BASHLYK/libtst
 #  DESCRIPTION
@@ -99,7 +99,6 @@ else
 fi
 
 eval "ini.section.set() { $s[\$1]="\$2"; }; ini.section.get() { echo "\${$s[\$1]}"; };"
-eval "ini.section.exists() { (( \${#$s[@]} > 0 )); return $?; };"
 
 }
 #****f* libtst/ini.read
@@ -159,13 +158,19 @@ ini.read() {
   udfOn MissingArgument throw $2
 
   local -A h hKeyValue hRawMode
-  local bActiveSection csv fn i reComment reKeyValue reRawMode reSection s
+  local bActiveSection csv fmtKeyValue fn i reComment reExpectedSection reRawMode reSection s
   #
   fn=$1
+  if [[ ! $( stat -c %U $fn ) == $( _ sUser ) ]]; then
+
+	eval $( udfOnError NotPermitted throw "$1 owned by $( stat -c %U $fn )" )
+
+  fi
+
   shift
 
    reSection='^[[:space:]]*(:?)\[[[:space:]]*([^[:punct:]]+?)[[:space:]]*\](:?)[[:space:]]*$'
-  reKeyValue='^[[:space:]]*([[:alnum:]]+)[[:space:]]*=[[:space:]]*(.*)[[:space:]]*$'
+   fmtKeyVal='^[[:space:]]*(%KEY%)[[:space:]]*=[[:space:]]*(.*)[[:space:]]*$'
    reComment='(^|[[:space:]]+)[\#\;].*$'
    reRawMode='^[=\-+]$'
 
@@ -175,83 +180,107 @@ ini.read() {
 
     sSection=${BASH_REMATCH[1]}
     : ${sSection:=__global__}
-    hRawMode[$sSection]="${BASH_REMATCH[3]}"
-    s="${BASH_REMATCH[4]}"
-    s="${s//,/\|}"
+    ini.section.select "$sSection"
 
-    [[ $s ]] && hKeyValue[$sSection]=${reKeyValue/\[\[:alnum:\]\]+/$s}
+    [[ ${BASH_REMATCH[3]} ]] && hRawMode[$sSection]="${BASH_REMATCH[3]}"
+    [[ ${BASH_REMATCH[4]} ]] && s="${BASH_REMATCH[4]}" || s=
+    [[ $s ]] && s="${s//,/\|}" && hKeyValue[$sSection]=${fmtKeyVal/\%KEY\%/$s}
+
+    csv+="${sSection}|"
 
   done
 
+  csv=${csv%*|}
+
+  [[ $csv ]] && reExpectedSection=${reSection/\[^\[:punct:\]\]+\?/$csv}
+
+#  {
+#   declare -p hRawMode
+#   declare -p hKeyValue
+#   echo $reExpectedSection
+#  } > /tmp/hashes.log
+
   i=0
   s="__global__"
+  bIgnore=
 
-  ini.section.select $s
+  ini.section.select "$s"
 
   while read -t 4; do
 
     if [[ $REPLY =~ $reSection ]]; then
 
-      (( i > 0 )) && ini.section.set __unnamed_cnt $i
+      bIgnore=1
+      [[ $REPLY =~ $reExpectedSection ]] || continue
+      bIgnore=
 
       s="${BASH_REMATCH[2]}"
 
       [[ ${BASH_REMATCH[1]} == ":" ]] && bActiveSection=close
       [[ ${BASH_REMATCH[3]} == ":" ]] && bActiveSection=open
 
-      if [[ $bActiveSection == "close" ]]; then
+      (( i > 0 )) && ini.section.set __unnamed_cnt $i
 
-        bActiveSection=
-        continue
-
-      fi
+      bIgnore=1
+      [[ $bActiveSection == "close" ]] && bActiveSection= && continue
+      bIgnore=
 
       ini.section.select "$s"
 
-      i=$( ini.section.get __unnamed_cnt )
+      if [[ ${hRawMode[$s]} ]]; then
 
-      if ! udfIsNumber $i; then
+       i=$( ini.section.get __unnamed_cnt )
 
-        i=0
-        ini.section.set __unnamed_cnt $i
+       if ! udfIsNumber $i; then
 
-      fi
+         i=0
+         ini.section.set __unnamed_cnt $i
 
-      [[ ${hRawMode[$s]} =~ ^(\+|=)$ ]] || i=0
+       fi
 
-    else
-
-      [[ $REPLY =~ $reComment ]] && continue
-
-      if [[ ${hKeyValue[$s]} ]]; then
-
-        [[ $REPLY =~ ${hKeyValue[$s]} ]] && ini.section.set "${BASH_REMATCH[1]}" "${BASH_REMATCH[2]}"
+       [[ ${hRawMode[$s]} =~ ^(\+|=)$ ]] || i=0
 
       else
 
-        : ${i:=0}
-
-        if [[ ${hRawMode[$s]} =~ ^=$ ]]; then
-
-          REPLY=${REPLY##*( )}
-          REPLY=${REPLY%%*( )}
-          ini.section.set "__unnamed_key=${REPLY}" "$REPLY"
-
-        else
-
-          ini.section.set "__unnamed_idx=${i}" "$REPLY"
-
-        fi
-
-        : $(( i++ ))
+        i=0
 
       fi
+
+      continue
+
+    else
+
+      [[ $REPLY =~ $reComment || $bIgnore ]] && continue
+
+    fi
+
+    if [[ ${hKeyValue[$s]} ]]; then
+
+      [[ $REPLY =~ ${hKeyValue[$s]} ]] && ini.section.set "${BASH_REMATCH[1]}" "${BASH_REMATCH[2]}"
+
+    else
+
+      : ${i:=0}
+
+      if [[ ${hRawMode[$s]} =~ ^=$ ]]; then
+
+        REPLY=${REPLY##*( )}
+        REPLY=${REPLY%%*( )}
+        ini.section.set "__unnamed_key=${REPLY}" "$REPLY"
+
+      else
+
+        ini.section.set "__unnamed_idx=${i}" "$REPLY"
+
+      fi
+
+      : $(( i++ ))
 
     fi
 
   done < $fn
 
-  [[ ini.section.exists ]] &&  ini.section.set __unnamed_cnt $i
+  [[ ${hRawMode[$s]} ]] &&  ini.section.set __unnamed_cnt $i
 
 }
 #******
@@ -267,10 +296,10 @@ ini.read() {
 #  RETURN VALUE
 #    ...
 #  EXAMPLE
-#   local c ini s S                                                             #-
+#   local c iniMain iniChild s S                                                #-
 #   c=':void,main exec:- main:sTxt,b,iYo replace:- unify:= asstoass:+'          #-
-#   udfMakeTemp ini suffix=.ini                                                 #-
-#    cat <<'EOFini' > ${ini}                                                    #-
+#   udfMakeTemp -v iniMain suffix=.ini                                          #-
+#    cat <<'EOFini' > $iniMain                                                  #-
 #    void  =  1                                                                 #-
 #[exec]:                                                                        #-
 #    TZ=UTC date -R --date='@12345678'                                          #-
@@ -295,7 +324,9 @@ ini.read() {
 #    *.tmp                                                                      #-
 #                                                                               #-
 #    EOFini                                                                     #-
-#    cat <<'EOFiniChild' > "${ini%/*}/child.${ini##*/}"                         #-
+#    iniChild="${iniMain%/*}/child.${iniMain##*/}"                              #-
+#    udfAddFile2Clean $iniChild                                                 #-
+#    cat <<'EOFiniChild' > $iniChild                                            #-
 #    void  =  2                                                                 #-
 #    main  =  main                                                              #-
 #[exec]:                                                                        #-
@@ -317,6 +348,9 @@ ini.read() {
 #[unify]                                                                        #-
 #    *.xxx                                                                      #-
 #    *.tmp                                                                      #-
+#[ignored]                                                                      #-
+#    test by test                                                               #-
+#    a = b                                                                      #-
 #[asstoass]                                                                     #-
 #    *.bak                                                                      #-
 #    *.tmp                                                                      #-
@@ -327,10 +361,13 @@ ini.read() {
 #    *.mp3                                                                      #-
 #    *.dll                                                                      #-
 #    *.asp                                                                      #-
+#[unify]                                                                        #-
+#    *.xxx                                                                      #-
+#    *.lit                                                                      #-
 #    EOFiniChild                                                                #-
-#   sed -i -e "s/_____/     /g" "${ini%/*}/child.${ini##*/}"                    #-
-#   cat $ini "${ini%/*}/child.${ini##*/}"
-#   ini.group "${ini%/*}/child.${ini##*/}" $c                                   #? true
+#   sed -i -e "s/_____/     /g" $iniChild                                       #-
+#   cat $iniMain $iniChild
+#   ini.group $iniChild $c                                                      #? true
 #    declare -p _h
 #    for s in "${!_h[@]}"; do                                                   #-
 #      [[ $s == '__id__' ]] && continue                                         #-
@@ -349,12 +386,6 @@ ini.group() {
   [[ "$1" == "${1##*/}" && -f "$(_ pathIni)/$1" ]] && path=$(_ pathIni)
   [[ "$1" == "${1##*/}" && -f "$1"              ]] && path=$(pwd)
   [[ "$1" != "${1##*/}" && -f "$1"              ]] && path=${1%/*}
-
-  if [[ ! $( stat -c %U ${path}/${1##*/} ) == $( _ sUser ) ]]; then
-
-	eval $( udfOnError NotPermitted throw "$1 owned by $( stat -c %U ${path}/${1##*/} )" )
-
-  fi
   #
   if [[ ! $path && -f "/etc/$(_ pathPrefix)/$1" ]]; then
 
