@@ -1,5 +1,5 @@
 #
-# $Id: libtst.sh 599 2016-11-24 17:29:01+04:00 toor $
+# $Id: libtst.sh 600 2016-11-25 00:06:30+04:00 toor $
 #
 #****h* BASHLYK/libtst
 #  DESCRIPTION
@@ -502,21 +502,46 @@ ini.group() {
 #
 }
 #******
+#****f* libtst/ini.bind.cli.options
+#  SYNOPSIS
+#    ini.bind.cli.options args
+#  DESCRIPTION
+#    ...
+#  INPUTS
+#    ...
+#  OUTPUT
+#    ...
+#  RETURN VALUE
+#    ...
+#  EXAMPLE
+#
+#    local s="first@F second@S:: section-single@s"
+#    _ sArg "--second --first -s"
+#    ini.section.init
+#    ini.bind.cli.options $s                                                    #? true
+#    declare -p _h
+#    for s in "${!_h[@]}"; do                                                   #-
+#      [[ $s == '__id__' ]] && continue                                         #-
+#      echo "section ${s}:"
+#      eval "declare -p ${_h[$s]}"
+#    done                                                                       #-
+#
+#  SOURCE
 ini.bind.cli.options() {
 
-  udfOn MissingArgument $@ || return $?
+  udfOn MissingArgument "$@" || return $?
 
   local -a a
-  local s s2 sSection sShort sLong sArg sHandler sCases fmtCase fmHandler
+  local s s2 s3 sSection sShort sLong sArg sHandler sCases fmtCase fmHandler
 
-  fmtHandler='udfHandleGetopt() { while true; do case $1 in %s esac; break; done }'
-  fmtCase='--%s|%s) ini.section.select "%s"; ini.section.set "%s" "$2"; shift %s;;'
+  fmtHandler='udfHandleGetopt() { while true; do case $1 in %s --) shift; break;; esac; done }'
+  fmtCase='--%s|%s) ini.section.select "%s"; ini.section.set "%s" "%s"; shift %s;;'
 
   for s in $@; do
 
-    if [[ $s =~ (([[:alnum:]]+)(-))?([[:alnum:]]+)(\|([[:alnum:]]))?([:]{1,2})? ]]; then
+    if [[ $s =~ (([[:alnum:]]+)(-))?([[:alnum:]]+)(@([[:alnum:]]))?([:]{1,2})? ]]; then
 
-      a=( "" ${BASH_REMATCH[1]} ${BASH_REMATCH[2]} ${BASH_REMATCH[3]} ${BASH_REMATCH[4]} ${BASH_REMATCH[5]} ${BASH_REMATCH[6]} ${BASH_REMATCH[7]} )
+      a=( "" "${BASH_REMATCH[1]}" "${BASH_REMATCH[2]}" "${BASH_REMATCH[3]}" "${BASH_REMATCH[4]}" "${BASH_REMATCH[5]}" "${BASH_REMATCH[6]}" "${BASH_REMATCH[7]}" )
 
     else
 
@@ -528,32 +553,22 @@ ini.bind.cli.options() {
     [[ ${a[4]} ]] && sLong+="${a[4]}${a[7]},"
     [[ ${a[6]} ]] && sShort+="${a[6]}${a[7]}" && s="-${a[6]}"
     [[ ${a[6]} ]] && s="-${a[6]}" || s=
-    [[ ${a[7]} ]] && s2="2" || s2=
+    [[ ${a[7]} ]] && s2="2"  || s2=
+    [[ ${a[7]} ]] && s3='$2' || s3="1"
 
-    sCases+="$( printf -- "$fmtCase" "${a[4]}" "$s" "${sSection}" "${a[4]}" "$s2" ) "
+    declare -p a
+
+    sCases+="$( printf -- "$fmtCase" "${a[4]}" "$s" "${sSection}" "${a[4]}" "$s3" "$s2" ) "
 
   done
 
-  s="$( getopt -o $sShort --long ${sLong%*,} -n $0 -- "$( _ sArg )" )"
-
+  s="$( getopt -o $sShort --long ${sLong%*,} -n $0 -- $(_ sArg) )"
   (( $? > 0 )) && udfOn InvalidArgument throw "$s - CLI parsing error..."
 
+  sHandler="$( printf -- "$fmtHandler" "$sCases" )"
+  echo "dbg arg $s : $_sArg : $sHandler"
+
+  eval "$sHandler" && udfHandleGetopt $s
+
 }
-#
-#sub bindCliOptions {
-#
-#	return undef unless @_;
-#
-#	my $s = "";
-#
-#	$s .= parseCliOption( $_ ) . ', ' foreach @_;
-#
-#	chop $s;
-#	chop $s;
-#
-#	eval "GetOptions ( $s )" or return undef;
-#
-#	return \%_hCLI;
-#
-#}
-#
+#******
