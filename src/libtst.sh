@@ -1,5 +1,5 @@
 #
-# $Id: libtst.sh 598 2016-11-23 17:14:45+04:00 toor $
+# $Id: libtst.sh 599 2016-11-24 17:29:01+04:00 toor $
 #
 #****h* BASHLYK/libtst
 #  DESCRIPTION
@@ -502,3 +502,58 @@ ini.group() {
 #
 }
 #******
+ini.bind.cli.options() {
+
+  udfOn MissingArgument $@ || return $?
+
+  local -a a
+  local s s2 sSection sShort sLong sArg sHandler sCases fmtCase fmHandler
+
+  fmtHandler='udfHandleGetopt() { while true; do case $1 in %s esac; break; done }'
+  fmtCase='--%s|%s) ini.section.select "%s"; ini.section.set "%s" "$2"; shift %s;;'
+
+  for s in $@; do
+
+    if [[ $s =~ (([[:alnum:]]+)(-))?([[:alnum:]]+)(\|([[:alnum:]]))?([:]{1,2})? ]]; then
+
+      a=( "" ${BASH_REMATCH[1]} ${BASH_REMATCH[2]} ${BASH_REMATCH[3]} ${BASH_REMATCH[4]} ${BASH_REMATCH[5]} ${BASH_REMATCH[6]} ${BASH_REMATCH[7]} )
+
+    else
+
+      eval $( udfOnError throw InvalidArgument "$s - format error" )
+
+    fi
+
+    [[ ${a[2]} ]] && sSection="${a[2]}" || sSection='__global__'
+    [[ ${a[4]} ]] && sLong+="${a[4]}${a[7]},"
+    [[ ${a[6]} ]] && sShort+="${a[6]}${a[7]}" && s="-${a[6]}"
+    [[ ${a[6]} ]] && s="-${a[6]}" || s=
+    [[ ${a[7]} ]] && s2="2" || s2=
+
+    sCases+="$( printf -- "$fmtCase" "${a[4]}" "$s" "${sSection}" "${a[4]}" "$s2" ) "
+
+  done
+
+  s="$( getopt -o $sShort --long ${sLong%*,} -n $0 -- "$( _ sArg )" )"
+
+  (( $? > 0 )) && udfOn InvalidArgument throw "$s - CLI parsing error..."
+
+}
+#
+#sub bindCliOptions {
+#
+#	return undef unless @_;
+#
+#	my $s = "";
+#
+#	$s .= parseCliOption( $_ ) . ', ' foreach @_;
+#
+#	chop $s;
+#	chop $s;
+#
+#	eval "GetOptions ( $s )" or return undef;
+#
+#	return \%_hCLI;
+#
+#}
+#
