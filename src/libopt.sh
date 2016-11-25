@@ -1,5 +1,5 @@
 #
-# $Id: libopt.sh 556 2016-09-22 13:56:00+04:00 toor $
+# $Id: libopt.sh 601 2016-11-25 16:18:39+04:00 toor $
 #
 #****h* BASHLYK/libopt
 #  DESCRIPTION
@@ -37,7 +37,7 @@
 #    * $_bashlyk_aRequiredCmd_std - список используемых в данном модуле внешних
 #    утилит
 #  SOURCE
-: ${_bashlyk_sArg:=$*}
+: ${_bashlyk_sArg:="$@"}
 : ${_bashlyk_bSetOptions:=}
 : ${_bashlyk_aRequiredCmd_opt:="echo getopt rm"}
 : ${_bashlyk_aExport_opt:="udfExcludePairFromHash udfGetOpt udfGetOptHash udfSetOptHash"}

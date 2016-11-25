@@ -1,5 +1,5 @@
 #
-# $Id: libstd.sh 575 2016-10-30 00:36:53+04:00 toor $
+# $Id: libstd.sh 601 2016-11-25 16:18:39+04:00 toor $
 #
 #****h* BASHLYK/libstd
 #  DESCRIPTION
@@ -41,7 +41,7 @@
 _bashlyk_iMaxOutputLines=1000
 #
 : ${_bashlyk_onError:=throw}
-: ${_bashlyk_sArg:=$*}
+: ${_bashlyk_sArg:="$@"}
 : ${_bashlyk_pathDat:=/tmp}
 : ${_bashlyk_sWSpaceAlias:=___}
 : ${_bashlyk_sUnnamedKeyword:=_bashlyk_unnamed_key_}

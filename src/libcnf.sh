@@ -1,5 +1,5 @@
 #
-# $Id: libcnf.sh 539 2016-08-18 14:20:34+04:00 toor $
+# $Id: libcnf.sh 601 2016-11-25 16:18:38+04:00 toor $
 #
 #****h* BASHLYK/libcnf
 #  DESCRIPTION
@@ -30,7 +30,7 @@
 #  DESCRIPTION
 #    Блок инициализации глобальных переменных
 #  SOURCE
-: ${_bashlyk_sArg:=$*}
+: ${_bashlyk_sArg:="$@"}
 : ${_bashlyk_pathCnf:=$(pwd)}
 : ${_bashlyk_sUnnamedKeyword:=_bashlyk_unnamed_key_}
 : ${_bashlyk_aRequiredCmd_cnf:="awk date dirname echo mkdir printf pwd tr"}

@@ -1,5 +1,5 @@
 #
-# $Id: libtst.sh 600 2016-11-25 00:06:30+04:00 toor $
+# $Id: libtst.sh 601 2016-11-25 16:18:39+04:00 toor $
 #
 #****h* BASHLYK/libtst
 #  DESCRIPTION
@@ -35,8 +35,9 @@
 : ${_bashlyk_emailRcpt:=postmaster}
 : ${_bashlyk_emailSubj:="${_bashlyk_sUser}@${HOSTNAME}::${_bashlyk_s0}"}
 : ${_bashlyk_envXSession:=}
-: ${_bashlyk_aRequiredCmd_msg:="[ "}
-: ${_bashlyk_aExport_msg:="udfTest ini.group"}
+: ${_bashlyk_aRequiredCmd_msg:="getopt stat"}
+: ${_bashlyk_aExport_msg:="ini.section.{add,free,get,init,raw,select,set}       \
+  ini.read ini.group ini.bind.cli"}
 #******
 #****f* libtst/udfTest
 #  SYNOPSIS
@@ -60,13 +61,9 @@ udfTest() {
 #  SYNOPSIS
 #    ini.section.free
 #  DESCRIPTION
-#    ...
-#  INPUTS
-#    ...
-#  OUTPUT
-#    ...
+#    removing the resources associated with processing of the INI-configurations
 #  RETURN VALUE
-#    ...
+#    last unset status
 #  EXAMPLE
 #    local -A _h='( [__id__]="__id__" [test]="hI" )' hI='( [__id__]="__id__" )'
 #    ini.section.free                                                           #? true
@@ -93,13 +90,9 @@ ini.section.free() {
 #  SYNOPSIS
 #    ini.section.init
 #  DESCRIPTION
-#    ...
-#  INPUTS
-#    ...
-#  OUTPUT
-#    ...
+#    preparing resources to handle the INI configurations
 #  RETURN VALUE
-#    ...
+#    declare status
 #  EXAMPLE
 #    local -A _h='( [__id__]="__id__" [test]="hI" )' hI='( [__id__]="__id__" )'
 #    ini.section.init                                                           #? true
@@ -117,15 +110,13 @@ ini.section.init() {
 #******
 #****f* libtst/ini.section.select
 #  SYNOPSIS
-#    ini.section.select arg
+#    ini.section.select <section>
 #  DESCRIPTION
-#    ...
-#  INPUTS
-#    ...
-#  OUTPUT
-#    ...
+#    preparing resources to handle the selected section of the INI-file(s)
+#  ARGUMENTS
+#    section name
 #  RETURN VALUE
-#    ...
+#    last eval status
 #  EXAMPLE
 #    local s
 #    ini.section.init                                                           #? true
@@ -155,7 +146,95 @@ else
 
 fi
 
+## TODO '$1' checking required
 eval "ini.section.set() { $s[\$1]="\$2"; }; ini.section.get() { echo "\${$s[\$1]}"; };"
+
+}
+#******
+#****f* libtst/ini.section.raw
+#  SYNOPSIS
+#    ini.section.raw <raw mode> <data>
+#  DESCRIPTION
+#    add or update unnamed record of the "raw" data for early selected section
+#  ARGUMENTS
+#    <raw mode> - the signs of the method of raw data handling:
+#                 '-', '+' - add new records with key incrementing
+#                 '='      - add new unique record only
+#    < data>    - "raw" data, no as "key=value" pairs
+#  RETURN VALUE
+#    InvalidArgument - unexpected "raw" mode
+#    Success for other cases
+#  EXAMPLE
+#  SOURCE
+ini.section.raw() {
+
+  local i s
+
+  i=$( ini.section.get __unnamed_cnt )
+  udfIsNumber $i || i=0
+
+  case "$1" in
+
+    =)
+
+       s="${2##*( )}"
+       s="${s%%*( )}"
+       ini.section.set "__unnamed_key=${s//[\'\"\\]/}" "$s"
+
+    ;;
+
+    -|+)
+
+       ini.section.set "__unnamed_idx=${i}" "$2"
+
+    ;;
+
+    *)
+
+      return $( _ iErrorInvalidArgument )
+
+  esac
+
+  : $(( i++ ))
+  ini.section.set __unnamed_cnt $i
+
+  return 0
+
+}
+#******
+#  SYNOPSIS
+#    ini.section.add <section> <key> <value>
+#  DESCRIPTION
+#    add or update <key> record of the INI section
+#  ARGUMENTS
+#    <section> - section of the INI-configuration
+#    <key>     - named key for "key=value" pairs of the input data. For unnamed
+#                records this argument must be the sign of the method of raw
+#                data handling:
+#                '-', '+' - add new records with key incrementing
+#                '='      - add new unique record only
+#    <value>   - "value" part of the "key=value" pair or full "raw" inputs
+#  RETURN VALUE
+#    Success always
+#  EXAMPLE
+#  SOURCE
+ini.section.add() {
+
+  [[ $2 ]] || return 0
+
+  local s="$1"
+
+  ini.section.select "${s:=__global__}"
+
+  if [[ $2 =~ ^[\-\+=]$ ]]; then
+
+    ini.section.raw "$2" "$3"
+
+  else
+
+    ini.section.set "$2" "$3"
+
+  fi
 
 }
 #******
@@ -163,13 +242,12 @@ eval "ini.section.set() { $s[\$1]="\$2"; }; ini.section.get() { echo "\${$s[\$1]
 #  SYNOPSIS
 #    ini.read args
 #  DESCRIPTION
-#    ...
-#  INPUTS
-#    ...
-#  OUTPUT
-#    ...
+#    Handling a configuration from the single INI file. Read valid "key=value"
+#    pairs and "active" sections data only
 #  RETURN VALUE
-#    ...
+#    NoSuchFileOrDir - input file not exist
+#    NotPermitted    - owner of the input file differ than owner of the process
+#    Success for the other cases
 #  EXAMPLE
 #   local c ini s S                                                             #-
 #   c=':void,main exec:- main:sTxt,b,iYo replace:- unify:= asstoass:+'          #-
@@ -303,7 +381,7 @@ ini.read() {
 
         REPLY=${REPLY##*( )}
         REPLY=${REPLY%%*( )}
-        ini.section.set "__unnamed_key=${REPLY}" "$REPLY"
+        ini.section.set "__unnamed_key=${REPLY//[\'\"\\]/}" "$REPLY"
 
       else
 
@@ -325,15 +403,14 @@ ini.read() {
 #******
 #****f* libtst/ini.group
 #  SYNOPSIS
-#    ini.group args
+#    ini.group <args>
 #  DESCRIPTION
-#    ...
+#    getting indicated parameters from a group of related INI files
 #  INPUTS
 #    ...
-#  OUTPUT
-#    ...
 #  RETURN VALUE
-#    ...
+#    NoSuchFileOrDir - input file not exist
+#    MissingArgument - parameters and sections are not selected
 #  EXAMPLE
 #   local c iniMain iniChild s S                                                #-
 #   c=':file,main,child exec:- main:hint,msg,cnt replace:- unify:= asstoass:+'  #-
@@ -453,12 +530,12 @@ ini.group() {
 
     sSection=${BASH_REMATCH[1]}
     : ${sSection:=__global__}
-    ini.section.select "$sSection"
 
     [[ ${BASH_REMATCH[3]} ]] && hRawMode[$sSection]="${BASH_REMATCH[3]}"
     [[ ${BASH_REMATCH[4]} ]] && s="${BASH_REMATCH[4]}" || s=
     [[ $s ]] && s="${s//,/\|}" && hKeyValue[$sSection]=${fmtKeyValue/\%KEY\%/$s}
 
+    ini.section.select "$sSection"
     csv+="${sSection}|"
 
   done
@@ -484,27 +561,11 @@ ini.group() {
 
   done
 
-## TODO add CLI config without temporary config
-# echo "$sIni"
-
-#	if ( scalar keys %_hCLI ) {
-#
-#		( $fh, $fn ) = tempfile();
-#		writeTarget( $fh, \%_hCLI );
-#		seek( $fh, 0, 0 ) or die "${fn}: seek error $!\n";
-#		$ph = readSource( $fh, $ph, $phClass );
-#		close( $fh );
-#		unlink( $fn );
-#
-#	}
-#
-#	return $ph;
-#
 }
 #******
-#****f* libtst/ini.bind.cli.options
+#****f* libtst/ini.bind.cli
 #  SYNOPSIS
-#    ini.bind.cli.options args
+#    ini.bind.cli args
 #  DESCRIPTION
 #    ...
 #  INPUTS
@@ -515,10 +576,10 @@ ini.group() {
 #    ...
 #  EXAMPLE
 #
-#    local s="first@F second@S:: section-single@s"
-#    _ sArg "--second --first -s"
+#    local s="first{F} second{S}: section-single{s} no-save{N} raw{R}:="
+#    _ sArg "--second test --first -s --raw abyr --raw walg -R ssass -N"
 #    ini.section.init
-#    ini.bind.cli.options $s                                                    #? true
+#    ini.bind.cli $s                                                            #? true
 #    declare -p _h
 #    for s in "${!_h[@]}"; do                                                   #-
 #      [[ $s == '__id__' ]] && continue                                         #-
@@ -527,21 +588,22 @@ ini.group() {
 #    done                                                                       #-
 #
 #  SOURCE
-ini.bind.cli.options() {
+ini.bind.cli() {
 
   udfOn MissingArgument "$@" || return $?
 
   local -a a
-  local s s2 s3 sSection sShort sLong sArg sHandler sCases fmtCase fmHandler
+  local fmtCase fmHandler k sSection sShort sLong sArg s S sHandler sCases v
 
   fmtHandler='udfHandleGetopt() { while true; do case $1 in %s --) shift; break;; esac; done }'
-  fmtCase='--%s|%s) ini.section.select "%s"; ini.section.set "%s" "%s"; shift %s;;'
+  fmtCase='--%s|%s) ini.section.add "%s" "%s" "%s"; shift %s;;'
 
   for s in $@; do
 
-    if [[ $s =~ (([[:alnum:]]+)(-))?([[:alnum:]]+)(@([[:alnum:]]))?([:]{1,2})? ]]; then
+    if [[ $s =~ (([[:alnum:]]+)(-))?(@|[[:alnum:]]+)(\{([[:alnum:]])\})?([:])?([:=\+\-])? ]]; then
 
-      a=( "" "${BASH_REMATCH[1]}" "${BASH_REMATCH[2]}" "${BASH_REMATCH[3]}" "${BASH_REMATCH[4]}" "${BASH_REMATCH[5]}" "${BASH_REMATCH[6]}" "${BASH_REMATCH[7]}" )
+      s=$( declare -p BASH_REMATCH )
+      eval "${s/-ar BASH_REMATCH/-a a}"
 
     else
 
@@ -549,24 +611,21 @@ ini.bind.cli.options() {
 
     fi
 
-    [[ ${a[2]} ]] && sSection="${a[2]}" || sSection='__global__'
+    s=;S=;v=1;sSection="${a[2]}";k="${a[4]}"
+
     [[ ${a[4]} ]] && sLong+="${a[4]}${a[7]},"
     [[ ${a[6]} ]] && sShort+="${a[6]}${a[7]}" && s="-${a[6]}"
-    [[ ${a[6]} ]] && s="-${a[6]}" || s=
-    [[ ${a[7]} ]] && s2="2"  || s2=
-    [[ ${a[7]} ]] && s3='$2' || s3="1"
+    [[ ${a[7]} ]] && S="2" && v='$2'
+    [[ ${a[8]} =~ ^(=|\-|\+)$ ]] && k="${a[8]}" && sSection="${a[4]}"
 
-    declare -p a
-
-    sCases+="$( printf -- "$fmtCase" "${a[4]}" "$s" "${sSection}" "${a[4]}" "$s3" "$s2" ) "
+    sCases+="$( printf -- "$fmtCase" "${a[4]}" "$s" "${sSection}" "$k" "$v" "$S" ) "
 
   done
 
-  s="$( getopt -o $sShort --long ${sLong%*,} -n $0 -- $(_ sArg) )"
+  s="$( getopt -u -o $sShort --long ${sLong%*,} -n $0 -- $(_ sArg) )"
   (( $? > 0 )) && udfOn InvalidArgument throw "$s - CLI parsing error..."
 
   sHandler="$( printf -- "$fmtHandler" "$sCases" )"
-  echo "dbg arg $s : $_sArg : $sHandler"
 
   eval "$sHandler" && udfHandleGetopt $s
 

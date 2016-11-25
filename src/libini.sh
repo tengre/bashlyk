@@ -1,5 +1,5 @@
 #
-# $Id: libini.sh 556 2016-09-22 13:56:00+04:00 toor $
+# $Id: libini.sh 601 2016-11-25 16:18:38+04:00 toor $
 #
 #****h* BASHLYK/libini
 #  DESCRIPTION
@@ -32,7 +32,7 @@
 #  DESCRIPTION
 #    Блок инициализации глобальных переменных
 #  SOURCE
-: ${_bashlyk_sArg:=$*}
+: ${_bashlyk_sArg:="$@"}
 : ${_bashlyk_pathIni:=$(pwd)}
 : ${_bashlyk_bSetOptions:=}
 : ${_bashlyk_csvOptions2Ini:=}

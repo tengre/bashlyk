@@ -1,5 +1,5 @@
 #
-# $Id: liberr.sh 580 2016-11-10 17:23:58+04:00 toor $
+# $Id: liberr.sh 601 2016-11-25 16:18:38+04:00 toor $
 #
 #****h* BASHLYK/liberr
 #  DESCRIPTION
@@ -93,7 +93,7 @@ _bashlyk_hError[$_bashlyk_iErrorIncompatibleVersion]="incompatible version"
 _bashlyk_hError[$_bashlyk_iErrorTryBoxException]="try box exception"
 #
 : ${_bashlyk_onError:=throw}
-: ${_bashlyk_sArg:=$*}
+: ${_bashlyk_sArg:="$@"}
 : ${_bashlyk_aRequiredCmd_err:="echo printf sed which"}
 : ${_bashlyk_aExport_err:="udfCommandNotFound udfEmptyArgument udfEmptyOrMissingArgument   \
   udfEmptyResult udfEmptyVariable udfInvalidVariable udfMissingArgument udfOn              \
