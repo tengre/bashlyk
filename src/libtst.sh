@@ -1,5 +1,5 @@
 #
-# $Id: libtst.sh 601 2016-11-25 16:18:39+04:00 toor $
+# $Id: libtst.sh 603 2016-11-28 00:03:30+04:00 toor $
 #
 #****h* BASHLYK/libtst
 #  DESCRIPTION
@@ -82,6 +82,7 @@ ini.section.free() {
 
   done
 
+  unset -v _a
   unset -v _h
 
 }
@@ -105,6 +106,7 @@ ini.section.init() {
 
   ini.section.free
   declare -A -g -- _h="( [__id__]=__id__ )"
+  declare -a -g -- _a="()"
 
 }
 #******
@@ -130,24 +132,72 @@ ini.section.init() {
 #  SOURCE
 ini.section.select() {
 
-local s
+local s s1=$1
 
-if [[ ! ${_h[$1]} ]]; then
+: ${s1:=__global__}
 
-  s=$(md5sum <<< "$1")
+if [[ ! ${_h[$s1]} ]]; then
+
+  s=$(md5sum <<< "$s1")
   s="_ini${s:0:32}"
-  _h[$1]="$s"
+  _h[$s1]="$s"
+  #_a[]="$s"
 
   eval "declare -A -g -- $s=()"
 
 else
 
-  s=${_h[$1]}
+  s=${_h[$s1]}
 
 fi
 
 ## TODO '$1' checking required
 eval "ini.section.set() { $s[\$1]="\$2"; }; ini.section.get() { echo "\${$s[\$1]}"; };"
+
+}
+#******
+ini.section.write() {
+
+  local i iC s=$1
+
+  : ${s:=__global__}
+
+  ini.section.select $s
+
+  s=${_h[$s]}
+
+  echo "ini.section.key_val() { local i; for i in \"\${!$s[@]}\"; do printf -- \"\t%s = %s\n\" \"\$i\"  \"\${$s[\$i]}\"; };"
+  echo "ini.section.unnamed() { local i; for i in \"\${$s[@]}\"; do printf -- \"%s\n\" \$i; };"
+
+  eval "ini.section.key_val() { local i; for i in "\${!$s[@]}"; do printf -- \"\t%s = %s\n\" "\$i"  "\${$s[\$i]}"; };"
+  eval "ini.section.unnamed() { local i; for i in "\${$s[@]}"; do printf -- "%s\n" "\$i"; };"
+
+  [[ $1 ]] && printf "\n\n[ %s ]\n\n" "$1" || printf %s "\n"
+
+  if   [[ $( ini.section.get __unnamed_mode ) == "=" ]]; then
+
+    ini.section.unnamed
+
+  else
+
+    iC=$( ini.section.get __unnamed_cnt )
+    if udfIsNumber $iC && (( iC > 0 )); then
+
+      for (( i=0; i < $iC; i++ )); do
+
+        ini.section.get __unnamed_key=$i
+
+      done
+
+    else
+
+      ini.section.key_val
+
+    fi
+
+  fi
+
+  printf -- "\n"
 
 }
 #******
@@ -353,6 +403,7 @@ ini.read() {
        fi
 
        [[ ${hRawMode[$s]} =~ ^(\+|=)$ ]] || i=0
+       [[ ${hRawMode[$s]} =~ ^=$ ]] && ini.section.set __unnamed_mod "@"
 
       else
 
@@ -412,7 +463,7 @@ ini.read() {
 #    NoSuchFileOrDir - input file not exist
 #    MissingArgument - parameters and sections are not selected
 #  EXAMPLE
-#   local c iniMain iniChild s S                                                #-
+#   local c iniMain iniChild iniWrite s S                                       #-
 #   c=':file,main,child exec:- main:hint,msg,cnt replace:- unify:= asstoass:+'  #-
 #   udfMakeTemp -v iniMain suffix=.ini                                          #-
 #    cat <<'EOFini' > $iniMain                                                  #-
@@ -443,6 +494,7 @@ ini.read() {
 #                                                                               #-
 #    EOFini                                                                     #-
 #    iniChild="${iniMain%/*}/child.${iniMain##*/}"                              #-
+#    iniWrite="${iniMain%/*}/write.${iniMain##*/}"                              #-
 #    udfAddFile2Clean $iniChild                                                 #-
 #    cat <<'EOFiniChild' > $iniChild                                            #-
 #    section  =  global                                                         #-
@@ -486,6 +538,7 @@ ini.read() {
 #    *.lit                                                                      #-
 #    EOFiniChild                                                                #-
 #   ini.group $iniChild $c                                                      #? true
+#   ini.write $iniChild                                                         #? true
 #    declare -p _h
 #    for s in "${!_h[@]}"; do                                                   #-
 #      [[ $s == '__id__' ]] && continue                                         #-
@@ -631,3 +684,40 @@ ini.bind.cli() {
 
 }
 #******
+#****f* libtst/ini.section.write
+#  SYNOPSIS
+#    ini.section.write <section>
+#  DESCRIPTION
+#    ...
+#  INPUTS
+#    ...
+#  OUTPUT
+#    ...
+#  RETURN VALUE
+#    ...
+#  EXAMPLE
+#  SOURCE
+ini.write() {
+
+  udfOn NoSuchFileOrDir throw $1
+
+  local fn
+  fn=$1
+
+  mkdir -p ${fn%/*} || eval $( udfOnError throw NotExistNotCreated "${fn%/*}" )
+
+  {
+    ini.section.write
+    for s in ${!_h[@]}; do
+
+      [[ $s == '__global__' ]] && continue
+      ini.section.write "$s"
+
+    done
+
+  } > $fn
+
+  return 0
+
+}
+

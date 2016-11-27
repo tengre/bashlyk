@@ -1,5 +1,5 @@
 #
-# $Id: libini.sh 601 2016-11-25 16:18:38+04:00 toor $
+# $Id: libini.sh 603 2016-11-28 00:03:30+04:00 toor $
 #
 #****h* BASHLYK/libini
 #  DESCRIPTION
@@ -623,16 +623,16 @@ udfIniChange() {
 #    iniChild="$(dirname $ini)/child.$(basename $ini)"
 #
 #    cat <<'EOFini' > ${ini}                                                    #-
-#    void	=	1                                                       #-
+#    void	=	1                                                               #-
 #[exec]:                                                                        #-
 #    TZ=UTC date -R --date='@12345678'                                          #-
 #    sUname="$(uname -a)"                                                       #-
 #:[exec]                                                                        #-
 #[main]                                                                         #-
-#    sTxt	=	$(date -R)                                              #-
-#    b		=	false                                                   #-
-#    iXo Xo	=	19                                                      #-
-#    iYo	=	80                                                      #-
+#    sTxt	=	$(date -R)                                                      #-
+#    b		=	false                                                           #-
+#    iXo Xo	=	19                                                              #-
+#    iYo	=	80                                                              #-
 #    `simple line`                                                              #-
 #[replace]                                                                      #-
 #    before replacing                                                           #-
@@ -645,18 +645,18 @@ udfIniChange() {
 #                                                                               #-
 #    EOFini                                                                     #-
 #    cat <<'EOFiniChild' > ${iniChild}                                          #-
-#    void	=	0                                                       #-
-#    [main]	                                                                #-
-#    sTxt	=	foo = bar                                               #-
-#    b		=	true                                                    #-
-#    iXo	=	1921                                                    #-
-#    iYo	=	1080                                                    #-
+#    void	=	0                                                               #-
+#    [main]	                                                                    #-
+#    sTxt	=	foo = bar                                                       #-
+#    b		=	true                                                            #-
+#    iXo	=	1921                                                            #-
+#    iYo	=	1080                                                            #-
 #[exec]:                                                                        #-
 #    TZ=UTC date -R --date='@12345679'                                          #-
 #    sUname="$(uname)"                                                          #-
 #:[exec]                                                                        #-
 #[replace]                                                                      #-
-#	after replacing                                                         #-
+#	after replacing                                                             #-
 #[unify]                                                                        #-
 #    *.bak                                                                      #-
 #    *.tmp                                                                      #-
