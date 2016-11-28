@@ -1,5 +1,5 @@
 #
-# $Id: libtst.sh 603 2016-11-28 00:03:30+04:00 toor $
+# $Id: libtst.sh 604 2016-11-28 17:19:22+04:00 toor $
 #
 #****h* BASHLYK/libtst
 #  DESCRIPTION
@@ -37,7 +37,7 @@
 : ${_bashlyk_envXSession:=}
 : ${_bashlyk_aRequiredCmd_msg:="getopt stat"}
 : ${_bashlyk_aExport_msg:="ini.section.{add,free,get,init,raw,select,set}       \
-  ini.read ini.group ini.bind.cli"}
+  ini.read ini.load ini.save ini.bind.cli"}
 #******
 #****f* libtst/udfTest
 #  SYNOPSIS
@@ -132,51 +132,61 @@ ini.section.init() {
 #  SOURCE
 ini.section.select() {
 
-local s s1=$1
+  local s s1=$1
 
-: ${s1:=__global__}
+  : ${s1:=__global__}
 
-if [[ ! ${_h[$s1]} ]]; then
+  if [[ ! ${_h[$s1]} ]]; then
 
-  s=$(md5sum <<< "$s1")
-  s="_ini${s:0:32}"
-  _h[$s1]="$s"
-  #_a[]="$s"
+    s=$(md5sum <<< "$s1")
+    s="_ini${s:0:32}"
+    _h[$s1]="$s"
+    _a[${#_a[@]}]="$s1"
 
-  eval "declare -A -g -- $s=()"
+    eval "declare -A -g -- $s=()"
 
-else
+  else
 
-  s=${_h[$s1]}
+    s=${_h[$s1]}
 
-fi
+  fi
 
-## TODO '$1' checking required
-eval "ini.section.set() { $s[\$1]="\$2"; }; ini.section.get() { echo "\${$s[\$1]}"; };"
+  ## TODO '$1' checking required
+  eval "ini.section.set() { $s[\$1]="\$2"; }; ini.section.get() { echo "\${$s[\$1]}"; };"
 
 }
 #******
-ini.section.write() {
+#****f* libtst/ini.section.show
+#  SYNOPSIS
+#    ini.section.show <section>
+#  DESCRIPTION
+#    show the contents of the specified section
+#  ARGUMENTS
+#    <section> - section name, default - unnamed section
+#  OUTPUT
+#    the contents (must be empty) of the specified section with name
+#  EXAMPLE
+#  SOURCE
+ini.section.show() {
 
-  local i iC s=$1
+  local i iC s=$1 sA sU
 
   : ${s:=__global__}
 
   ini.section.select $s
 
   s=${_h[$s]}
+  sU=$( ini.section.get __unnamed_mod )
+  [[ $sU == '!' ]] && sA=':' || sA=
 
-  echo "ini.section.key_val() { local i; for i in \"\${!$s[@]}\"; do printf -- \"\t%s = %s\n\" \"\$i\"  \"\${$s[\$i]}\"; };"
-  echo "ini.section.unnamed() { local i; for i in \"\${$s[@]}\"; do printf -- \"%s\n\" \$i; };"
+  eval "ini.section.show.pairs()   { local i; for i in "\${!$s[@]}"; do [[ \$i =~ ^__unnamed_     ]] || printf -- '\t%s\t = %s\n' \"\$i\" \"\${$s[\$i]}\"; done; };"
+  eval "ini.section.show.unnamed() { local i; for i in "\${!$s[@]}"; do [[ \$i =~ ^__unnamed_key= ]] && printf -- '%s\n' \"\${$s[\$i]}\"; done; };"
 
-  eval "ini.section.key_val() { local i; for i in "\${!$s[@]}"; do printf -- \"\t%s = %s\n\" "\$i"  "\${$s[\$i]}"; };"
-  eval "ini.section.unnamed() { local i; for i in "\${$s[@]}"; do printf -- "%s\n" "\$i"; };"
+  [[ $1 ]] && printf "\n\n[ %s ]%s\n\n" "$1" "$sA" || echo ""
 
-  [[ $1 ]] && printf "\n\n[ %s ]\n\n" "$1" || printf %s "\n"
+  if   [[ $sU == "@" ]]; then
 
-  if   [[ $( ini.section.get __unnamed_mode ) == "=" ]]; then
-
-    ini.section.unnamed
+    ini.section.show.unnamed
 
   else
 
@@ -185,19 +195,19 @@ ini.section.write() {
 
       for (( i=0; i < $iC; i++ )); do
 
-        ini.section.get __unnamed_key=$i
+        ini.section.get "__unnamed_idx=$i"
 
       done
 
     else
 
-      ini.section.key_val
+      ini.section.show.pairs
 
     fi
 
   fi
 
-  printf -- "\n"
+  [[ $sA ]] && printf "\n%s[ %s ]\n" "$sA" "$1"
 
 }
 #******
@@ -330,14 +340,14 @@ ini.section.add() {
 #    *.tmp                                                                      #-
 #    ass = to ass                                                               #-
 #    EOFini                                                                     #-
-#   ini.section.init
 #   ini.read $ini                                                               #? true
-#    declare -p _h
-#    for s in "${!_h[@]}"; do                                                   #-
-#      [[ $s == '__id__' ]] && continue                                         #-
-#      echo "section ${s}:"
-#      eval "declare -p ${_h[$s]}"
-#    done                                                                       #-
+#   ini.show
+#   declare -p _h
+##    for s in "${!_h[@]}"; do                                                  #-
+##      [[ $s == '__id__' ]] && continue                                        #-
+##      echo "section ${s}:"
+##      eval "declare -p ${_h[$s]}"
+##    done                                                                      #-
 #  SOURCE
 ini.read() {
 
@@ -347,7 +357,7 @@ ini.read() {
 
   reSection='^[[:space:]]*(:?)\[[[:space:]]*([^[:punct:]]+?)[[:space:]]*\](:?)[[:space:]]*$'
   reKey_Val='^[[:space:]]*([[:alnum:]]+)[[:space:]]*=[[:space:]]*(.*)[[:space:]]*$'
-  reComment='(^|[[:space:]]+)[\#\;].*$'
+  reComment='^[[:space:]]*$|(^|[[:space:]]+)[\#\;].*$'
   reRawMode='^[=\-+]$'
 
   s="__global__"
@@ -356,6 +366,7 @@ ini.read() {
   [[ $2 ]] && reValidSections="$2" || reValidSections="$reSection"
   [[ ${hKeyValue[@]} ]] || local -A hKeyValue
   [[ ${hRawMode[@]}  ]] || local -A hRawMode
+  [[ ${_h[@]}        ]] || ini.section.init
 
   if [[ ! $( stat -c %U $fn ) == $( _ sUser ) ]]; then
 
@@ -386,7 +397,7 @@ ini.read() {
       (( i > 0 )) && ini.section.set __unnamed_cnt $i
 
       bIgnore=1
-      [[ $bActiveSection == "close" ]] && bActiveSection= && continue
+      [[ $bActiveSection == "close" ]] && bActiveSection= && ini.section.set __unnamed_mod "!" && continue
       bIgnore=
 
       ini.section.select "$s"
@@ -452,21 +463,30 @@ ini.read() {
 
 }
 #******
-#****f* libtst/ini.group
+#****f* libtst/ini.load
 #  SYNOPSIS
-#    ini.group <args>
+#    ini.load <file> <section>:(<options>)|<raw mode>) ...
 #  DESCRIPTION
-#    getting indicated parameters from a group of related INI files
-#  INPUTS
-#    ...
+#    load the specified parameters from a group of related INI files
+#  ARGUMENTS
+#    <file>     - the final configuration file. Based on of his name may be
+#                 pre-loaded the parent files of the configuration
+#    <section>  - section name, by default is empty for global section
+#    <options>  - comma separated list of the options for loading. Required or
+#                 replaced by <raw mode specs>
+#    <raw mode> - specifiers '-=+' define the section of the store as a list of
+#                 the "raw" data:
+#                 - - replace early load data of the section
+#                 + - add data to the early loaded data of the section
+#                 = - add only unique data of the early loaded data
 #  RETURN VALUE
 #    NoSuchFileOrDir - input file not exist
 #    MissingArgument - parameters and sections are not selected
 #  EXAMPLE
-#   local c iniMain iniChild iniWrite s S                                       #-
-#   c=':file,main,child exec:- main:hint,msg,cnt replace:- unify:= asstoass:+'  #-
+#   local iniMain iniLoad iniSave s S sRules                                    #-
+#   sRules=':file,main,child exec:- main:hint,msg,cnt replace:- unify:= acc:+'  #-
 #   udfMakeTemp -v iniMain suffix=.ini                                          #-
-#    cat <<'EOFini' > $iniMain                                                  #-
+#    cat <<-'EOFini' > $iniMain                                                 #-
 #    section  =  global                                                         #-
 #    file     =  main                                                           #-
 #    main     =  true                                                           #-
@@ -488,15 +508,15 @@ ini.read() {
 #[unify]                                                                        #-
 #    *.bak                                                                      #-
 #    *.tmp                                                                      #-
-#[asstoass]                                                                     #-
+#[acc]                                                                          #-
 #    *.bak                                                                      #-
 #    *.tmp                                                                      #-
 #                                                                               #-
 #    EOFini                                                                     #-
-#    iniChild="${iniMain%/*}/child.${iniMain##*/}"                              #-
-#    iniWrite="${iniMain%/*}/write.${iniMain##*/}"                              #-
-#    udfAddFile2Clean $iniChild                                                 #-
-#    cat <<'EOFiniChild' > $iniChild                                            #-
+#    iniLoad="${iniMain%/*}/child.${iniMain##*/}"                               #-
+#    iniSave="${iniMain%/*}/write.${iniMain##*/}"                               #-
+#    udfAddFile2Clean $iniLoad                                                  #-
+#    cat <<-'EOFiniChild' > $iniLoad                                            #-
 #    section  =  global                                                         #-
 #    file     =  child                                                          #-
 #    main     =  false                                                          #-
@@ -523,7 +543,7 @@ ini.read() {
 #[ignored]                                                                      #-
 #    test by test                                                               #-
 #    a = b                                                                      #-
-#[asstoass]                                                                     #-
+#[acc]                                                                          #-
 #    *.bak                                                                      #-
 #    *.tmp                                                                      #-
 #    *.com                                                                      #-
@@ -537,16 +557,18 @@ ini.read() {
 #    *.xxx                                                                      #-
 #    *.lit                                                                      #-
 #    EOFiniChild                                                                #-
-#   ini.group $iniChild $c                                                      #? true
-#   ini.write $iniChild                                                         #? true
-#    declare -p _h
-#    for s in "${!_h[@]}"; do                                                   #-
-#      [[ $s == '__id__' ]] && continue                                         #-
-#      echo "section ${s}:"
-#      eval "declare -p ${_h[$s]}"
-#    done                                                                       #-
+#   ini.load $iniLoad $sRules                                                   #? true
+#   ini.save $iniSave                                                           #? true
+#   declare -p _a
+#   declare -p _h
+#   ini.show
+##    for s in "${!_h[@]}"; do                                                   #-
+##      [[ $s == '__id__' ]] && continue                                         #-
+##      echo "section ${s}:"
+##      eval "declare -p ${_h[$s]}"
+##    done                                                                       #-
 #  SOURCE
-ini.group() {
+ini.load() {
 
   udfOn NoSuchFileOrDir throw $1
   udfOn MissingArgument throw $2
@@ -597,11 +619,11 @@ ini.group() {
 
   [[ $csv ]] && reValidSections=${fmtSections/\%SECTION\%/$csv}
 
-  {
-   declare -p hRawMode
-   declare -p hKeyValue
-   echo $reValidSections
-  } > /tmp/hashes.log
+#  {
+#   declare -p hRawMode
+#   declare -p hKeyValue
+#   echo $reValidSections
+#  } > /tmp/hashes.log
 
   ## TODO init hash per section here
   ini.section.init
@@ -618,27 +640,37 @@ ini.group() {
 #******
 #****f* libtst/ini.bind.cli
 #  SYNOPSIS
-#    ini.bind.cli args
+#    ini.bind.cli [<section>-]<option long name>{<short name>}[:<extra>] ...
 #  DESCRIPTION
-#    ...
-#  INPUTS
-#    ...
-#  OUTPUT
-#    ...
+#    Bind command line options to the structure of the configuration INI
+#  ARGUMENTS
+#    <option name> - option name that used as long option of the CLI and key for
+#                    array of the INI data
+#    <section>     - part of the option name for binding it to a certain section
+#                    of the INI data. By default, it is assumed that option is
+#                    included to the global section
+#    <short name>  - short alias as single letter for option name
+#    <extra>       - Additional configuration options for specifying arguments:
+#                    :     - an optional argument
+#                    [=-+] - option is to store the data list, binded to the
+#                            eponymous section of the INI data
+#                    by default, the option is expected to have a required
+#                    argument and is included in the global section of the INI
+#                    data
 #  RETURN VALUE
-#    ...
+#    MissingArgument - arguments is not specified
 #  EXAMPLE
-#
-#    local s="first{F} second{S}: section-single{s} no-save{N} raw{R}:="
-#    _ sArg "--second test --first -s --raw abyr --raw walg -R ssass -N"
-#    ini.section.init
-#    ini.bind.cli $s                                                            #? true
+#    local sRules
+#    sRules='file{F}: exec{E}:- main-hint{H}: main-msg{M}: unify{U}:= acc:+'    #-
+#    _ sArg "-F CLI -E clear -H 'Hi!' -M test -U a.2 -U a.2 --acc=a --acc=b"    #-
+#    ini.bind.cli $sRules                                                       #? true
 #    declare -p _h
-#    for s in "${!_h[@]}"; do                                                   #-
-#      [[ $s == '__id__' ]] && continue                                         #-
-#      echo "section ${s}:"
-#      eval "declare -p ${_h[$s]}"
-#    done                                                                       #-
+#    ini.show
+##    for s in "${!_h[@]}"; do                                                  #-
+##      [[ $s == '__id__' ]] && continue                                        #-
+##      echo "section ${s}:"
+##      eval "declare -p ${_h[$s]}"
+##    done                                                                      #-
 #
 #  SOURCE
 ini.bind.cli() {
@@ -648,8 +680,10 @@ ini.bind.cli() {
   local -a a
   local fmtCase fmHandler k sSection sShort sLong sArg s S sHandler sCases v
 
+  [[ ${_h[@]} ]] || ini.section.init
+
   fmtHandler='udfHandleGetopt() { while true; do case $1 in %s --) shift; break;; esac; done }'
-  fmtCase='--%s|%s) ini.section.add "%s" "%s" "%s"; shift %s;;'
+  fmtCase='--%s%s) ini.section.add "%s" "%s" "%s"; shift %s;;'
 
   for s in $@; do
 
@@ -667,7 +701,7 @@ ini.bind.cli() {
     s=;S=;v=1;sSection="${a[2]}";k="${a[4]}"
 
     [[ ${a[4]} ]] && sLong+="${a[4]}${a[7]},"
-    [[ ${a[6]} ]] && sShort+="${a[6]}${a[7]}" && s="-${a[6]}"
+    [[ ${a[6]} ]] && sShort+="${a[6]}${a[7]}" && s="|-${a[6]}"
     [[ ${a[7]} ]] && S="2" && v='$2'
     [[ ${a[8]} =~ ^(=|\-|\+)$ ]] && k="${a[8]}" && sSection="${a[4]}"
 
@@ -684,40 +718,58 @@ ini.bind.cli() {
 
 }
 #******
-#****f* libtst/ini.section.write
+#****f* libtst/ini.show
 #  SYNOPSIS
-#    ini.section.write <section>
+#    ini.show
 #  DESCRIPTION
-#    ...
-#  INPUTS
-#    ...
-#  OUTPUT
-#    ...
-#  RETURN VALUE
-#    ...
+#    Show the current state of the configuration data
 #  EXAMPLE
 #  SOURCE
-ini.write() {
+ini.show() {
 
-  udfOn NoSuchFileOrDir throw $1
+  ini.section.show
+
+  for s in ${_a[@]}; do
+
+    [[ $s =~ ^(__global__|__id__)$ ]] && continue
+    ini.section.show "$s"
+
+  done
+
+  printf -- "\n"
+
+}
+#******
+#****f* libtst/ini.save
+#  SYNOPSIS
+#    ini.save <file>
+#  DESCRIPTION
+#    Save the current state of the configuration data to the specified file
+#  ARGUMENTS
+#    <file> - target file for saving, full path required
+#  RETURN VALUE
+#    MissingArgument    - the file name is not specified
+#    NotExistNotCreated - the target file is not created
+#  EXAMPLE
+#  SOURCE
+ini.save() {
+
+  udfOn MissingArgument throw $1
 
   local fn
   fn=$1
 
-  mkdir -p ${fn%/*} || eval $( udfOnError throw NotExistNotCreated "${fn%/*}" )
+  ## TODO backup previous version if exist
+  mkdir -p ${fn%/*} && touch $fn || eval $( udfOnError throw NotExistNotCreated "${fn%/*}" )
 
   {
-    ini.section.write
-    for s in ${!_h[@]}; do
 
-      [[ $s == '__global__' ]] && continue
-      ini.section.write "$s"
-
-    done
+    printf ';\n; created %s by %s\n;\n' "$(date -R)" "$( _ sUser)"
+    ini.show
 
   } > $fn
 
   return 0
 
 }
-
+#******
