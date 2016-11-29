@@ -1,5 +1,5 @@
 #
-# $Id: libtst.sh 605 2016-11-29 17:24:53+04:00 toor $
+# $Id: libtst.sh 606 2016-11-29 22:38:08+04:00 toor $
 #
 #****h* BASHLYK/libtst
 #  DESCRIPTION
@@ -66,14 +66,17 @@ __config.section.storage.show() {
 #  SYNOPSIS
 #    __config.section.storage.free cli|ini
 #  DESCRIPTION
-#    removing the resources associated with processing of the data configurations
-#  RETURN VALUE
-#    last unset status
+#    remove the storage associated with the configuration (CLI or INI)
+#  ARGUMENTS
+#    cli - storage for Command Line Interface (CLI) options
+#    ini - storage for INI options
 #  EXAMPLE
-#    local -A _hINI='( [__id__]="__id__" [test]="hI" )' hI='( [__id__]="__id__" )'
+#    local -A _hINI='([__id__]="__id__" [i]="_hINI_i")' _hINI_i='([__id__]="__id__")'
+#    local -A _hCLI='([__id__]="__id__" [c]="_hCLI_c")' _hCLI_c='([__id__]="__id__")'
+#    [[ ${_hINI[@]} && ${_hINI_i[@]} && ${_hCLI[@]} && ${_hCLI_c[@]} ]]         #? true
 #    __config.section.storage.free ini                                          #? true
-#    [[ ${_hINI[@]} ]]                                                          #? false
-#    [[ ${hI[@]} ]]                                                             #? false
+#    __config.section.storage.free cli                                          #? true
+#    [[ ${_hINI[@]} || ${_hINI_i[@]} || ${_hCLI[@]} || ${_hCLI_c[@]} ]]         #? false
 #  SOURCE
 __config.section.storage.free() {
 
@@ -94,16 +97,20 @@ __config.section.storage.free() {
 #  SYNOPSIS
 #    __config.section.storage.renew cli|ini
 #  DESCRIPTION
-#    preparing resources to handle the INI configurations
+#    prepare the storage of the configuration (CLI or INI)
 #  RETURN VALUE
 #    declare status
 #  EXAMPLE
-#    local -A _hINI='( [__id__]="__id__" [test]="hI" )' hI='( [__id__]="__id__" )'
+#    local -A _hINI='([__id__]="__id__" [i]="_hINI_i")' _hINI_i='([__id__]="__id__")'
+#    local -A _hCLI='([__id__]="__id__" [c]="_hCLI_c")' _hCLI_c='([__id__]="__id__")'
+#    [[ ${_hINI[@]} && ${_hINI_i[@]} && ${_hCLI[@]} && ${_hCLI_c[@]} ]]         #? true
 #    __config.section.storage.renew ini                                         #? true
-#    [[ ${_hINI[@]} ]]                                                          #? true
-#    [[ ${hI[@]} ]]                                                             #? false
+#    __config.section.storage.renew cli                                         #? true
+#    [[ ${_hINI[@]} || ${_hINI_i[@]} && ${_hCLI[@]} || ${_hCLI_c[@]} ]]         #? true
 #    __config.section.storage.free ini                                          #? true
-#    [[ ${_hINI[@]} ]]                                                          #? false
+#    __config.section.storage.free cli                                          #? true
+#    [[ ${_hINI[@]} || ${_hINI_i[@]} || ${_hCLI[@]} || ${_hCLI_c[@]} ]]         #? false
+
 #  SOURCE
 __config.section.storage.renew() {
 
@@ -118,20 +125,20 @@ __config.section.storage.renew() {
 #******
 #****f* libtst/__config.section.storage.select
 #  SYNOPSIS
-#    __config.section.storage.select cli|ini <section>
+#    __config.section.storage.select cli|ini [<section>]
 #  DESCRIPTION
-#    preparing resources to handle the selected section of the INI-file(s)
+#    select a section of the storage (CLI or INI) for the processing
 #  ARGUMENTS
-#    section name
+#    cli|ini - select configuration storage - CLI or INI, required
+#    section - section name, default - unnamed global
 #  RETURN VALUE
-#    last eval status
+#    InvalidArgument - not valid first argument, expected CLI or INI
 #  EXAMPLE
 #    local s
-#    __config.section.storage.renew ini                                         #? true
-#    __config.section.storage.select ini test                                                     #? true
+#    __config.section.storage.renew inI                                         #? true
+#    __config.section.storage.select Ini test                                   #? true
 #    s=${_hINI[test]}
 #    eval "declare -p $s" >| grep "declare.*2dc0f896fd7cb4cb0031ba249="         #? true
-#    [[ ${hI[@]} ]]                                                             #? false
 #    __config.section.storage.free ini                                          #? true
 #    [[ ${_hINI[@]} ]]                                                          #? false
 ## TODO add tests for section.{get,set}
@@ -190,7 +197,7 @@ config.section.show() {
 
   [[ $2 ]] && printf "\n\n[ %s ]%s\n\n" "$2" "$sA" || echo ""
 
-  if   [[ $sU == "@" ]]; then
+  if [[ $sU == "@" ]]; then
 
     ${1}.section.show.unnamed
 
@@ -805,7 +812,7 @@ ini.bind.cli() {
 
   eval "$sHandler" && udfHandleGetopt $s
 
-  echo $sHandler
+  #echo $sHandler
 }
 #******
 #****f* libtst/ini.save
