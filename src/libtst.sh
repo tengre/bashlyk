@@ -1,5 +1,5 @@
 #
-# $Id: libtst.sh 607 2016-11-30 16:48:39+04:00 toor $
+# $Id: libtst.sh 608 2016-11-30 17:11:18+04:00 toor $
 #
 #****h* BASHLYK/libtst
 #  DESCRIPTION
@@ -504,7 +504,6 @@ ini.read() {
 
   fi
 
-  i=0
   bIgnore=
 
   [[ ${hKeyValue[$s]} ]] || hKeyValue[$s]="$reKey_Val"
@@ -532,30 +531,20 @@ ini.read() {
 
       __ini.section.select ini "$s"
 
-      if  [[ ${hRawMode[$s]} =~ ^(\+|\-)$ ]]; then
+      i=0
+      case "${hRawMode[$s]}" in
 
-        i=$( ini.section.get __unnamed_cnt )
+        -) ;;
 
-        if ! udfIsNumber $i; then
+        +) i=$( ini.section.get __unnamed_cnt )
+           udfIsNumber $i || ini.section.set __unnamed_cnt ${i:=0}
+           ;;
 
-          i=0
-          ini.section.set __unnamed_cnt $i
+        =) ini.section.set __unnamed_mod "@";;
 
-        fi
+        *) hKeyValue[$s]="$reKey_Val";;
 
-        [[ ${hRawMode[$s]} == "-" ]] && i=0
-
-      elif [[ ${hRawMode[$s]} == "=" ]]; then
-
-        ini.section.set __unnamed_mod "@"
-        i=0
-
-      else
-
-        hKeyValue[$s]="$reKey_Val"
-        i=0
-
-      fi
+      esac
 
       continue
 
