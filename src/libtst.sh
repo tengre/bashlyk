@@ -1,5 +1,5 @@
 #
-# $Id: libtst.sh 608 2016-11-30 17:11:18+04:00 toor $
+# $Id: libtst.sh 609 2016-12-01 00:03:55+04:00 toor $
 #
 #****h* BASHLYK/libtst
 #  DESCRIPTION
@@ -84,6 +84,7 @@ __ini.section.id() {
   [[ ${1^^} =~ ^(CLI|INI)$ ]] && eval "echo \${_h${1^^}[${2:-@}]}" || return $( _ iErrorInvalidArgument )
 
 }
+#******
 #****f* libtst/__ini.db.free
 #  SYNOPSIS
 #    __ini.db.free [CLI|INI]
@@ -258,92 +259,6 @@ __ini.section.show() {
 
 }
 #******
-#****f* libtst/__ini.show
-#  SYNOPSIS
-#    __ini.show [CLI|INI]
-#  DESCRIPTION
-#    Show the current state of the configuration data
-#  ARGUMENTS
-#    CLI - storage for Command Line Interface (CLI) options
-#    INI - storage for INI options, default
-#  OUTPUT
-#    configuration in the INI format
-#  EXAMPLE
-#    __ini.db.clean
-#    __ini.section.select INI section
-#    ini.section.set key "is value"
-#    __ini.section.select INI
-#    ini.section.set key "unnamed section"
-#    __ini.show     >| md5sum - | grep ^5a67839daaa52b9c5dbd135daaad313e.*-$    #? true
-#    __ini.db.free
-#  SOURCE
-__ini.show() {
-
-  local a s S=${1:-INI}
-
-  [[ ${S^^} =~ ^(CLI|INI)$ ]] || eval $( udfOnError return InvalidArgument '$1' )
-
-  eval "a=\"\${_a${S^^}[@]}\""
-
-  __ini.section.show $S
-
-  for s in $a; do
-
-    [[ $s =~ ^(__global__|__id__)$ ]] && continue
-    __ini.section.show $S "$s"
-
-  done
-
-  printf -- "\n"
-
-}
-#******
-#****f* libtst/__ini.save
-#  SYNOPSIS
-#    __ini.save cli|ini <file>
-#  DESCRIPTION
-#    Save the current state of the configuration data to the specified file
-#  ARGUMENTS
-#    cli|ini - select configuration storage - CLI or INI, required
-#    <file>  - target file for saving, full path required
-#  RETURN VALUE
-#    MissingArgument    - the file name is not specified
-#    NotExistNotCreated - the target file is not created
-#  EXAMPLE
-#    local fn
-#    udfMakeTemp fn
-#    __ini.db.clean
-#    __ini.section.select INI section
-#    ini.section.set key "is value"
-#    __ini.section.select INI
-#    ini.section.set key "unnamed section"
-#    __ini.save INI $fn
-#    __ini.db.free
-#    tail -n +4 $fn >| md5sum - | grep ^5a67839daaa52b9c5dbd135daaad313e.*-$    #? true
-#  SOURCE
-__ini.save() {
-
-  [[ ${1^^} =~ ^(CLI|INI)$ ]] || eval $( udfOnError InvalidArgument '$1' )
-
-  udfOn MissingArgument throw "$2"
-
-  local fn
-  fn="$2"
-
-  ## TODO backup previous version if exist
-  mkdir -p ${fn%/*} && touch $fn || eval $( udfOnError throw NotExistNotCreated "${fn%/*}" )
-
-  {
-
-    printf ';\n; created %s by %s\n;\n' "$(date -R)" "$( _ sUser )"
-    __ini.show $1
-
-  } > $fn
-
-  return 0
-
-}
-#******
 #****f* libtst/cli.section.raw
 #  SYNOPSIS
 #    cli.section.raw <raw mode> <data>
@@ -428,6 +343,151 @@ cli.section.add() {
 
 }
 #******
+#****f* libtst/ini.show
+#  SYNOPSIS
+#    ini.show [CLI|INI]
+#  DESCRIPTION
+#    Show the current state of the configuration data
+#  ARGUMENTS
+#    CLI - storage for Command Line Interface (CLI) options
+#    INI - storage for INI options, default
+#  OUTPUT
+#    configuration in the INI format
+#  EXAMPLE
+#    __ini.db.clean
+#    __ini.section.select INI section
+#    ini.section.set key "is value"
+#    __ini.section.select INI
+#    ini.section.set key "unnamed section"
+#    ini.show >| md5sum - | grep ^5a67839daaa52b9c5dbd135daaad313e.*-$          #? true
+#    __ini.db.free
+#  SOURCE
+ini.show() {
+
+  local a s S=${1:-INI}
+
+  [[ ${S^^} =~ ^(CLI|INI)$ ]] || eval $( udfOnError return InvalidArgument '$1' )
+
+  eval "a=\"\${_a${S^^}[@]}\""
+
+  __ini.section.show $S
+
+  for s in $a; do
+
+    [[ $s =~ ^(__global__|__id__)$ ]] && continue
+    __ini.section.show $S "$s"
+
+  done
+
+  printf -- "\n"
+
+}
+#******
+#****f* libtst/ini.cli.show
+#  SYNOPSIS
+#    ini.cli.show
+#  DESCRIPTION
+#    Show the current state of the configuration data
+#  OUTPUT
+#    configuration in the INI format
+#  EXAMPLE
+#    __ini.db.clean CLI
+#    __ini.section.select CLI section
+#    cli.section.set key "is value"
+#    __ini.section.select CLI
+#    cli.section.set key "unnamed section"
+#    ini.cli.show >| md5sum - | grep ^5a67839daaa52b9c5dbd135daaad313e.*-$      #? true
+#    __ini.db.free CLI
+#  SOURCE
+ini.cli.show() {
+
+  ini.show CLI
+
+}
+#******
+#****f* libtst/__ini.save
+#  SYNOPSIS
+#    __ini.save cli|ini <file>
+#  DESCRIPTION
+#    Save the current state of the configuration data to the specified file
+#  ARGUMENTS
+#    cli|ini - select configuration storage - CLI or INI, required
+#    <file>  - target file for saving, full path required
+#  RETURN VALUE
+#    MissingArgument    - the file name is not specified
+#    NotExistNotCreated - the target file is not created
+#  EXAMPLE
+#    local fn
+#    udfMakeTemp fn
+#    __ini.db.clean
+#    __ini.section.select INI section
+#    ini.section.set key "is value"
+#    __ini.section.select INI
+#    ini.section.set key "unnamed section"
+#    __ini.save INI $fn
+#    __ini.db.free
+#    tail -n +4 $fn >| md5sum - | grep ^5a67839daaa52b9c5dbd135daaad313e.*-$    #? true
+#  SOURCE
+__ini.save() {
+
+  [[ ${1^^} =~ ^(CLI|INI)$ ]] || eval $( udfOnError InvalidArgument '$1' )
+
+  udfOn MissingArgument throw "$2"
+
+  local fn
+  fn="$2"
+
+  ## TODO backup previous version if exist
+  mkdir -p ${fn%/*} && touch $fn || eval $( udfOnError throw NotExistNotCreated "${fn%/*}" )
+
+  {
+
+    printf ';\n; created %s by %s\n;\n' "$(date -R)" "$( _ sUser )"
+    ini.show $1
+
+  } > $fn
+
+  return 0
+
+}
+#******
+#****f* libtst/ini.save
+#  SYNOPSIS
+#    ini.save <file>
+#  DESCRIPTION
+#    Save the current state of the configuration data to the specified file
+#  ARGUMENTS
+#    <file> - target file for saving, full path required
+#  RETURN VALUE
+#    MissingArgument    - the file name is not specified
+#    NotExistNotCreated - the target file is not created
+#  EXAMPLE
+#  SOURCE
+ini.save() {
+
+  __ini.save INI $1
+
+}
+#******
+#****f* libtst/ini.cli.save
+#  SYNOPSIS
+#    ini.cli.save <file>
+#  DESCRIPTION
+#    Save a CLI options as INI configuration to the
+#    specified file
+#  ARGUMENTS
+#    <file> - target file for saving, full path required
+#  RETURN VALUE
+#    MissingArgument    - the file name is not specified
+#    NotExistNotCreated - the target file is not created
+#  EXAMPLE
+#  SOURCE
+ini.cli.save() {
+
+  __ini.save CLI $1
+
+}
+#******
 #****f* libtst/ini.read
 #  SYNOPSIS
 #    ini.read args
@@ -471,7 +531,7 @@ cli.section.add() {
 #    ass = to ass                                                               #-
 #    EOFini                                                                     #-
 #   ini.read $ini                                                               #? true
-#   __ini.show >| md5sum - | grep ^a7d5fb1f4425f6a74154addf5801ee4b.*-$         #? true
+#   ini.show >| md5sum - | grep ^a7d5fb1f4425f6a74154addf5801ee4b.*-$           #? true
 #   declare -p _hINI >| md5sum - | grep ^c5d33e3b1b3cccf9b32ae2d41ee3b8c3.*-$   #? true
 #    for s in "${!_hINI[@]}"; do                                                #-
 #      [[ $s == '__id__' ]] && continue                                         #-
@@ -682,7 +742,7 @@ ini.read() {
 #   ini.save $iniSave                                                           #? true
 #   declare -p _aINI
 #   declare -p _hINI
-#   __ini.show >| md5sum - | grep ^5a8cdc4d2dbb5cb169cc857603179217.*-$         #? true
+#   ini.show >| md5sum - | grep ^5a8cdc4d2dbb5cb169cc857603179217.*-$           #? true
 #    for s in "${!_hINI[@]}"; do                                                #-
 #      [[ $s == '__id__' ]] && continue                                         #-
 #      echo "section ${s}:"
@@ -750,7 +810,7 @@ ini.load() {
 
   done
 
-  if [[ ${_hCLI[@]} ]]; then
+  if [[ $( __ini.section.id CLI ) ]]; then
 
     udfMakeTemp ini
 
@@ -796,8 +856,8 @@ ini.load() {
 #    ini.cli.bind $rCLI                                                         #? true
 #    ini.load $ini $rINI                                                        #? true
 #    declare -p _hCLI
-#    __ini.show CLI >| md5sum - | grep ^033a19e25672b2c703023b4da23e2efd.*-$ #? true
-#    __ini.show >| md5sum - | grep ^230af661227964498193dc3df7c63ece.*-$        #? true
+#    ini.show CLI >| md5sum - | grep ^033a19e25672b2c703023b4da23e2efd.*-$      #? true
+#    ini.show >| md5sum - | grep ^230af661227964498193dc3df7c63ece.*-$          #? true
 #    for s in "${!_hCLI[@]}"; do                                                #-
 #      [[ $s == '__id__' ]] && continue                                         #-
 #      echo "section ${s}:"
@@ -850,85 +910,3 @@ ini.cli.bind() {
 
 }
 #******
-#****f* libtst/ini.show
-#  SYNOPSIS
-#    ini.show
-#  DESCRIPTION
-#    Show the current state of the configuration data
-#  OUTPUT
-#    configuration in the INI format
-#  EXAMPLE
-#    __ini.db.clean
-#    __ini.section.select INI section
-#    ini.section.set key "is value"
-#    __ini.section.select INI
-#    ini.section.set key "unnamed section"
-#    ini.show >| md5sum - | grep ^5a67839daaa52b9c5dbd135daaad313e.*-$          #? true
-#    __ini.db.free
-#  SOURCE
-ini.show() {
-
-  __ini.show INI
-
-}
-#******
-#****f* libtst/ini.cli.show
-#  SYNOPSIS
-#    ini.cli.show
-#  DESCRIPTION
-#    Show the current state of the configuration data
-#  OUTPUT
-#    configuration in the INI format
-#  EXAMPLE
-#    __ini.db.clean CLI
-#    __ini.section.select CLI section
-#    cli.section.set key "is value"
-#    __ini.section.select CLI
-#    cli.section.set key "unnamed section"
-#    ini.cli.show >| md5sum - | grep ^5a67839daaa52b9c5dbd135daaad313e.*-$      #? true
-#    __ini.db.free CLI
-#  SOURCE
-ini.cli.show() {
-
-  __ini.show CLI
-
-}
-#******
-#****f* libtst/ini.save
-#  SYNOPSIS
-#    ini.save <file>
-#  DESCRIPTION
-#    Save the current state of the configuration data to the specified file
-#  ARGUMENTS
-#    <file> - target file for saving, full path required
-#  RETURN VALUE
-#    MissingArgument    - the file name is not specified
-#    NotExistNotCreated - the target file is not created
-#  EXAMPLE
-#  SOURCE
-ini.save() {
-
-  __ini.save INI $1
-
-}
-#******
-#****f* libtst/ini.cli.save
-#  SYNOPSIS
-#    ini.cli.save <file>
-#  DESCRIPTION
-#    Save a CLI options as INI configuration to the
-#    specified file
-#  ARGUMENTS
-#    <file> - target file for saving, full path required
-#  RETURN VALUE
-#    MissingArgument    - the file name is not specified
-#    NotExistNotCreated - the target file is not created
-#  EXAMPLE
-#  SOURCE
-ini.cli.save() {
-
-  __ini.save CLI $1
-
-}
-#******
-
