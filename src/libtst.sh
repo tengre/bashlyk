@@ -1,5 +1,5 @@
 #
-# $Id: libtst.sh 609 2016-12-01 00:03:55+04:00 toor $
+# $Id: libtst.sh 610 2016-12-02 15:35:03+04:00 toor $
 #
 #****h* BASHLYK/libtst
 #  DESCRIPTION
@@ -36,8 +36,7 @@
 : ${_bashlyk_emailSubj:="${_bashlyk_sUser}@${HOSTNAME}::${_bashlyk_s0}"}
 : ${_bashlyk_envXSession:=}
 : ${_bashlyk_aRequiredCmd_msg:="getopt stat"}
-: ${_bashlyk_aExport_msg:="ini.section.{add,free,get,init,raw,select,set}       \
-  ini.read ini.load ini.save ini.bind.cli"}
+: ${_bashlyk_aExport_msg:="ini.cli.bind ini.load ini.read ini.save ini.show"}
 #******
 #****f* libtst/udfTest
 #  SYNOPSIS
@@ -91,14 +90,14 @@ __ini.section.id() {
 #  DESCRIPTION
 #    remove the storage associated with the configuration (CLI or INI)
 #  ARGUMENTS
-#    cli - storage for Command Line Interface (CLI) options
-#    ini - storage for INI options, default
+#    CLI - storage for Command Line Interface (CLI) options
+#    INI - storage for INI options, default
 #  EXAMPLE
 #    local -A _hINI='([__id__]="__id__" [i]="_hINI_i")' _hINI_i='([__id__]="__id__")'
 #    local -A _hCLI='([__id__]="__id__" [c]="_hCLI_c")' _hCLI_c='([__id__]="__id__")'
 #    [[ ${_hINI[@]} && ${_hINI_i[@]} && ${_hCLI[@]} && ${_hCLI_c[@]} ]]         #? true
-#    __ini.db.free                                                           #? true
-#    __ini.db.free cli                                                       #? true
+#    __ini.db.free                                                              #? true
+#    __ini.db.free cli                                                          #? true
 #    [[ ${_hINI[@]} || ${_hINI_i[@]} || ${_hCLI[@]} || ${_hCLI_c[@]} ]]         #? false
 #  SOURCE
 __ini.db.free() {
@@ -150,9 +149,9 @@ __ini.db.clean() {
 
 }
 #******
-#****f* libtst/__ini.section.select
+#****f* libtst/ini.section.select
 #  SYNOPSIS
-#    __ini.section.select CLI|INI [<section>]
+#    ini.section.select [CLI|INI][\[<section>\]]
 #  DESCRIPTION
 #    select a section of the storage (CLI or INI) for the processing
 #  ARGUMENTS
@@ -163,34 +162,58 @@ __ini.db.clean() {
 #  EXAMPLE
 #    local s
 #    __ini.db.clean
-#    __ini.section.select Ini test                                              #? true
+#    ini.section.select                                                         #? true
+#    ini.section.select ini[]                                                   #? true
+#    ini.section.select []                                                      #? true
+#    ini.section.select [test]                                                  #? true
+#    ini.section.select test                                                    #? true
+#    ini.section.select Ini[test]                                               #? true
 #    s=${_hINI[test]}
 #    eval "declare -p $s" >| grep "declare.*2dc0f896fd7cb4cb0031ba249="         #? true
 #    __ini.db.free
-#    [[ ${_hINI[@]} ]]
 ## TODO add tests for section.{get,set}
 #  SOURCE
-__ini.section.select() {
+ini.section.select() {
 
-  [[ ${1^^} =~ ^(CLI|INI)$ ]] || eval $( udfOnError InvalidArgument '$1' )
+  local -a a
+  local h id s IFS
 
-  local s sS="${2:-__global__}"
+  IFS='[]' a=( $* )
 
-  if [[ ! $( __ini.section.id $1 $sS ) ]]; then
+  case "${#a[@]}" in
 
-    s=$(md5sum <<< "$sS")
-    s="_h${1^^}_${s:0:32}"
-    declare -A -g -- $s="()"
+    2|3)
+      h=${a[0]:-INI}
+      s="${a[1]:-__global__}"
+      ;;
 
-    eval "_h${1^^}[$sS]=$s; _a${1^^}[\${#_a${1^^}[@]}]=\"$sS\""
+    0|1)
+      h=INI
+      s="${a[0]:-__global__}"
+      ;;
+
+    *)
+      eval $( udfOnError throw InvalidArgument "$*" )
+
+  esac
+
+  [[ ${h^^} =~ ^(CLI|INI)$ ]] || eval $( udfOnError throw InvalidArgument "$h - CLI or INI expected.." )
+
+  if [[ ! $( __ini.section.id $h $s ) ]]; then
+
+    id=$(md5sum <<< "$s")
+    id="_h${h^^}_${id:0:32}"
+    declare -A -g -- $id="()"
+
+    eval "_h${h^^}[$s]=$id; _a${h^^}[\${#_a${h^^}[@]}]=\"$s\""
 
   else
 
-    eval "s=\${_h${1^^}[$sS]}"
+    eval "id=\${_h${h^^}[$s]}"
 
   fi
 
-  eval "${1,,}.section.set() { [[ \$1 ]] && $s[\$1]="\$2"; }; ${1,,}.section.get() { [[ \$1 ]] && echo "\${$s[\$1]}"; };"
+  eval "${h,,}.section.set() { [[ \$1 ]] && $id[\$1]="\$2"; }; ${h,,}.section.get() { [[ \$1 ]] && echo "\${$id[\$1]}"; };"
 
 }
 #******
@@ -206,10 +229,10 @@ __ini.section.select() {
 #    the contents (must be empty) of the specified section with name
 #  EXAMPLE
 #    __ini.db.clean
-#    __ini.section.select INI section
+#    ini.section.select [section]
 #    ini.section.set key "is value"
 #    __ini.section.show INI section >| md5sum - | grep ^9134a91b.*5ef71         #? true
-#    __ini.section.select INI
+#    ini.section.select
 #    ini.section.set key "unnamed section"
 #    __ini.section.show INI >| md5sum - | grep ^33098f129cdfa322.*b4f0b         #? true
 #    __ini.db.free
@@ -218,9 +241,9 @@ __ini.section.show() {
 
   [[ ${1^^} =~ ^(CLI|INI)$ ]] || eval $( udfOnError InvalidArgument '$1' )
 
-  local i iC s="${2:-__global__}" sA sU
+  local i iC s=${2:-__global__} sA sU
 
-  __ini.section.select $1 $s
+  ini.section.select ${1}[${s}]
 
   s=$( __ini.section.id $1 "$s" )
 
@@ -232,7 +255,7 @@ __ini.section.show() {
 
   [[ $2 ]] && printf "\n\n[ %s ]%s\n\n" "$2" "$sA" || echo ""
 
-  if [[ $sU == "@" ]]; then
+  if [[ $sU == "=" ]]; then
 
     ${1,,}.section.show.unnamed
 
@@ -268,7 +291,7 @@ __ini.section.show() {
 #    <raw mode> - the signs of the method of raw data handling:
 #                 '-', '+' - add new records with key incrementing
 #                 '='      - add new unique record only
-#    < data>    - "raw" data, no as "key=value" pairs
+#    <data>     - "raw" data, no as "key=value" pairs
 #  RETURN VALUE
 #    InvalidArgument - unexpected "raw" mode
 #    Success for other cases
@@ -284,8 +307,8 @@ cli.section.raw() {
 
        s="${2##*( )}"
        s="${s%%*( )}"
-       cli.section.set "__unnamed_key=${s//[\'\"\\]/}" "$s"
-       cli.section.set "__unnamed_mod" "@"
+       cli.section.set "__unnamed_key=${s//[\'\"\\ ]/}" "$s"
+       cli.section.set '__unnamed_mod' "="
 
     ;;
 
@@ -295,7 +318,7 @@ cli.section.raw() {
        udfIsNumber $i || i=0
        cli.section.set "__unnamed_idx=${i}" "$2"
        : $(( i++ ))
-       cli.section.set __unnamed_cnt $i
+       cli.section.set '__unnamed_cnt' $i
 
     ;;
 
@@ -309,6 +332,7 @@ cli.section.raw() {
 
 }
 #******
+#****f* libtst/cli.section.add
 #  SYNOPSIS
 #    cli.section.add <section> <key> <value>
 #  DESCRIPTION
@@ -329,7 +353,7 @@ cli.section.add() {
 
   udfOn MissingArgument $2 || return $?
 
-  __ini.section.select cli "${1:-__global__}"
+  ini.section.select cli[${1:-__global__}]
 
   if [[ $2 =~ ^[\-\+=]$ ]]; then
 
@@ -343,21 +367,210 @@ cli.section.add() {
 
 }
 #******
+udfIsHash() {
+
+  udfOn InvalidVariable $1 || return $?
+  [[ $( declare -p $1 2>/dev/null ) =~ ^declare ]] && return 0 || return $( _ iErrorInvalidHash )
+
+}
+#****f* libtst/ini.section.getarray
+#  SYNOPSIS
+#    ini.getarray [INI|CLI][\[[<section>]\]]<key>
+#  DESCRIPTION
+#    get value(s) for specified key of the section of the configuration
+#  ARGUMENTS
+#    <section> - correspondent section to the configuration, default - unnamed
+#    <key>     - named key for "key=value" pair of the input data. For unnamed
+#                records this argument must be supressed, this cases return
+#                serialized array of items
+#  RETURN VALUE
+#    MissingArgument - arguments not found
+#    InvalidArgument - expected like a 'cli[section]key', 'cli[]key', 'key'
+#    Success in other cases
+#  EXAMPLE
+#    __ini.db.clean
+#    ini.section.select sect1
+#    ini.section.set __unnamed_cnt 3
+#    ini.section.set __unnamed_idx=0 "is raw value No.1"
+#    ini.section.set __unnamed_idx=1 "is raw value No.2"
+#    ini.section.set __unnamed_idx=2 "is raw value No.3"
+#    ini.section.select sect2
+#    ini.section.set __unnamed_mod =
+#    ini.section.set '__unnamed_key=a1' "is raw value No.1"
+#    ini.section.set '__unnamed_key=b2' "is raw value No.2"
+#    ini.section.set '__unnamed_key=a1' "is raw value No.3"
+#    ini.section.getarray [sect1] >| md5sum - | grep ^9cb6e1559552.*3d7417b.*-$ #? true
+#    ini.section.getarray [sect2] >| md5sum - | grep ^9c964b5b47f6.*82a6d4e.*-$ #? true
+#    ini.section.getarray sect2 >| md5sum - | grep ^9c964b5b47f6dc.*82a6d4e.*-$ #? true
+#    ini.section.getarray sect1 >| md5sum - | grep ^9cb6e155955235.*3d7417b.*-$ #? true
+#    __ini.db.free
+#  SOURCE
+ini.section.getarray() {
+
+  local -a a
+  local h id iC sU s IFS
+
+  IFS='[]' && a=( $* ) && IFS=$' \t\n'
+
+  case "${#a[@]}" in
+
+    2|3)
+      h=${a[0]:-INI}
+      s="${a[1]:-__global__}"
+      ;;
+
+    0|1)
+      h=INI
+      s="${a[0]:-__global__}"
+      ;;
+
+    *)
+      eval $( udfOnError throw InvalidArgument "$*" )
+
+  esac
+
+  h=${h^^}
+
+  unset -v a
+  local -a a='()'
+
+  ini.section.select $h[$s]
+  id=$( __ini.section.id $h "$s" )
+
+  udfIsHash $id || eval $( udfOnError InvalidHash '$id' )
+
+  sU=$( ${h,,}.section.get __unnamed_mod )
+
+  if [[ $sU == "=" ]]; then
+
+    eval "__ini.section.getarray.unnamed.keys() { local i; for i in "\${!$id[@]}"; do [[ \$i =~ ^__unnamed_key= ]] && a[\${#a[@]}]=\"\${$id[\$i]}\"; done; };"
+    __ini.section.getarray.unnamed.keys
+
+  else
+
+    iC=$( ${h,,}.section.get __unnamed_cnt )
+    if udfIsNumber $iC && (( iC )); then
+
+      eval "__ini.section.getarray.unnamed.idxs() { local i; for (( i=0; i < $iC; i++ )); do a[\${#a[@]}]=\"\${$id[__unnamed_idx=\$i]}\"; done; };"
+      __ini.section.getarray.unnamed.idxs
+
+    fi
+
+  fi
+
+  (( ${#a[@]} > 0 )) && declare -p a
+
+}
+#******
+#****f* libtst/ini.get
+#  SYNOPSIS
+#    ini.get [INI|CLI][\[[<section>]\]]<key>
+#  DESCRIPTION
+#    get value(s) for specified key of the section of the configuration
+#  ARGUMENTS
+#    <section> - correspondent section to the configuration, default - unnamed
+#    <key>     - named key for "key=value" pair of the input data. For unnamed
+#                records this argument must be supressed, this cases return
+#                serialized array of items
+#  RETURN VALUE
+#    MissingArgument - arguments not found
+#    InvalidArgument - expected like a 'cli[section]key', 'cli[]key', 'key'
+#    Success in other cases
+#  EXAMPLE
+#
+#    __ini.db.clean
+#    ini.section.select
+#    ini.section.set key "is unnamed section"
+#    ini.section.select section
+#    ini.section.set key "is value"
+#    ini.section.select
+#    ini.get ini[section]key >| grep '^is value$'                               #? true
+#    ini.get    [section]key >| grep '^is value$'                               #? true
+#    ini.section.select INI[section]
+#    ini.get      key >| grep '^is unnamed section$'                            #? true
+#    ini.get    []key >| grep '^is unnamed section$'                            #? true
+#    ini.get INI[]key >| grep '^is unnamed section$'                            #? true
+#    ini.section.select section1
+#    ini.section.set __unnamed_cnt 3
+#    ini.section.set __unnamed_idx=0 "is raw value No.1"
+#    ini.section.set __unnamed_idx=1 "is raw value No.2"
+#    ini.section.set __unnamed_idx=2 "is raw value No.3"
+#    ini.section.select section2
+#    ini.section.set __unnamed_mod =
+#    ini.section.set __unnamed_key=a1 "is raw value No.1"
+#    ini.section.set __unnamed_key=b2 "is raw value No.2"
+#    ini.section.set __unnamed_key=a1 "is raw value No.3"
+#    ini.get ini[section1] >| md5sum - | grep ^9cb6e1559552.*3d7417b.*-$        #? true
+#    ini.get ini[section2] >| md5sum - | grep ^9c964b5b47f6.*82a6d4e.*-$        #? true
+#    ini.get [section2] >| md5sum -    | grep ^9c964b5b47f6dc.*82a6d4e.*-$      #? true
+#    ini.get [section1] >| md5sum -    | grep ^9cb6e155955235.*3d7417b.*-$      #? true
+#    __ini.db.free
+#  SOURCE
+ini.get() {
+
+  udfOn MissingArgument $* || return $?
+
+  local -a a
+  local h k s v IFS
+
+  IFS='[]' a=( $* )
+
+  case ${#a[@]} in
+
+    3)
+      h=${a[0]:-INI}
+      s="${a[1]:-__global__}"
+      k=${a[2]:-__unnamed_}
+      ;;
+
+    2)
+      h=${a[0]:-INI}
+      s="${a[1]:-__global__}"
+      k='__unnamed_'
+      ;;
+
+    1)
+      h=INI
+      s='__global__'
+      k="${a[0]:-__unnamed_}"
+      ;;
+
+    *)
+      eval $( udfOnError throw InvalidArgument "$* $(declare -p a)" )
+
+  esac
+
+  if [[ $k =~ __unnamed_ ]]; then
+
+    ini.section.getarray ${h}[${s}]
+
+  else
+
+    ini.section.select ${h}[${s}]
+    ini.section.get "$k"
+
+  fi
+
+}
+#******
 #****f* libtst/ini.show
 #  SYNOPSIS
 #    ini.show [CLI|INI]
 #  DESCRIPTION
-#    Show the current state of the configuration data
+#    Show a configuration (CLI or INI) in the INI format
 #  ARGUMENTS
-#    CLI - storage for Command Line Interface (CLI) options
-#    INI - storage for INI options, default
+#    CLI - storage for the Command Line Interface (CLI) options
+#    INI - storage for the options from the INI files, default
+#  RETURN VALUE
+#    InvalidArgument - expected 'CLI' or 'INI' arguments
+#    Success on other cases
 #  OUTPUT
 #    configuration in the INI format
 #  EXAMPLE
 #    __ini.db.clean
-#    __ini.section.select INI section
+#    ini.section.select section
 #    ini.section.set key "is value"
-#    __ini.section.select INI
+#    ini.section.select
 #    ini.section.set key "unnamed section"
 #    ini.show >| md5sum - | grep ^5a67839daaa52b9c5dbd135daaad313e.*-$          #? true
 #    __ini.db.free
@@ -383,23 +596,23 @@ ini.show() {
 
 }
 #******
-#****f* libtst/ini.cli.show
+#****f* libtst/cli.show
 #  SYNOPSIS
-#    ini.cli.show
+#    cli.show
 #  DESCRIPTION
-#    Show the current state of the configuration data
+#    Show a content of the CLI configuration in the INI format
 #  OUTPUT
 #    configuration in the INI format
 #  EXAMPLE
 #    __ini.db.clean CLI
-#    __ini.section.select CLI section
+#    ini.section.select CLI[section]
 #    cli.section.set key "is value"
-#    __ini.section.select CLI
+#    ini.section.select CLI[]
 #    cli.section.set key "unnamed section"
-#    ini.cli.show >| md5sum - | grep ^5a67839daaa52b9c5dbd135daaad313e.*-$      #? true
+#    cli.show >| md5sum - | grep ^5a67839daaa52b9c5dbd135daaad313e.*-$      #? true
 #    __ini.db.free CLI
 #  SOURCE
-ini.cli.show() {
+cli.show() {
 
   ini.show CLI
 
@@ -407,11 +620,11 @@ ini.cli.show() {
 #******
 #****f* libtst/__ini.save
 #  SYNOPSIS
-#    __ini.save cli|ini <file>
+#    __ini.save CLI|INI <file>
 #  DESCRIPTION
-#    Save the current state of the configuration data to the specified file
+#    Save the configuration to the specified file in the INI format
 #  ARGUMENTS
-#    cli|ini - select configuration storage - CLI or INI, required
+#    CLI|INI - select configuration storage - CLI or INI, required
 #    <file>  - target file for saving, full path required
 #  RETURN VALUE
 #    MissingArgument    - the file name is not specified
@@ -420,9 +633,9 @@ ini.cli.show() {
 #    local fn
 #    udfMakeTemp fn
 #    __ini.db.clean
-#    __ini.section.select INI section
+#    ini.section.select [section]
 #    ini.section.set key "is value"
-#    __ini.section.select INI
+#    ini.section.select []
 #    ini.section.set key "unnamed section"
 #    __ini.save INI $fn
 #    __ini.db.free
@@ -437,7 +650,7 @@ __ini.save() {
   local fn
   fn="$2"
 
-  ## TODO backup previous version if exist
+  [[ -s $fn ]] && mv $fn ${fn}.bak
   mkdir -p ${fn%/*} && touch $fn || eval $( udfOnError throw NotExistNotCreated "${fn%/*}" )
 
   {
@@ -455,12 +668,14 @@ __ini.save() {
 #  SYNOPSIS
 #    ini.save <file>
 #  DESCRIPTION
-#    Save the current state of the configuration data to the specified file
+#    Save a content of the INI configuration in the INI format to the specified
+#    file
 #  ARGUMENTS
 #    <file> - target file for saving, full path required
 #  RETURN VALUE
 #    MissingArgument    - the file name is not specified
 #    NotExistNotCreated - the target file is not created
+#    Success on other cases
 #  EXAMPLE
 #  SOURCE
 ini.save() {
@@ -469,12 +684,12 @@ ini.save() {
 
 }
 #******
-#****f* libtst/ini.cli.save
+#****f* libtst/cli.save
 #  SYNOPSIS
-#    ini.cli.save <file>
+#    cli.save <file>
 #  DESCRIPTION
-#    Save a CLI options as INI configuration to the
-#    specified file
+#    Save a content of the CLI configuration in the INI format to the specified
+#    file
 #  ARGUMENTS
 #    <file> - target file for saving, full path required
 #  RETURN VALUE
@@ -482,7 +697,7 @@ ini.save() {
 #    NotExistNotCreated - the target file is not created
 #  EXAMPLE
 #  SOURCE
-ini.cli.save() {
+cli.save() {
 
   __ini.save CLI $1
 
@@ -568,7 +783,7 @@ ini.read() {
 
   [[ ${hKeyValue[$s]} ]] || hKeyValue[$s]="$reKey_Val"
 
-  __ini.section.select ini "$s"
+  ini.section.select [${s}]
 
   while read -t 4; do
 
@@ -589,7 +804,7 @@ ini.read() {
       [[ $bActiveSection == "close" ]] && bActiveSection= && ini.section.set __unnamed_mod "!" && continue
       bIgnore=
 
-      __ini.section.select ini "$s"
+      ini.section.select [${s}]
 
       i=0
       case "${hRawMode[$s]}" in
@@ -600,7 +815,7 @@ ini.read() {
            udfIsNumber $i || ini.section.set __unnamed_cnt ${i:=0}
            ;;
 
-        =) ini.section.set __unnamed_mod "@";;
+        =) ini.section.set __unnamed_mod "=";;
 
         *) hKeyValue[$s]="$reKey_Val";;
 
@@ -624,7 +839,7 @@ ini.read() {
 
         REPLY=${REPLY##*( )}
         REPLY=${REPLY%%*( )}
-        ini.section.set "__unnamed_key=${REPLY//[\'\"\\]/}" "$REPLY"
+        ini.section.set "__unnamed_key=${REPLY//[\'\"\\ ]/}" "$REPLY"
 
       else
 
@@ -791,7 +1006,7 @@ ini.load() {
     [[ ${BASH_REMATCH[4]} ]] && s="${BASH_REMATCH[4]}" || s=
     [[ $s ]] && s="${s//,/\|}" && hKeyValue[$sSection]=${fmtKeyValue/\%KEY\%/$s}
 
-    __ini.section.select ini "$sSection"
+    ini.section.select [${sSection}]
     csv+="${sSection}|"
 
   done
@@ -814,7 +1029,7 @@ ini.load() {
 
     udfMakeTemp ini
 
-    ini.cli.save $ini
+    cli.save $ini
     ini.read $ini "$reValidSections"
 
     rm -f $ini
@@ -856,7 +1071,7 @@ ini.load() {
 #    ini.cli.bind $rCLI                                                         #? true
 #    ini.load $ini $rINI                                                        #? true
 #    declare -p _hCLI
-#    ini.show CLI >| md5sum - | grep ^033a19e25672b2c703023b4da23e2efd.*-$      #? true
+#    cli.show >| md5sum - | grep ^033a19e25672b2c703023b4da23e2efd.*-$          #? true
 #    ini.show >| md5sum - | grep ^230af661227964498193dc3df7c63ece.*-$          #? true
 #    for s in "${!_hCLI[@]}"; do                                                #-
 #      [[ $s == '__id__' ]] && continue                                         #-

@@ -1,5 +1,5 @@
 #
-# $Id: liberr.sh 601 2016-11-25 16:18:38+04:00 toor $
+# $Id: liberr.sh 610 2016-12-02 15:35:03+04:00 toor $
 #
 #****h* BASHLYK/liberr
 #  DESCRIPTION
@@ -53,7 +53,8 @@ _bashlyk_iErrorAbortedBySignal=220
 _bashlyk_iErrorNonValidVariable=200
 _bashlyk_iErrorInvalidVariable=200
 _bashlyk_iErrorInvalidFunction=199
-_bashlyk_iErrorEmptyVariable=198
+_bashlyk_iErrorInvalidHash=198
+_bashlyk_iErrorEmptyVariable=197
 _bashlyk_iErrorNotExistNotCreated=190
 _bashlyk_iErrorNoSuchFileOrDir=185
 _bashlyk_iErrorNoSuchProcess=184
@@ -79,6 +80,7 @@ _bashlyk_hError[$_bashlyk_iErrorBrokenIntegrity]="broken integrity"
 _bashlyk_hError[$_bashlyk_iErrorAbortedBySignal]="aborted by signal"
 _bashlyk_hError[$_bashlyk_iErrorInvalidVariable]="invalid variable"
 _bashlyk_hError[$_bashlyk_iErrorInvalidFunction]="invalid function"
+_bashlyk_hError[$_bashlyk_iErrorInvalidHash]="invalid hash"
 _bashlyk_hError[$_bashlyk_iErrorNotExistNotCreated]="not exist and not created"
 _bashlyk_hError[$_bashlyk_iErrorNoSuchFileOrDir]="no such file or directory"
 _bashlyk_hError[$_bashlyk_iErrorNoSuchProcess]="no such process"
