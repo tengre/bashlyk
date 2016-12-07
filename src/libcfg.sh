@@ -1,5 +1,5 @@
 #
-# $Id: libcfg.sh 612 2016-12-06 00:28:26+04:00 toor $
+# $Id: libcfg.sh 613 2016-12-07 13:03:03+04:00 toor $
 #
 #****h* BASHLYK/libcfg
 #  DESCRIPTION
@@ -50,7 +50,8 @@
 #  RETURN VALUE
 #    ...
 #  EXAMPLE
-#    cfg.new test #? true
+#    cfg.new tst #? true
+#    tst.free     #? true
 #  SOURCE
 cfg.new() {
 
@@ -59,7 +60,7 @@ cfg.new() {
   local a o s f
 
   o=$1
-  a="section.id section.select section.show section.raw section.add get show save read load cli.bind"
+  a="section.id section.item section.select section.show section.raw section.add section.getarray get set show save read load cli.bind getopt free"
 
   for s in $a; do
 
@@ -93,14 +94,46 @@ cfg.new() {
 #    cfg.new cli
 #    ini.section.id >| grep '__id__'                                            #? true
 #    cli.section.id >| grep '__id__'                                            #? true
-#    cfg.free ini
-#    cfg.free cli
+#    ini.free
+#    cli.free
 #  SOURCE
 cfg.section.id() {
 
   local o=${FUNCNAME[0]%%.*}
 
   eval "echo \${_h${o^^}[${1:-@}]}"
+
+}
+#******
+#****f* libcfg/cfg.section.item
+#  SYNOPSIS
+#    cfg.section.item number
+#  DESCRIPTION
+#    get a name of the section by number of the location
+#  ARGUMENTS
+#    section - section name or empty
+#  OUTPUT
+#    section name or numbers of sections
+#  EXAMPLE
+#    cfg.new ini
+#    ini.section.select
+#    ini.section.select section1
+#    ini.section.select section2
+#    ini.section.item
+#    ini.section.item 0
+#    ini.section.item 1
+#    ini.section.item 2
+#    ini.free
+#  SOURCE
+cfg.section.item() {
+
+  local i o=${FUNCNAME[0]%%.*} s
+
+  udfIsNumber $1 && i=$1 || i=@
+
+  [[ $i == @ ]] && s='#' || s=''
+
+  eval "echo \${${s}_a${o^^}[$i]}"
 
 }
 #******
@@ -112,25 +145,46 @@ cfg.section.id() {
 #  ARGUMENTS
 #    <db> - storage for INI options
 #  EXAMPLE
-#    local -A _hINI='([__id__]="__id__" [i]="_hINI_i")' _hINI_i='([__id__]="__id__")'
-#    local -A _hCLI='([__id__]="__id__" [c]="_hCLI_c")' _hCLI_c='([__id__]="__id__")'
-#    [[ ${_hINI[@]} && ${_hINI_i[@]} && ${_hCLI[@]} && ${_hCLI_c[@]} ]]         #? true
-#    cfg.free ini                                                               #? true
-#    cfg.free cli                                                               #? true
-#    [[ ${_hINI[@]} || ${_hINI_i[@]} || ${_hCLI[@]} || ${_hCLI_c[@]} ]]         #? false
+#    echo "${_hINI[@]}::${_aINI[@]}::${_aCLI[@]}::${_hINI_i[@]}::${_hCLI[@]}::${_hCLI_c[@]}"  #? true
+#    cfg.new ini
+#    cfg.new cli
+#    ini.section.select test1
+#    cli.section.select test2
+#    echo "${_hINI[@]}::${_aINI[@]}::${_aCLI[@]}::${_hINI_i[@]}::${_hCLI[@]}::${_hCLI_c[@]}"  #? true
+#    ini.free                                                               #? true
+#    cli.free                                                               #? true
+#    echo "${_hINI[@]}::${_aINI[@]}::${_aCLI[@]}::${_hINI_i[@]}::${_hCLI[@]}::${_hCLI_c[@]}"  #? true
+#    declare -pf ini.show
 #  SOURCE
 cfg.free() {
 
-  local o=${1:-CFG} s
+  local a o s
 
-  for s in "$( ${o}.section.id )"; do
+  a="section.id section.item section.select section.show section.raw section.add section.getarray get set show save read load cli.bind getopt section.get section.set free"
 
-    [[ $s == '__id__' ]] && continue || unset -v $s
+  o=${FUNCNAME[0]%%.*}
+
+  #
+  [[ $o == cfg ]] && o=$1
+  [[ $o ]] || return 1
+  #
+
+  for s in $( ${o}.section.id ); do
+
+    [[ $s =~ ^[[:blank:]]*$|^__id__$ ]] && continue || unset -v $s
 
   done
 
   unset -v _a${o^^}
   unset -v _h${o^^}
+
+  [[ $o == cfg ]] && return 0
+
+  for s in $a; do
+
+    unset -f ${o}.$s
+
+  done
 
 }
 #******
@@ -148,14 +202,10 @@ cfg.free() {
 #    cfg.new CNF
 #    CNF.section.select                                                         #? true
 #    s=$(CNF.section.id __global__)
-#    echo "hash $s"
-#    declare -pf CNF.$s.set
-#    declare -pf CNF.$s.get
-#    declare -p _hCNF
 #    CNF.section.select test                                                    #? true
 #    s=$( CNF.section.id test  )
 #    eval "declare -p $s" >| grep "declare.*2dc0f896fd7cb4cb0031ba249="         #? true
-#    cfg.free CNF
+#    CNF.free
 #  SOURCE
 cfg.section.select() {
 
@@ -164,7 +214,6 @@ cfg.section.select() {
   o=${FUNCNAME[0]%%.*}
   eval "id=\${_h${o^^}[$s]}"
 
-  echo "dbg0 -- $id" >> /tmp/o.log
   if [[ ! $id ]]; then
 
     ! eval "(( \${#_h${o^^}[@]} > 0 )) || declare -A -g -- _h${o^^}='([__id__]=__id__)'"
@@ -173,18 +222,12 @@ cfg.section.select() {
     declare -A -g -- $id="()"
 
     eval "_h${o^^}[$s]=$id; _a${o^^}[\${#_a${o^^}[@]}]=\"$s\""
-    eval "${o}.${id}.set() { [[ \$1 ]] && $id[\$1]="\$2"; }; ${o}.${id}.get() { [[ \$1 ]] && echo "\${$id[\$1]}"; };"
-    eval "${o}.${id}.show.pairs()   { local i; for i in "\${!$id[@]}"; do [[ \$i =~ ^__unnamed_     ]] || printf -- '\t%s\t = %s\n' \"\$i\" \"\${$id[\$i]}\"; done; };"
-    eval "${o}.${id}.show.unnamed() { local i; for i in "\${!$id[@]}"; do [[ \$i =~ ^__unnamed_key= ]] && printf -- '%s\n' \"\${$id[\$i]}\"; done; };"
+    #eval "${o}.${id}.set() { [[ \$1 ]] && $id[\$1]="\$2"; }; ${o}.${id}.get() { [[ \$1 ]] && echo "\${$id[\$1]}"; };"
 
-    echo "dbg1 -- $id" >> /tmp/o.log
   fi
 
-  echo "dbg ${FUNCNAME[1]} :: $*" >> /tmp/o.log
-  declare -pf ${o}.${id}.set >> /tmp/o.log
-  declare -p _h${o^^} >> /tmp/o.log
-  declare -p $id >> /tmp/o.log
-  #echo $id
+  eval "id=\${_h${o^^}[$s]}"
+  eval "${o}.section.set() { [[ \$1 ]] && $id[\$1]="\$2"; }; ${o}.section.get() { [[ \$1 ]] && echo "\${$id[\$1]}"; };"
 
 }
 #******
@@ -198,15 +241,14 @@ cfg.section.select() {
 #  OUTPUT
 #    the contents (must be empty) of the specified section with name
 #  EXAMPLE
-#    local id
 #    cfg.new conf
 #    conf.section.select section
-#    conf.$(conf.section.id section).set key "is value"
+#    conf.section.set key "is value"
 #    conf.section.show section >| md5sum - | grep ^9134a91b84725c7357c6f0aa12d5ef71.*-$ #? true
 #    conf.section.select
-#    conf.$(conf.section.id __global__).set key "unnamed section"
+#    conf.section.set key "unnamed section"
 #    conf.section.show >| md5sum - | grep ^33098f129cdfa322a2bd326a56bb4f0b.*-$ #? true
-#    cfg.free conf
+#    conf.free
 #  SOURCE
 cfg.section.show() {
 
@@ -217,36 +259,36 @@ cfg.section.show() {
   ${o}.section.select $s
   id=$( ${o}.section.id $s )
 
-  sU=$( ${o}.${id}.get __unnamed_mod )
+  sU=$( ${o}.section.get __unnamed_mod )
 
   [[ $sU == '!' ]] && sA=':' || sA=
   [[ $1 ]] && printf "\n\n[ %s ]%s\n\n" "$1" "$sA" || echo ""
 
   if [[ $sU == "=" ]]; then
 
-    ${o}.${id}.show.unnamed
+    eval "for i in "\${!$id[@]}"; do [[ \$i =~ ^__unnamed_key= ]] && printf -- '%s\n' \"\${$id[\$i]}\"; done;"
 
   else
 
-    iC=$( ${o}.${id}.get __unnamed_cnt )
+    iC=$( ${o}.section.get __unnamed_cnt )
 
     if udfIsNumber $iC && (( iC > 0 )); then
 
       for (( i=0; i < $iC; i++ )); do
 
-        ${o}.${id}.get "__unnamed_idx=$i"
+        ${o}.section.get "__unnamed_idx=$i"
 
       done
 
     else
 
-      ${o}.${id}.show.pairs
+      eval "for i in "\${!$id[@]}"; do [[ \$i =~ ^__unnamed_ ]] || printf -- '\t%s\t = %s\n' \"\$i\" \"\${$id[\$i]}\"; done;"
 
     fi
 
   fi
 
-  [[ $sA ]] && printf "\n%s[ %s ]\n" "$sA" "$2"
+  [[ $sA ]] && printf "\n%s[ %s ]\n" "$sA" "$1"
 
 }
 #******
@@ -264,12 +306,23 @@ cfg.section.show() {
 #    InvalidArgument - unexpected "raw" mode
 #    Success for other cases
 #  EXAMPLE
+#    cfg.new RawTest
+#    RawTest.section.select rawtest1
+#    RawTest.section.raw "=" "test 1"
+#    RawTest.section.raw "=" "test 2"
+#    RawTest.section.raw "=" "test 1"
+#    RawTest.section.select rawtest2
+#    RawTest.section.raw "+" "test 1"
+#    RawTest.section.raw "+" "test 2"
+#    RawTest.section.raw "+" "test 1"
+#    RawTest.show
+#    RawTest.free
 #  SOURCE
 cfg.section.raw() {
 
-  local a i s
+  local i o s
 
-  a=( ${FUNCNAME[0]//./ } )
+  o=${FUNCNAME[0]%%.*}
 
   case "$1" in
 
@@ -277,18 +330,18 @@ cfg.section.raw() {
 
        s="${2##*( )}"
        s="${s%%*( )}"
-       ${a[0]}.${a[1]}.set "__unnamed_key=${s//[\'\"\\ ]/}" "$s"
-       ${a[0]}.${a[1]}.set '__unnamed_mod' "="
+       ${o}.section.set "__unnamed_key=${s//[\'\"\\ ]/}" "$s"
+       ${o}.section.set '__unnamed_mod' "="
 
     ;;
 
     -|+)
 
-       i=$( ${a[0]}.${a[1]}.get __unnamed_cnt )
+       i=$( ${o}.section.get __unnamed_cnt )
        udfIsNumber $i || i=0
-       ${a[0]}.${a[1]}.set "__unnamed_idx=${i}" "$2"
+       ${o}.section.set "__unnamed_idx=${i}" "$2"
        : $(( i++ ))
-       ${a[0]}.${a[1]}.set '__unnamed_cnt' $i
+       ${o}.section.set '__unnamed_cnt' $i
 
     ;;
 
@@ -318,24 +371,35 @@ cfg.section.raw() {
 #  RETURN VALUE
 #    Success always
 #  EXAMPLE
+#    cfg.new AddTest
+#    AddTest.section.add addtest1 key1 "test 1"
+#    AddTest.section.add addtest1 key2 "test 2"
+#    AddTest.section.add addtest1 key3 "test 1"
+#    AddTest.section.add addtest2 "=" "test 1"
+#    AddTest.section.add addtest2 "=" "test 2"
+#    AddTest.section.add addtest2 "=" "test 1"
+#    AddTest.section.add addtest3 "+" "test 1"
+#    AddTest.section.add addtest3 "+" "test 2"
+#    AddTest.section.add addtest3 "+" "test 1"
+#    AddTest.show
+#    AddTest.free
 #  SOURCE
 cfg.section.add() {
 
   udfOn MissingArgument $2 || return $?
 
-  local a id o
+  local o
   o=${FUNCNAME[0]%%.*}
 
   ${o}.section.select ${1:-__global__}
-  id=$( ${o}.section.id ${1:-__global__} )
 
   if [[ $2 =~ ^[\-\+=]$ ]]; then
 
-    ${o}.${id}.raw "$2" "$3"
+    ${o}.section.raw "$2" "$3"
 
   else
 
-    ${o}.${id}.set "$2" "$3"
+    ${o}.section.set "$2" "$3"
 
   fi
 
@@ -358,49 +422,47 @@ udfIsHash() {
 #    MissingArgument - arguments not found
 #    Success in other cases
 #  EXAMPLE
-#    local id
 #    cfg.new ini
 #    ini.section.select sect1
-#    id=$(ini.section.id sect1)
-#    ini.${id}.set __unnamed_cnt 3
-#    ini.${id}.set __unnamed_idx=0 "is raw value No.1"
-#    ini.${id}.set __unnamed_idx=1 "is raw value No.2"
-#    ini.${id}.set __unnamed_idx=2 "is raw value No.3"
+#    ini.section.set __unnamed_cnt 3
+#    ini.section.set __unnamed_idx=0 "is raw value No.1"
+#    ini.section.set __unnamed_idx=1 "is raw value No.2"
+#    ini.section.set __unnamed_idx=2 "is raw value No.3"
 #    ini.section.select sect2
-#    id=$(ini.section.id sect2)
-#    ini.${id}.set __unnamed_mod =
-#    ini.${id}.set '__unnamed_key=a1' "is raw value No.1"
-#    ini.${id}.set '__unnamed_key=b2' "is raw value No.2"
-#    ini.${id}.set '__unnamed_key=a1' "is raw value No.3"
+#    ini.section.set __unnamed_mod =
+#    ini.section.set '__unnamed_key=a1' "is raw value No.1"
+#    ini.section.set '__unnamed_key=b2' "is raw value No.2"
+#    ini.section.set '__unnamed_key=a1' "is raw value No.3"
 #    ini.section.getarray sect1 >| md5sum - | grep ^9cb6e1559552.*3d7417b.*-$ #? true
 #    ini.section.getarray sect2 >| md5sum - | grep ^9c964b5b47f6.*82a6d4e.*-$ #? true
-#    cfg.free ini
+#    ini.free
 #  SOURCE
-ini.section.getarray() {
+cfg.section.getarray() {
 
   local -a a
-  local id iC o sU s
+  local i id iC o sU s
 
   o=${FUNCNAME[0]%%.*}
   ${o}.section.select ${1:-__global__}
   id=$( ${o}.section.id ${1:-__global__} )
-
   udfIsHash $id || eval $( udfOnError InvalidHash '$id' )
 
-  sU=$( ${o}.${id}.get __unnamed_mod )
+  sU=$( ${o}.section.get __unnamed_mod )
 
   if [[ $sU == "=" ]]; then
 
-    eval "${o}.${id}.getarray.unnamed.keys() { local i; for i in "\${!$id[@]}"; do [[ \$i =~ ^__unnamed_key= ]] && a[\${#a[@]}]=\"\${$id[\$i]}\"; done; };"
-    ${o}.${id}.getarray.unnamed.keys
+    #eval "${o}.section.getarray.unnamed.keys() { local i; for i in "\${!$id[@]}"; do [[ \$i =~ ^__unnamed_key= ]] && a[\${#a[@]}]=\"\${$id[\$i]}\"; done; };"
+    #${o}.section.getarray.unnamed.keys
+    eval "for i in "\${!$id[@]}"; do [[ \$i =~ ^__unnamed_key= ]] && a[\${#a[@]}]=\"\${$id[\$i]}\"; done;"
 
   else
 
-    iC=$( ${o}.${id}.get __unnamed_cnt )
+    iC=$( ${o}.section.get __unnamed_cnt )
     if udfIsNumber $iC && (( iC )); then
 
-      eval "${o}.${id}.getarray.unnamed.idxs() { local i; for (( i=0; i < $iC; i++ )); do a[\${#a[@]}]=\"\${$id[__unnamed_idx=\$i]}\"; done; };"
-      ${o}.${id}.getarray.unnamed.idxs
+      #eval "${o}.section.getarray.unnamed.idxs() { local i; for (( i=0; i < $iC; i++ )); do a[\${#a[@]}]=\"\${$id[__unnamed_idx=\$i]}\"; done; };"
+      #${o}.section.getarray.unnamed.idxs
+      eval "for (( i=0; i < $iC; i++ )); do a[\${#a[@]}]=\"\${$id[__unnamed_idx=\$i]}\"; done;"
 
     fi
 
@@ -428,29 +490,26 @@ ini.section.getarray() {
 #    local id
 #    cfg.new ini
 #    ini.section.select
-#    ini.$(ini.section.id __global__).set key "is unnamed section"
+#    ini.section.set key "is unnamed section"
 #    ini.section.select section
-#    ini.$(ini.section.id section).set key "is value"
-##    ini.section.select section
+#    ini.section.set key "is value"
+#    ini.get [section]key
 #    ini.get [section]key >| grep '^is value$'                                  #? true
-#    ini.section.select section
-#    ini.get      key >| grep '^is unnamed section$'                            #? true
-#    ini.get    []key >| grep '^is unnamed section$'                            #? true
+#    ini.get   key >| grep '^is unnamed section$'                               #? true
+#    ini.get []key >| grep '^is unnamed section$'                               #? true
 #    ini.section.select section1
-#    id=$(ini.section.id section1)
-#    ini.${id}.set __unnamed_cnt 3
-#    ini.${id}.set __unnamed_idx=0 "is raw value No.1"
-#    ini.${id}.set __unnamed_idx=1 "is raw value No.2"
-#    ini.${id}.set __unnamed_idx=2 "is raw value No.3"
+#    ini.section.set __unnamed_cnt 3
+#    ini.section.set __unnamed_idx=0 "is raw value No.1"
+#    ini.section.set __unnamed_idx=1 "is raw value No.2"
+#    ini.section.set __unnamed_idx=2 "is raw value No.3"
 #    ini.section.select section2
-#    id=$(ini.section.id section2)
-#    ini.${id}.set __unnamed_mod =
-#    ini.${id}.set __unnamed_key=a1 "is raw value No.1"
-#    ini.${id}.set __unnamed_key=b2 "is raw value No.2"
-#    ini.${id}.set __unnamed_key=a1 "is raw value No.3"
+#    ini.section.set __unnamed_mod =
+#    ini.section.set __unnamed_key=a1 "is raw value No.1"
+#    ini.section.set __unnamed_key=b2 "is raw value No.2"
+#    ini.section.set __unnamed_key=a1 "is raw value No.3"
 #    ini.get [section2] >| md5sum -    | grep ^9c964b5b47f6dc.*82a6d4e.*-$      #? true
 #    ini.get [section1] >| md5sum -    | grep ^9cb6e155955235.*3d7417b.*-$      #? true
-#    cfg.free ini
+#    ini.free
 #  SOURCE
 cfg.get() {
 
@@ -459,18 +518,25 @@ cfg.get() {
   local -a a
   local o k s v IFS
 
+  o="$*"
+  s="$IFS"
+  IFS='[]' && a=( $o )
+  IFS="$s"
   o=${FUNCNAME[0]%%.*}
-
-  IFS='[]' && a=( $* ) && IFS=$' \t\n'
 
   case "${#a[@]}" in
 
-    2|3)
-      s=${a[0]:-__global__}
-      k="${a[1]:-__unnamed_}"
+    3)
+      s=${a[1]:-__global__}
+      k="${a[2]:-__unnamed_}"
       ;;
 
-    0|1)
+    2)
+      s=${a[1]:-__global__}
+      k=__unnamed_
+      ;;
+
+    1)
       s=__global__
       k="${a[0]:-__unnamed_}"
       ;;
@@ -487,7 +553,90 @@ cfg.get() {
   else
 
     ${o}.section.select $s
-    $o.$(${o}.section.id $s).get "$k"
+    ${o}.section.get "$k"
+
+  fi
+
+}
+#******
+#****f* libcfg/cfg.set
+#  SYNOPSIS
+#    cfg.set [<section>]<key>
+#  DESCRIPTION
+#    set value(s) for specified key of the section of the configuration
+#  ARGUMENTS
+#    <section> - correspondent section to the configuration, default - unnamed
+#    <key>     - named key for "key=value" pair of the input data. For unnamed
+#                records this argument must be supressed, this cases return
+#                serialized array of items
+#  RETURN VALUE
+#    MissingArgument - arguments not found
+#    InvalidArgument - expected like a 'cli[section]key', 'cli[]key', 'key'
+#    Success in other cases
+#  EXAMPLE
+#    local id
+#    cfg.new ini
+#    ini.set [section]key = is value
+#    ini.set key = is unnamed section
+#    ini.get [section]key
+#    ini.get [section]key >| grep '^is value$'                                  #? true
+#    ini.get   key >| grep '^is unnamed section$'                               #? true
+#    ini.get []key >| grep '^is unnamed section$'                               #? true
+#    ini.set [section1]+= is raw value No.1
+#    ini.set [section1]+ = is raw value No.2
+#    ini.set [section1]+  =   is raw value No.3
+#    ini.set [section2] = is raw value No.1
+#    ini.set [section2] =  is raw value No.2
+#    ini.set [section2] =   is raw value No.1
+#    ini.get [section2] >| md5sum | grep ^dae9eb0fed6d92e45ec62db6778bb0ea.*-$  #? true
+#    ini.get [section1] >| md5sum | grep ^9cb6e155955235c701959b4253d7417b.*-$  #? true
+#    ini.free
+#  SOURCE
+cfg.set() {
+
+  udfOn MissingArgument $* || return $?
+
+  local -a a
+  local o k s v
+
+  o="$*"
+  s="$IFS"
+  IFS='[]' && a=( $o )
+  IFS="$s"
+  o=${FUNCNAME[0]%%.*}
+
+  case "${#a[@]}" in
+
+    3)
+      s=${a[1]:-__global__}
+      k=${a[2]%%=*}
+      v=${a[2]#*=}
+      ;;
+
+    1)
+      s=__global__
+      k=${a[0]%%=*}
+      v=${a[0]#*=}
+      ;;
+
+    *)
+      eval $( udfOnError throw InvalidArgument "$* - $(declare -p a)" )
+
+  esac
+
+  k="$( echo $k )"
+  v="$( echo $v )"
+  : ${k:==}
+
+  ${o}.section.select $s
+
+  if [[ $k =~ ^(=|\-|\+)$ ]]; then
+
+    ${o}.section.raw "$k" "$v"
+
+  else
+
+    ${o}.section.set "$k" "$v"
 
   fi
 
@@ -502,13 +651,13 @@ cfg.get() {
 #    configuration in the INI format
 #  EXAMPLE
 #    local s
-#    cfg.new ini
-#    ini.section.select section
-#    ini.$(ini.section.id section).set key "is value"
-#    ini.section.select
-#    ini.$(ini.section.id __global__).set key "unnamed section"
-#    ini.show >| md5sum - | grep ^5a67839daaa52b9c5dbd135daaad313e.*-$          #? true
-#    cfg.free ini
+#    cfg.new ShowTest
+#    ShowTest.section.select "ShowTest"
+#    ShowTest.section.set key "is value"
+#    ShowTest.section.select
+#    ShowTest.section.set key "unnamed section"
+#    ShowTest.show >| md5sum - | grep ^e1f8a72e35593a7838f826ddd4590aea.*-$     #? true
+#    ShowTest.free
 #  SOURCE
 cfg.show() {
 
@@ -518,10 +667,11 @@ cfg.show() {
 
   ${o}.section.show
 
-  for s in $( ${o}.section.id ); do
+  for (( i=0; i < $( ${o}.section.item ); i++ )); do
 
+    s="$( ${o}.section.item $i )"
     [[ $s =~ ^(__global__|__id__)$ ]] && continue
-    ${o}.section.show $s
+    ${o}.section.show "$s"
 
   done
 
@@ -542,11 +692,13 @@ cfg.show() {
 #  EXAMPLE
 #    local fn
 #    udfMakeTemp fn
-#    cfg.new ini
-#    ini.$(ini.section.select section).set key "is value"
-#    ini.$(ini.section.select).set key "unnamed section"
-#    cfg.save $fn
-#    cfg.free ini
+#    cfg.new TestSave
+#    TestSave.section.select section
+#    TestSave.section.set key "is value"
+#    TestSave.section.select
+#    TestSave.section.set key "unnamed section"
+#    TestSave.save $fn
+#    TestSave.free
 #    tail -n +4 $fn >| md5sum - | grep ^5a67839daaa52b9c5dbd135daaad313e.*-$    #? true
 #  SOURCE
 cfg.save() {
@@ -623,7 +775,7 @@ cfg.save() {
 #      echo "section ${s}:"
 #      eval "declare -p ${_hINI[$s]}"
 #    done                                                                       #-
-#   cfg.free ini
+#   ini.free
 #  SOURCE
 cfg.read() {
 
@@ -635,14 +787,15 @@ cfg.read() {
   reKey_Val='^[[:space:]]*([[:alnum:]]+)[[:space:]]*=[[:space:]]*(.*)[[:space:]]*$'
   reComment='^[[:space:]]*$|(^|[[:space:]]+)[\#\;].*$'
   reRawMode='^[=\-+]$'
+  o=${FUNCNAME[0]%%.*}
 
   s="__global__"
   fn="$1"
 
   [[ $2 ]] && reValidSections="$2" || reValidSections="$reSection"
-  [[ ${hKeyValue[@]}      ]] || local -A hKeyValue
-  [[ ${hRawMode[@]}       ]] || local -A hRawMode
-  [[ $( ${o}.section.id ) ]] || cfg.new $o
+  [[ ${hKeyValue[@]}        ]] || local -A hKeyValue
+  [[ ${hRawMode[@]}         ]] || local -A hRawMode
+  [[ $( ${o}.section.item ) ]] || cfg.new $o
 
   if [[ ! $( stat -c %U $fn ) == $( _ sUser ) ]]; then
 
@@ -655,7 +808,6 @@ cfg.read() {
   [[ ${hKeyValue[$s]} ]] || hKeyValue[$s]="$reKey_Val"
 
   ${o}.section.select
-  id=$( ${o}.section.id __global__ )
 
   while read -t 4; do
 
@@ -670,24 +822,23 @@ cfg.read() {
       [[ ${BASH_REMATCH[1]} == ":" ]] && bActiveSection=close
       [[ ${BASH_REMATCH[3]} == ":" ]] && hRawMode[$s]="-"
 
-      (( i > 0 )) && ${o}.${id}.set __unnamed_cnt $i
+      (( i > 0 )) && ${o}.section.set __unnamed_cnt $i
 
       bIgnore=1
-      [[ $bActiveSection == "close" ]] && bActiveSection= && ${o}.${id}.set __unnamed_mod "!" && continue
+      [[ $bActiveSection == "close" ]] && bActiveSection= && ${o}.section.set __unnamed_mod "!" && continue
       bIgnore=
 
       ${o}.section.select $s
-      id=$( ${o}.section.id $s )
       i=0
       case "${hRawMode[$s]}" in
 
         -) ;;
 
-        +) i=$( ${o}.${id}.get __unnamed_cnt )
-           udfIsNumber $i || ${o}.${id}.set __unnamed_cnt ${i:=0}
+        +) i=$( ${o}.section.get __unnamed_cnt )
+           udfIsNumber $i || ${o}.section.set __unnamed_cnt ${i:=0}
            ;;
 
-        =) ${o}.${id}.set __unnamed_mod "=";;
+        =) ${o}.section.set __unnamed_mod "=";;
 
         *) hKeyValue[$s]="$reKey_Val";;
 
@@ -703,7 +854,7 @@ cfg.read() {
 
     if [[ ${hKeyValue[$s]} ]]; then
 
-      [[ $REPLY =~ ${hKeyValue[$s]} ]] && ${o}.${id}.set "${BASH_REMATCH[1]}" "${BASH_REMATCH[2]}"
+      [[ $REPLY =~ ${hKeyValue[$s]} ]] && ${o}.section.set "${BASH_REMATCH[1]}" "${BASH_REMATCH[2]}"
 
     else
 
@@ -711,11 +862,11 @@ cfg.read() {
 
         REPLY=${REPLY##*( )}
         REPLY=${REPLY%%*( )}
-        ${o}.${id}.set "__unnamed_key=${REPLY//[\'\"\\ ]/}" "$REPLY"
+        ${o}.section.set "__unnamed_key=${REPLY//[\'\"\\ ]/}" "$REPLY"
 
       else
 
-        ${o}.${id}.set "__unnamed_idx=${i:=0}" "$REPLY"
+        ${o}.section.set "__unnamed_idx=${i:=0}" "$REPLY"
         : $(( i++ ))
 
       fi
@@ -724,7 +875,7 @@ cfg.read() {
 
   done < $fn
 
-  [[ ${hRawMode[$s]} =~ ^(\+|\-)$ ]] && ${o}.${id}.set __unnamed_cnt ${i:=0}
+  [[ ${hRawMode[$s]} =~ ^(\+|\-)$ ]] && ${o}.section.set __unnamed_cnt ${i:=0}
 
   return 0
 
@@ -836,7 +987,7 @@ cfg.read() {
 #      echo "section ${s}:"
 #      eval "declare -p ${_hINI[$s]}"
 #    done                                                                       #-
-#    cfg.free ini
+##    ini.free
 #  SOURCE
 cfg.load() {
 
@@ -898,11 +1049,12 @@ cfg.load() {
 
   done
 
-  if [[ $( cli.section.id ) ]]; then
+  eval "s=\${_h${o^^}[__cli__]}"
+  if [[ $s ]]; then
 
     udfMakeTemp ini
 
-    cli.save $ini
+    ${s}.save $ini
     ${o}.read $ini "$reValidSections"
 
     rm -f $ini
@@ -940,34 +1092,30 @@ cfg.load() {
 #    rCLI='file{F}: exec{E}:- main-hint{H}: main-msg{M}: unify{U}:= acc:+'      #-
 #    _ sArg "-F CLI -E clear -H 'Hi!' -M test -U a.2 -U a.2 --acc=a --acc=b"    #-
 #    udfMakeTemp ini
-#    cfg.new ini
 #    ini.save $ini                                                              #? true
+#    ini.free
+#    cfg.new ini
 #    ini.cli.bind $rCLI                                                         #? true
-#    ini.load $ini $rINI                                                        #? true
 #    declare -p _hCLI
-#    cli.show >| md5sum - | grep ^033a19e25672b2c703023b4da23e2efd.*-$          #? true
+#    ini.load $ini $rINI                                                        #? true
 #    ini.show >| md5sum - | grep ^230af661227964498193dc3df7c63ece.*-$          #? true
-#    for s in "${!_hCLI[@]}"; do                                                #-
-#      [[ $s == '__id__' ]] && continue                                         #-
-#      echo "section ${s}:"
-#      eval "declare -p ${_hCLI[$s]}"
-#    done                                                                       #-
-#    cfg.free cli
-#    cfg.free ini
+#    ini.free
 #  SOURCE
 cfg.cli.bind() {
 
   udfOn MissingArgument "$@" || return $?
 
   local -a a
-  local fmtCase fmHandler k o sSection sShort sLong sArg s S sHandler sCases v
+  local c fmtCase fmHandler k o sSection sShort sLong sArg s S sHandler sCases v
 
   o=${FUNCNAME[0]%%.*}
+  c=cli${RANDOM}
 
-  cfg.new cli
+  cfg.new $c
+  eval "_h${o^^}[__cli__]=$c"
 
-  fmtHandler="${o}.cli.getopt() { while true; do case \$1 in %s --) shift; break;; esac; done }"
-  fmtCase="--%s%s) ${o}.section.add "%s" "%s" "%s"; shift %s;;"
+  fmtHandler="${c}.getopt() { while true; do case \$1 in %s --) shift; break;; esac; done }"
+  fmtCase="--%s%s) ${c}.section.add \"%s\" \"%s\" \"%s\"; shift %s;;"
 
   for s in $@; do
 
@@ -998,9 +1146,71 @@ cfg.cli.bind() {
 
   sHandler="$( printf -- "$fmtHandler" "$sCases" )"
 
-  eval "$sHandler" && ${o}.cli.getopt $s
+  eval "$sHandler" && ${c}.getopt $s
 
   echo $sHandler
+
+}
+#******
+#****f* libcfg/cfg.getopt
+#  SYNOPSIS
+#    cfg.getopt [<section>-]<option>
+#  DESCRIPTION
+#    Bind command line options to the structure of the configuration INI
+#  ARGUMENTS
+#    <option name> - option name that used as long option of the CLI and key for
+#                    array of the INI data
+#    <section>     - part of the option name for binding it to a certain section
+#                    of the INI data. By default, it is assumed that option is
+#                    included to the global section
+#  RETURN VALUE
+#    MissingArgument - arguments is not specified
+#  EXAMPLE
+#    local rCLI
+#    rCLI='file{F}: exec{E}:- main-hint{H}: main-msg{M}: unify{U}:= acc:+'      #-
+#    _ sArg "-F CLI -E clear -H 'Hi!' -M test -U a.2 -U a.2 --acc=a --acc=b"    #-
+#    cfg.new opt
+#    opt.cli.bind $rCLI                                                         #? true
+#    opt.getopt file                                                            #? true
+#    opt.getopt exec--                                                          #? true
+#    opt.getopt main-hint                                                       #? true
+#    opt.getopt main-msg                                                        #? true
+#    opt.getopt unify--                                                         #? true
+#    opt.getopt acc--                                                           #? true
+#    opt.free
+#  SOURCE
+cfg.getopt() {
+
+  udfOn MissingArgument "$@" || return $?
+
+  local -a a
+  local c o s IFS
+
+  s="$*"
+  c="$IFS"
+  IFS='-' && a=( $s )
+  IFS="$c"
+  o=${FUNCNAME[0]%%.*}
+  eval "c=\${_h${o^^}[__cli__]}"
+
+  case "${#a[@]}" in
+
+    2)
+      s=${a[0]:-__global__}
+      k=${a[1]}
+      ;;
+
+    1)
+      s=__global__
+      k=${a[0]}
+      ;;
+
+    *)
+      eval $( udfOnError throw InvalidArgument "$*" )
+
+  esac
+
+  ${c}.get [${s}]${k}
 
 }
 #******
