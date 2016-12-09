@@ -1,5 +1,5 @@
 #
-# $Id: libcfg.sh 616 2016-12-08 17:21:53+04:00 toor $
+# $Id: libcfg.sh 617 2016-12-09 15:56:24+04:00 toor $
 #
 #****h* BASHLYK/libcfg
 #  DESCRIPTION
@@ -34,22 +34,25 @@
 : ${_bashlyk_emailRcpt:=postmaster}
 : ${_bashlyk_emailSubj:="${_bashlyk_sUser}@${HOSTNAME}::${_bashlyk_s0}"}
 : ${_bashlyk_envXSession:=}
-: ${_bashlyk_cfgMethods:="__section.id __section.item __section.select __section.show __section.raw __section.getarray get set show save read load bind.cli getopt free"}
+: ${_bashlyk_iniMethods:="__section.id __section.byindex __section.select __section.show __section.setRawData __section.getArray get set show save read load bind.cli getopt free"}
 : ${_bashlyk_aRequiredCmd_cfg:="date echo getopt hostname logname md5sum mkdir mv pwd rm stat touch"}
 : ${_bashlyk_aExport_cfg:="INI get set show save read load bind.cli getopt free"}
 #******
 #****f* libcfg/INI
 #  SYNOPSIS
-#    INI <id>
+#    INI [<id>]
 #  DESCRIPTION
-#    create new instance <id> of the INI(INI) object
+#    constructor for new instance <id> of the INI object
+#  NOTES
+#    public method
 #  ARGUMENTS
-#    valid variable name for created instance
+#    valid variable name for created instance, default - used class name INI as
+#    instance
 #  RETURN VALUE
 #    InvalidArgument - method not found
 #    InvalidVariable - invalid variable name for instance
 #  EXAMPLE
-#    local f
+#    local rc
 #    INI tnew                                                                   #? true
 #    declare -pf tnew.show >/dev/null 2>&1 && rc=true || rc=false               #-
 #    $rc                                                                        #? true
@@ -57,22 +60,21 @@
 #    $rc                                                                        #? true
 #    declare -pf tnew.load >/dev/null 2>&1 && rc=true || rc=false               #-
 #    $rc                                                                        #? true
-#    declare -pf tnew.read >/dev/null 2>&1 && rc=true || rc=false               #-
-#    $rc                                                                        #? true
+#    tnew.__section.id @ >| grep '__id__'                                       #? true
 #    tnew.free                                                                  #? true
 #  SOURCE
 INI() {
 
-  udfOn InvalidVariable throw "$1"
+  local f s=${1:-INI}
 
-  local f s
+  udfOn InvalidVariable throw $s
 
-  declare -a -g -- _a${1^^}="()"
-  declare -A -g -- _h${1^^}="([__id__]=__id__)"
+  declare -a -g -- _a${s^^}="()"
+  declare -A -g -- _h${s^^}="([__id__]=__id__)"
 
-  [[ $1 == INI ]] && return 0
+  [[ $s == INI ]] && return 0
 
-  for s in $_bashlyk_cfgMethods; do
+  for s in $_bashlyk_iniMethods; do
 
     f=$( declare -pf INI.${s} )
 
@@ -83,7 +85,6 @@ INI() {
 
   done
 
-
   return 0
 
 }
@@ -92,17 +93,19 @@ INI() {
 #  SYNOPSIS
 #    INI.__section.id [<section>]
 #  DESCRIPTION
-#    get a hash name for specified section or all hashes from instance
+#    get a link of the storage for specified section or links for all storages.
+#  NOTES
+#    private method
 #  ARGUMENTS
-#    section - section name, default - all hashes
+#    <section> - section name, '@' - all sections, default - unnamed 'global'
 #  OUTPUT
-#    hash name{s}
+#    associative array(s), in which are stored data of the section(s)
 #  EXAMPLE
 #    INI tSectionId1
 #    INI tSectionId2
-#    tSectionId1.__section.id >| grep '__id__'                                    #? true
-#    tSectionId2.__section.id >| grep '__id__'                                    #? true
-#    tSectionId2.__section.id @ >| grep '__id__'                                    #? true
+#    tSectionId1.__section.select
+#    tSectionId1.__section.id   >| grep ^_hTSECTIONID1_aaac3ffb13380885c7f49.*$ #? true
+#    tSectionId2.__section.id @ >| grep ^__id__$                                #? true
 #    tSectionId1.free
 #    tSectionId2.free
 #  SOURCE
@@ -110,31 +113,35 @@ INI.__section.id() {
 
   local o=${FUNCNAME[0]%%.*}
 
-  eval "echo \${_h${o^^}[${1:-@}]}"
+  eval "echo \${_h${o^^}[${1:-__global__}]}"
 
 }
 #******
-#****f* libcfg/INI.__section.item
+#****f* libcfg/INI.__section.byindex
 #  SYNOPSIS
-#    INI.__section.item <index>
+#    INI.__section.byindex [<index>]
 #  DESCRIPTION
-#    get a name of the section by number of the location or sections count
+#    get the name of the section at the specified index, or number of then
+#    registered sections.
+#  NOTES
+#    private method
 #  ARGUMENTS
-#    index - section index on sections order list
+#    <index> - index of the section in the common list in order of registration,
+#              default - total number of the registered sections
 #  OUTPUT
-#    section name or sections count
+#    section name or total number of the registered sections
 #  EXAMPLE
-#    INI tSectionItem
-#    tSectionItem.__section.select
-#    tSectionItem.__section.select sItem1
-#    tSectionItem.__section.select sItem2
-#    tSectionItem.__section.item   >| grep ^3$                                    #? true
-#    tSectionItem.__section.item 0 >| grep ^__global__$                           #? true
-#    tSectionItem.__section.item 1 >| grep ^sItem1$                               #? true
-#    tSectionItem.__section.item 2 >| grep ^sItem2$                               #? true
-#    tSectionItem.free
+#    INI tSectionIndex
+#    tSectionIndex.__section.select
+#    tSectionIndex.__section.select sItem1
+#    tSectionIndex.__section.select sItem2
+#    tSectionIndex.__section.byindex   >| grep ^3$                              #? true
+#    tSectionIndex.__section.byindex 0 >| grep ^__global__$                     #? true
+#    tSectionIndex.__section.byindex 1 >| grep ^sItem1$                         #? true
+#    tSectionIndex.__section.byindex 2 >| grep ^sItem2$                         #? true
+#    tSectionIndex.free
 #  SOURCE
-INI.__section.item() {
+INI.__section.byindex() {
 
   local i o=${FUNCNAME[0]%%.*} s
 
@@ -150,13 +157,15 @@ INI.__section.item() {
 #  SYNOPSIS
 #    INI.free
 #  DESCRIPTION
-#    remove a instance of the INI object
+#    destructor of the instance
+#  NOTES
+#    public method
 #  EXAMPLE
 #    local i o s
 #    INI tFree
 #    tFree.__section.select
 #    tFree.__section.select sFree
-#    o=$( tFree.__section.id )
+#    o=$( tFree.__section.id @ )
 #    tFree.free                                                                 #? true
 #    i=0                                                                        #-
 #    for s in $o; do                                                            #-
@@ -170,12 +179,7 @@ INI.free() {
 
   o=${FUNCNAME[0]%%.*}
 
-  #
-  [[ $o == INI ]] && o=$1
-  [[ $o ]] || return 1
-  #
-
-  for s in $( ${o}.__section.id ); do
+  for s in $( ${o}.__section.id @ ); do
 
     [[ $s =~ ^[[:blank:]]*$|^__id__$ ]] && continue || unset -v $s
 
@@ -186,7 +190,7 @@ INI.free() {
 
   [[ $o == INI ]] && return 0
 
-  for s in __section.get __section.set $_bashlyk_cfgMethods; do
+  for s in __section.get __section.set $_bashlyk_iniMethods; do
 
     unset -f ${o}.$s
 
@@ -198,19 +202,22 @@ INI.free() {
 #  SYNOPSIS
 #    INI.__section.select [<section>]
 #  DESCRIPTION
-#    select current section of the instance of INI object
+#    select current section of the instance, prepare private getter and setter
+#    for the storage of the selected section
+#  NOTES
+#    private method
 #  ARGUMENTS
-#    section - section name, default - unnamed global
+#    <section> - section name, default - unnamed global
 #  EXAMPLE
 #    local s
 #    INI tSel
-#    tSel.__section.select                                                        #? true
+#    tSel.__section.select                                                      #? true
 #    tSel.__section.set key "is unnamed section"
-#    tSel.__section.get key >| grep '^is unnamed section$'                        #? true
-#    tSel.__section.select tSect                                                  #? true
+#    tSel.__section.get key >| grep '^is unnamed section$'                      #? true
+#    tSel.__section.select tSect                                                #? true
 #    tSel.__section.set key "is value"
-#    tSel.__section.get key >| grep '^is value$'                                  #? true
-#    tSel.__section.id >| md5sum - | grep ^180d2f8ad60b98865dfe06b8710b3a68.*-$   #? true
+#    tSel.__section.get key >| grep '^is value$'                                #? true
+#    tSel.__section.id @ >| md5sum - | grep ^180d2f8ad60b98865dfe06b8710b3a.*-$ #? true
 #    tSel.free
 #  SOURCE
 INI.__section.select() {
@@ -241,7 +248,7 @@ INI.__section.select() {
 #  SYNOPSIS
 #    INI.__section.show [<section>]
 #  DESCRIPTION
-#    show the contents of the specified section of the instance configuration
+#    show a content of the specified section
 #  ARGUMENTS
 #    <section> - section name, default - unnamed section
 #  OUTPUT
@@ -250,20 +257,20 @@ INI.__section.select() {
 #    INI tSShow
 #    tSShow.__section.select tSect
 #    tSShow.__section.set key "is value"
-#    tSShow.__section.show tSect >| md5sum | grep ^01db4c1804653c29952c089159.*-$ #? true
+#    tSShow.__section.show tSect >| md5sum | grep ^01db4c1804653c29952c0891.*-$ #? true
 #    tSShow.__section.select
 #    tSShow.__section.set key "unnamed section"
-#    tSShow.__section.show >| md5sum - | grep ^33098f129cdfa322a2bd326a56bb4f.*-$ #? true
+#    tSShow.__section.show >| md5sum - | grep ^33098f129cdfa322a2bd326a56bb.*-$ #? true
 #    tSShow.free
 #  SOURCE
 INI.__section.show() {
 
-  local i iC id o s=${1:-__global__} sA sU
+  local i iC id o sA sU
 
   o=${FUNCNAME[0]%%.*}
 
-  ${o}.__section.select $s
-  id=$( ${o}.__section.id $s )
+  ${o}.__section.select $1
+  id=$( ${o}.__section.id $1 )
 
   sU=$( ${o}.__section.get __unnamed_mod )
 
@@ -298,33 +305,36 @@ INI.__section.show() {
 
 }
 #******
-#****f* libcfg/INI.__section.raw
+#****f* libcfg/INI.__section.setRawData
 #  SYNOPSIS
-#    INI.__section.raw <raw mode> <data>
+#    INI.__section.setRawData -|=|+ <data>
 #  DESCRIPTION
-#    add or update unnamed record of the "raw" data for early selected section
+#    set "raw" data record to the current section with special key prefix
+#    '__unnamed_...'
+#  NOTES
+#    private method
 #  ARGUMENTS
-#    <raw mode> - the signs of the method of raw data handling:
-#                 '-', '+' - add new records with key incrementing
-#                 '='      - add new unique record only
-#    <data>     - "raw" data, no as "key=value" pairs
+#    '-', '+' - add "raw" record with incremented key like "__unnamed_idx=<No>"
+#    '='      - add or update "raw" unique record with key like
+#               "__unnamed_key=<input data without spaces and quotes>"
+#    <data>   - input data, interpreted as "raw" record
 #  RETURN VALUE
 #    InvalidArgument - unexpected "raw" mode
 #    Success for other cases
 #  EXAMPLE
-#    INI tSRaw
-#    tSRaw.__section.select sRaw1
-#    tSRaw.__section.raw "=" "test 1"
-#    tSRaw.__section.raw "=" "test 2"
-#    tSRaw.__section.raw "=" "test 1"
-#    tSRaw.__section.select sRaw2
-#    tSRaw.__section.raw "+" "test 1"
-#    tSRaw.__section.raw "+" "test 2"
-#    tSRaw.__section.raw "+" "test 1"
-#    tSRaw.show >| md5sum - | grep ^7149e6d295217813c4902cd78d9fd332.*-$         #? true
-#    tSRaw.free
+#    INI tSRawData
+#    tSRawData.__section.select sRaw1
+#    tSRawData.__section.setRawData "=" "test 1"
+#    tSRawData.__section.setRawData "=" "test 2"
+#    tSRawData.__section.setRawData "=" "test 1"
+#    tSRawData.__section.select sRaw2
+#    tSRawData.__section.setRawData "+" "test 1"
+#    tSRawData.__section.setRawData "+" "test 2"
+#    tSRawData.__section.setRawData "+" "test 1"
+#    tSRawData.show >| md5sum - | grep ^7149e6d295217813c4902cd78d9fd332.*-$        #? true
+#    tSRawData.free
 #  SOURCE
-INI.__section.raw() {
+INI.__section.setRawData() {
 
   local i o s
 
@@ -365,13 +375,13 @@ INI.__section.raw() {
 #  SYNOPSIS
 #    udfIsHash <variable>
 #  DESCRIPTION
-#    check variable on type - success on hash
+#    treated a variable as global associative array
 #  ARGUMENTS
 #    <variable> - variable name
 #  RETURN VALUE
 #    InvalidVariable - argument is not valid variable name
 #    InvalidHash     - argument is not hash variable
-#    Success         - argument is hash variable
+#    Success         - argument is name of the associative array
 #  EXAMPLE
 #    declare -A -g -- hh='()' s5
 #    udfIsHash 5s                                                               #? $_bashlyk_iErrorInvalidVariable
@@ -385,13 +395,17 @@ udfIsHash() {
 
 }
 #******
-#****f* libcfg/INI.__section.getarray
+#****f* libcfg/INI.__section.getArray
 #  SYNOPSIS
-#    INI.__section.getarray [<section>]
+#    INI.__section.getArray [<section>]
 #  DESCRIPTION
-#    get all value(s) from specified section of the raw data as serialized array
+#    get unnamed records from specified section as serialized array. Try to get
+#    a unique "raw" records (with the prefix "__unnamed_key=...") or incremented
+#    records (with prefix "__unnamed_idx=...")
+#  NOTES
+#    private method
 #  ARGUMENTS
-#    <section> - correspondent section, default - unnamed
+#    <section> - specified section, default - unnamed global
 #  RETURN VALUE
 #    MissingArgument - arguments not found
 #    Success in other cases
@@ -407,18 +421,18 @@ udfIsHash() {
 #    tGA.__section.set '__unnamed_key=a1' "is raw value No.1"
 #    tGA.__section.set '__unnamed_key=b2' "is raw value No.2"
 #    tGA.__section.set '__unnamed_key=a1' "is raw value No.3"
-#    tGA.__section.getarray sect1 >| md5sum - | grep ^9cb6e1559552.*3d7417b.*-$ #? true
-#    tGA.__section.getarray sect2 >| md5sum - | grep ^9c964b5b47f6.*82a6d4e.*-$ #? true
+#    tGA.__section.getArray sect1 >| md5sum - | grep ^9cb6e1559552.*3d7417b.*-$ #? true
+#    tGA.__section.getArray sect2 >| md5sum - | grep ^9c964b5b47f6.*82a6d4e.*-$ #? true
 #    tGA.free
 #  SOURCE
-INI.__section.getarray() {
+INI.__section.getArray() {
 
   local -a a
-  local i id iC o sU s
+  local i id iC o s sU
 
   o=${FUNCNAME[0]%%.*}
   ${o}.__section.select $1
-  id=$( ${o}.__section.id ${1:-__global__} )
+  id=$( ${o}.__section.id $1 )
   udfIsHash $id || eval $( udfOnError InvalidHash '$id' )
 
   sU=$( ${o}.__section.get __unnamed_mod )
@@ -446,13 +460,17 @@ INI.__section.getarray() {
 #  SYNOPSIS
 #    INI.get [\[<section>\]]<key>
 #  DESCRIPTION
-#    get value for a specified key of the section or all data of the "raw"
-#    section
+#    get single value for a key or serialized array of the "raw" records for
+#    specified section
+#  SEE ALSO
+#    INI.__section.getArray
+#  NOTES
+#    public method
 #  ARGUMENTS
-#    <section> - correspondent section to the configuration, default - unnamed
+#    <section> - specified section, default - unnamed global
 #    <key>     - named key for "key=value" pair of the input data. For unnamed
 #                records this argument must be supressed, this cases return
-#                serialized array of the items
+#                serialized array of the records (see INI.__section.getArray)
 #  RETURN VALUE
 #    MissingArgument - arguments not found
 #    InvalidArgument - expected like a '[section]key', '[]key' or 'key'
@@ -477,8 +495,8 @@ INI.__section.getarray() {
 #    tGet.__section.set __unnamed_key=a1 "is raw value No.1"
 #    tGet.__section.set __unnamed_key=b2 "is raw value No.2"
 #    tGet.__section.set __unnamed_key=a1 "is raw value No.3"
-#    tGet.get [section2] >| md5sum -    | grep ^9c964b5b47f6dc.*82a6d4e.*-$     #? true
-#    tGet.get [section1] >| md5sum -    | grep ^9cb6e155955235.*3d7417b.*-$     #? true
+#    tGet.get [section2] >| md5sum - | grep ^9c964b5b47f6dc.*82a6d4e.*-$        #? true
+#    tGet.get [section1] >| md5sum - | grep ^9cb6e155955235.*3d7417b.*-$        #? true
 #    tGet.free
 #  SOURCE
 INI.get() {
@@ -517,7 +535,7 @@ INI.get() {
 
   if [[ $k =~ __unnamed_ ]]; then
 
-    ${o}.__section.getarray $s
+    ${o}.__section.getArray $s
 
   else
 
@@ -533,10 +551,12 @@ INI.get() {
 #    INI.set [\[<section>\]]<key> = <value>
 #  DESCRIPTION
 #    set a value to the specified key of the section
+#  NOTES
+#    public method
 #  ARGUMENTS
-#    <section> - correspondent section, default - unnamed
+#    <section> - specified section, default - unnamed global
 #    <key>     - named key for "key=value" pair of the input data. For unnamed
-#                records this argument must be supressed or is have '-' '+'
+#                records this argument must be supressed or must have '-' '+'
 #                value, in this cases return serialized array of items
 #  RETURN VALUE
 #    MissingArgument - arguments not found
@@ -599,7 +619,7 @@ INI.set() {
 
   if [[ $k =~ ^(=|\-|\+)$ ]]; then
 
-    ${o}.__section.raw "$k" "$v"
+    ${o}.__section.setRawData "$k" "$v"
 
   else
 
@@ -613,11 +633,12 @@ INI.set() {
 #  SYNOPSIS
 #    INI.show
 #  DESCRIPTION
-#    Show a configuration data in the INI format
+#    Show a instance data in the INI format
+#  NOTES
+#    public method
 #  OUTPUT
-#    configuration in the INI format
+#    instance data in the INI format
 #  EXAMPLE
-#    local s
 #    INI tShow
 #    tShow.__section.select "ShowTest"
 #    tShow.__section.set key "is value"
@@ -634,9 +655,9 @@ INI.show() {
 
   ${o}.__section.show
 
-  for (( i=0; i < $( ${o}.__section.item ); i++ )); do
+  for (( i=0; i < $( ${o}.__section.byindex ); i++ )); do
 
-    s="$( ${o}.__section.item $i )"
+    s="$( ${o}.__section.byindex $i )"
     [[ $s =~ ^(__global__|__id__)$ ]] && continue
     ${o}.__section.show "$s"
 
@@ -651,6 +672,8 @@ INI.show() {
 #    INI.save <file>
 #  DESCRIPTION
 #    Save the configuration to the specified file in the INI format
+#  NOTES
+#    public method
 #  ARGUMENTS
 #    <file>  - target file for saving, full path required
 #  RETURN VALUE
@@ -756,7 +779,6 @@ INI.read() {
   [[ $2 ]] && reValidSections="$2" || reValidSections="$reSection"
   [[ ${hKeyValue[@]}        ]] || local -A hKeyValue
   [[ ${hRawMode[@]}         ]] || local -A hRawMode
-  [[ $( ${o}.__section.item ) ]] || INI $o
 
   if [[ ! $( stat -c %U $fn ) == $( _ sUser ) ]]; then
 
@@ -791,6 +813,7 @@ INI.read() {
 
       ${o}.__section.select $s
       i=0
+
       case "${hRawMode[$s]}" in
 
         -) ;;
