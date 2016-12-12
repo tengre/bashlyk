@@ -1,5 +1,5 @@
 #
-# $Id: libcfg.sh 617 2016-12-09 15:56:24+04:00 toor $
+# $Id: libcfg.sh 618 2016-12-12 14:06:00+04:00 toor $
 #
 #****h* BASHLYK/libcfg
 #  DESCRIPTION
@@ -240,7 +240,7 @@ INI.__section.select() {
   fi
 
   eval "id=\${_h${o^^}[$s]}"
-  eval "${o}.__section.set() { [[ \$1 ]] && $id[\$1]="\$2"; }; ${o}.__section.get() { [[ \$1 ]] && echo "\${$id[\$1]}"; };"
+  eval "${o}.__section.set() { [[ \$1 ]] && $id[\$1]=\"\$2\"; }; ${o}.__section.get() { [[ \$1 ]] && echo \"\${$id[\$1]}\"; };"
 
 }
 #******
@@ -765,12 +765,11 @@ INI.read() {
 
   udfOn NoSuchFileOrDir throw $1
 
-  local bActiveSection bIgnore csv fn i reComment reRawMode reSection reValidSections s
+  local bActiveSection bIgnore csv fn i reComment reSection reValidSections s sReadLine
 
   reSection='^[[:space:]]*(:?)\[[[:space:]]*([^[:punct:]]+?)[[:space:]]*\](:?)[[:space:]]*$'
   reKey_Val='^[[:space:]]*([[:alnum:]]+)[[:space:]]*=[[:space:]]*(.*)[[:space:]]*$'
   reComment='^[[:space:]]*$|(^|[[:space:]]+)[\#\;].*$'
-  reRawMode='^[=\-+]$'
   o=${FUNCNAME[0]%%.*}
 
   s="__global__"
@@ -844,8 +843,7 @@ INI.read() {
 
       if [[ ${hRawMode[$s]} == "=" ]]; then
 
-        REPLY=${REPLY##*( )}
-        REPLY=${REPLY%%*( )}
+        REPLY="$( echo $REPLY )"
         ${o}.__section.set "__unnamed_key=${REPLY//[\'\"\\ ]/}" "$REPLY"
 
       else
