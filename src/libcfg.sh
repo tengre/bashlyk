@@ -1,5 +1,5 @@
 #
-# $Id: libcfg.sh 619 2016-12-12 16:48:32+04:00 toor $
+# $Id: libcfg.sh 620 2016-12-13 00:39:39+04:00 toor $
 #
 #****h* BASHLYK/libcfg
 #  DESCRIPTION
@@ -69,8 +69,8 @@ INI() {
 
   udfOn InvalidVariable throw $s
 
-  declare -a -g -- _a${s^^}="()"
-  declare -A -g -- _h${s^^}="([__id__]=__id__)"
+  declare -ag -- _a${s^^}="()"
+  declare -Ag -- _h${s^^}="([__id__]=__id__)"
 
   [[ $s == INI ]] && return 0
 
@@ -229,11 +229,11 @@ INI.__section.select() {
 
   if [[ ! $id ]]; then
 
-    #eval "(( \${#_h${o^^}[@]} > 0 )) || declare -A -g -- _h${o^^}='([__id__]=__id__)'"
-    #eval "(( \${#_a${o^^}[@]} > 0 )) || declare -a -g -- _a${o^^}='()'"
+    #eval "(( \${#_h${o^^}[@]} > 0 )) || declare -Ag -- _h${o^^}='([__id__]=__id__)'"
+    #eval "(( \${#_a${o^^}[@]} > 0 )) || declare -ag -- _a${o^^}='()'"
     id=$(md5sum <<< "$s")
     id="_h${o^^}_${id:0:32}"
-    declare -A -g -- $id="()"
+    declare -Ag -- $id="()"
 
     eval "_h${o^^}[$s]=$id; _a${o^^}[\${#_a${o^^}[@]}]=\"$s\""
 
@@ -333,7 +333,7 @@ INI.__section.show() {
 #    tSRawData.__section.setRawData "+" "test 1"
 #    tSRawData.__section.setRawData "+" "test 2"
 #    tSRawData.__section.setRawData "+" "test 1"
-#    tSRawData.show >| md5sum - | grep ^7149e6d295217813c4902cd78d9fd332.*-$        #? true
+#    tSRawData.show >| md5sum - | grep ^7149e6d295217813c4902cd78d9fd332.*-$    #? true
 #    tSRawData.free
 #  SOURCE
 INI.__section.setRawData() {
@@ -385,7 +385,7 @@ INI.__section.setRawData() {
 #    InvalidHash     - argument is not hash variable
 #    Success         - argument is name of the associative array
 #  EXAMPLE
-#    declare -A -g -- hh='()' s5
+#    declare -Ag -- hh='()' s5
 #    udfIsHash 5s                                                               #? $_bashlyk_iErrorInvalidVariable
 #    udfIsHash s5                                                               #? $_bashlyk_iErrorInvalidHash
 #    udfIsHash hh                                                               #? true
@@ -778,8 +778,8 @@ INI.read() {
   fn="$1"
 
   [[ $2 ]] && reValidSections="$2" || reValidSections="$reSection"
-  [[ ${hKeyValue[@]}        ]] || local -A hKeyValue
-  [[ ${hRawMode[@]}         ]] || local -A hRawMode
+  [[ ${hKeyValue[@]} ]] || local -A hKeyValue
+  [[ ${hRawMode[@]}  ]] || local -A hRawMode
 
   ## TODO permit hi uid ?
   if [[ ! $( stat -c %U $fn ) == $( _ sUser ) ]]; then
@@ -810,6 +810,7 @@ INI.read() {
       s="${BASH_REMATCH[2]}"
 
       [[ ${BASH_REMATCH[1]} == ":" ]] && bActiveSection=close
+      ## TODO other modes for active section ?
       [[ ${BASH_REMATCH[3]} == ":" ]] && hRawMode[$s]="-"
 
       bIgnore=1
@@ -881,7 +882,7 @@ INI.read() {
 #  SYNOPSIS
 #    INI.load <file> <section>:(<options>)|<raw mode>) ...
 #  DESCRIPTION
-#    load the specified parameters from a group of related INI files
+#    load the specified configuration data from a group of related INI files
 #  ARGUMENTS
 #    <file>     - the final configuration file. Based on of his name may be
 #                 pre-loaded the parent files of the configuration
@@ -1057,9 +1058,9 @@ INI.load() {
 #******
 #****f* libcfg/INI.bind.cli
 #  SYNOPSIS
-#    INI.bind.cli [<section>-]<option long name>{<short name>}[:<extra>] ...
+#    INI.bind.cli [<section>-]<option long name>{<short name>}[:[:=+]] ...
 #  DESCRIPTION
-#    Bind command line options to the structure of the configuration INI
+#    Parse command line options and bind to the INI instance
 #  ARGUMENTS
 #    <option name> - option name that used as long option of the CLI and key for
 #                    array of the INI data
@@ -1067,15 +1068,15 @@ INI.load() {
 #                    of the INI data. By default, it is assumed that option is
 #                    included to the global section
 #    <short name>  - short alias as single letter for option name
-#    <extra>       - Additional configuration options for specifying arguments:
-#                    :     - an optional argument
-#                    [=-+] - option is to store the data list, binded to the
-#                            eponymous section of the INI data
-#                    by default, the option is expected to have a required
-#                    argument and is included in the global section of the INI
-#                    data
+#    first  :      - option is expected to have a required argument
+#    second :      - argument is a optional
+#           =      - option is expected to have list of unique arguments
+#           +      - option is expected to have list of accumulated arguments
+#                    by default, option is included in the global section of the
+#                    INI instance data
 #  RETURN VALUE
 #    MissingArgument - arguments is not specified
+#    InvalidArgument - invalid format of the arguments
 #  EXAMPLE
 #    local rINI rCLI ini
 #    rINI=':file,main,child exec:- main:hint,msg,cnt replace:- unify:= acc:+'   #-
@@ -1143,17 +1144,19 @@ INI.bind.cli() {
 #******
 #****f* libcfg/INI.getopt
 #  SYNOPSIS
-#    INI.getopt [<section>-]<option>
+#    INI.getopt <option>[--]
 #  DESCRIPTION
-#    Bind command line options to the structure of the configuration INI
+#    get option value after binding command line arguments to the INI instance
+#    ( after <o>.bind.cli call )
 #  ARGUMENTS
-#    <option name> - option name that used as long option of the CLI and key for
-#                    array of the INI data
-#    <section>     - part of the option name for binding it to a certain section
-#                    of the INI data. By default, it is assumed that option is
-#                    included to the global section
+#    <option> - option name that used as long option of the CLI and key for
+#               array of the INI data
+#          -- - expected list of the values - serialized array
 #  RETURN VALUE
 #    MissingArgument - arguments is not specified
+#    InvalidArgument - invalid format of the argument
+#  OUTPUT
+#    option value
 #  EXAMPLE
 #    local rCLI
 #    rCLI='file{F}: exec{E}:- main-hint{H}: main-msg{M}: unify{U}:= acc:+'      #-
