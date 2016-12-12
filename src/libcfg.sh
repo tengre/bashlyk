@@ -1,5 +1,5 @@
 #
-# $Id: libcfg.sh 618 2016-12-12 14:06:00+04:00 toor $
+# $Id: libcfg.sh 619 2016-12-12 16:48:32+04:00 toor $
 #
 #****h* BASHLYK/libcfg
 #  DESCRIPTION
@@ -257,15 +257,15 @@ INI.__section.select() {
 #    INI tSShow
 #    tSShow.__section.select tSect
 #    tSShow.__section.set key "is value"
-#    tSShow.__section.show tSect >| md5sum | grep ^01db4c1804653c29952c0891.*-$ #? true
+#    tSShow.__section.show tSect >| md5sum | grep ^99c8669469e47642b9b540db.*-$ #? true
 #    tSShow.__section.select
 #    tSShow.__section.set key "unnamed section"
-#    tSShow.__section.show >| md5sum - | grep ^33098f129cdfa322a2bd326a56bb.*-$ #? true
+#    tSShow.__section.show >| md5sum | grep ^67d9d58badfb9e5e568e72adcc5c95.*-$ #? true
 #    tSShow.free
 #  SOURCE
 INI.__section.show() {
 
-  local i iC id o sA sU
+  local fmt i iC id o sA sU
 
   o=${FUNCNAME[0]%%.*}
 
@@ -295,7 +295,9 @@ INI.__section.show() {
 
     else
 
-      eval "for i in "\${!$id[@]}"; do [[ \$i =~ ^__unnamed_ ]] || printf -- '\t%s\t = %s\n' \"\$i\" \"\${$id[\$i]}\"; done;"
+      fmt=$( ${o}.__section.get __unnamed_fmt )
+      udfIsNumber $fmt || fmt=''
+      eval "for i in "\${!$id[@]}"; do [[ \$i =~ ^__unnamed_ ]] || printf -- '\t%${fmt}s    =    %s\n' \"\$i\" \"\${$id[\$i]}\"; done;"
 
     fi
 
@@ -640,11 +642,11 @@ INI.set() {
 #    instance data in the INI format
 #  EXAMPLE
 #    INI tShow
-#    tShow.__section.select "ShowTest"
+#    tShow.__section.select "tShow"
 #    tShow.__section.set key "is value"
 #    tShow.__section.select
 #    tShow.__section.set key "unnamed section"
-#    tShow.show >| md5sum - | grep ^e1f8a72e35593a7838f826ddd4590aea.*-$        #? true
+#    tShow.show >| md5sum - | grep ^d8822ed5c794ad0f13c2e07e4f929219.*-$        #? true
 #    tShow.free
 #  SOURCE
 INI.show() {
@@ -689,7 +691,7 @@ INI.show() {
 #    tSave.__section.set key "unnamed section"
 #    tSave.save $fn
 #    tSave.free
-#    tail -n +4 $fn >| md5sum - | grep ^5a67839daaa52b9c5dbd135daaad313e.*-$    #? true
+#    tail -n +4 $fn >| md5sum - | grep ^014d76fac8f057af36d119aaddeb30ee.*-$    #? true
 #  SOURCE
 INI.save() {
 
@@ -758,14 +760,14 @@ INI.save() {
 #    EOFini                                                                     #-
 #   INI tRead
 #   tRead.read $ini                                                             #? true
-#   tRead.show >| md5sum - | grep ^a7d5fb1f4425f6a74154addf5801ee4b.*-$         #? true
+#   tRead.show >| md5sum - | grep ^a394a7bbdada0694a90967c9bc7d88d5.*-$         #? true
 #   tRead.free
 #  SOURCE
 INI.read() {
 
   udfOn NoSuchFileOrDir throw $1
 
-  local bActiveSection bIgnore csv fn i reComment reSection reValidSections s sReadLine
+  local bActiveSection bIgnore csv fmt fn i reComment reSection reValidSections s
 
   reSection='^[[:space:]]*(:?)\[[[:space:]]*([^[:punct:]]+?)[[:space:]]*\](:?)[[:space:]]*$'
   reKey_Val='^[[:space:]]*([[:alnum:]]+)[[:space:]]*=[[:space:]]*(.*)[[:space:]]*$'
@@ -779,6 +781,7 @@ INI.read() {
   [[ ${hKeyValue[@]}        ]] || local -A hKeyValue
   [[ ${hRawMode[@]}         ]] || local -A hRawMode
 
+  ## TODO permit hi uid ?
   if [[ ! $( stat -c %U $fn ) == $( _ sUser ) ]]; then
 
     eval $( udfOnError NotPermitted throw "$1 owned by $( stat -c %U $fn )" )
@@ -790,6 +793,8 @@ INI.read() {
   [[ ${hKeyValue[$s]} ]] || hKeyValue[$s]="$reKey_Val"
 
   ${o}.__section.select
+  fmt=$( ${o}.__section.get __unnamed_fmt )
+  udfIsNumber $fmt || fmt=0
 
   while read -t 4; do
 
@@ -799,12 +804,13 @@ INI.read() {
       [[ $REPLY =~ $reValidSections ]] || continue
       bIgnore=
 
+      (( i > 0   )) && ${o}.__section.set __unnamed_cnt $i
+      (( fmt > 0 )) && ${o}.__section.set __unnamed_fmt $fmt
+
       s="${BASH_REMATCH[2]}"
 
       [[ ${BASH_REMATCH[1]} == ":" ]] && bActiveSection=close
       [[ ${BASH_REMATCH[3]} == ":" ]] && hRawMode[$s]="-"
-
-      (( i > 0 )) && ${o}.__section.set __unnamed_cnt $i
 
       bIgnore=1
       [[ $bActiveSection == "close" ]] && bActiveSection= && ${o}.__section.set __unnamed_mod "!" && continue
@@ -812,6 +818,8 @@ INI.read() {
 
       ${o}.__section.select $s
       i=0
+      fmt=$( ${o}.__section.get __unnamed_fmt )
+      udfIsNumber $fmt || fmt=0
 
       case "${hRawMode[$s]}" in
 
@@ -837,7 +845,12 @@ INI.read() {
 
     if [[ ${hKeyValue[$s]} ]]; then
 
-      [[ $REPLY =~ ${hKeyValue[$s]} ]] && ${o}.__section.set "${BASH_REMATCH[1]}" "${BASH_REMATCH[2]}"
+      if [[ $REPLY =~ ${hKeyValue[$s]} ]]; then
+
+        ${o}.__section.set "${BASH_REMATCH[1]}" "${BASH_REMATCH[2]}"
+        (( ${#BASH_REMATCH[1]} > $fmt )) && fmt=${#BASH_REMATCH[1]}
+
+      fi
 
     else
 
@@ -858,6 +871,7 @@ INI.read() {
   done < $fn
 
   [[ ${hRawMode[$s]} =~ ^(\+|\-)$ ]] && ${o}.__section.set __unnamed_cnt ${i:=0}
+  [[ ${hKeyValue[$s]} ]] && ${o}.__section.set __unnamed_fmt $fmt
 
   return 0
 
@@ -917,6 +931,7 @@ INI.read() {
 #    iniLoad="${iniMain%/*}/child.${iniMain##*/}"                               #-
 #    iniSave="${iniMain%/*}/write.${iniMain##*/}"                               #-
 #    udfAddFile2Clean $iniLoad                                                  #-
+#    udfAddFile2Clean $iniSave                                                  #-
 #    cat <<-'EOFiniChild' > $iniLoad                                            #-
 #    section  =  global                                                         #-
 #    file     =  child                                                          #-
@@ -961,7 +976,7 @@ INI.read() {
 #   INI tLoad
 #   tLoad.load $iniLoad $sRules                                                 #? true
 #   tLoad.save $iniSave                                                         #? true
-#   tLoad.show >| md5sum - | grep ^5a8cdc4d2dbb5cb169cc857603179217.*-$         #? true
+#   tLoad.show >| md5sum - | grep ^2cf8c82e21f821cfaaae0e32e5839115.*-$         #? true
 ##    tLoad.free
 #  SOURCE
 INI.load() {
@@ -1072,7 +1087,7 @@ INI.load() {
 #    INI tBindCli
 #    tBindCli.bind.cli $rCLI                                                    #? true
 #    tBindCli.load $ini $rINI                                                   #? true
-#    tBindCli.show >| md5sum - | grep ^230af661227964498193dc3df7c63ece.*-$     #? true
+#    tBindCli.show >| md5sum - | grep ^2f125619b6d32942dcd34801acc5cdd1.*-$     #? true
 #    tBindCli.free
 #  SOURCE
 INI.bind.cli() {
