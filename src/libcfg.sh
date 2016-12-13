@@ -1,5 +1,5 @@
 #
-# $Id: libcfg.sh 620 2016-12-13 00:39:39+04:00 toor $
+# $Id: libcfg.sh 621 2016-12-13 16:13:11+04:00 toor $
 #
 #****h* BASHLYK/libcfg
 #  DESCRIPTION
@@ -265,39 +265,39 @@ INI.__section.select() {
 #  SOURCE
 INI.__section.show() {
 
-  local fmt i iC id o sA sU
+  local i iKeyWidth iC id o sA sU
 
   o=${FUNCNAME[0]%%.*}
 
   ${o}.__section.select $1
   id=$( ${o}.__section.id $1 )
 
-  sU=$( ${o}.__section.get __unnamed_mod )
+  sU=$( ${o}.__section.get _bashlyk_raw_mode )
 
   [[ $sU == '!' ]] && sA=':' || sA=
   [[ $1 ]] && printf "\n\n[ %s ]%s\n\n" "$1" "$sA" || echo ""
 
   if [[ $sU == "=" ]]; then
 
-    eval "for i in "\${!$id[@]}"; do [[ \$i =~ ^__unnamed_key= ]] && printf -- '%s\n' \"\${$id[\$i]}\"; done;"
+    eval "for i in "\${!$id[@]}"; do [[ \$i =~ ^_bashlyk_raw_uniq= ]] && printf -- '%s\n' \"\${$id[\$i]}\"; done;"
 
   else
 
-    iC=$( ${o}.__section.get __unnamed_cnt )
+    iC=$( ${o}.__section.get _bashlyk_raw_num )
 
     if udfIsNumber $iC && (( iC > 0 )); then
 
       for (( i=0; i < $iC; i++ )); do
 
-        ${o}.__section.get "__unnamed_idx=$i"
+        ${o}.__section.get "_bashlyk_raw_incr=$i"
 
       done
 
     else
 
-      fmt=$( ${o}.__section.get __unnamed_fmt )
-      udfIsNumber $fmt || fmt=''
-      eval "for i in "\${!$id[@]}"; do [[ \$i =~ ^__unnamed_ ]] || printf -- '\t%${fmt}s    =    %s\n' \"\$i\" \"\${$id[\$i]}\"; done;"
+      iKeyWidth=$( ${o}.__section.get _bashlyk_key_width )
+      udfIsNumber $iKeyWidth || iKeyWidth=''
+      eval "for i in "\${!$id[@]}"; do [[ \$i =~ ^_bashlyk_ ]] || printf -- '\t%${iKeyWidth}s    =    %s\n' \"\$i\" \"\${$id[\$i]}\"; done;"
 
     fi
 
@@ -312,28 +312,28 @@ INI.__section.show() {
 #    INI.__section.setRawData -|=|+ <data>
 #  DESCRIPTION
 #    set "raw" data record to the current section with special key prefix
-#    '__unnamed_...'
+#    '_bashlyk_raw_...'
 #  NOTES
 #    private method
 #  ARGUMENTS
-#    '-', '+' - add "raw" record with incremented key like "__unnamed_idx=<No>"
+#    '-', '+' - add "raw" record with incremented key like "_bashlyk_raw_incr=<No>"
 #    '='      - add or update "raw" unique record with key like
-#               "__unnamed_key=<input data without spaces and quotes>"
+#               "_bashlyk_raw_uniq=<input data without spaces and quotes>"
 #    <data>   - input data, interpreted as "raw" record
 #  RETURN VALUE
 #    InvalidArgument - unexpected "raw" mode
 #    Success for other cases
 #  EXAMPLE
 #    INI tSRawData
-#    tSRawData.__section.select sRaw1
-#    tSRawData.__section.setRawData "=" "test 1"
-#    tSRawData.__section.setRawData "=" "test 2"
-#    tSRawData.__section.setRawData "=" "test 1"
-#    tSRawData.__section.select sRaw2
-#    tSRawData.__section.setRawData "+" "test 1"
-#    tSRawData.__section.setRawData "+" "test 2"
-#    tSRawData.__section.setRawData "+" "test 1"
-#    tSRawData.show >| md5sum - | grep ^7149e6d295217813c4902cd78d9fd332.*-$    #? true
+#    tSRawData.__section.select "unique_values"
+#    tSRawData.__section.setRawData "=" "save only unique 1"
+#    tSRawData.__section.setRawData "=" "save only unique 2"
+#    tSRawData.__section.setRawData "=" "save only unique 1"
+#    tSRawData.__section.select "accumulated_values"
+#    tSRawData.__section.setRawData "+" "save all 1"
+#    tSRawData.__section.setRawData "+" "save all 2"
+#    tSRawData.__section.setRawData "+" "save all 1"
+#    tSRawData.show >| md5sum - | grep ^1ec72eb6334d7eb29d45ffd7b01fccd2.*-$    #? true
 #    tSRawData.free
 #  SOURCE
 INI.__section.setRawData() {
@@ -348,18 +348,18 @@ INI.__section.setRawData() {
 
        s="${2##*( )}"
        s="${s%%*( )}"
-       ${o}.__section.set "__unnamed_key=${s//[\'\"\\ ]/}" "$s"
-       ${o}.__section.set '__unnamed_mod' "="
+       ${o}.__section.set "_bashlyk_raw_uniq=${s//[\'\"\\ ]/}" "$s"
+       ${o}.__section.set '_bashlyk_raw_mode' "="
 
     ;;
 
     -|+)
 
-       i=$( ${o}.__section.get __unnamed_cnt )
+       i=$( ${o}.__section.get _bashlyk_raw_num )
        udfIsNumber $i || i=0
-       ${o}.__section.set "__unnamed_idx=${i}" "$2"
+       ${o}.__section.set "_bashlyk_raw_incr=${i}" "$2"
        : $(( i++ ))
-       ${o}.__section.set '__unnamed_cnt' $i
+       ${o}.__section.set '_bashlyk_raw_num' $i
 
     ;;
 
@@ -402,8 +402,8 @@ udfIsHash() {
 #    INI.__section.getArray [<section>]
 #  DESCRIPTION
 #    get unnamed records from specified section as serialized array. Try to get
-#    a unique "raw" records (with the prefix "__unnamed_key=...") or incremented
-#    records (with prefix "__unnamed_idx=...")
+#    a unique "raw" records (with the prefix "_bashlyk_raw_uniq=...") or incremented
+#    records (with prefix "_bashlyk_raw_incr=...")
 #  NOTES
 #    private method
 #  ARGUMENTS
@@ -414,15 +414,15 @@ udfIsHash() {
 #  EXAMPLE
 #    INI tGA
 #    tGA.__section.select sect1
-#    tGA.__section.set __unnamed_cnt 3
-#    tGA.__section.set __unnamed_idx=0 "is raw value No.1"
-#    tGA.__section.set __unnamed_idx=1 "is raw value No.2"
-#    tGA.__section.set __unnamed_idx=2 "is raw value No.3"
+#    tGA.__section.set _bashlyk_raw_num 3
+#    tGA.__section.set _bashlyk_raw_incr=0 "is raw value No.1"
+#    tGA.__section.set _bashlyk_raw_incr=1 "is raw value No.2"
+#    tGA.__section.set _bashlyk_raw_incr=2 "is raw value No.3"
 #    tGA.__section.select sect2
-#    tGA.__section.set __unnamed_mod =
-#    tGA.__section.set '__unnamed_key=a1' "is raw value No.1"
-#    tGA.__section.set '__unnamed_key=b2' "is raw value No.2"
-#    tGA.__section.set '__unnamed_key=a1' "is raw value No.3"
+#    tGA.__section.set _bashlyk_raw_mode =
+#    tGA.__section.set '_bashlyk_raw_uniq=a1' "is raw value No.1"
+#    tGA.__section.set '_bashlyk_raw_uniq=b2' "is raw value No.2"
+#    tGA.__section.set '_bashlyk_raw_uniq=a1' "is raw value No.3"
 #    tGA.__section.getArray sect1 >| md5sum - | grep ^9cb6e1559552.*3d7417b.*-$ #? true
 #    tGA.__section.getArray sect2 >| md5sum - | grep ^9c964b5b47f6.*82a6d4e.*-$ #? true
 #    tGA.free
@@ -437,18 +437,18 @@ INI.__section.getArray() {
   id=$( ${o}.__section.id $1 )
   udfIsHash $id || eval $( udfOnError InvalidHash '$id' )
 
-  sU=$( ${o}.__section.get __unnamed_mod )
+  sU=$( ${o}.__section.get _bashlyk_raw_mode )
 
   if [[ $sU == "=" ]]; then
 
-    eval "for i in "\${!$id[@]}"; do [[ \$i =~ ^__unnamed_key= ]] && a[\${#a[@]}]=\"\${$id[\$i]}\"; done;"
+    eval "for i in "\${!$id[@]}"; do [[ \$i =~ ^_bashlyk_raw_uniq= ]] && a[\${#a[@]}]=\"\${$id[\$i]}\"; done;"
 
   else
 
-    iC=$( ${o}.__section.get __unnamed_cnt )
+    iC=$( ${o}.__section.get _bashlyk_raw_num )
     if udfIsNumber $iC && (( iC )); then
 
-      eval "for (( i=0; i < $iC; i++ )); do a[\${#a[@]}]=\"\${$id[__unnamed_idx=\$i]}\"; done;"
+      eval "for (( i=0; i < $iC; i++ )); do a[\${#a[@]}]=\"\${$id[_bashlyk_raw_incr=\$i]}\"; done;"
 
     fi
 
@@ -487,18 +487,18 @@ INI.__section.getArray() {
 #    tGet.get [section]key >| grep '^is value$'                                 #? true
 #    tGet.get   key >| grep '^is unnamed section$'                              #? true
 #    tGet.get []key >| grep '^is unnamed section$'                              #? true
-#    tGet.__section.select section1
-#    tGet.__section.set __unnamed_cnt 3
-#    tGet.__section.set __unnamed_idx=0 "is raw value No.1"
-#    tGet.__section.set __unnamed_idx=1 "is raw value No.2"
-#    tGet.__section.set __unnamed_idx=2 "is raw value No.3"
-#    tGet.__section.select section2
-#    tGet.__section.set __unnamed_mod =
-#    tGet.__section.set __unnamed_key=a1 "is raw value No.1"
-#    tGet.__section.set __unnamed_key=b2 "is raw value No.2"
-#    tGet.__section.set __unnamed_key=a1 "is raw value No.3"
-#    tGet.get [section2] >| md5sum - | grep ^9c964b5b47f6dc.*82a6d4e.*-$        #? true
-#    tGet.get [section1] >| md5sum - | grep ^9cb6e155955235.*3d7417b.*-$        #? true
+#    tGet.__section.select accumu
+#    tGet.__section.set _bashlyk_raw_num 3
+#    tGet.__section.set _bashlyk_raw_incr=0 "is raw value No.1"
+#    tGet.__section.set _bashlyk_raw_incr=1 "is raw value No.2"
+#    tGet.__section.set _bashlyk_raw_incr=2 "is raw value No.3"
+#    tGet.__section.select unique
+#    tGet.__section.set _bashlyk_raw_mode =
+#    tGet.__section.set _bashlyk_raw_uniq=a1 "is raw value No.1"
+#    tGet.__section.set _bashlyk_raw_uniq=b2 "is raw value No.2"
+#    tGet.__section.set _bashlyk_raw_uniq=a1 "is raw value No.3"
+#    tGet.get [accumu] >| md5sum | grep ^9cb6e155955235c701959b4253d7417b.*-$   #? true
+#    tGet.get [unique] >| md5sum | grep ^9c964b5b47f6dcc62be09c5de82a6d4e.*-$   #? true
 #    tGet.free
 #  SOURCE
 INI.get() {
@@ -516,17 +516,17 @@ INI.get() {
 
     3)
       s=${a[1]:-__global__}
-      k="${a[2]:-__unnamed_}"
+      k="${a[2]:-_bashlyk_raw}"
       ;;
 
     2)
       s=${a[1]:-__global__}
-      k=__unnamed_
+      k=_bashlyk_raw
       ;;
 
     1)
       s=__global__
-      k="${a[0]:-__unnamed_}"
+      k="${a[0]:-_bashlyk_raw}"
       ;;
 
     *)
@@ -535,7 +535,7 @@ INI.get() {
 
   esac
 
-  if [[ $k =~ __unnamed_ ]]; then
+  if [[ $k =~ _bashlyk_raw ]]; then
 
     ${o}.__section.getArray $s
 
@@ -576,10 +576,10 @@ INI.get() {
 #    tSet.set [section1]+= is raw value No.1
 #    tSet.set [section1]+ = is raw value No.2
 #    tSet.set [section1]+  =   is raw value No.3
-#    tSet.set [section2] = is raw value No.1
-#    tSet.set [section2] =  is raw value No.2
-#    tSet.set [section2] =   is raw value No.1
-#    tSet.get [section2] >| md5sum | grep ^dae9eb0fed6d92e45ec62db6778bb0ea.*-$ #? true
+#    tSet.set [section2]=save unique value No.1
+#    tSet.set [section2] =  save unique value No.2
+#    tSet.set [section2] =   save unique value No.1
+#    tSet.get [section2] >| md5sum | grep ^8c6e9c4833a07c3d451eacbef0813534.*-$ #? true
 #    tSet.get [section1] >| md5sum | grep ^9cb6e155955235c701959b4253d7417b.*-$ #? true
 #    tSet.free
 #  SOURCE
@@ -767,7 +767,7 @@ INI.read() {
 
   udfOn NoSuchFileOrDir throw $1
 
-  local bActiveSection bIgnore csv fmt fn i reComment reSection reValidSections s
+  local bActiveSection bIgnore csv fn i iKeyWidth reComment reSection reValidSections s
 
   reSection='^[[:space:]]*(:?)\[[[:space:]]*([^[:punct:]]+?)[[:space:]]*\](:?)[[:space:]]*$'
   reKey_Val='^[[:space:]]*([[:alnum:]]+)[[:space:]]*=[[:space:]]*(.*)[[:space:]]*$'
@@ -793,8 +793,8 @@ INI.read() {
   [[ ${hKeyValue[$s]} ]] || hKeyValue[$s]="$reKey_Val"
 
   ${o}.__section.select
-  fmt=$( ${o}.__section.get __unnamed_fmt )
-  udfIsNumber $fmt || fmt=0
+  iKeyWidth=$( ${o}.__section.get _bashlyk_key_width )
+  udfIsNumber $iKeyWidth || iKeyWidth=0
 
   while read -t 4; do
 
@@ -804,8 +804,8 @@ INI.read() {
       [[ $REPLY =~ $reValidSections ]] || continue
       bIgnore=
 
-      (( i > 0   )) && ${o}.__section.set __unnamed_cnt $i
-      (( fmt > 0 )) && ${o}.__section.set __unnamed_fmt $fmt
+      (( i > 0   )) && ${o}.__section.set _bashlyk_raw_num $i
+      (( iKeyWidth > 0 )) && ${o}.__section.set _bashlyk_key_width $iKeyWidth
 
       s="${BASH_REMATCH[2]}"
 
@@ -814,23 +814,23 @@ INI.read() {
       [[ ${BASH_REMATCH[3]} == ":" ]] && hRawMode[$s]="-"
 
       bIgnore=1
-      [[ $bActiveSection == "close" ]] && bActiveSection= && ${o}.__section.set __unnamed_mod "!" && continue
+      [[ $bActiveSection == "close" ]] && bActiveSection= && ${o}.__section.set _bashlyk_raw_mode "!" && continue
       bIgnore=
 
       ${o}.__section.select $s
       i=0
-      fmt=$( ${o}.__section.get __unnamed_fmt )
-      udfIsNumber $fmt || fmt=0
+      iKeyWidth=$( ${o}.__section.get _bashlyk_key_width )
+      udfIsNumber $iKeyWidth || iKeyWidth=0
 
       case "${hRawMode[$s]}" in
 
         -) ;;
 
-        +) i=$( ${o}.__section.get __unnamed_cnt )
-           udfIsNumber $i || ${o}.__section.set __unnamed_cnt ${i:=0}
+        +) i=$( ${o}.__section.get _bashlyk_raw_num )
+           udfIsNumber $i || ${o}.__section.set _bashlyk_raw_num ${i:=0}
            ;;
 
-        =) ${o}.__section.set __unnamed_mod "=";;
+        =) ${o}.__section.set _bashlyk_raw_mode "=";;
 
         *) hKeyValue[$s]="$reKey_Val";;
 
@@ -849,7 +849,7 @@ INI.read() {
       if [[ $REPLY =~ ${hKeyValue[$s]} ]]; then
 
         ${o}.__section.set "${BASH_REMATCH[1]}" "${BASH_REMATCH[2]}"
-        (( ${#BASH_REMATCH[1]} > $fmt )) && fmt=${#BASH_REMATCH[1]}
+        (( ${#BASH_REMATCH[1]} > $iKeyWidth )) && iKeyWidth=${#BASH_REMATCH[1]}
 
       fi
 
@@ -858,11 +858,11 @@ INI.read() {
       if [[ ${hRawMode[$s]} == "=" ]]; then
 
         REPLY="$( echo $REPLY )"
-        ${o}.__section.set "__unnamed_key=${REPLY//[\'\"\\ ]/}" "$REPLY"
+        ${o}.__section.set "_bashlyk_raw_uniq=${REPLY//[\'\"\\ ]/}" "$REPLY"
 
       else
 
-        ${o}.__section.set "__unnamed_idx=${i:=0}" "$REPLY"
+        ${o}.__section.set "_bashlyk_raw_incr=${i:=0}" "$REPLY"
         : $(( i++ ))
 
       fi
@@ -871,8 +871,8 @@ INI.read() {
 
   done < $fn
 
-  [[ ${hRawMode[$s]} =~ ^(\+|\-)$ ]] && ${o}.__section.set __unnamed_cnt ${i:=0}
-  [[ ${hKeyValue[$s]} ]] && ${o}.__section.set __unnamed_fmt $fmt
+  [[ ${hRawMode[$s]} =~ ^(\+|\-)$ ]] && ${o}.__section.set _bashlyk_raw_num ${i:=0}
+  [[ ${hKeyValue[$s]} ]] && ${o}.__section.set _bashlyk_key_width $iKeyWidth
 
   return 0
 
@@ -977,7 +977,7 @@ INI.read() {
 #   INI tLoad
 #   tLoad.load $iniLoad $sRules                                                 #? true
 #   tLoad.save $iniSave                                                         #? true
-#   tLoad.show >| md5sum - | grep ^2cf8c82e21f821cfaaae0e32e5839115.*-$         #? true
+#   tLoad.show >| md5sum - | grep ^ecc291818557339352e35fe80fb0de57.*-$         #? true
 ##    tLoad.free
 #  SOURCE
 INI.load() {
@@ -1088,7 +1088,7 @@ INI.load() {
 #    INI tBindCli
 #    tBindCli.bind.cli $rCLI                                                    #? true
 #    tBindCli.load $ini $rINI                                                   #? true
-#    tBindCli.show >| md5sum - | grep ^2f125619b6d32942dcd34801acc5cdd1.*-$     #? true
+#    tBindCli.show >| md5sum - | grep ^5f07ee81d3d7cab5bff836f1acb99a20.*-$     #? true
 #    tBindCli.free
 #  SOURCE
 INI.bind.cli() {
