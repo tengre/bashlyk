@@ -1,5 +1,5 @@
 #
-# $Id: libcfg.sh 621 2016-12-13 16:13:11+04:00 toor $
+# $Id: libcfg.sh 622 2016-12-13 16:37:35+04:00 toor $
 #
 #****h* BASHLYK/libcfg
 #  DESCRIPTION
@@ -1096,7 +1096,7 @@ INI.bind.cli() {
   udfOn MissingArgument "$@" || return $?
 
   local -a a
-  local c fmtCase fmHandler k o sSection sShort sLong sArg s S evalGetopts sCases v
+  local c fmtCase fmtHandler k o sSection sShort sLong sArg s S evalGetopts sCases v
 
   o=${FUNCNAME[0]%%.*}
   c=cli${RANDOM}
