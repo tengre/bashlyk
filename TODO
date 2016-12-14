@@ -94,9 +94,9 @@ Fri, 06 Mar 2015 12:44:00 +0400
 + #160703 - udfMakeTemp - temporary fifo files support
 + #160704 - udfThrowOnEmptyArgument !!! Use udfOn EmptyOrMissingArgument throw|warn|...
 + #160705 - udfChangeIni - loss % contain substring
-- #160706 - check for configuration files permissions
-- #160707 - hashes can be used instead of CSV? testing required
-- #160708 - libopt.sh - support of short options
+! #160706 - check for configuration files permissions
++ #160707 - hashes can be used instead of CSV? testing required
+! #160708 - libopt.sh - support of short options
 + #160709 - udfOnError - quote required for ()
 ! #160710 - simplify the usage of udfOnError
 + #160711 - new error code iErrorNonSupported
@@ -105,7 +105,7 @@ Fri, 06 Mar 2015 12:44:00 +0400
 + #160901 - udfCheckStarted - check pid as number
 + #160910 - add new library libnet
 + #160911 - add alias iErrorInvalid{Argument,Variable} to iErrorNonValid{Argument,Variable}
-- #160912 - add force "notuse" option for disable logging
++ #160912 - add force "notuse" option for disable logging
 + #160913 - add alias iErrorMissingArgument to iErrorMissingOrEmptyArgument
 + #160914 - add udfStopProcess to libpid
 + #160915 - add InvalidVariable handling for udfOn

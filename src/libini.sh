@@ -1,5 +1,5 @@
 #
-# $Id: libini.sh 623 2016-12-14 15:37:50+04:00 toor $
+# $Id: libini.sh 624 2016-12-14 23:42:36+04:00 toor $
 #
 #****h* BASHLYK/libini
 #  DESCRIPTION
@@ -14,7 +14,7 @@
 #  SOURCE
 [ -n "$BASH_VERSION" ] || eval 'echo "bash interpreter for this script ($0) required ..."; exit 255'
 
-[[ $_BASHLYK_libini ]] && return 0 || _BASHLYK_libini=1
+[[ $_BASHLYK_LIBINI ]] && return 0 || _BASHLYK_LIBINI=1
 #******
 #****** libini/External Modules
 # DESCRIPTION

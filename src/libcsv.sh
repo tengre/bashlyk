@@ -1,5 +1,5 @@
 #
-# $Id: libcsv.sh 623 2016-12-14 15:37:50+04:00 toor $
+# $Id: libcsv.sh 624 2016-12-14 23:42:36+04:00 toor $
 #
 #****h* BASHLYK/libcsv
 #  DESCRIPTION
@@ -17,7 +17,7 @@
 #  SOURCE
 [ -n "$BASH_VERSION" ] \
  || eval 'echo "bash interpreter for this script ($0) required ..."; exit 255'
-[[ -n "$_BASHLYK_LIBINI" ]] && return 0 || _BASHLYK_LIBINI=1
+[[ $_BASHLYK_LIBCSV ]] && return 0 || _BASHLYK_LIBCSV=1
 #******
 #****** libcsv/External Modules
 # DESCRIPTION
