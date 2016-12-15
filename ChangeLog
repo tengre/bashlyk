@@ -1,3 +1,30 @@
+Thu, 15 Dec 2016 16:25:52 +0400
+	New upstream release
+	Version 1.88
+
+ Существенное изменение поведения библиотеки libini:
+ - использование ассоциативных массивов для манипуляции с данными, вместо CSV,
+   как ранее
+ - ООП-стиль прикладного кода - использование "методов" для обработки данных,
+   использование конструктора и деструктора для управления жизненным циклом
+   ресурсов, выделяемых для обработки конфигурационных данных
+ - более удобный способ разбора аргументов командной строки и их привязка к
+   конфигурационным данным, позволяющая переопределять с командной строки
+   параметры INI-файлов, поддерживается наглядное описание длинных и коротких
+   опций
+ - для опций не надо создавать одноименные переменные
+ - не требуется защита от исполнения <?>
+
+ Пример кода:
+
+   INI ini
+   ini.bind.cli config{c}: source{s}:-- help{h} mode{m}: no-save
+   conf=$( ini.getopt config )
+   ini.load $conf :mode,help no:save source:=
+   [[ $( ini.get help ) ]] && usage
+   ini.save $conf
+   ini.free
+
 Sun, 30 Oct 2016 00:39:00 +0400
 	Fix bugs
 	Version 1.87
@@ -11,9 +38,9 @@ libpid.sh:
  - removed deprecated udfClean
  - fixed and improved udfStopProcess:
    * added the ability to delete a group of processes associated with the
-     command line:
-     ** PID argument replaced by the option "pid=<PID>[,..]"
-     ** added option "childs" - stop only child processes
+     command line
+   * PID argument replaced by the option "pid=<PID>[,..]"
+   * added option "childs" - stop only child processes
    * successful return code is calculated implicitly - the resulting list of
      processes is empty and at least one process has been stopped
 
@@ -35,11 +62,10 @@ liberr.sh:
  - fixed udfThrow test unit
 
 libmsg.sh:
- - small fixes:
-   * udfMail - removed using '-v' for 'mail' command
-   * udfGetXSessionProperties:
-     ** used 'pgrep -f ..." instead 'ps -C ...'
-     ** ignored stderr from 'grep -az ...'
+ - udfMail - removed using '-v' for 'mail' command
+ - udfGetXSessionProperties changes:
+   * used 'pgrep -f ..." instead 'ps -C ...'
+   * ignored stderr from 'grep -az ...'
 
 
 Sat, 24 Sep 2016 21:53:04 +0400
