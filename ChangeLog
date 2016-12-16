@@ -1,25 +1,41 @@
-Fri, 16 Dec 2016 00:54:28 +0400
+Fri, 16 Dec 2016 11:52:17 +0400
 	New upstream release
 	Version 1.88
 
- Существенное изменение поведения библиотеки libini, за основу взят perl-модуль
-   GoodIni.pm:
- - использование ассоциативных массивов для манипуляции с INI конфигурационными
-   данными, вместо CSV, как ранее
- - ООП-стиль прикладного кода:
-   * привязка функций (например, get/set) к ресурсам, выделенным для обработки
-     конфигурационных данных, как "методов" экземпляра базового класса INI.
-   * использование конструктора и деструктора для управления жизненным циклом
-     ресурсов, выделяемых для обработки конфигурационных данных
- - более удобный способ разбора аргументов командной строки и их привязка к
-   конфигурационным данным, позволяющая переопределять с командной строки
-   параметры INI-файлов, поддерживается одновременное определение длинных и
-   коротких опций для конфигурационных параметров.
- - для опций не надо создавать одноименные переменные
- - не требуется защита от исполнения
- - форматирование вывода INI-секции по самому длинному ключу
+ significantly redesigned library "libini.sh", which is now based on the
+ following ideas:
+ - used the associative arrays for store the INI configuration data, instead of
+   the CSV, as previously
+ - used of OOP style to handle INI configuration data:
+   * the functions (eg, get/set) bind with the configuration data as "methods"
+     of the corresponding instance of the base class "INI"
+   * used the constructor and destructor to manage the life cycle of the
+     resources allocated for processing configuration data
+ - a more convenient way for parsing the command line (CLI) arguments and their
+   binding to the configuration data that allows you to override the INI-file
+   settings from CLI
 
- Пример кода:
+ significantly redesigned library libini.sh, which is now based on the following
+ ideas:
+ - associative arrays are used to store the INI configuration data, instead of
+   the CSV, as previously
+ - used for the treatment of OOP style INI configuration data:
+   * functions (eg, get/set) associated with the configuration data, as
+     "methods" of the corresponding instance of the base class "INI"
+   * used the constructor and destructor to manage the life cycle of the
+     resources allocated for processing configuration data
+ - a more convenient way to parse command line arguments and their binding to
+   configuration data that allows you to override the command line options
+   INI-file
+ - supports simultaneous determination of long and short options of
+   configuration parameters.
+ - no need to declare variables for the INI and CLI options
+ - INI section is formatted by the width of the longest key at operations save
+   or output
+ - old code of the libini.sh moved to the libcsv.sh for support the scripts that
+   use earlier versions of the bashlyk
+
+ Example code:
 
    INI ini
    ini.bind.cli config{c}: source{s}:-- help{h} mode{m}: dry-run
@@ -30,6 +46,11 @@ Fri, 16 Dec 2016 00:54:28 +0400
      ini.show
      exit 0
    fi
+
+   ini.set mode = demo
+   ini.set [source] = $HOME
+   ini.set [source] = /var/mail/$USER
+
    ini.save $conf
    ini.free
 
