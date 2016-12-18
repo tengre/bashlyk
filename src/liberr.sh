@@ -1,5 +1,5 @@
 #
-# $Id: liberr.sh 610 2016-12-02 15:35:03+04:00 toor $
+# $Id: liberr.sh 628 2016-12-19 00:27:21+04:00 toor $
 #
 #****h* BASHLYK/liberr
 #  DESCRIPTION
@@ -19,7 +19,7 @@
 #  SOURCE
 [ -n "$BASH_VERSION" ] \
  || eval 'echo "bash interpreter for this script ($0) required ..."; exit 255'
-[[ -n "$_BASHLYK_LIBERR" ]] && return 0 || _BASHLYK_LIBERR=1
+[[ $_BASHLYK_LIBERR ]] && return 0 || _BASHLYK_LIBERR=1
 #******
 #****** liberr/External Modules
 # DESCRIPTION

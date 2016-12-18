@@ -1,5 +1,5 @@
 #
-# $Id: libcnf.sh 601 2016-11-25 16:18:38+04:00 toor $
+# $Id: libcnf.sh 628 2016-12-19 00:27:20+04:00 toor $
 #
 #****h* BASHLYK/libcnf
 #  DESCRIPTION
@@ -16,7 +16,7 @@
 #  SOURCE
 [ -n "$BASH_VERSION" ] \
  || eval 'echo "bash interpreter for this script ($0) required ..."; exit 255'
-[[ -n "$_BASHLYK_LIBCNF" ]] && return 0 || _BASHLYK_LIBCNF=1
+[[ $_BASHLYK_LIBCNF ]] && return 0 || _BASHLYK_LIBCNF=1
 #******
 #****** libcnf/External Modules
 # DESCRIPTION

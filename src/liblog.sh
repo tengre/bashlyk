@@ -1,5 +1,5 @@
 #
-# $Id: liblog.sh 556 2016-09-22 13:56:00+04:00 toor $
+# $Id: liblog.sh 628 2016-12-19 00:27:21+04:00 toor $
 #
 #****h* BASHLYK/liblog
 #  DESCRIPTION
@@ -18,7 +18,7 @@
 #  SOURCE
 [ -n "$BASH_VERSION" ] \
  || eval 'echo "bash interpreter for this script ($0) required ..."; exit 255'
-[[ -n "$_BASHLYK_LIBLOG" ]] && return 0 || _BASHLYK_LIBLOG=1
+[[ $_BASHLYK_LIBLOG ]] && return 0 || _BASHLYK_LIBLOG=1
 #******
 #****** liblog/External modules
 #  DESCRIPTION

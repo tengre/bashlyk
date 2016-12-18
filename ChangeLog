@@ -1,19 +1,6 @@
-Fri, 16 Dec 2016 11:52:17 +0400
+Sat, 17 Dec 2016 23:49:19 +0400
 	New upstream release
 	Version 1.88
-
- significantly redesigned library "libini.sh", which is now based on the
- following ideas:
- - used the associative arrays for store the INI configuration data, instead of
-   the CSV, as previously
- - used of OOP style to handle INI configuration data:
-   * the functions (eg, get/set) bind with the configuration data as "methods"
-     of the corresponding instance of the base class "INI"
-   * used the constructor and destructor to manage the life cycle of the
-     resources allocated for processing configuration data
- - a more convenient way for parsing the command line (CLI) arguments and their
-   binding to the configuration data that allows you to override the INI-file
-   settings from CLI
 
  significantly redesigned library libini.sh, which is now based on the following
  ideas:

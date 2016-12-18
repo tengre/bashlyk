@@ -1,5 +1,5 @@
 #
-# $Id: libstd.sh 601 2016-11-25 16:18:39+04:00 toor $
+# $Id: libstd.sh 628 2016-12-19 00:27:21+04:00 toor $
 #
 #****h* BASHLYK/libstd
 #  DESCRIPTION
@@ -19,7 +19,7 @@
 #  SOURCE
 [ -n "$BASH_VERSION" ] \
  || eval 'echo "bash interpreter for this script ($0) required ..."; exit 255'
-[[ -n "$_BASHLYK_LIBSTD" ]] && return 0 || _BASHLYK_LIBSTD=1
+[[ $_BASHLYK_LIBSTD ]] && return 0 || _BASHLYK_LIBSTD=1
 #******
 #****** libstd/External Modules
 # DESCRIPTION
