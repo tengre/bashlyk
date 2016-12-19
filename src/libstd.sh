@@ -1,5 +1,5 @@
 #
-# $Id: libstd.sh 628 2016-12-19 00:27:21+04:00 toor $
+# $Id: libstd.sh 629 2016-12-19 15:26:43+04:00 toor $
 #
 #****h* BASHLYK/libstd
 #  DESCRIPTION
@@ -1397,7 +1397,7 @@ udfGetTimeInSec() {
 
 }
 #******
-#****f* libpid/udfGetFreeFD
+#****f* libstd/udfGetFreeFD
 #  SYNOPSIS
 #    udfGetFreeFD
 #  DESCRIPTION
@@ -1427,6 +1427,30 @@ udfGetFreeFD() {
 		fi
 
 	done
+
+}
+#******
+#****f* libstd/udfIsHash
+#  SYNOPSIS
+#    udfIsHash <variable>
+#  DESCRIPTION
+#    treated a variable as global associative array
+#  ARGUMENTS
+#    <variable> - variable name
+#  RETURN VALUE
+#    InvalidVariable - argument is not valid variable name
+#    InvalidHash     - argument is not hash variable
+#    Success         - argument is name of the associative array
+#  EXAMPLE
+#    declare -Ag -- hh='()' s5
+#    udfIsHash 5s                                                               #? $_bashlyk_iErrorInvalidVariable
+#    udfIsHash s5                                                               #? $_bashlyk_iErrorInvalidHash
+#    udfIsHash hh                                                               #? true
+#  SOURCE
+udfIsHash() {
+
+  udfOn InvalidVariable $1 || return $?
+  [[ $( declare -pA $1 2>/dev/null ) =~ ^declare.*-A ]] && return 0 || return $( _ iErrorInvalidHash )
 
 }
 #******

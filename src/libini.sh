@@ -1,32 +1,73 @@
 #
-# $Id: libini.sh 624 2016-12-14 23:42:36+04:00 toor $
+# $Id: libini.sh 629 2016-12-19 15:26:43+04:00 toor $
 #
 #****h* BASHLYK/libini
 #  DESCRIPTION
-#    template for testing
+#    management of the configuration files in the INI-style. Implemented
+#    capabilities and features:
+#     - associative arrays are used to store the INI configuration data
+#     - OOP style used for a treatment of the INI configuration data:
+#       * functions (eg, get/set) bind with the configuration data, as "methods"
+#         of the corresponding instance of the base class "INI"
+#       * used the constructor and destructor to manage the life cycle of the
+#         resources allocated for processing configuration data
+#     - INI configuration source may be not only single file but also a group of
+#       related files
+#     - supported the filtration ability  - retrieving only the specified
+#       sections and parameters
+#     - The possibility of simultaneous and independent work with different
+#       sources of INI data
+#     - Get/Set certain configuration data by using parameter as key
+#     - Record the configuration data to a file or output to the standard device
+#       in INI format.
+#     - Support for Command Line Interface (CLI) - simultaneous determination of
+#       long and short options of configuration parameters.
+#     - parsing the command line arguments and their binding to configuration
+#       data that allows you to override selected parameters of the INI-file.
+#  EXAMPLE
+#    INI ini
+#    ini.bind.cli config{c}: source{s}:-- help{h} mode{m}: dry-run
+#    conf=$( ini.getopt config )
+#    ini.load $conf :mode,help dry:run source:=
+#    if [[ $( ini.get [dry]run ) ]]; then
+#      echo "dry run, view current config:"
+#      ini.show
+#      exit 0
+#    fi
+#
+#    ini.set mode = demo
+#    ini.set [source] = $HOME
+#    ini.set [source] = /var/mail/$USER
+#
+#    ini.save $conf
+#    ini.free
+#
 #  AUTHOR
 #    Damir Sh. Yakupov <yds@bk.ru>
 #******
-#****d* libini/Once required
+#****d* libini/ Global Variables - once required
 #  DESCRIPTION
-#    Эта глобальная переменная обеспечивает защиту от повторного использования данного модуля
-#    Отсутствие значения $BASH_VERSION предполагает несовместимость c текущим командным интерпретатором
+#    - $BASH_VERSION    - no value is incompatible with the current shell
+#    - $BASH_VERSION    - required Bash major version 4 or more for this script
+#    - $_BASHLYK_LIBINI - global variable provides protection against re-use of
+#                         this module
 #  SOURCE
-[ -n "$BASH_VERSION" ] || eval 'echo "bash interpreter for this script ($0) required ..."; exit 255'
-
+[ -n "$BASH_VERSION" ]         || eval 'echo "BASH interpreter for this script ($0) required ..."; exit 255'
+(( ${BASH_VERSINFO[0]} >= 4 )) || eval 'echo "required BASH version 4 or more for this script ($0) ..."; exit 255'
 [[ $_BASHLYK_LIBINI ]] && return 0 || _BASHLYK_LIBINI=1
 #******
-#****** libini/External Modules
+#****** libini/ Link external modules
 # DESCRIPTION
-#   Using modules section
-#   Здесь указываются модули, код которых используется данной библиотекой
+#   Used external modules
 # SOURCE
 : ${_bashlyk_pathLib:=/usr/share/bashlyk}
 [[ -s ${_bashlyk_pathLib}/libstd.sh ]] && . "${_bashlyk_pathLib}/libstd.sh"
 [[ -s ${_bashlyk_pathLib}/liberr.sh ]] && . "${_bashlyk_pathLib}/liberr.sh"
 #******
-#****v* libini/Init section
+#****v* libini/ Global Variables - init section
 #  DESCRIPTION
+#    init of the required global variables
+#  SOURCE
 : ${_bashlyk_sUser:=$USER}
 : ${_bashlyk_sLogin:=$(logname 2>/dev/null)}
 : ${HOSTNAME:=$(hostname 2>/dev/null)}
@@ -38,7 +79,7 @@
 : ${_bashlyk_aRequiredCmd_cfg:="date echo getopt hostname logname md5sum mkdir mv pwd rm stat touch"}
 : ${_bashlyk_aExport_cfg:="INI get set show save read load bind.cli getopt free"}
 #******
-#****f* libini/INI
+#****f* public/INI
 #  SYNOPSIS
 #    INI [<id>]
 #  DESCRIPTION
@@ -89,7 +130,15 @@ INI() {
 
 }
 #******
-#****f* libini/INI.__section.id
+#****** libini/private
+#  DESCRIPTION
+#    private "methods"
+#******
+#****** libini/public
+#  DESCRIPTION
+#    public "methods"
+#******
+#****f* private/INI.__section.id
 #  SYNOPSIS
 #    INI.__section.id [<section>]
 #  DESCRIPTION
@@ -117,7 +166,7 @@ INI.__section.id() {
 
 }
 #******
-#****f* libini/INI.__section.byindex
+#****f* private/INI.__section.byindex
 #  SYNOPSIS
 #    INI.__section.byindex [<index>]
 #  DESCRIPTION
@@ -153,7 +202,7 @@ INI.__section.byindex() {
 
 }
 #******
-#****f* libini/INI.free
+#****f* public/INI.free
 #  SYNOPSIS
 #    INI.free
 #  DESCRIPTION
@@ -198,7 +247,7 @@ INI.free() {
 
 }
 #******
-#****f* libini/INI.__section.select
+#****f* private/INI.__section.select
 #  SYNOPSIS
 #    INI.__section.select [<section>]
 #  DESCRIPTION
@@ -244,7 +293,7 @@ INI.__section.select() {
 
 }
 #******
-#****f* libini/INI.__section.show
+#****f* private/INI.__section.show
 #  SYNOPSIS
 #    INI.__section.show [<section>]
 #  DESCRIPTION
@@ -307,7 +356,7 @@ INI.__section.show() {
 
 }
 #******
-#****f* libini/INI.__section.setRawData
+#****f* private/INI.__section.setRawData
 #  SYNOPSIS
 #    INI.__section.setRawData -|=|+ <data>
 #  DESCRIPTION
@@ -373,31 +422,7 @@ INI.__section.setRawData() {
 
 }
 #******
-#****f* libini/udfIsHash
-#  SYNOPSIS
-#    udfIsHash <variable>
-#  DESCRIPTION
-#    treated a variable as global associative array
-#  ARGUMENTS
-#    <variable> - variable name
-#  RETURN VALUE
-#    InvalidVariable - argument is not valid variable name
-#    InvalidHash     - argument is not hash variable
-#    Success         - argument is name of the associative array
-#  EXAMPLE
-#    declare -Ag -- hh='()' s5
-#    udfIsHash 5s                                                               #? $_bashlyk_iErrorInvalidVariable
-#    udfIsHash s5                                                               #? $_bashlyk_iErrorInvalidHash
-#    udfIsHash hh                                                               #? true
-#  SOURCE
-udfIsHash() {
-
-  udfOn InvalidVariable $1 || return $?
-  [[ $( declare -pA $1 2>/dev/null ) =~ ^declare.*-A ]] && return 0 || return $( _ iErrorInvalidHash )
-
-}
-#******
-#****f* libini/INI.__section.getArray
+#****f* private/INI.__section.getArray
 #  SYNOPSIS
 #    INI.__section.getArray [<section>]
 #  DESCRIPTION
@@ -458,7 +483,7 @@ INI.__section.getArray() {
 
 }
 #******
-#****f* libini/INI.get
+#****f* public/INI.get
 #  SYNOPSIS
 #    INI.get [\[<section>\]]<key>
 #  DESCRIPTION
@@ -548,7 +573,7 @@ INI.get() {
 
 }
 #******
-#****f* libini/INI.set
+#****f* public/INI.set
 #  SYNOPSIS
 #    INI.set [\[<section>\]]<key> = <value>
 #  DESCRIPTION
@@ -631,7 +656,7 @@ INI.set() {
 
 }
 #******
-#****f* libini/INI.show
+#****f* public/INI.show
 #  SYNOPSIS
 #    INI.show
 #  DESCRIPTION
@@ -669,7 +694,7 @@ INI.show() {
 
 }
 #******
-#****f* libini/INI.save
+#****f* public/INI.save
 #  SYNOPSIS
 #    INI.save <file>
 #  DESCRIPTION
@@ -716,7 +741,7 @@ INI.save() {
 
 }
 #******
-#****f* libini/INI.read
+#****f* public/INI.read
 #  SYNOPSIS
 #    INI.read <filename>
 #  DESCRIPTION
@@ -878,7 +903,7 @@ INI.read() {
 
 }
 #******
-#****f* libini/INI.load
+#****f* public/INI.load
 #  SYNOPSIS
 #    INI.load <file> <section>:(<options>)|<raw mode>) ...
 #  DESCRIPTION
@@ -1056,7 +1081,7 @@ INI.load() {
 
 }
 #******
-#****f* libini/INI.bind.cli
+#****f* public/INI.bind.cli
 #  SYNOPSIS
 #    INI.bind.cli [<section>-]<option long name>{<short name>}[:[:=+]] ...
 #  DESCRIPTION
@@ -1142,7 +1167,7 @@ INI.bind.cli() {
 
 }
 #******
-#****f* libini/INI.getopt
+#****f* public/INI.getopt
 #  SYNOPSIS
 #    INI.getopt <option>[--]
 #  DESCRIPTION
