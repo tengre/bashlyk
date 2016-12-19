@@ -1,5 +1,5 @@
 #
-# $Id: liberr.sh 568 2016-10-27 17:11:41+04:00 toor $
+# $Id: liberr.sh 628 2016-12-19 00:27:21+04:00 toor $
 #
 #****h* BASHLYK/liberr
 #  DESCRIPTION
@@ -19,7 +19,7 @@
 #  SOURCE
 [ -n "$BASH_VERSION" ] \
  || eval 'echo "bash interpreter for this script ($0) required ..."; exit 255'
-[[ -n "$_BASHLYK_LIBERR" ]] && return 0 || _BASHLYK_LIBERR=1
+[[ $_BASHLYK_LIBERR ]] && return 0 || _BASHLYK_LIBERR=1
 #******
 #****** liberr/External Modules
 # DESCRIPTION
@@ -53,7 +53,8 @@ _bashlyk_iErrorAbortedBySignal=220
 _bashlyk_iErrorNonValidVariable=200
 _bashlyk_iErrorInvalidVariable=200
 _bashlyk_iErrorInvalidFunction=199
-_bashlyk_iErrorEmptyVariable=198
+_bashlyk_iErrorInvalidHash=198
+_bashlyk_iErrorEmptyVariable=197
 _bashlyk_iErrorNotExistNotCreated=190
 _bashlyk_iErrorNoSuchFileOrDir=185
 _bashlyk_iErrorNoSuchProcess=184
@@ -79,6 +80,7 @@ _bashlyk_hError[$_bashlyk_iErrorBrokenIntegrity]="broken integrity"
 _bashlyk_hError[$_bashlyk_iErrorAbortedBySignal]="aborted by signal"
 _bashlyk_hError[$_bashlyk_iErrorInvalidVariable]="invalid variable"
 _bashlyk_hError[$_bashlyk_iErrorInvalidFunction]="invalid function"
+_bashlyk_hError[$_bashlyk_iErrorInvalidHash]="invalid hash"
 _bashlyk_hError[$_bashlyk_iErrorNotExistNotCreated]="not exist and not created"
 _bashlyk_hError[$_bashlyk_iErrorNoSuchFileOrDir]="no such file or directory"
 _bashlyk_hError[$_bashlyk_iErrorNoSuchProcess]="no such process"
@@ -93,7 +95,7 @@ _bashlyk_hError[$_bashlyk_iErrorIncompatibleVersion]="incompatible version"
 _bashlyk_hError[$_bashlyk_iErrorTryBoxException]="try box exception"
 #
 : ${_bashlyk_onError:=throw}
-: ${_bashlyk_sArg:=$*}
+: ${_bashlyk_sArg:="$@"}
 : ${_bashlyk_aRequiredCmd_err:="echo printf sed which"}
 : ${_bashlyk_aExport_err:="udfCommandNotFound udfEmptyArgument udfEmptyOrMissingArgument   \
   udfEmptyResult udfEmptyVariable udfInvalidVariable udfMissingArgument udfOn              \
@@ -485,6 +487,7 @@ udfTryEveryLine() {
 #    udfOn EmptyResult ""                                                       #? $_bashlyk_iErrorEmptyResult
 #    udfOn EmptyResult return ""                                                #? $_bashlyk_iErrorEmptyResult
 #    udfOn InvalidVariable invalid+variable                                     #? $_bashlyk_iErrorInvalidVariable
+#    udfOn NoSuchFileOrDir "/$RANDOM/$RANDOM"                                   #? $_bashlyk_iErrorNoSuchFileOrDir
 #  SOURCE
 
 udfOn() {
@@ -497,7 +500,7 @@ udfOn() {
 	IFS=$' \t\n'
 	e=$1
 
-	if [[ $1 =~ ^(CommandNotFound|Empty(Variable|Argument|OrMissingArgument|Result)|Invalid(Argument|Variable)|MissingArgument)$ ]]; then
+	if [[ $1 =~ ^(CommandNotFound|Empty(Variable|Argument|OrMissingArgument|Result)|Invalid(Argument|Variable)|MissingArgument|NoSuchFileOrDir)$ ]]; then
 
 		e=$1
 
@@ -579,6 +582,30 @@ udfOn() {
 udfCommandNotFound() {
 
 	[[ -n "$1" && -n "$( which $1 )" ]] && return 1 || return 0
+
+}
+#******
+#****f* liberr/udfNoSuchFileOrDir
+#  SYNOPSIS
+#    udfNoSuchFileOrDir <filename>
+#  DESCRIPTION
+#    return true if argument is empty, nonexistent, designed to check the
+#    conditions in the function udfOn
+#  ARGUMENTS
+#    filename - filesystem object for checking
+#  RETURN VALUE
+#    0 - no arguments, specified filesystem object is nonexistent
+#    1 - specified filesystem object are found
+#  EXAMPLE
+#    local cmdYes='/bin/sh' cmdNo1="bin_${RANDOM}" cmdNo2="bin_${RANDOM}"
+#    udfNoSuchFileOrDir                                                         #? true
+#    udfNoSuchFileOrDir $cmdNo1                                                 #? true
+#    $(udfNoSuchFileOrDir $cmdNo2 && exit 123)                                  #? 123
+#    udfNoSuchFileOrDir $cmdYes                                                 #? false
+#  SOURCE
+udfNoSuchFileOrDir() {
+
+	[[ -n "$1" && -e "$1" ]] && return 1 || return 0
 
 }
 #******

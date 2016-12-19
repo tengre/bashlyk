@@ -1,5 +1,5 @@
 #
-# $Id: libopt.sh 556 2016-09-22 13:56:00+04:00 toor $
+# $Id: libopt.sh 628 2016-12-19 00:27:21+04:00 toor $
 #
 #****h* BASHLYK/libopt
 #  DESCRIPTION
@@ -18,7 +18,7 @@
 #  SOURCE
 [ -n "$BASH_VERSION" ] \
  || eval 'echo "bash interpreter for this script ($0) required ..."; exit 255'
-[[ -n "$_BASHLYK_LIBOPT" ]] && return 0 || _BASHLYK_LIBOPT=1
+[[ $_BASHLYK_LIBOPT ]] && return 0 || _BASHLYK_LIBOPT=1
 #******
 #****** libopt/External modules
 #  DESCRIPTION
@@ -37,7 +37,7 @@
 #    * $_bashlyk_aRequiredCmd_std - список используемых в данном модуле внешних
 #    утилит
 #  SOURCE
-: ${_bashlyk_sArg:=$*}
+: ${_bashlyk_sArg:="$@"}
 : ${_bashlyk_bSetOptions:=}
 : ${_bashlyk_aRequiredCmd_opt:="echo getopt rm"}
 : ${_bashlyk_aExport_opt:="udfExcludePairFromHash udfGetOpt udfGetOptHash udfSetOptHash"}

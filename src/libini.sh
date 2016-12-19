@@ -1,639 +1,949 @@
 #
-# $Id: libini.sh 556 2016-09-22 13:56:00+04:00 toor $
+# $Id: libini.sh 629 2016-12-19 15:26:43+04:00 toor $
 #
 #****h* BASHLYK/libini
 #  DESCRIPTION
-#    Управление пассивными конфигурационными файлов в стиле INI. Имеется
-#    возможность подгрузки исполнимого контента
+#    management of the configuration files in the INI-style. Implemented
+#    capabilities and features:
+#     - associative arrays are used to store the INI configuration data
+#     - OOP style used for a treatment of the INI configuration data:
+#       * functions (eg, get/set) bind with the configuration data, as "methods"
+#         of the corresponding instance of the base class "INI"
+#       * used the constructor and destructor to manage the life cycle of the
+#         resources allocated for processing configuration data
+#     - INI configuration source may be not only single file but also a group of
+#       related files
+#     - supported the filtration ability  - retrieving only the specified
+#       sections and parameters
+#     - The possibility of simultaneous and independent work with different
+#       sources of INI data
+#     - Get/Set certain configuration data by using parameter as key
+#     - Record the configuration data to a file or output to the standard device
+#       in INI format.
+#     - Support for Command Line Interface (CLI) - simultaneous determination of
+#       long and short options of configuration parameters.
+#     - parsing the command line arguments and their binding to configuration
+#       data that allows you to override selected parameters of the INI-file.
+#  EXAMPLE
+#    INI ini
+#    ini.bind.cli config{c}: source{s}:-- help{h} mode{m}: dry-run
+#    conf=$( ini.getopt config )
+#    ini.load $conf :mode,help dry:run source:=
+#    if [[ $( ini.get [dry]run ) ]]; then
+#      echo "dry run, view current config:"
+#      ini.show
+#      exit 0
+#    fi
+#
+#    ini.set mode = demo
+#    ini.set [source] = $HOME
+#    ini.set [source] = /var/mail/$USER
+#
+#    ini.save $conf
+#    ini.free
+#
 #  AUTHOR
 #    Damir Sh. Yakupov <yds@bk.ru>
 #******
-#****d* libini/Required Once
+#****d* libini/ Global Variables - once required
 #  DESCRIPTION
-#    Глобальная переменная $_BASHLYK_LIBINI обеспечивает
-#    защиту от повторного использования данного модуля
-#    Отсутствие значения $BASH_VERSION предполагает несовместимость с
-#    c текущим командным интерпретатором
+#    - $BASH_VERSION    - no value is incompatible with the current shell
+#    - $BASH_VERSION    - required Bash major version 4 or more for this script
+#    - $_BASHLYK_LIBINI - global variable provides protection against re-use of
+#                         this module
 #  SOURCE
-[ -n "$BASH_VERSION" ] \
- || eval 'echo "bash interpreter for this script ($0) required ..."; exit 255'
-[[ -n "$_BASHLYK_LIBINI" ]] && return 0 || _BASHLYK_LIBINI=1
+[ -n "$BASH_VERSION" ]         || eval 'echo "BASH interpreter for this script ($0) required ..."; exit 255'
+(( ${BASH_VERSINFO[0]} >= 4 )) || eval 'echo "required BASH version 4 or more for this script ($0) ..."; exit 255'
+[[ $_BASHLYK_LIBINI ]] && return 0 || _BASHLYK_LIBINI=1
 #******
-#****** libini/External Modules
+#****** libini/ Link external modules
 # DESCRIPTION
-#   Using modules section
-#   Здесь указываются модули, код которых используется данной библиотекой
+#   Used external modules
 # SOURCE
 : ${_bashlyk_pathLib:=/usr/share/bashlyk}
-[[ -s "${_bashlyk_pathLib}/libstd.sh" ]] && . "${_bashlyk_pathLib}/libstd.sh"
-[[ -s "${_bashlyk_pathLib}/libopt.sh" ]] && . "${_bashlyk_pathLib}/libopt.sh"
+[[ -s ${_bashlyk_pathLib}/libstd.sh ]] && . "${_bashlyk_pathLib}/libstd.sh"
+[[ -s ${_bashlyk_pathLib}/liberr.sh ]] && . "${_bashlyk_pathLib}/liberr.sh"
 #******
-#****v* libini/Init section
+#****v* libini/ Global Variables - init section
 #  DESCRIPTION
-#    Блок инициализации глобальных переменных
+#    init of the required global variables
 #  SOURCE
-: ${_bashlyk_sArg:=$*}
-: ${_bashlyk_pathIni:=$(pwd)}
-: ${_bashlyk_bSetOptions:=}
-: ${_bashlyk_csvOptions2Ini:=}
-: ${_bashlyk_sUnnamedKeyword:=_bashlyk_ini_void_autoKey_}
-: ${_bashlyk_aRequiredCmd_ini:="awk cat cut dirname echo false grep mawk mkdir \
-  mv printf pwd rm sed sort touch tr true uniq xargs"}
-: ${_bashlyk_aExport_ini:="udfAssembly udfCsvHash2Raw udfCsvKeys udfCsvKeys2Var       \
-  udfCsvOrder udfCsvOrder2Var udfGetCsvSection udfGetCsvSection2Var udfGetIni         \
-  udfGetIni2Var udfGetIniSection udfGetIniSection2Var udfIni udfIni2Csv udfIni2CsvVar \
-  udfIniChange udfIniGroup2Csv udfIniGroup2CsvVar udfIniGroupSection2Csv              \
-  udfIniGroupSection2CsvVar udfIniSection2Csv udfIniSection2CsvVar udfIniWrite        \
-  udfOptions2Ini udfReadIniSection udfReadIniSection2Var udfSelectEnumFromCsvHash     \
-  udfSetVarFromCsv udfSetVarFromIni"}
+: ${_bashlyk_sUser:=$USER}
+: ${_bashlyk_sLogin:=$(logname 2>/dev/null)}
+: ${HOSTNAME:=$(hostname 2>/dev/null)}
+: ${_bashlyk_bNotUseLog:=1}
+: ${_bashlyk_emailRcpt:=postmaster}
+: ${_bashlyk_emailSubj:="${_bashlyk_sUser}@${HOSTNAME}::${_bashlyk_s0}"}
+: ${_bashlyk_envXSession:=}
+: ${_bashlyk_iniMethods:="__section.id __section.byindex __section.select __section.show __section.setRawData __section.getArray get set show save read load bind.cli getopt free"}
+: ${_bashlyk_aRequiredCmd_cfg:="date echo getopt hostname logname md5sum mkdir mv pwd rm stat touch"}
+: ${_bashlyk_aExport_cfg:="INI get set show save read load bind.cli getopt free"}
 #******
-#****f* libini/udfGetIniSection
+#****f* public/INI
 #  SYNOPSIS
-#    udfGetIniSection <file> [<section>]
+#    INI [<id>]
 #  DESCRIPTION
-#    Получить секцию конфигурационных данных <section> из <file> и, при наличии,
-#    от "родительских" к нему файлов. Например, если <file> это "a.b.c.ini", то
-#    "родительскими" будут считаться файлы "ini", "c.ini" и "b.c.ini" если есть
-#    в том же каталоге. Данные наследуются и перекрываются от "старшего" файла к
-#    младшему.
-#    Поиск конфигурационных файлов выполняется по следующим критериям:
-#     1. Если имя файла <file> содержит неполный путь, то в начале проверяется
-#     текущий каталог, затем каталог конфигураций по умолчанию
-#     2. Если имя файла содержит полный путь, то рабочим каталогом является этот
-#     полный путь
-#     3. Последняя попытка - найти файл в каталоге /etc
-#    Важно: имя <file> не должно начинаться с точки и им заканчиваться!
-#  INPUTS
-#    file    - имя файла конфигурации
-#    section - название секции конфигурации, при отсутствии этого аргумента
-#              считываются данные до первого заголовка секции [<...>] данных или
-#              до конца конфигурационного файла, если секций нет
-#  OUTPUT
-#              разделенный символом ";" строка, в полях которого содержатся
-#              конфигурационные данные в формате "<key>=<value>;..."
+#    constructor for new instance <id> of the INI object
+#  NOTES
+#    public method
+#  ARGUMENTS
+#    valid variable name for created instance, default - used class name INI as
+#    instance
 #  RETURN VALUE
-#   0                            - Выполнено успешно
-#   iErrorNoSuchFileOrDir        - файл конфигурации не найден
-#   iErrorEmptyOrMissingArgument - аргумент не задан
-#   iErrorEmptyResult            - результат отсутствует
+#    InvalidArgument - method not found
+#    InvalidVariable - invalid variable name for instance
 #  EXAMPLE
-#    local csv='b=true;_bashlyk_ini_test_autoKey_0="iXo Xo = 19";_bashlyk_ini_test_autoKey_1="simple line";iXo=1921;iYo=1080;sTxt="foo bar";'
-#    local sTxt="foo bar" b=true iXo=1921 iYo=1080 ini iniChild
-#    local fmt="[test]\n\t%s\t=\t%s\n\t%s\t=\t%s\n\t%s\t=\t%s\n\t%s\t=\t%s\n"
-#    ini=$(mktemp --suffix=.ini || tempfile -s .test.ini)                       #? true
-#    iniChild="$(dirname $ini)/child.$(basename $ini)"
-#    printf "$fmt" sTxt foo b false "iXo Xo" 19 iYo 80 | tee $ini
-#    echo "simple line" | tee -a $ini
-#    printf "$fmt" sTxt "$sTxt" b "$b" iXo "$iXo" iYo "$iYo" | tee $iniChild
-#    udfGetIniSection $iniChild test >| grep "^${csv}$"                         #? true
-#    udfGetIniSection2Var csvResult $iniChild test                              #? true
-#    echo "$csvResult" | grep "^${csv}$"                                        #? true
-#    rm -f $iniChild $ini
-#    udfGetIniSection $iniChild test                                            #? $_bashlyk_iErrorNoSuchFileOrDir
-#    ## TODO тест пустой результат
+#    local rc
+#    INI tnew                                                                   #? true
+#    declare -pf tnew.show >/dev/null 2>&1 && rc=true || rc=false               #-
+#    $rc                                                                        #? true
+#    declare -pf tnew.save >/dev/null 2>&1 && rc=true || rc=false               #-
+#    $rc                                                                        #? true
+#    declare -pf tnew.load >/dev/null 2>&1 && rc=true || rc=false               #-
+#    $rc                                                                        #? true
+#    tnew.__section.id @ >| grep '__id__'                                       #? true
+#    tnew.free                                                                  #? true
 #  SOURCE
-udfGetIniSection() {
- [[ -n "$1" ]] || eval $(udfOnError return iErrorEmptyOrMissingArgument)
- #
- local aini csvIni csvResult ini pathIni s sTag IFS=$' \t\n' GLOBIGNORE
- #
- ini=''
- pathIni="$_bashlyk_pathIni"
- #
- [[ "$1" == "${1##*/}" && -f "${pathIni}/$1" ]] || pathIni=
- [[ "$1" == "${1##*/}" && -f "$1" ]] && pathIni=$(pwd)
- [[ "$1" != "${1##*/}" && -f "$1" ]] && pathIni=$(dirname $1)
- [[ -n "$2" ]] && sTag="$2"
- #
- if [[ -z "$pathIni" ]]; then
-  [[ -f "/etc/${_bashlyk_pathPrefix}/$1" ]] \
-   && pathIni="/etc/${_bashlyk_pathPrefix}" \
-   || eval $(udfOnError return iErrorNoSuchFileOrDir 'file /etc/${_bashlyk_pathPrefix}/$1 is not exist...')
- fi
- #
- aini=$(echo "${1##*/}" | awk 'BEGIN{FS="."} {for (i=NF;i>=1;i--) printf $i" "}')
+INI() {
 
- GLOBIGNORE="*:?"
+  local f s=${1:-INI}
 
- for s in $aini; do
-  [[ -n "$s"                ]] || continue
-  [[ -n "$ini"              ]] && ini="${s}.${ini}" || ini="$s"
-  [[ -s "${pathIni}/${ini}" ]] && csvIni+=";$(udfIniSection2Csv "${pathIni}/${ini}" "$sTag");"
- done
- unset GLOBIGNORE
+  udfOn InvalidVariable throw $s
 
- udfCsvOrder "$csvIni" || eval $(udfOnError return)
- return 0
+  declare -ag -- _a${s^^}="()"
+  declare -Ag -- _h${s^^}="([__id__]=__id__)"
+
+  [[ $s == INI ]] && return 0
+
+  for s in $_bashlyk_iniMethods; do
+
+    f=$( declare -pf INI.${s} )
+
+    [[ $f =~ ^(INI.${s}).\(\) ]] || eval $( udfOnError throw InvalidArgument "not instance $s method for $o object" )
+    f=${f/${BASH_REMATCH[1]}/${1}.$s}
+
+    eval "$f"
+
+  done
+
+  return 0
+
 }
 #******
-#****f* libini/udfGetIniSection2Var
-#  SYNOPSIS
-#    udfGetIniSection <varname> <file> [<section>]
+#****** libini/private
 #  DESCRIPTION
-#    поместить результат вызова udfGetIniSection в переменную <varname>
-#  INPUTS
-#    file    - имя файла конфигурации
-#    section - название секции конфигурации, при отсутствии этого аргумента
-#              считываются данные до первого заголовка секции [<...>] данных или
-#              до конца конфигурационного файла, если секций нет
-#    varname - валидный идентификатор переменной (без "$ "). Результат в виде
-#              CSV; строки формата "ключ=значение;" будет помещен в
-#              соответствующую переменную.
-#  RETURN VALUE
-#    0                            - Выполнено успешно
-#    iErrorNonValidVariable       - аргумент <varname> не является валидным идентификатором переменной
-#    iErrorEmptyOrMissingArgument - аргумент отсутствует
+#    private "methods"
+#******
+#****** libini/public
+#  DESCRIPTION
+#    public "methods"
+#******
+#****f* private/INI.__section.id
+#  SYNOPSIS
+#    INI.__section.id [<section>]
+#  DESCRIPTION
+#    get a link of the storage for specified section or links for all storages.
+#  NOTES
+#    private method
+#  ARGUMENTS
+#    <section> - section name, '@' - all sections, default - unnamed 'global'
+#  OUTPUT
+#    associative array(s), in which are stored data of the section(s)
 #  EXAMPLE
-#    #пример приведен в описании udfGetIniSection
+#    INI tSectionId1
+#    INI tSectionId2
+#    tSectionId1.__section.select
+#    tSectionId1.__section.id   >| grep ^_hTSECTIONID1_aaac3ffb13380885c7f49.*$ #? true
+#    tSectionId2.__section.id @ >| grep ^__id__$                                #? true
+#    tSectionId1.free
+#    tSectionId2.free
 #  SOURCE
-udfGetIniSection2Var() {
- [[ -n "$2" ]] || eval $(udfOnError return iErrorEmptyOrMissingArgument)
- udfIsValidVariable $1 || eval $(udfOnError return $? '$1')
- eval 'export ${1}="$(udfGetIniSection "$2" $3)"'
- return 0
+INI.__section.id() {
+
+  local o=${FUNCNAME[0]%%.*}
+
+  eval "echo \${_h${o^^}[${1:-__global__}]}"
+
 }
 #******
-#****f* libini/udfReadIniSection
+#****f* private/INI.__section.byindex
 #  SYNOPSIS
-#    udfReadIniSection <file> [<section>]
+#    INI.__section.byindex [<index>]
 #  DESCRIPTION
-#    Получить секцию конфигурационных данных <section> из <file> и выдать
-#    результат в виде строки CSV, разделенных ';', каждое поле которой содержит
-#    данные в формате "<ключ>=<значение>" согласно данных строки секции.
-#    В случае если исходная строка не содержит ключ или ключ содержит пробел, то
-#    ключом становится выражение "_bashlyk_ini_<секция>_autokey_<инкремент>", а
-#    всё содержимое строки - значением - "безымянным", с автоматически
-#    формируемым ключом
-#  INPUTS
-#    file    - имя файла конфигурации
-#    section - название секции конфигурации, при отсутствии этого аргумента
-#              считываются данные до первого заголовка секции [<...>] данных
-#              или до конца конфигурационного файла, если секций нет
+#    get the name of the section at the specified index, or number of then
+#    registered sections.
+#  NOTES
+#    private method
+#  ARGUMENTS
+#    <index> - index of the section in the common list in order of registration,
+#              default - total number of the registered sections
 #  OUTPUT
-#              строка CSV;
-#  RETURN VALUE
-#   0  - Выполнено успешно
-#   iErrorNoSuchFileOrDir - аргумент не задан или это не файл конфигурации
-#   iErrorEmptyResult     - функция не возвращает результат
+#    section name or total number of the registered sections
 #  EXAMPLE
-#    local csv='sTxt="foo bar";b=true;iXo=1921;iYo=1080;_bashlyk_ini_test_autoKey_0="simple line";'
-#    local sTxt="foo bar" b=true iXo=1921 iYo=1080 ini iniChild csvResult
-#    local fmt="[test] \n\t%s\t=\t%s\n\t%s\t=\t%s\n\t%s\t=\t%s\n\t%s\t=\t%s\n"
-#    ini=$(mktemp --suffix=.ini || tempfile -s .test.ini)                       #? true
-#    printf "$fmt" "sTxt" "$sTxt" "b" "$b" "iXo" "$iXo" "iYo" "$iYo" | tee $ini
-#    printf "\n\n# comment\nsimple line\n\n" | tee -a $ini
-#    udfReadIniSection $ini test >| grep "^${csv}$"                             #? true
-#    udfReadIniSection2Var csvResult $ini test                                  #? true
-#    echo "$csvResult" >| grep "^${csv}$"                                       #? true
-#    rm -f $ini
-#    udfReadIniSection $ini test                                                #? $_bashlyk_iErrorNoSuchFileOrDir
-#    ## TODO тест "пустой результат"
+#    INI tSectionIndex
+#    tSectionIndex.__section.select
+#    tSectionIndex.__section.select sItem1
+#    tSectionIndex.__section.select sItem2
+#    tSectionIndex.__section.byindex   >| grep ^3$                              #? true
+#    tSectionIndex.__section.byindex 0 >| grep ^__global__$                     #? true
+#    tSectionIndex.__section.byindex 1 >| grep ^sItem1$                         #? true
+#    tSectionIndex.__section.byindex 2 >| grep ^sItem2$                         #? true
+#    tSectionIndex.free
 #  SOURCE
-udfReadIniSection() {
- local b bOpen=false csvResult i=0 ini="$1" k v s sTag IFS=$' \t\n' sUnnamedKeyword="_bashlyk_ini_${2:-void}_autoKey_"
- [[ -n "$1" && -f "$1" ]] || eval $(udfOnError return iErrorNoSuchFileOrDir)
- #
- [[ -n "$2" ]] && sTag=$2 || bOpen=true
- while read s; do
-  [[ "$s" =~ ^#|^$ ]] && continue
-  [[ "$s" =~ \[.*\] ]] && b=${s//[\[\]]/} || b=''
-  if [[ -n "$b" ]]; then
-   $bOpen && break
-   if [[ $b =~ [[:blank:]]*${sTag}[[:blank:]]* ]]; then
-    csvResult=
-    bOpen=true
-   else
-    continue
-   fi
+INI.__section.byindex() {
+
+  local i o=${FUNCNAME[0]%%.*} s
+
+  udfIsNumber $1 && i=$1 || i=@
+
+  [[ $i == @ ]] && s='#' || s=''
+
+  eval "echo \${${s}_a${o^^}[$i]}"
+
+}
+#******
+#****f* public/INI.free
+#  SYNOPSIS
+#    INI.free
+#  DESCRIPTION
+#    destructor of the instance
+#  NOTES
+#    public method
+#  EXAMPLE
+#    local i o s
+#    INI tFree
+#    tFree.__section.select
+#    tFree.__section.select sFree
+#    o=$( tFree.__section.id @ )
+#    tFree.free                                                                 #? true
+#    i=0                                                                        #-
+#    for s in $o; do                                                            #-
+#      declare -pA $s >/dev/null 2>&1; i=$(( i + $? ))                          #-
+#    done                                                                       #-
+#    (( i == 3 ))                                                               #? true
+#  SOURCE
+INI.free() {
+
+  local o s
+
+  o=${FUNCNAME[0]%%.*}
+
+  for s in $( ${o}.__section.id @ ); do
+
+    [[ $s =~ ^[[:blank:]]*$|^__id__$ ]] && continue || unset -v $s
+
+  done
+
+  unset -v _a${o^^}
+  unset -v _h${o^^}
+
+  [[ $o == INI ]] && return 0
+
+  for s in __section.get __section.set $_bashlyk_iniMethods; do
+
+    unset -f ${o}.$s
+
+  done
+
+}
+#******
+#****f* private/INI.__section.select
+#  SYNOPSIS
+#    INI.__section.select [<section>]
+#  DESCRIPTION
+#    select current section of the instance, prepare private getter and setter
+#    for the storage of the selected section
+#  NOTES
+#    private method
+#  ARGUMENTS
+#    <section> - section name, default - unnamed global
+#  EXAMPLE
+#    local s
+#    INI tSel
+#    tSel.__section.select                                                      #? true
+#    tSel.__section.set key "is unnamed section"
+#    tSel.__section.get key >| grep '^is unnamed section$'                      #? true
+#    tSel.__section.select tSect                                                #? true
+#    tSel.__section.set key "is value"
+#    tSel.__section.get key >| grep '^is value$'                                #? true
+#    tSel.__section.id @ >| md5sum - | grep ^180d2f8ad60b98865dfe06b8710b3a.*-$ #? true
+#    tSel.free
+#  SOURCE
+INI.__section.select() {
+
+  local id o s=${1:-__global__}
+
+  o=${FUNCNAME[0]%%.*}
+  eval "id=\${_h${o^^}[$s]}"
+
+  if [[ ! $id ]]; then
+
+    #eval "(( \${#_h${o^^}[@]} > 0 )) || declare -Ag -- _h${o^^}='([__id__]=__id__)'"
+    #eval "(( \${#_a${o^^}[@]} > 0 )) || declare -ag -- _a${o^^}='()'"
+    id=$(md5sum <<< "$s")
+    id="_h${o^^}_${id:0:32}"
+    declare -Ag -- $id="()"
+
+    eval "_h${o^^}[$s]=$id; _a${o^^}[\${#_a${o^^}[@]}]=\"$s\""
+
+  fi
+
+  eval "id=\${_h${o^^}[$s]}"
+  eval "${o}.__section.set() { [[ \$1 ]] && $id[\$1]=\"\$2\"; }; ${o}.__section.get() { [[ \$1 ]] && echo \"\${$id[\$1]}\"; };"
+
+}
+#******
+#****f* private/INI.__section.show
+#  SYNOPSIS
+#    INI.__section.show [<section>]
+#  DESCRIPTION
+#    show a content of the specified section
+#  ARGUMENTS
+#    <section> - section name, default - unnamed section
+#  OUTPUT
+#    the contents (must be empty) of the specified section with name as header
+#  EXAMPLE
+#    INI tSShow
+#    tSShow.__section.select tSect
+#    tSShow.__section.set key "is value"
+#    tSShow.__section.show tSect >| md5sum | grep ^99c8669469e47642b9b540db.*-$ #? true
+#    tSShow.__section.select
+#    tSShow.__section.set key "unnamed section"
+#    tSShow.__section.show >| md5sum | grep ^67d9d58badfb9e5e568e72adcc5c95.*-$ #? true
+#    tSShow.free
+#  SOURCE
+INI.__section.show() {
+
+  local i iKeyWidth iC id o sA sU
+
+  o=${FUNCNAME[0]%%.*}
+
+  ${o}.__section.select $1
+  id=$( ${o}.__section.id $1 )
+
+  sU=$( ${o}.__section.get _bashlyk_raw_mode )
+
+  [[ $sU == '!' ]] && sA=':' || sA=
+  [[ $1 ]] && printf "\n\n[ %s ]%s\n\n" "$1" "$sA" || echo ""
+
+  if [[ $sU == "=" ]]; then
+
+    eval "for i in "\${!$id[@]}"; do [[ \$i =~ ^_bashlyk_raw_uniq= ]] && printf -- '%s\n' \"\${$id[\$i]}\"; done;"
+
   else
-   $bOpen || continue
-   s=$(echo $s | tr -d "'")
-   k="$(echo ${s%%=*}|xargs -0)"
-   v="$(echo ${s#*=}|xargs -0)"
-   if [[ -z "$k" || "$k" == "$v" || "$k" =~ .*[[:space:]+].* ]]
-   then
-    k=${sUnnamedKeyword}${i}
-    i=$((i+1))
-    v="$s"
-   fi
-   csvResult+="$k=$(udfQuoteIfNeeded $v);"
+
+    iC=$( ${o}.__section.get _bashlyk_raw_num )
+
+    if udfIsNumber $iC && (( iC > 0 )); then
+
+      for (( i=0; i < $iC; i++ )); do
+
+        ${o}.__section.get "_bashlyk_raw_incr=$i"
+
+      done
+
+    else
+
+      iKeyWidth=$( ${o}.__section.get _bashlyk_key_width )
+      udfIsNumber $iKeyWidth || iKeyWidth=''
+      eval "for i in "\${!$id[@]}"; do [[ \$i =~ ^_bashlyk_ ]] || printf -- '\t%${iKeyWidth}s    =    %s\n' \"\$i\" \"\${$id[\$i]}\"; done;"
+
+    fi
+
   fi
- done < $ini
- $bOpen || eval $(udfOnError return iErrorEmptyResult)
- echo $csvResult
- #return 0
+
+  [[ $sA ]] && printf "\n%s[ %s ]\n" "$sA" "$1"
+
 }
 #******
-#****f* libini/udfReadIniSection2Var
+#****f* private/INI.__section.setRawData
 #  SYNOPSIS
-#    udfReadIniSection2Var <varname> <file> [<section>]
+#    INI.__section.setRawData -|=|+ <data>
 #  DESCRIPTION
-#    поместить результат вызова udfReadIniSection в переменную <varname>
-#  INPUTS
-#    file    - имя файла конфигурации
-#    section - название секции конфигурации, при отсутствии этого аргумента
-#              считываются данные до первого заголовка секции [<...>] данных
-#              или до конца конфигурационного файла, если секций нет
-#    varname - идентификатор переменной (без "$"). При его наличии результат
-#              будет помещен в соответствующую переменную. При отсутствии такого
-#              идентификатора результат будет выдан на стандартный вывод
+#    set "raw" data record to the current section with special key prefix
+#    '_bashlyk_raw_...'
+#  NOTES
+#    private method
+#  ARGUMENTS
+#    '-', '+' - add "raw" record with incremented key like "_bashlyk_raw_incr=<No>"
+#    '='      - add or update "raw" unique record with key like
+#               "_bashlyk_raw_uniq=<input data without spaces and quotes>"
+#    <data>   - input data, interpreted as "raw" record
 #  RETURN VALUE
-#     0                           - Выполнено успешно
-#    iErrorNonValidVariable       - аргумент <varname> не является валидным идентификатором переменной
-#    iErrorEmptyOrMissingArgument - аргумент отсутствует или файл конфигурации не найден
+#    InvalidArgument - unexpected "raw" mode
+#    Success for other cases
 #  EXAMPLE
-#    #пример приведен в описании udfIniGroup2Csv
+#    INI tSRawData
+#    tSRawData.__section.select "unique_values"
+#    tSRawData.__section.setRawData "=" "save only unique 1"
+#    tSRawData.__section.setRawData "=" "save only unique 2"
+#    tSRawData.__section.setRawData "=" "save only unique 1"
+#    tSRawData.__section.select "accumulated_values"
+#    tSRawData.__section.setRawData "+" "save all 1"
+#    tSRawData.__section.setRawData "+" "save all 2"
+#    tSRawData.__section.setRawData "+" "save all 1"
+#    tSRawData.show >| md5sum - | grep ^1ec72eb6334d7eb29d45ffd7b01fccd2.*-$    #? true
+#    tSRawData.free
 #  SOURCE
-udfReadIniSection2Var() {
- local IFS=$' \t\n'
- [[ -n "$2" && -f "$2" ]] || eval $(udfOnError return iErrorEmptyOrMissingArgument)
- udfIsValidVariable $1 || eval $(udfOnError return $? '$1')
- eval 'export ${1}="$(udfReadIniSection "$2" $3)"'
- return 0
+INI.__section.setRawData() {
+
+  local i o s
+
+  o=${FUNCNAME[0]%%.*}
+
+  case "$1" in
+
+    =)
+
+       s="${2##*( )}"
+       s="${s%%*( )}"
+       ${o}.__section.set "_bashlyk_raw_uniq=${s//[\'\"\\ ]/}" "$s"
+       ${o}.__section.set '_bashlyk_raw_mode' "="
+
+    ;;
+
+    -|+)
+
+       i=$( ${o}.__section.get _bashlyk_raw_num )
+       udfIsNumber $i || i=0
+       ${o}.__section.set "_bashlyk_raw_incr=${i}" "$2"
+       : $(( i++ ))
+       ${o}.__section.set '_bashlyk_raw_num' $i
+
+    ;;
+
+    *)
+
+      return $( _ iErrorInvalidArgument )
+
+  esac
+
+  return 0
+
 }
 #******
-#****f* libini/udfCsvOrder
+#****f* private/INI.__section.getArray
 #  SYNOPSIS
-#    udfCsvOrder <csv;>
+#    INI.__section.getArray [<section>]
 #  DESCRIPTION
-#    упорядочение CSV-строки, которое заключается в удалении устаревших значений
-#    пар "<key>=<value>". Более старыми при повторении ключей считаются более
-#    левые поля в строке
-#  INPUTS
-#    csv;    - CSV-строка, разделённая ";", поля которой содержат данные вида
-#              "key=value"
+#    get unnamed records from specified section as serialized array. Try to get
+#    a unique "raw" records (with the prefix "_bashlyk_raw_uniq=...") or incremented
+#    records (with prefix "_bashlyk_raw_incr=...")
+#  NOTES
+#    private method
+#  ARGUMENTS
+#    <section> - specified section, default - unnamed global
+#  RETURN VALUE
+#    MissingArgument - arguments not found
+#    Success in other cases
+#  EXAMPLE
+#    INI tGA
+#    tGA.__section.select sect1
+#    tGA.__section.set _bashlyk_raw_num 3
+#    tGA.__section.set _bashlyk_raw_incr=0 "is raw value No.1"
+#    tGA.__section.set _bashlyk_raw_incr=1 "is raw value No.2"
+#    tGA.__section.set _bashlyk_raw_incr=2 "is raw value No.3"
+#    tGA.__section.select sect2
+#    tGA.__section.set _bashlyk_raw_mode =
+#    tGA.__section.set '_bashlyk_raw_uniq=a1' "is raw value No.1"
+#    tGA.__section.set '_bashlyk_raw_uniq=b2' "is raw value No.2"
+#    tGA.__section.set '_bashlyk_raw_uniq=a1' "is raw value No.3"
+#    tGA.__section.getArray sect1 >| md5sum - | grep ^9cb6e1559552.*3d7417b.*-$ #? true
+#    tGA.__section.getArray sect2 >| md5sum - | grep ^9c964b5b47f6.*82a6d4e.*-$ #? true
+#    tGA.free
+#  SOURCE
+INI.__section.getArray() {
+
+  local -a a
+  local i id iC o s sU
+
+  o=${FUNCNAME[0]%%.*}
+  ${o}.__section.select $1
+  id=$( ${o}.__section.id $1 )
+  udfIsHash $id || eval $( udfOnError InvalidHash '$id' )
+
+  sU=$( ${o}.__section.get _bashlyk_raw_mode )
+
+  if [[ $sU == "=" ]]; then
+
+    eval "for i in "\${!$id[@]}"; do [[ \$i =~ ^_bashlyk_raw_uniq= ]] && a[\${#a[@]}]=\"\${$id[\$i]}\"; done;"
+
+  else
+
+    iC=$( ${o}.__section.get _bashlyk_raw_num )
+    if udfIsNumber $iC && (( iC )); then
+
+      eval "for (( i=0; i < $iC; i++ )); do a[\${#a[@]}]=\"\${$id[_bashlyk_raw_incr=\$i]}\"; done;"
+
+    fi
+
+  fi
+
+  (( ${#a[@]} > 0 )) && declare -p a
+
+}
+#******
+#****f* public/INI.get
+#  SYNOPSIS
+#    INI.get [\[<section>\]]<key>
+#  DESCRIPTION
+#    get single value for a key or serialized array of the "raw" records for
+#    specified section
+#  SEE ALSO
+#    INI.__section.getArray
+#  NOTES
+#    public method
+#  ARGUMENTS
+#    <section> - specified section, default - unnamed global
+#    <key>     - named key for "key=value" pair of the input data. For unnamed
+#                records this argument must be supressed, this cases return
+#                serialized array of the records (see INI.__section.getArray)
+#  RETURN VALUE
+#    MissingArgument - arguments not found
+#    InvalidArgument - expected like a '[section]key', '[]key' or 'key'
+#    Success in other cases
+#  EXAMPLE
+#    INI tGet
+#    tGet.__section.select
+#    tGet.__section.set key "is unnamed section"
+#    tGet.__section.select section
+#    tGet.__section.set key "is value"
+#    tGet.get [section]key
+#    tGet.get [section]key >| grep '^is value$'                                 #? true
+#    tGet.get   key >| grep '^is unnamed section$'                              #? true
+#    tGet.get []key >| grep '^is unnamed section$'                              #? true
+#    tGet.__section.select accumu
+#    tGet.__section.set _bashlyk_raw_num 3
+#    tGet.__section.set _bashlyk_raw_incr=0 "is raw value No.1"
+#    tGet.__section.set _bashlyk_raw_incr=1 "is raw value No.2"
+#    tGet.__section.set _bashlyk_raw_incr=2 "is raw value No.3"
+#    tGet.__section.select unique
+#    tGet.__section.set _bashlyk_raw_mode =
+#    tGet.__section.set _bashlyk_raw_uniq=a1 "is raw value No.1"
+#    tGet.__section.set _bashlyk_raw_uniq=b2 "is raw value No.2"
+#    tGet.__section.set _bashlyk_raw_uniq=a1 "is raw value No.3"
+#    tGet.get [accumu] >| md5sum | grep ^9cb6e155955235c701959b4253d7417b.*-$   #? true
+#    tGet.get [unique] >| md5sum | grep ^9c964b5b47f6dcc62be09c5de82a6d4e.*-$   #? true
+#    tGet.free
+#  SOURCE
+INI.get() {
+
+  udfOn MissingArgument $* || return $?
+
+  local -a a
+  local IFS o k s v
+
+  o="$*" && s="$IFS" && IFS='[]' && a=( $o ) && IFS="$s"
+
+  o=${FUNCNAME[0]%%.*}
+
+  case "${#a[@]}" in
+
+    3)
+      s=${a[1]:-__global__}
+      k="${a[2]:-_bashlyk_raw}"
+      ;;
+
+    2)
+      s=${a[1]:-__global__}
+      k=_bashlyk_raw
+      ;;
+
+    1)
+      s=__global__
+      k="${a[0]:-_bashlyk_raw}"
+      ;;
+
+    *)
+      eval $( udfOnError throw InvalidArgument "$*" )
+      ;;
+
+  esac
+
+  if [[ $k =~ _bashlyk_raw ]]; then
+
+    ${o}.__section.getArray $s
+
+  else
+
+    ${o}.__section.select $s
+    ${o}.__section.get "$k"
+
+  fi
+
+}
+#******
+#****f* public/INI.set
+#  SYNOPSIS
+#    INI.set [\[<section>\]]<key> = <value>
+#  DESCRIPTION
+#    set a value to the specified key of the section
+#  NOTES
+#    public method
+#  ARGUMENTS
+#    <section> - specified section, default - unnamed global
+#    <key>     - named key for "key=value" pair of the input data. For unnamed
+#                records this argument must be supressed or must have '-' '+'
+#                value, in this cases return serialized array of items
+#  RETURN VALUE
+#    MissingArgument - arguments not found
+#    InvalidArgument - expected like a '[section]key = value', '[]key = value'
+#                      or 'key = value'
+#    Success in other cases
+#  EXAMPLE
+#    INI tSet
+#    tSet.set [section]key = is value
+#    tSet.set key = is unnamed section
+#    tSet.get [section]key
+#    tSet.get [section]key >| grep '^is value$'                                 #? true
+#    tSet.get   key >| grep '^is unnamed section$'                              #? true
+#    tSet.get []key >| grep '^is unnamed section$'                              #? true
+#    tSet.set [section1]+= is raw value No.1
+#    tSet.set [section1]+ = is raw value No.2
+#    tSet.set [section1]+  =   is raw value No.3
+#    tSet.set [section2]=save unique value No.1
+#    tSet.set [section2] =  save unique value No.2
+#    tSet.set [section2] =   save unique value No.1
+#    tSet.get [section2] >| md5sum | grep ^8c6e9c4833a07c3d451eacbef0813534.*-$ #? true
+#    tSet.get [section1] >| md5sum | grep ^9cb6e155955235c701959b4253d7417b.*-$ #? true
+#    tSet.free
+#  SOURCE
+INI.set() {
+
+  udfOn MissingArgument $* || return $?
+
+  local -a a
+  local ISF o k s v
+
+  o="$*" && s="$IFS" && IFS='[]' && a=( $o ) && IFS="$s"
+  o=${FUNCNAME[0]%%.*}
+
+  case "${#a[@]}" in
+
+    3)
+      s=${a[1]:-__global__}
+      k=${a[2]%%=*}
+      v=${a[2]#*=}
+      ;;
+
+    1)
+      s=__global__
+      k=${a[0]%%=*}
+      v=${a[0]#*=}
+      ;;
+
+    *)
+      eval $( udfOnError throw InvalidArgument "$* - $(declare -p a)" )
+      ;;
+
+  esac
+
+  k="$( echo $k )"
+  v="$( echo $v )"
+  : ${k:==}
+
+  ${o}.__section.select $s
+
+  if [[ $k =~ ^(=|\-|\+)$ ]]; then
+
+    ${o}.__section.setRawData "$k" "$v"
+
+  else
+
+    ${o}.__section.set "$k" "$v"
+
+  fi
+
+}
+#******
+#****f* public/INI.show
+#  SYNOPSIS
+#    INI.show
+#  DESCRIPTION
+#    Show a instance data in the INI format
+#  NOTES
+#    public method
 #  OUTPUT
-#              разделенный символом ";" строка, в полях которого содержатся
-#              данные в формате "<key>=<value>;..."
-#  RETURN VALUE
-#    0                            - Выполнено успешно
-#    iErrorEmptyOrMissingArgument - аргумент отсутствует
-#    iErrorEmptyResult            - пустой результат
+#    instance data in the INI format
 #  EXAMPLE
-#    local csv='sTxt=bar;b=false;iXo=21;iYo=1080;sTxt=foo bar;b=true;iXo=1920;'
-#    local csvResult
-#    local csvTest='b=true;iXo=1920;iYo=1080;sTxt="foo bar";'
-#    udfCsvOrder "$csv" >| grep "^${csvTest}$"                                  #? true
-#    udfCsvOrder2Var csvResult "$csv"                                           #? true
-#    echo $csvResult | grep "^${csvTest}$"                                      #? true
-#    udfCsvOrder ""                                                             #? $_bashlyk_iErrorEmptyOrMissingArgument
-#    ## TODO тест пустой результат
+#    INI tShow
+#    tShow.__section.select "tShow"
+#    tShow.__section.set key "is value"
+#    tShow.__section.select
+#    tShow.__section.set key "unnamed section"
+#    tShow.show >| md5sum - | grep ^d8822ed5c794ad0f13c2e07e4f929219.*-$        #? true
+#    tShow.free
 #  SOURCE
-udfCsvOrder() {
- local aKeys csvResult csv fnExec IFS=$' \t\n'
- [[ -n "$1" ]] || eval $(udfOnError return iErrorEmptyOrMissingArgument)
- #
- csv="$(udfCheckCsv "$1")"
- aKeys="$(udfCsvKeys "$csv" | tr ' ' '\n' | sort -u | uniq -u | xargs)"
- csv=$(echo "$csv" | tr ';' '\n')
- #
- udfMakeTemp fnExec
- #
- cat << _CsvOrder_EOF > $fnExec
-#!/bin/bash
-#
-# . bashlyk
-#
-udfAssembly() {
- local $aKeys
- #
- $csv
- #
- udfShowVariable $aKeys | grep -v '^:' | tr -d '\t' \
-  | sed -e "s/=\(.*[[:space:]]\+.*\)/=\"\1\"/" | tr '\n' ';' | sed -e "s/;;/;/"
- #
- return 0
-}
-#
-udfAssembly
-_CsvOrder_EOF
+INI.show() {
 
- csvResult=$(. $fnExec 2>/dev/null)
- rm -f $fnExec
- [[ -n "$csvResult" ]] && echo $csvResult || eval $(udfOnError return iErrorEmptyResult)
- #return 0
-}
-#******
-#****f* libini/udfCsvOrder2Var
-#  SYNOPSIS
-#    udfCsvOrder2Var <varname> <csv;>
-#  DESCRIPTION
-#    поместить результат вызова udfCsvOrder в переменную <varname>
-#  INPUTS
-#    csv;    - CSV-строка, разделённая ";", поля которой содержат данные вида
-#              "key=value"
-#    varname - валидный идентификатор переменной (без "$ "). Результат в виде
-#              разделённой символом ";" CSV-строки, поля которого содержат
-#              данные в формате "<key>=<value>;...", будет помещен в
-#              соответствующую переменну.
-#  RETURN VALUE
-#   0                            - Выполнено успешно
-#   iErrorNonValidVariable       - аргумент <varname> не является валидным идентификатором переменной
-#   iErrorEmptyOrMissingArgument - аргумент отсутствует
-#  EXAMPLE
-#    #пример приведен в описании udfCsvOrder
-#  SOURCE
-udfCsvOrder2Var() {
- local IFS=$' \t\n'
- #
- [[ -n "$2" ]] || eval $(udfOnError return iErrorEmptyOrMissingArgument)
- udfIsValidVariable $1 || eval $(udfOnError return $? '$1')
- eval 'export ${1}="$(udfCsvOrder "$2")"'
- return 0
-}
-#******
-#****f* libini/udfSetVarFromCsv
-#  SYNOPSIS
-#    udfSetVarFromCsv <csv;> <keys> ...
-#  DESCRIPTION
-#    Инициализировать переменные <keys> значениями соответствующих ключей пар
-#    "key=value" из CSV-строки <csv;>
-#  INPUTS
-#    csv; - CSV-строка, разделённая ";", поля которой содержат данные вида
-#          "key=value"
-#    keys - идентификаторы переменных (без "$ "). При их наличии будет
-#           произведена инициализация в соответствующие переменные значений
-#           совпадающих ключей CSV-строки
-#  RETURN VALUE
-#    0                            - Выполнено успешно
-#    iErrorEmptyOrMissingArgument - аргумент(ы) отсутствуют
-#  EXAMPLE
-#    local b sTxt iXo iYo
-#    local csv='sTxt=bar;b=false;iXo=21;iYo=1080;sTxt=foo = bar;b=true;iXo=1920;'
-#    local sResult="true:foo = bar:1920:1080"
-#    udfSetVarFromCsv "$csv" b sTxt iXo iYo                                     #? true
-#    echo "${b}:${sTxt}:${iXo}:${iYo}" | grep "^${sResult}$"                    #? true
-#  SOURCE
-udfSetVarFromCsv() {
- local bashlyk_csvInput_KLokRJky bashlyk_csvResult_KLokRJky bashlyk_k_KLokRJky bashlyk_v_KLokRJky IFS=$' \t\n'
- #
- [[ -n "$1" ]] || eval $(udfOnError return iErrorEmptyOrMissingArgument)
- #
- bashlyk_csvInput_KLokRJky=";$(udfCsvOrder "$1");"
- shift
- #
- for bashlyk_k_KLokRJky in $*; do
-  #bashlyk_csvResult_KLokRJky=$(echo $bashlyk_csvInput_KLokRJky | grep -Po ";$bashlyk_k_KLokRJky=.*?;" | tr -d ';')
-  bashlyk_v_KLokRJky="$(echo "${bashlyk_csvInput_KLokRJky#*;$bashlyk_k_KLokRJky=}" | cut -f 1 -d ';')"
-  if [[ -n "$bashlyk_v_KLokRJky" ]]; then
-   eval "$bashlyk_k_KLokRJky=$bashlyk_v_KLokRJky"
-  fi
- done
- return 0
-}
-#******
-#****f* libini/udfSetVarFromIni
-#  SYNOPSIS
-#    udfSetVarFromIni <file> <section> <keys> ...
-#  DESCRIPTION
-#    Инициализировать переменнные <keys> значениями соответствующих ключей пар
-#    "key=value" секции <section> ini файла <file> (и всех его родительских
-#    ini-файлов, см. описание udfGetIniSection)
-#  INPUTS
-#    file    - имя файла конфигурации
-#    section - название секции конфигурации, при отсутствии этого аргумента
-#              считываются данные до первого заголовка секции [<...>] данных или
-#              до конца конфигурационного файла, если секций нет
-#    keys    - идентификаторы переменных (без "$ "). При их наличии будет
-#              произведена инициализация в соответствующие переменные значений
-#              совпадающих ключей CSV-строки
-#  RETURN VALUE
-#    iErrorEmptyOrMissingArgument - аргумент(ы) отсутствуют
-#     0                           - Выполнено успешно
-#  EXAMPLE
-#    local sResult='true:foo bar:1024:768'
-#    local sTxt b iXo iYo ini
-#    local fmt="[test]\n\t%s\t=\t%s\n\t%s\t=\t%s\n\t%s\t=\t%s\n\t%s\t=\t%s\n"
-#    ini=$(mktemp --suffix=.ini || tempfile -s .test.ini)                       #? true
-#    printf "$fmt" sTxt "foo bar" b true iXo 1024 iYo 768 | tee $ini
-#    udfSetVarFromIni $ini test sTxt b iXo iYo                                  #? true
-#    echo "${b}:${sTxt}:${iXo}:${iYo}" | grep "^${sResult}$"                    #? true
-#    rm -f $ini
-#  SOURCE
-udfSetVarFromIni() {
- local ini="$1" sSection="$2" IFS=$' \t\n'
- #
- [[ -n "$1" && -f "$1" && -n "$3" ]] || eval $(udfOnError return iErrorEmptyOrMissingArgument)
- #
- shift 2
+  local o s
 
- udfSetVarFromCsv ";$(udfIniGroupSection2Csv $ini $sSection);" $*
+  o=${FUNCNAME[0]%%.*}
 
- return 0
+  ${o}.__section.show
+
+  for (( i=0; i < $( ${o}.__section.byindex ); i++ )); do
+
+    s="$( ${o}.__section.byindex $i )"
+    [[ $s =~ ^(__global__|__id__)$ ]] && continue
+    ${o}.__section.show "$s"
+
+  done
+
+  printf -- "\n"
+
 }
 #******
-#****f* libini/udfCsvKeys
+#****f* public/INI.save
 #  SYNOPSIS
-#    udfCsvKeys <csv;>
+#    INI.save <file>
 #  DESCRIPTION
-#    Получить ключи пар "ключ=значение" из CSV-строки <csv;>
-#  INPUTS
-#    csv;    - CSV-строка, разделённая ";", поля которой содержат данные вида
-#              "key=value"
-#  OUTPUT
-#              строка ключей
+#    Save the configuration to the specified file in the INI format
+#  NOTES
+#    public method
+#  ARGUMENTS
+#    <file>  - target file for saving, full path required
 #  RETURN VALUE
-#    0                            - Выполнено успешно
-#    iErrorEmptyOrMissingArgument - Ошибка: аргумент отсутствует
+#    MissingArgument    - the file name is not specified
+#    NotExistNotCreated - the target file is not created
 #  EXAMPLE
-#    local csv='sTxt="foo bar";b=true;iXo=1921;iYo=1080;' sResult
-#    udfCsvKeys "$csv" | xargs >| grep "^sTxt b iXo iYo$"                       #? true
-#    udfCsvKeys2Var sResult "$csv"                                              #? true
-#    echo $sResult | grep "^sTxt b iXo iYo$"                                    #? true
+#    local fn
+#    udfMakeTemp fn
+#    INI tSave
+#    tSave.__section.select section
+#    tSave.__section.set key "is value"
+#    tSave.__section.select
+#    tSave.__section.set key "unnamed section"
+#    tSave.save $fn
+#    tSave.free
+#    tail -n +4 $fn >| md5sum - | grep ^014d76fac8f057af36d119aaddeb30ee.*-$    #? true
 #  SOURCE
-udfCsvKeys() {
- local csv="$1" csvResult s IFS=$' \t\n'
- #
- [[ -n "$1" ]] || eval $(udfOnError return iErrorEmptyOrMissingArgument)
- #
- IFS=';'
- for s in $csv; do
-  csvResult+="${s%%=*} "
- done
- echo "$csvResult"
- return 0
+INI.save() {
+
+  udfOn MissingArgument throw "$1"
+
+  local fn o
+
+  fn="$1"
+  o=${FUNCNAME[0]%%.*}
+
+  [[ -s $fn ]] && mv $fn ${fn}.bak
+  mkdir -p ${fn%/*} && touch $fn || eval $( udfOnError throw NotExistNotCreated "${fn%/*}" )
+
+  {
+
+    printf ';\n; created %s by %s\n;\n' "$(date -R)" "$( _ sUser )"
+    ${o}.show
+
+  } > $fn
+
+  return 0
+
 }
 #******
-#****f* libini/udfCsvKeys2Var
+#****f* public/INI.read
 #  SYNOPSIS
-#    udfCsvKeys2Var <varname> <csv;>
+#    INI.read <filename>
 #  DESCRIPTION
-#    Поместить вывод udfCsvKeys в переменную <varname>
-#  INPUTS
-#    csv;  - CSV-строка, разделённая ";", поля которой содержат данные вида
-#            "key=value"
-#  varname - валидный идентификатор переменной. Результат в виде строки ключей,
-#            разделенной пробелами, будет помещёна в соответствующую переменную
+#    Handling a configuration from the single INI file. Read valid "key=value"
+#    pairs and as bonus "active" sections data only
 #  RETURN VALUE
-#    0                            - Выполнено успешно
-#    iErrorNonValidVariable       - аргумент <varname> не является валидным идентификатором переменной
-#    iErrorEmptyOrMissingArgument - аргумент отсутствует
+#    NoSuchFileOrDir - input file not exist
+#    NotPermitted    - owner of the input file differ than owner of the process
+#    Success for the other cases
 #  EXAMPLE
-#    #пример приведен в описании udfCsvKeys
-#  SOURCE
-udfCsvKeys2Var() {
- local IFS=$' \t\n'
- [[ -n "$2" ]] || eval $(udfOnError return iErrorEmptyOrMissingArgument)
- udfIsValidVariable $1 || eval $(udfOnError return $? '$1')
- eval 'export ${1}="$(udfCsvKeys "$2")"'
- return 0
-}
-#******
-#****f* libini/udfIniWrite
-#  SYNOPSIS
-#    udfIniWrite <file> <csv;>
-#  DESCRIPTION
-#    сохранить данные из CSV-строки <csv;> в формате [<section>];<key>=<value>;
-#    в файл конфигурации <file> c заменой предыдущего содержания. Сохранение
-#    производится с форматированием строк, разделитель ";" заменяется на перевод
-#    строки
-#  INPUTS
-#    file - файл конфигурации в стиле "ini". Если он не пустой, то сохраняется
-#           в виде копии "<file>.bak"
-#    csv; - CSV-строка, разделённая ";", поля которой содержат данные вида
-#           "[<section>];<key>=<value>;..."
-#  RETURN VALUE
-#    0  - Выполнено успешно
-#    iErrorNotExistNotCreated     - путь не существует и не создан
-#    iErrorEmptyOrMissingArgument - аргументы отсутствуют
-#  EXAMPLE
-#    ## TODO дополнить тесты по второму аргументу
-#    local ini csv='[];void=0;[exec]:;"TZ_bashlyk_&#61_UTC date -R --date_bashlyk_&#61_'@12345679'";sUname_bashlyk_&#61_"$_bashlyk_&#40_uname_bashlyk_&#41_";:[exec];[main];sTxt="foo = bar";b=true;iXo=1921;[replace];"after replacing";[unify];*.bak;*.tmp;*~;[acc];;*.bak;*.tmp;;*.bak;*.tmp;*~;'
-#    ini=$(mktemp --suffix=.ini || tempfile -s .test.ini)                       #? true
-#    udfIniWrite $ini "$csv"                                                    #? true
-#    cat $ini
-#    grep -E '^\[unify\]$'                      $ini                            #? true
-#    grep -E 'sTxt.*=.*foo.*=.*bar$'            $ini                            #? true
-#    grep -E 'b.*=.*true$'                      $ini                            #? true
-#    grep -E 'iXo.*=.*1921$'                    $ini                            #? true
-#    grep -E 'TZ=UTC date -R --date=@12345679$' $ini                            #? true
-#    cat $ini
-#    rm -f $ini ${ini}.bak
-#  SOURCE
-udfIniWrite() {
- local csv ini="$1" s IFS=$' \t\n'
- #
- [[ -n "$1" ]] || eval $(udfOnError return iErrorEmptyOrMissingArgument "\$1")
- #
- [[ -n "$2" ]] && s="$2" || s="$(_ csvOptions2Ini)"
- [[ -n "$s" ]] || eval $(udfOnError return iErrorEmptyOrMissingArgument "\$2 _ csvOptions2Ini")
- #
- mkdir -p $(dirname "$ini") || eval $(udfOnError iErrorNotExistNotCreated "$(dirname $ini)")
- [[ -s "$ini" ]] && mv -f "$ini" "${ini}.bak"
- csv="$(echo "$s" | sed -e "s/[;]\+/;/g" -e "s/\(:\?\[\)/;;\1/g" -e "s/\[\]//g" | tr -d '"')"
- IFS=';'
- for s in $csv; do
-  k="${s%%=*}"
-  v="${s#*=}"
-  [[ "$k" == "$v" ]] && echo "$v" || printf -- "\t%s\t=\t%s\n" "$k" "$v"
- ## TODO продумать перенос уничтожения автоключей в udfBashlykUnquote
- done | sed -e "s/\t\?_bashlyk_ini_.*_autoKey_[0-9]\+\t\?=\t\?//g" | udfBashlykUnquote > "$ini"
- #
- return 0
-}
-#******
-#****f* libini/udfIniChange
-#  SYNOPSIS
-#    udfIniChange <file> <csv;> [<section>]
-#  DESCRIPTION
-#    Внести изменения в секцию <section> конфигурации <file> согласно данных
-#    CSV-строки  <csv;> в формате "<key>=<value>;..."
-#  INPUTS
-#     file - файл конфигурации формата "*.ini". Если он не пустой, то
-#            сохраняется в виде копии "<file>.bak"
-#     csv; - CSV-строка, разделённая ";", поля которой содержат данные вида
-#            "<key>=<value>;..."
-#  section - название секции конфигурации, в которую вносятся изменения. При
-#            отсутствии этого аргумента изменения производятся в блоке от
-#            начала файла до первого заголовка секции "[<...>]" данных или до
-#            конца конфигурационного файла, если секций нет вообще
-#  RETURN VALUE
-#    0                            - Выполнено успешно
-#    iErrorEmptyOrMissingArgument - аргументы отсутствуют
-#  EXAMPLE
-#    local csv='sTxt="foo bar";b=true;iXo=1921;iYo=999;' csvResult
-#    local re='b=.*;_b.*auto.*0="= value".*auto.*1=.*key = value".*sTxt=".*ar";'
-#    local sTxt="bar foo" b=true iXo=1234 iYo=4321 ini
-#    local fmt="[sect%s]\n\t%s\t=\t%s\n\t%s\t=\t%s\n\t%s\t=\t%s\n\t%s\t=\t%s\n"
-#    local md5='a0e4879ea58a1cb5f1889c2de949f485'
-#    ini=$(mktemp --suffix=.ini || tempfile -s .test.ini)                       #? true
-#    printf "$fmt" 1 sTxt foo '' value iXo 720 "non valid key" value | tee $ini
-#    echo "simple line" | tee -a $ini
-#    printf "$fmt" 2 sTxt "$sTxt" b "$b" iXo "$iXo" iYo "$iYo" | tee -a $ini
-#    udfIniChange $ini "$csv" sect1                                             #? true
-#    udfReadIniSection $ini sect1 >| grep "$re"                                 #? true
-#    cat $ini
-#    rm -f $ini ${ini}.bak
-#  SOURCE
-udfIniChange() {
- local a aKeys aTag csv ini="$1" s csvNew="$2" sTag IFS=$' \t\n'
- #
- [[ -n "$1" && -n "$2" ]] || eval $(udfOnError return iErrorEmptyOrMissingArgument)
- #
- [[ -n "$3" ]] && sTag="$3"
- #
- [[ -f "$ini" ]] || touch "$ini"
- aTag="$(grep -oE '\[.*\]' $ini | tr -d '[]' | sort -u | uniq -u | xargs)"
- [[ -n "$sTag" ]] && echo "$aTag" | grep -w "$sTag" >/dev/null || aTag+=" $sTag"
- for s in "" $aTag; do
-  csv=$(udfIniSection2Csv $ini $s)
-  if [[ "$s" == "$sTag" ]]; then
-   csv=$(udfCsvOrder "${csv};${csvNew}")
-  fi
-  a+=";[${s}];$csv;"
- done
- udfIniWrite $ini "$a"
- return 0
-}
-#******
-#****f* libini/udfIni
-#  SYNOPSIS
-#    udfIni <file> [<section>]:[<csv;>]|[(=|-|+|!)] ...
-#  DESCRIPTION
-#    получить данные указанных секций <section> ini-файла <file> (и, возможно,
-#    ему родственных, а также, опций командной строки, предварительно полученных
-#    функцией udfGetOpt) через инициализацию перечисленных в "csv;"-строке
-#    валидных идентификаторов переменных, идентичных соответствующим ключам
-#    секции или "сырую" сериализацию всех данных секции в переменную c именем
-#    секции
-#  INPUTS
-#     file    - файл конфигурации в стиле ini
-#     section - имена секций. Пустое значение для "безымянной" секции
-#     csv;    - список валидных переменных для приема соответствующих значений
-#               строк вида "<ключ>=<значение>" секции section, в случае
-#               повторения ключей, актуальной становится последняя пара
-#     =-+!    - сериализация всех данных секции в переменную c именем секции,
-#               модификаторы "=-+!" задают стратегию обработки "сырых" данных:
-#     =       - накапливание данные с последующей унификацией
-#     -       - замена данных
-#     +       - накопление данных
-#     !       - замена данных (активная секция)
-#
-#  RETURN VALUE
-#    0                            - Выполнено успешно
-#    iErrorNonValidVariable       - невалидный идентификатор переменной
-#    iErrorNoSuchFileOrDir        - файл конфигурации не найден
-#    iErrorEmptyOrMissingArgument - аргументы отсутствуют
-#  EXAMPLE
-#    local sTxt="foo = bar" b=true iXo=1921 iYo=1080 ini iniChild
-#    local exec replace unify acc sVoid=void sMain='sTxt;b;iXo'
-#    local sRules=":${sVoid} exec:! main:${sMain} replace:- unify:= acc:+"
-#
-#    ini=$(mktemp --suffix=test.ini || tempfile -s .test.ini)                   #? true
-#    iniChild="$(dirname $ini)/child.$(basename $ini)"
-#
+#   local c ini s S                                                             #-
+#   c=':void,main exec:- main:sTxt,b,iYo replace:- unify:= asstoass:+'          #-
+#   udfMakeTemp ini suffix=".ini"                                               #-
 #    cat <<'EOFini' > ${ini}                                                    #-
-#    void	=	1                                                       #-
+#    section  =  global                                                         #-
+#[main]                                                                         #-
+#    sTxt   =  $(date -R)                                                       #-
+#    b      =  false                                                            #-
+#    iXo Xo =  19                                                               #-
+#    iYo    =  80                                                               #-
+#    `simple line`                                                              #-
 #[exec]:                                                                        #-
 #    TZ=UTC date -R --date='@12345678'                                          #-
 #    sUname="$(uname -a)"                                                       #-
+#    if [[ $HOSTNAME ]]; then                                                   #-
+#         export HOSTNAME=$(hostname)                                           #-
+#    fi                                                                         #-
+#:[exec]                                                                        #-
+#[replace]                                                                      #-
+#    this is a line of the raw data                                             #-
+#    replace = true                                                             #-
+#[unify]                                                                        #-
+#    # this is a comment                                                        #-
+#    *.bak                                                                      #-
+#    *.tmp                                                                      #-
+#    unify = false                                                              #-
+#[asstoass]                                                                     #-
+#    *.bak                                                                      #-
+#    *.tmp                                                                      #-
+#    ass = to ass                                                               #-
+#    EOFini                                                                     #-
+#   INI tRead
+#   tRead.read $ini                                                             #? true
+#   tRead.show >| md5sum - | grep ^a394a7bbdada0694a90967c9bc7d88d5.*-$         #? true
+#   tRead.free
+#  SOURCE
+INI.read() {
+
+  udfOn NoSuchFileOrDir throw $1
+
+  local bActiveSection bIgnore csv fn i iKeyWidth reComment reSection reValidSections s
+
+  reSection='^[[:space:]]*(:?)\[[[:space:]]*([^[:punct:]]+?)[[:space:]]*\](:?)[[:space:]]*$'
+  reKey_Val='^[[:space:]]*([[:alnum:]]+)[[:space:]]*=[[:space:]]*(.*)[[:space:]]*$'
+  reComment='^[[:space:]]*$|(^|[[:space:]]+)[\#\;].*$'
+  o=${FUNCNAME[0]%%.*}
+
+  s="__global__"
+  fn="$1"
+
+  [[ $2 ]] && reValidSections="$2" || reValidSections="$reSection"
+  [[ ${hKeyValue[@]} ]] || local -A hKeyValue
+  [[ ${hRawMode[@]}  ]] || local -A hRawMode
+
+  ## TODO permit hi uid ?
+  if [[ ! $( stat -c %U $fn ) == $( _ sUser ) ]]; then
+
+    eval $( udfOnError NotPermitted throw "$1 owned by $( stat -c %U $fn )" )
+
+  fi
+
+  bIgnore=
+
+  [[ ${hKeyValue[$s]} ]] || hKeyValue[$s]="$reKey_Val"
+
+  ${o}.__section.select
+  iKeyWidth=$( ${o}.__section.get _bashlyk_key_width )
+  udfIsNumber $iKeyWidth || iKeyWidth=0
+
+  while read -t 4; do
+
+    if [[ $REPLY =~ $reSection ]]; then
+
+      bIgnore=1
+      [[ $REPLY =~ $reValidSections ]] || continue
+      bIgnore=
+
+      (( i > 0   )) && ${o}.__section.set _bashlyk_raw_num $i
+      (( iKeyWidth > 0 )) && ${o}.__section.set _bashlyk_key_width $iKeyWidth
+
+      s="${BASH_REMATCH[2]}"
+
+      [[ ${BASH_REMATCH[1]} == ":" ]] && bActiveSection=close
+      ## TODO other modes for active section ?
+      [[ ${BASH_REMATCH[3]} == ":" ]] && hRawMode[$s]="-"
+
+      bIgnore=1
+      [[ $bActiveSection == "close" ]] && bActiveSection= && ${o}.__section.set _bashlyk_raw_mode "!" && continue
+      bIgnore=
+
+      ${o}.__section.select $s
+      i=0
+      iKeyWidth=$( ${o}.__section.get _bashlyk_key_width )
+      udfIsNumber $iKeyWidth || iKeyWidth=0
+
+      case "${hRawMode[$s]}" in
+
+        -) ;;
+
+        +) i=$( ${o}.__section.get _bashlyk_raw_num )
+           udfIsNumber $i || ${o}.__section.set _bashlyk_raw_num ${i:=0}
+           ;;
+
+        =) ${o}.__section.set _bashlyk_raw_mode "=";;
+
+        *) hKeyValue[$s]="$reKey_Val";;
+
+      esac
+
+      continue
+
+    else
+
+      [[ $REPLY =~ $reComment || $bIgnore ]] && continue
+
+    fi
+
+    if [[ ${hKeyValue[$s]} ]]; then
+
+      if [[ $REPLY =~ ${hKeyValue[$s]} ]]; then
+
+        ${o}.__section.set "${BASH_REMATCH[1]}" "${BASH_REMATCH[2]}"
+        (( ${#BASH_REMATCH[1]} > $iKeyWidth )) && iKeyWidth=${#BASH_REMATCH[1]}
+
+      fi
+
+    else
+
+      if [[ ${hRawMode[$s]} == "=" ]]; then
+
+        REPLY="$( echo $REPLY )"
+        ${o}.__section.set "_bashlyk_raw_uniq=${REPLY//[\'\"\\ ]/}" "$REPLY"
+
+      else
+
+        ${o}.__section.set "_bashlyk_raw_incr=${i:=0}" "$REPLY"
+        : $(( i++ ))
+
+      fi
+
+    fi
+
+  done < $fn
+
+  [[ ${hRawMode[$s]} =~ ^(\+|\-)$ ]] && ${o}.__section.set _bashlyk_raw_num ${i:=0}
+  [[ ${hKeyValue[$s]} ]] && ${o}.__section.set _bashlyk_key_width $iKeyWidth
+
+  return 0
+
+}
+#******
+#****f* public/INI.load
+#  SYNOPSIS
+#    INI.load <file> <section>:(<options>)|<raw mode>) ...
+#  DESCRIPTION
+#    load the specified configuration data from a group of related INI files
+#  ARGUMENTS
+#    <file>     - the final configuration file. Based on of his name may be
+#                 pre-loaded the parent files of the configuration
+#    <section>  - section name, by default is empty for global section
+#    <options>  - comma separated list of the options for loading. Required or
+#                 replaced by <raw mode> argument
+#    <raw mode> - specifiers '-=+' define the section of the store as a list of
+#                 the "raw" data (without keys):
+#                 - - replace early load data of the section
+#                 + - add data to the early loaded data of the section
+#                 = - add only unique data of the early loaded data
+#  RETURN VALUE
+#    NoSuchFileOrDir - input file not exist
+#    MissingArgument - parameters and sections are not selected
+#  EXAMPLE
+#   local iniMain iniLoad iniSave s S sRules                                    #-
+#   sRules=':file,main,child exec:- main:hint,msg,cnt replace:- unify:= acc:+'  #-
+#   udfMakeTemp -v iniMain suffix=.ini                                          #-
+#   GLOBIGNORE="*:?"
+#    cat <<-'EOFini' > $iniMain                                                 #-
+#    section  =  global                                                         #-
+#    file     =  main                                                           #-
+#    main     =  true                                                           #-
+#[exec]:                                                                        #-
+#    TZ=UTC date -R --date='@12345678'                                          #-
+#    sUname="$(uname -a)"                                                       #-
+#    if [[ $HOSTNAME ]]; then                                                   #-
+#         export HOSTNAME=$(hostname)                                           #-
+#    fi                                                                         #-
 #:[exec]                                                                        #-
 #[main]                                                                         #-
-#    sTxt	=	$(date -R)                                              #-
-#    b		=	false                                                   #-
-#    iXo Xo	=	19                                                      #-
-#    iYo	=	80                                                      #-
-#    `simple line`                                                              #-
+#    hint   =  $(date -R)                                                       #-
+#    msg    =  file main                                                        #-
+#    iXo Xo =  19                                                               #-
+#    cnt    =  66                                                               #-
+#    ~simple line~                                                              #-
 #[replace]                                                                      #-
 #    before replacing                                                           #-
 #[unify]                                                                        #-
@@ -644,716 +954,278 @@ udfIniChange() {
 #    *.tmp                                                                      #-
 #                                                                               #-
 #    EOFini                                                                     #-
-#    cat <<'EOFiniChild' > ${iniChild}                                          #-
-#    void	=	0                                                       #-
-#    [main]	                                                                #-
-#    sTxt	=	foo = bar                                               #-
-#    b		=	true                                                    #-
-#    iXo	=	1921                                                    #-
-#    iYo	=	1080                                                    #-
+#    iniLoad="${iniMain%/*}/child.${iniMain##*/}"                               #-
+#    iniSave="${iniMain%/*}/write.${iniMain##*/}"                               #-
+#    udfAddFile2Clean $iniLoad                                                  #-
+#    udfAddFile2Clean $iniSave                                                  #-
+#    cat <<-'EOFiniChild' > $iniLoad                                            #-
+#    section  =  global                                                         #-
+#    file     =  child                                                          #-
+#    main     =  false                                                          #-
+#    child    =  true                                                           #-
 #[exec]:                                                                        #-
 #    TZ=UTC date -R --date='@12345679'                                          #-
 #    sUname="$(uname)"                                                          #-
+#    if [[ $HOSTNAME ]]; then                                                   #-
+#         export HOSTNAME=$(hostname -f)                                        #-
+#    fi                                                                         #-
+#    echo $sUname                                                               #-
 #:[exec]                                                                        #-
+#[main]                                                                         #-
+#    hint   =  $(date "+%s") more = equals =                                    #-
+#    msg    =  child file                                                       #-
+#    iXo Xo =  19                                                               #-
+#    cnt    =  80                                                               #-
+#    simple line                                                                #-
 #[replace]                                                                      #-
-#	after replacing                                                         #-
+#    after replacing                                                            #-
 #[unify]                                                                        #-
-#    *.bak                                                                      #-
+#    *.xxx                                                                      #-
 #    *.tmp                                                                      #-
-#    *~                                                                         #-
+#[ignored]                                                                      #-
+#    test by test                                                               #-
+#    a = b                                                                      #-
 #[acc]                                                                          #-
 #    *.bak                                                                      #-
 #    *.tmp                                                                      #-
-#    *~                                                                         #-
-#                                                                               #-
+#    *.com                                                                      #-
+#    *.exe                                                                      #-
+#    *.jpg                                                                      #-
+#    *.png                                                                      #-
+#    *.mp3                                                                      #-
+#    *.dll                                                                      #-
+#    *.asp                                                                      #-
+#[unify]                                                                        #-
+#    *.xxx                                                                      #-
+#    *.lit                                                                      #-
 #    EOFiniChild                                                                #-
-#    udfIni $iniChild $sRules                                                   #? true
-#    echo "${sTxt};${b};${iXo}" >| grep -e "^foo = bar;true;1921$"              #? true
-#    echo "$exec"     | udfBashlykUnquote >| grep 'TZ=UTC.*@12345679.*$(uname)' #? true
-#    echo "$replace" >| grep '"after replacing";$'                              #? true
-#    echo "$unify"   >| grep '^\*\.bak;\*\.tmp;\*~;$'                           #? true
-#    echo "$acc"     >| grep '^\*\.bak;\*\.tmp;\*\.bak;\*\.tmp;\*~;$'           #? true
-#    rm -f $iniChild $ini
-#    udfIni $iniChild $sRules                                                   #? $_bashlyk_iErrorNoSuchFileOrDir
-#    ## TODO проверка пустых данных (iErrorEmptyOrMissingArgument)
+#   INI tLoad
+#   tLoad.load $iniLoad $sRules                                                 #? true
+#   tLoad.save $iniSave                                                         #? true
+#   tLoad.show >| md5sum - | grep ^ecc291818557339352e35fe80fb0de57.*-$         #? true
+##    tLoad.free
 #  SOURCE
-udfIni() {
- local IFS=$' \t\n'
- #
- [[ -n "$1" ]] || eval $(udfOnError return iErrorEmptyOrMissingArgument)
- #
- local bashlyk_udfIni_csv bashlyk_udfIni_s bashlyk_udfIni_sSection
- local bashlyk_udfIni_csvSection bashlyk_udfIni_csvVar bashlyk_udfIni_ini
- local bashlyk_udfIni_cClass
- #
- bashlyk_udfIni_ini="$1"
- shift
- #
- [[ "$_bashlyk_bSetOptions" == 1 ]] && udfOptions2Ini $*
- #
- bashlyk_udfIni_csv=$(udfIniGroup2Csv "$bashlyk_udfIni_ini")
- bashlyk_udfIni_s=$?
- [[ "$bashlyk_udfIni_s" == 0 ]] || eval $(udfOnError return $bashlyk_udfIni_s)
- #
- for bashlyk_udfIni_s in $*; do
-  bashlyk_udfIni_sSection=${bashlyk_udfIni_s%:*}
-  bashlyk_udfIni_csvSection=$(udfGetCsvSection "$bashlyk_udfIni_csv" "$bashlyk_udfIni_sSection")
-  if [[ "$bashlyk_udfIni_s" == "${bashlyk_udfIni_s%:[=\-+\!]*}" ]]; then
-   bashlyk_udfIni_aVar="${bashlyk_udfIni_s#*:}"
-   ## TODO продумать расширение имен переменных до вида "имяСекции_переменная"
-   udfSetVarFromCsv "$bashlyk_udfIni_csvSection" ${bashlyk_udfIni_aVar//;/ }
-  else
-   bashlyk_udfIni_cClass="${bashlyk_udfIni_s#*:}"
-   udfIsValidVariable $bashlyk_udfIni_sSection || eval $(udfOnError return iErrorNonValidVariable '$bashlyk_udfIni_sSection')
-   case "$bashlyk_udfIni_cClass" in
-    !|-) bashlyk_udfIni_csvSection="${bashlyk_udfIni_csvSection##*_bashlyk_csv_record=;}" ;;
-      #+) bashlyk_udfIni_csvSection="$(echo "$bashlyk_udfIni_csvSection" | sed -e "s/_bashlyk_csv_record=;//g")" ;;
-      =) bashlyk_udfIni_csvSection="$(echo "$bashlyk_udfIni_csvSection" | tr ';' '\n' | sort | uniq | tr '\n' ';')" ;;
-   esac
-   eval 'export $bashlyk_udfIni_sSection="$(udfCsvHash2Raw "$bashlyk_udfIni_csvSection" "$bashlyk_udfIni_sSection")"'
+INI.load() {
+
+  udfOn NoSuchFileOrDir throw $1
+  udfOn MissingArgument throw $2
+
+  local -a a
+  local -A h hKeyValue hRawMode
+  local csv i ini fmtKeyValue fmtSections o path reSection reValidSections s sSection
+
+  o=${FUNCNAME[0]%%.*}
+  fmtSections='^[[:space:]]*(:?)\[[[:space:]]*(%SECTION%)[[:space:]]*\](:?)[[:space:]]*$'
+  fmtKeyValue='^[[:space:]]*(%KEY%)[[:space:]]*=[[:space:]]*(.*)[[:space:]]*$'
+
+  [[ "$1" == "${1##*/}" && -f "$(_ pathIni)/$1" ]] && path=$(_ pathIni)
+  [[ "$1" == "${1##*/}" && -f "$1"              ]] && path=$(pwd)
+  [[ "$1" != "${1##*/}" && -f "$1"              ]] && path=${1%/*}
+  #
+  if [[ ! $path && -f "/etc/$(_ pathPrefix)/$1" ]]; then
+
+    path="/etc/$(_ pathPrefix)"
+
   fi
- done
- ## TODO вложенные кавычки: " " ""
- return 0
-}
-#******
-#****f* libini/udfGetIni
-#  SYNOPSIS
-#    udfGetIni <file> [<section>] ...
-#  DESCRIPTION
-#    Получить опции секций <csvSections> конфигурации <file> в CSV-строку в
-#    формате "[section];<key>=<value>;..." на стандартный вывод
-#  INPUTS
-#     file    - файл конфигурации формата "*.ini".
-#     section - любое количество имен секций, данные которых нужно получить.
-#               По умолчанию и всегда выполняется сериализация "безымянной"
-#               секции
-#  RETURN VALUE
-#    0                            - Выполнено успешно
-#    iErrorEmptyOrMissingArgument - аргументы отсутствуют или файл конфигурации не найден
-#  EXAMPLE
-#    local csv='b=true;_bashlyk_ini_test_autoKey_0="iXo Xo = 19";_bashlyk_ini_test_autoKey_1="simple line";iXo=1921;iYo=1080;sTxt="foo bar";'
-#    local sTxt="foo bar" b=true iXo=1921 iYo=1080 ini iniChild
-#    local fmt="[test]\n\t%s\t=\t%s\n\t%s\t=\t%s\n\t%s\t=\t%s\n\t%s\t=\t%s\n"
-#    ini=$(mktemp --suffix=.ini || tempfile -s .test.ini)                       #? true
-#    iniChild="$(dirname $ini)/child.$(basename $ini)"
-#    printf "$fmt" sTxt foo b false "iXo Xo" 19 iYo 80 | tee $ini
-#    echo "simple line" | tee -a $ini
-#    printf "$fmt" "sTxt" "$sTxt" "b" "$b" "iXo" "$iXo" "iYo" "$iYo" | tee $iniChild
-#    udfGetIni $iniChild test >| grep "^\[\];;\[test\];${csv}$"                 #? true
-#    udfGetIni2Var csvResult $iniChild test                                     #? true
-#    echo "$csvResult" | grep "^\[\];;\[test\];${csv}$"                         #? true
-#    rm -f $iniChild $ini
-#  SOURCE
-udfGetIni() {
- local csv s ini="$1" IFS=$' \t\n'
- #
- [[ -n "$1" && -f "$1" ]] || eval $(udfOnError return iErrorEmptyOrMissingArgument)
- #
- shift
- #
- for s in "" $*; do
-  csv+="[${s}];$(udfIniGroupSection2Csv $ini $s)"
- done
- echo "$csv"
- return 0
-}
-#******
-#****f* libini/udfGetIni2Var
-#  SYNOPSIS
-#    udfGetIni2Var <varname> <file> [<section>] ...
-#  DESCRIPTION
-#    Поместить вывод udfGetIni в переменную <varname>
-#  INPUTS
-#    file    - файл конфигурации формата "*.ini".
-#    varname - валидный идентификатор переменной. Результат в виде
-#              CSV-строки в формате "[section];<key>=<value>;..." будет
-#              помещён в соответствующую переменную
-#    section - список имен секций, данные которых нужно получить
-#  RETURN VALUE
-#    0                            - Выполнено успешно
-#    iErrorNonValidVariable       - не валидный идентификатор переменной
-#    iErrorEmptyOrMissingArgument - аргументы отсутствуют
-#  EXAMPLE
-#    #пример приведен в описании udfGetIni
-#  SOURCE
-udfGetIni2Var() {
- local bashlyk_GetIni2Var_ini="$2" bashlyk_GetIni2Var_s="$1" IFS=$' \t\n'
- #
- [[ -n "$2" && -f "$2" ]] || eval $(udfOnError return iErrorEmptyOrMissingArgument)
- udfIsValidVariable $1 || eval $(udfOnError return $? '$1')
- shift 2
- eval 'export ${bashlyk_GetIni2Var_s}="$(udfGetIni ${bashlyk_GetIni2Var_ini} $*)"'
- return 0
-}
-#******
-#****f* libini/udfGetCsvSection
-#  SYNOPSIS
-#    udfGetCsvSection <csv> <tag>
-#  DESCRIPTION
-#    Выделить из CSV-строки <csv> фрагмент вида "[tag];key=value;...;" до
-#    символа [ (очередная секция) или конца строки
-#    формате "[section];<key>=<value>;..."  на стандартный вывод
-#  INPUTS
-#    tag - имя ini-секции
-#    csv - строка сериализации данных ini-файлов
-#  OUTPUT
-#    csv; строка без заголовка секции [tag]
-#  EXAMPLE
-#    local csv='[];a=b;c=d e;[s1];a=f;c=g h;[s2];a=k;c=l m;'
-#    udfGetCsvSection "$csv"    >| grep '^a=b;c=d e;$'                          #? true
-#    udfGetCsvSection "$csv" s1 >| grep '^a=f;c=g h;$'                          #? true
-#    udfGetCsvSection "$csv" s2 >| grep '^a=k;c=l m;$'                          #? true
-#  SOURCE
-udfGetCsvSection() {
- echo "${1#*\[$2\];}" | cut -f1 -d'['
- return 0
-}
-#******
-#****f* libini/udfGetCsvSection2Var
-#  SYNOPSIS
-#    udfGetCsvSection <varname> <csv> [<tag>]
-#  DESCRIPTION
-#    поместить результат вызова udfGetCsvSection в переменную <varname>
-#  INPUTS
-#    tag     - имя ini-секции
-#    csv     - строка сериализации данных ini-файлов
-#    varname - валидный идентификатор переменной (без "$ "). Результат в виде
-#              CSV; строки формата "ключ=значение;" будет помещен в
-#              соответствующую переменную.
-#  RETURN VALUE
-#    0                            - Выполнено успешно
-#    iErrorNonValidVariable       - аргумент не является валидным идентификатором переменной
-#    iErrorEmptyOrMissingArgument - отсутствует аргумент
-#  EXAMPLE
-#    local csv='[];a=b;c=d e;[s1];a=f;c=g h;[s2];a=k;c=l m;' csvResult
-#    udfGetCsvSection2Var csvResult "$csv"
-#    echo $csvResult >| grep '^a=b;c=d e;$'                                     #? true
-#    udfGetCsvSection2Var csvResult "$csv" s1
-#    echo $csvResult >| grep '^a=f;c=g h;$'                                     #? true
-#    udfGetCsvSection2Var csvResult "$csv" s2
-#    echo $csvResult >| grep '^a=k;c=l m;$'                                     #? true
-#  SOURCE
-udfGetCsvSection2Var() {
- local IFS=$' \t\n'
- #
- [ -n "$2" ] || eval $(udfOnError return iErrorEmptyOrMissingArgument)
- udfIsValidVariable $1 || eval $(udfOnError return $? '$1')
- eval 'export ${1}="$(udfGetCsvSection "$2" $3)"'
- return 0
-}
-#******
-#****f* libini/udfSelectEnumFromCsvHash
-#  SYNOPSIS
-#    udfSelectEnumFromCsvHash <csv> [<tag>]
-#  DESCRIPTION
-#     CSV-строку, в полях которых указаны только неименованные значения,
-#    из CSV-строки <csv>. Предполагается, что данная <csv> строка является
-#    сериализацией ini-файла, неименованные данные которого получают ключи вида
-#    "_bashlyk_ini_<секция>_autoKey_<номер>"
-#  INPUTS
-#    tag - имя ini-секции
-#    csv - строка сериализации данных ini-файлов
-#  OUTPUT
-#    csv; строка без заголовка секции [tag]
-#  RETURN VALUE
-#     0  - Выполнено успешно
-#  EXAMPLE
-#    local csv='[];a=b;_bashlyk_ini_void_autoKey_0="d = e";[s1];_bashlyk_ini_s1_autoKey_0=f=0;c=g h;[s2];a=k;_bashlyk_ini_s2_autoKey_0=l m;'
-#    udfSelectEnumFromCsvHash "$csv"    >| grep '^"d = e";$'                    #? true
-#    udfSelectEnumFromCsvHash "$csv" s1 >| grep '^f=0;$'                        #? true
-#    udfSelectEnumFromCsvHash "$csv" s2 >| grep '^l m;$'                        #? true
-#  SOURCE
-udfSelectEnumFromCsvHash() {
- local IFS=';' csv s sUnnamedKeyword="_bashlyk_ini_${2:-void}_autoKey_"
- for s in $(echo "${1#*\[$2\];}" | cut -f1 -d'[')
- do
-  echo "$s" | grep "^${sUnnamedKeyword}" >/dev/null 2>&1 && csv+="${s#*=};"
- done
- echo "$csv"
-}
-#******
-#****f* libini/udfCsvHash2Raw
-#  SYNOPSIS
-#    udfCsvHash2Raw <csv> [<tag>]
-#  DESCRIPTION
-#    подготовить CSV;-строку для выполнения в качестве сценария, поля которого
-#    рассматриваются как строки команд. При этом автоматические ключи вида
-#    "_bashlyk_ini_<секция>_autoKey_<номер>" и поля-разделители записей разных
-#    источников данных "_bashlyk_csv_record=" будут убраны. Поля вида
-#    "ключ=значение" становятся командами присвоения значения переменной.
-#    Предполагается, что входная <csv> строка является сериализацией ini-файла.
-#  INPUTS
-#    tag - имя ini-секции
-#    csv - строка сериализации данных ini-файлов
-#  OUTPUT
-#    csv; строка без заголовка секции [tag]
-#  RETURN VALUE
-#     0  - Выполнено успешно
-#  EXAMPLE
-#    local csv='[];_bashlyk_csv_record=;a=b;_bashlyk_ini_void_autoKey_0="d = e";[s1];_bashlyk_ini_s1_autoKey_0=f=0;c=g h;[s2];a=k;_bashlyk_ini_s2_autoKey_0=l m;'
-#    udfCsvHash2Raw "$csv"    >| grep '^a=b;"d = e";$'                          #? true
-#    udfCsvHash2Raw "$csv" s1 >| grep '^f=0;c=g h;$'                            #? true
-#    udfCsvHash2Raw "$csv" s2 >| grep '^a=k;l m;$'                              #? true
-#  SOURCE
-udfCsvHash2Raw() {
- local IFS=';' csv s sUnnamedKeyword="_bashlyk_ini_${2:-void}_autoKey_"
- for s in $(echo "${1#*\[$2\];}" | cut -f1 -d'[')
- do
-  s="${s#${sUnnamedKeyword}[0-9]*=}"
-  s="${s##*_bashlyk_csv_record=}"
-  [[ -n "$s" ]] || continue
-  csv+="${s};"
- done
- echo "$csv"
-}
-#******
-#****f* libini/udfIniSection2Csv
-#  SYNOPSIS
-#    udfIniSection2Csv <file> [<section>]
-#  DESCRIPTION
-#    Получить секцию конфигурационных данных <section> из файла <file> и выдать
-#    результат в виде строки CSV, разделенных ';', каждое поле которой содержит
-#    данные в формате "<ключ>=<значение>" согласно данных строки секции.
-#    В случае если исходная строка не содержит ключ или ключ содержит пробел, то
-#    ключом становится выражение ${_bashlyk_sUnnamedKeyword}_<инкремент>, а всё
-#    содержимое строки - значением.
-#  INPUTS
-#    file    - имя файла конфигурации
-#    section - название секции конфигурации, при отсутствии этого аргумента
-#              считываются данные до первого заголовка секции [<...>] данных
-#              или до конца конфигурационного файла, если секций нет
-#  OUTPUT
-#    строки CSV, разделенных ';', каждое поле которой содержит данные в формате
-#    "<ключ>=<значение>" согласно данных строки секции
-#  RETURN VALUE
-#    0                            - Выполнено успешно
-#    iErrorEmptyOrMissingArgument - аргумент отсутствует или файл конфигурации
-#                                   не найден
-#  EXAMPLE
-#    local csv='sTxt="foo bar";b=true;iXo=1921;iYo=1080;_bashlyk_ini_test_autoKey_0="simple line";'
-#    local sTxt="foo bar" b=true iXo=1921 iYo=1080 ini iniChild csvResult
-#    local fmt="[test]\n\t%s\t=\t%s\n\t%s\t=\t%s\n\t%s\t=\t%s\n\t%s\t=\t%s\n"
-#    ini=$(mktemp --suffix=.ini || tempfile -s .test.ini)                       #? true
-#    printf "$fmt" "sTxt" "$sTxt" "b" "$b" "iXo" "$iXo" "iYo" "$iYo" | tee $ini
-#    echo "simple line" | tee -a $ini
-#    udfIniSection2Csv $ini test >| grep "^${csv}$"                             #? true
-#    udfIniSection2CsvVar csvResult $ini test                                   #? true
-#    echo "$csvResult"           >| grep "^${csv}$"                             #? true
-#    rm -f $ini
-#  SOURCE
-udfIniSection2Csv() {
- local IFS=$' \t\n'
- #
- [[ -n "$1" && -f "$1" ]] || eval $(udfOnError return iErrorEmptyOrMissingArgument)
- mawk -f ${_bashlyk_pathLib}/inisection2csv.awk -v "sTag=$2" -- $1
- return 0
-}
-#******
-#****f* libini/udfIniSection2CsvVar
-#  SYNOPSIS
-#    udfIniSection2CsvVar <varname> <file> [<section>]
-#  DESCRIPTION
-#    поместить результат вызова udfIniSection2Csv в переменную <varname>
-#  INPUTS
-#    file    - имя файла конфигурации
-#    section - название секции конфигурации, при отсутствии этого аргумента
-#              считываются данные до первого заголовка секции [<...>] данных
-#              или до конца конфигурационного файла, если секций нет
-#    varname - идентификатор переменной (без "$"). При его наличии результат
-#              будет помещен в соответствующую переменную. При отсутствии такого
-#              идентификатора результат будет выдан на стандартный вывод
-#  RETURN VALUE
-#     0  - Выполнено успешно
-#    iErrorNonValidVariable       - аргумент <varname> не является валидным идентификатором переменной
-#    iErrorEmptyOrMissingArgument - аргумент отсутствует или файл конфигурации не найден
-#  EXAMPLE
-#    #пример приведен в описании udfIniGroupSection2Csv
-#  SOURCE
-udfIniSection2CsvVar() {
- local IFS=$' \t\n'
- #
- [[ -n "$2" && -f "$2" ]] || eval $(udfOnError return iErrorEmptyOrMissingArgument)
- udfIsValidVariable $1 || eval $(udfOnError return $? '$1')
- eval 'export ${1}="$(udfIniSection2Csv "$2" $3)"'
- return 0
-}
-#******
-#****f* libini/udfIniGroupSection2Csv
-#  SYNOPSIS
-#    udfIniGroupSection2Csv <file> [<section>]
-#  DESCRIPTION
-#    Получить конфигурационные данные секции <section> из <file> и, при наличии,
-#    от группы "родительских" к нему файлов. Например, если <file> это
-#    "a.b.c.ini", то "родительскими" будут считаться файлы "ini", "c.ini" и
-#    "b.c.ini" если они есть в том же каталоге. Данные наследуются и
-#    перекрываются от "старшего" файла к младшему.
-#    Поиск конфигурационных файлов выполняется по следующим критериям:
-#     1. Если имя файла <file> содержит неполный путь, то в начале проверяется
-#     текущий каталог, затем каталог конфигураций по умолчанию
-#     2. Если имя файла содержит полный путь, то рабочим каталогом является этот
-#     полный путь
-#     3. Последняя попытка - найти файл в каталоге /etc
-#    Важно: имя <file> не должно начинаться с точки и им заканчиваться!
-#  INPUTS
-#    file    - имя файла конфигурации
-#    section - название секции конфигурации, при отсутствии этого аргумента
-#              считываются данные до первого заголовка секции [<...>] данных или
-#              до конца конфигурационного файла, если секций нет
-#  OUTPUT
-#              разделенный символом ";" строка, в полях которого содержатся
-#              конфигурационные данные в формате "<key>=<value>;..."
-#  RETURN VALUE
-#    0                            - Выполнено успешно
-#    iErrorNoSuchFileOrDir        - файл конфигурации не найден
-#    iErrorEmptyOrMissingArgument - аргумент отсутствует
-#  EXAMPLE
-#    local csv='b=true;_bashlyk_ini_test_autoKey_0="iXo Xo = 19";_bashlyk_ini_test_autoKey_1="simple line";iXo=1921;iYo=1080;sTxt="foo bar";'
-#    local sTxt="foo bar" b=true iXo=1921 iYo=1080 ini iniChild
-#    local fmt="[test]\n\t%s\t=\t%s\n\t%s\t=\t%s\n\t%s\t=\t%s\n\t%s\t=\t%s\n"
-#    ini=$(mktemp --suffix=.ini || tempfile -s .test.ini)                       #? true
-#    iniChild="$(dirname $ini)/child.$(basename $ini)"
-#    printf "$fmt" sTxt foo b false "iXo Xo" 19 iYo 80 | tee $ini
-#    echo "simple line" | tee -a $ini
-#    printf "$fmt" sTxt "$sTxt" b "$b" iXo "$iXo" iYo "$iYo" | tee $iniChild
-#    udfIniGroupSection2Csv $iniChild test >| grep "^${csv}$"                   #? true
-#    udfIniGroupSection2CsvVar csvResult $iniChild test                         #? true
-#    echo "$csvResult"                     >| grep "^${csv}$"                   #? true
-#    rm -f $iniChild $ini
-#    udfIniGroupSection2Csv $iniChild                                           #? $_bashlyk_iErrorNoSuchFileOrDir
-#    udfIniGroupSection2Csv                                                     #? $_bashlyk_iErrorEmptyOrMissingArgument
-#    ## TODO тест пустой результат
-#  SOURCE
-udfIniGroupSection2Csv() {
- local aini csvIni csvResult ini pathIni s sTag IFS=$' \t\n' GLOBIGNORE
- #
- [[ -n "$1" ]] || eval $(udfOnError return iErrorEmptyOrMissingArgument)
- #
- pathIni="$_bashlyk_pathIni"
- #
- [[ "$1" == "${1##*/}" && -f "${pathIni}/$1" ]] || pathIni=
- [[ "$1" == "${1##*/}" && -f "$1" ]] && pathIni=$(pwd)
- [[ "$1" != "${1##*/}" && -f "$1" ]] && pathIni=$(dirname $1)
- [[ -n "$2" ]] && sTag="$2"
- #
- if [[ -z "$pathIni" ]]; then
-  [[ -f "/etc/${_bashlyk_pathPrefix}/$1" ]] \
-   && pathIni="/etc/${_bashlyk_pathPrefix}" || eval $(udfOnError return iErrorNoSuchFileOrDir)
- fi
- #
- aini=$(echo "${1##*/}" |\
-  awk 'BEGIN{FS="."} {for (i=NF;i>=1;i--) printf $i" "}')
 
- GLOBIGNORE="*:?"
+  if [[ $path ]]; then
 
- for s in $aini; do
-  [[ -n "$s"   ]] || continue
-  [[ -n "$ini" ]] && ini="${s}.${ini}" || ini="$s"
-  [[ -s "${pathIni}/${ini}" ]] && \
-   csvIni+=";$(udfIniSection2Csv "${pathIni}/${ini}" "$sTag");"
- done
- unset GLOBIGNORE
- udfCsvOrder "$csvIni" || eval $(udfOnError return)
- #return 0
-}
-#******
-#****f* libini/udfIniGroupSection2CsvVar
-#  SYNOPSIS
-#    udfIniGroupSection2CsvVar <varname> <file> [<section>]
-#  DESCRIPTION
-#    поместить результат вызова udfIniGroupSection2Csv в переменную <varname>
-#  INPUTS
-#    file    - имя файла конфигурации
-#    section - название секции конфигурации, при отсутствии этого аргумента
-#              считываются данные до первого заголовка секции [<...>] данных или
-#              до конца конфигурационного файла, если секций нет
-#    varname - валидный идентификатор переменной (без "$ "). Результат в виде
-#              разделенной символом ";" CSV-строки, в полях которого содержатся
-#              конфигурационные данные в формате "<key>=<value>;..." будет
-#              помещён в соответствующую переменную
-#  RETURN VALUE
-#    0                            - Выполнено успешно
-#    iErrorNonValidVariable       - аргумент <varname> не является валидным идентификатором переменной
-#    iErrorEmptyOrMissingArgument - аргумент отсутствует
-#  EXAMPLE
-#    #пример приведен в описании udfIniGroupSection2Csv
-#  SOURCE
-udfIniGroupSection2CsvVar() {
- local IFS=$' \t\n'
- #
- [[ -n "$2" ]] || eval $(udfOnError return iErrorEmptyOrMissingArgument)
- udfIsValidVariable $1 || eval $(udfOnError return $? '$1')
- eval 'export ${1}="$(udfIniGroupSection2Csv "$2" $3)"'
- return 0
-}
-#******
-#****f* libini/udfIni2Csv
-#  SYNOPSIS
-#    udfIni2Csv <file>
-#  DESCRIPTION
-#    Получить конфигурационныe данныe всех секций ini-файла <file> и выдать
-#    результат в виде строки CSV, разделенных ';', каждое поле которой содержит
-#    данные в формате "[<секция>];<ключ>=<значение>" согласно данных строки
-#    секции.
-#    В случае если исходная строка не содержит ключ или ключ содержит пробел, то
-#    ключом становится переменная "_bashlyk_ini_<секция>_autoKey_<инкремент>", а
-#    всё содержимое строки - значением
-#  INPUTS
-#    file - имя файла конфигурации
-#  OUTPUT
-#    строки CSV, разделенных ';', каждое поле которой содержит данные в формате
-#    "[<секция>];<ключ>=<значение>" согласно данных секции.
-#  RETURN VALUE
-#    0                            - Выполнено успешно
-#    iErrorEmptyOrMissingArgument - аргумент отсутствует или файл конфигурации
-#                                   не найден
-#  EXAMPLE
-#    local ini re
-#    re='sTxt="-S-(da.*-R).*y_1="^_s.*e^_";\[exec\].*=$(.*\[ -n "$sUname" \] .*'
-#    ini=$(mktemp --suffix=test.ini || tempfile -s .test.ini)                   #? true
-#    cat <<'EOFini' > ${ini}                                                    #-
-#[test]                                                                         #-
-#    sTxt	=	$(date -R) a                                            #-
-#    b		=	false                                                   #-
-#    iXo Xo	=	19                                                      #-
-#    iYo	=	80                                                      #-
-#    test	=	line = to = line                                        #-
-#    `simple line`                                                              #-
-#[exec]:                                                                        #-
-#    sUname=$(uname -a)                                                         #-
-#    [ -n "$sUname" ] && date                                                   #-
-#:[exec]                                                                        #-
-#EOFini                                                                         #-
-#    udfIni2Csv $ini | grep -o "_bashlyk_&#.._" >| wc -l | grep '^7$'           #? true
-#    udfIni2Csv $ini | udfBashlykUnquote >| grep "$re"                          #? true
-#    udfIni2CsvVar csvResult $ini                                               #? true
-#    echo "$csvResult" | udfBashlykUnquote >| grep "$re"                        #? true
-#    rm -f $ini
-#  SOURCE
-udfIni2Csv() {
- local IFS=$' \t\n'
- #
- [[ -n "$1" && -f "$1" ]] || eval $(udfOnError return iErrorEmptyOrMissingArgument)
- mawk -f ${_bashlyk_pathLib}/ini2csv.awk -- $1
- return 0
-}
-#******
-#****f* libini/udfIni2CsvVar
-#  SYNOPSIS
-#    udfIni2CsvVar <varname> <file>
-#  DESCRIPTION
-#    поместить результат вызова udfIni2Csv в переменную <varname>
-#  INPUTS
-#    varname - валидный идентификатор переменной (без "$ "). Результат в  виде
-#              CSV; строки формата "[секция];ключ=значение;" будет помещен в
-#              соответствующую переменную.
-#    file    - имя файла конфигурации
-#  RETURN VALUE
-#    0                            - Выполнено успешно
-#    iErrorNonValidVariable       - аргумент <varname> не является валидным идентификатором переменной
-#    iErrorEmptyOrMissingArgument - аргумент отсутствует
-#  EXAMPLE
-#    #пример приведен в описании udfIni2Csv
-#  SOURCE
-udfIni2CsvVar() {
- local IFS=$' \t\n'
- #
- [[ -n "$2" ]] || eval $(udfOnError return iErrorEmptyOrMissingArgument)
- udfIsValidVariable $1 || eval $(udfOnError return $? '$1')
- eval 'export ${1}="$(udfIni2Csv "$2")"'
- return 0
-}
-#******
-#****f* libini/udfIniGroup2Csv
-#  SYNOPSIS
-#    udfIniGroup2Csv <file>
-#  DESCRIPTION
-#    Получить конфигурационные данные всех секций <section> из <file> и, при
-#    наличии, от группы "родительских" к нему файлов. Например, если <file> это
-#    "a.b.c.ini", то "родительскими" будут считаться файлы "ini", "c.ini" и
-#    "b.c.ini" если они есть в том же каталоге. Данные наследуются и
-#    перекрываются от "старшего" файла к младшему.
-#    Поиск конфигурационных файлов выполняется по следующим критериям:
-#     1. Если имя файла <file> содержит неполный путь, то в начале проверяется
-#     текущий каталог, затем каталог конфигураций по умолчанию
-#     2. Если имя файла содержит полный путь, то рабочим каталогом является этот
-#     полный путь
-#     3. Последняя попытка - найти файл в каталоге /etc
-#    Важно: имя <file> не должно начинаться с точки и им заканчиваться!
-#  INPUTS
-#    file    - имя файла конфигурации
-#  OUTPUT
-#              разделенный символом ";" CSV-строка, в полях которого содержатся
-#              конфигурационные данные в формате "[<section>];<key>=<value>;..."
-#  RETURN VALUE
-#    0                            - Выполнено успешно
-#    iErrorNoSuchFileOrDir        - файл конфигурации не найден
-#    iErrorEmptyOrMissingArgument - аргумент отсутствует или нет входных данных
-#    iErrorEmptyResult            - результат отсутствует
-#  EXAMPLE
-#    local re='\[test\];_b.*d=;sTxt=foo;.*autoKey_0=.*_b.*d=;.*foo bar.*o=1080;'
-#    local sTxt=foo b=false iXo=1921 iYo=80 ini iniChild csvResult
-#    local fmt="[test]\n\t%s\t=\t%s\n\t%s\t=\t%s\n\t%s\t=\t%s\n\t%s\t=\t%s\n"
-#
-#    ini=$(mktemp --suffix=.ini || tempfile -s .test.ini)                       #? true
-#    iniChild="$(dirname $ini)/child.$(basename $ini)"
-#    printf "$fmt" sTxt $sTxt b $b "iXo Xo" 19 iYo $iYo | tee $ini
-#    echo "simple line" | tee -a $ini
-#    printf "$fmt" sTxt "foo bar" b "true" iXo "1920" iYo "1080" | tee $iniChild
-#    udfIniGroup2Csv $iniChild >| grep "$re"                                    #? true
-#    udfIniGroup2CsvVar csvResult $iniChild                                     #? true
-#    echo "$csvResult" >| grep "$re"                                            #? true
-#    rm -f $iniChild $ini
-#    udfIniGroup2Csv $iniChild                                                  #? $_bashlyk_iErrorNoSuchFileOrDir
-#    ## TODO проверка пустых данных (iErrorEmptyOrMissingArgument)
-#  SOURCE
-udfIniGroup2Csv() {
- local a aini csvIni ini pathIni s sTag aTag csvOut fnOpt ini pathIni IFS=$' \t\n' GLOBIGNORE
- #
- [[ -n "$1" ]] || eval $(udfOnError return iErrorEmptyOrMissingArgument)
- #
- ## TODO встроить защиту от подстановки конфигурационного файла (по владельцу)
- #
- [[ "$1" == "${1##*/}" && -f "$(_ pathIni)/$1" ]] && pathIni=$(_ pathIni)
- [[ "$1" == "${1##*/}" && -f "$1"              ]] && pathIni=$(pwd)
- [[ "$1" != "${1##*/}" && -f "$1"              ]] && pathIni=$(dirname $1)
- #
- if [[ -z "$pathIni" ]]; then
-  [[ -f "/etc/$(_ pathPrefix)/$1" ]] && pathIni="/etc/$(_ pathPrefix)"
- fi
- #
- aini=$(echo "${1##*/}" |\
-  awk 'BEGIN{FS="."} {for (i=NF;i>=1;i--) printf $i" "}')
+    s=${1##*/}
+    a=( ${s//./ } )
 
- GLOBIGNORE="*:?"
+  fi
 
- if [[ -n "$pathIni" ]]; then
-  for s in $aini; do
-   [[ -n "$s"                ]] || continue
-   [[ -n "$ini"              ]] && ini="${s}.${ini}" || ini="$s"
-   [[ -s "${pathIni}/${ini}" ]] && \
-    csvIni+="$(udfIni2Csv "${pathIni}/${ini}" | tr -d '\\')"
+  shift
+
+  for s in "$@"; do
+
+    [[ $s =~ ^(.*)?:(([=+\-]?)|([^=+\-].*))$ ]] || udfOn InvalidArgument throw $s
+
+    sSection=${BASH_REMATCH[1]}
+    : ${sSection:=__global__}
+
+    [[ ${BASH_REMATCH[3]} ]] && hRawMode[$sSection]="${BASH_REMATCH[3]}"
+    [[ ${BASH_REMATCH[4]} ]] && s="${BASH_REMATCH[4]}" || s=
+    [[ $s ]] && s="${s//,/\|}" && hKeyValue[$sSection]=${fmtKeyValue/\%KEY\%/$s}
+
+    ${o}.__section.select $sSection
+    csv+="${sSection}|"
+
   done
- fi
 
- [[ "$_bashlyk_bSetOptions" == "1" && -n "$_bashlyk_csvOptions2Ini" ]] && {
-  udfMakeTemp fnOpt
-  udfIniWrite $fnOpt "$_bashlyk_csvOptions2Ini"
-  _bashlyk_csvOptions2Ini=''
-  _bashlyk_bSetOptions=0
-  csvIni+="$(udfIni2Csv $fnOpt | tr -d '\\')"
- }
+  csv=${csv%*|}
 
- declare -A a
- IFS='['
- for s in $csvIni; do
-  sTag=${s%%]*}
-  [[ -z "$sTag"  ]] && sTag=" "
-  [[ $sTag == ";" ]] && continue
-  [[ -z "$(echo "${s#*]}" | tr -d ';:')" ]] && continue
-  a[$sTag]+="_bashlyk_csv_record=${s#*]}"
- done
- for s in "${!a[@]}"; do
-  csvOut+="[${s// /}];${a[$s]}"
- done
- IFS=$' \t\n'
- unset GLOBIGNORE
- [[ -n "$csvOut" ]] || {
-  [[ -d "$pathIni" ]] || eval $(udfOnError return iErrorNoSuchFileOrDir '$1')
-  [[ -n "$csvIni"  ]] || eval $(udfOnError return iErrorEmptyOrMissingArgument)
-  eval $(udfOnError return iErrorEmptyResult)
- }
- echo ${csvOut} | sed -e "s/;\+/;/g"
- return 0
+  [[ $csv ]] && reValidSections=${fmtSections/\%SECTION\%/$csv}
+
+  for (( i = ${#a[@]}-1; i >= 0; i-- )); do
+
+    [[ ${a[i]} ]] || continue
+    [[ $ini    ]] && ini="${a[i]}.${ini}" || ini="${a[i]}"
+    [[ -s "${path}/${ini}" ]] && ${o}.read "${path}/${ini}" "$reValidSections"
+
+  done
+
+  eval "s=\${_h${o^^}[__cli__]}"
+  if [[ $s ]]; then
+
+    udfMakeTemp ini
+
+    ${s}.save $ini
+    ${o}.read $ini "$reValidSections"
+
+    rm -f $ini
+
+  fi
+
+  return 0
+
 }
 #******
-#****f* libini/udfIniGroup2CsvVar
+#****f* public/INI.bind.cli
 #  SYNOPSIS
-#    udfIniGroup2CsvVar <varname> <file>
+#    INI.bind.cli [<section>-]<option long name>{<short name>}[:[:=+]] ...
 #  DESCRIPTION
-#    поместить результат вызова udfIniGroup2Csv в переменную <varname>
-#  INPUTS
-#    varname - валидный идентификатор переменной (без "$ "). Результат в виде
-#              CSV; строки формата "[секция];ключ=значение;" будет помещен в
-#              соответствующую переменную.
-#    file    - имя файла конфигурации
+#    Parse command line options and bind to the INI instance
+#  ARGUMENTS
+#    <option name> - option name that used as long option of the CLI and key for
+#                    array of the INI data
+#    <section>     - part of the option name for binding it to a certain section
+#                    of the INI data. By default, it is assumed that option is
+#                    included to the global section
+#    <short name>  - short alias as single letter for option name
+#    first  :      - option is expected to have a required argument
+#    second :      - argument is a optional
+#           =      - option is expected to have list of unique arguments
+#           +      - option is expected to have list of accumulated arguments
+#                    by default, option is included in the global section of the
+#                    INI instance data
 #  RETURN VALUE
-#    0                            - Выполнено успешно
-#    iErrorNonValidVariable       - аргумент <varname> не является валидным идентификатором переменной
-#    iErrorEmptyOrMissingArgument - аргумент отсутствует
+#    MissingArgument - arguments is not specified
+#    InvalidArgument - invalid format of the arguments
 #  EXAMPLE
-#    #пример приведен в описании udfIniGroup2Csv
+#    local rINI rCLI ini
+#    rINI=':file,main,child exec:- main:hint,msg,cnt replace:- unify:= acc:+'   #-
+#    rCLI='file{F}: exec{E}:- main-hint{H}: main-msg{M}: unify{U}:= acc:+'      #-
+#    _ sArg "-F CLI -E clear -H 'Hi!' -M test -U a.2 -U a.2 --acc=a --acc=b"    #-
+#    udfMakeTemp ini
+#    tLoad.save $ini                                                            #? true
+#    tLoad.free
+#    INI tBindCli
+#    tBindCli.bind.cli $rCLI                                                    #? true
+#    tBindCli.load $ini $rINI                                                   #? true
+#    tBindCli.show >| md5sum - | grep ^5f07ee81d3d7cab5bff836f1acb99a20.*-$     #? true
+#    tBindCli.free
 #  SOURCE
-udfIniGroup2CsvVar() {
- local IFS=$' \t\n'
- #
- [[ -n "$2" ]] || eval $(udfOnError return iErrorEmptyOrMissingArgument)
- udfIsValidVariable $1 || eval $(udfOnError return $? '$1')
- eval 'export ${1}="$(udfIniGroup2Csv "$2")"'
- return 0
+INI.bind.cli() {
+
+  udfOn MissingArgument "$@" || return $?
+
+  local -a a
+  local c fmtCase fmtHandler k o sSection sShort sLong sArg s S evalGetopts sCases v
+
+  o=${FUNCNAME[0]%%.*}
+  c=cli${RANDOM}
+
+  INI $c
+  eval "_h${o^^}[__cli__]=$c"
+
+  fmtHandler="${c}.getopts() { while true; do case \$1 in %s --) shift; break;; esac; done }"
+  fmtCase="--%s%s) ${c}.set [%s]%s = %s; shift %s;;"
+
+  for s in $@; do
+
+    if [[ $s =~ (([[:alnum:]]+)(-))?(@|[[:alnum:]]+)(\{([[:alnum:]])\})?([:])?([:=\+\-])? ]]; then
+
+      s=$( declare -p BASH_REMATCH )
+      eval "${s/-ar BASH_REMATCH/-a a}"
+
+    else
+
+      eval $( udfOnError throw InvalidArgument "$s - format error" )
+
+    fi
+
+    s=;S=;v=1;sSection="${a[2]}";k="${a[4]}"
+
+    [[ ${a[4]} ]] && sLong+="${a[4]}${a[7]},"
+    [[ ${a[6]} ]] && sShort+="${a[6]}${a[7]}" && s="|-${a[6]}"
+    [[ ${a[7]} ]] && S="2" && v='$2'
+    [[ ${a[8]} =~ ^(=|\-|\+)$ ]] && k="${a[8]}" && sSection="${a[4]}"
+
+    sCases+="$( printf -- "$fmtCase" "${a[4]}" "$s" "${sSection}" "${k/=/}" "$v" "$S" ) "
+
+  done
+
+  s="$( getopt -u -o $sShort --long ${sLong%*,} -n $0 -- $(_ sArg) )"
+  (( $? > 0 )) && udfOn InvalidArgument throw "$s - CLI parsing error..."
+
+  evalGetopts="$( printf -- "$fmtHandler" "$sCases" )"
+
+  eval "$evalGetopts" && ${c}.getopts $s
+
+  unset -f evalGetopts
+
 }
 #******
-#****f* libini/udfOptions2Ini
+#****f* public/INI.getopt
 #  SYNOPSIS
-#    udfOptions2Ini  [<section>]:(=[<varname>])|<csv;> ...
+#    INI.getopt <option>[--]
 #  DESCRIPTION
-#    подготовить csv-поток из уже инициализированных переменных, например, опций
-#    командной строки согласно распределению этих переменных по указанным
-#    cекциям <section> (см. udfIni) для совмещения с соответствующими данными
-#    ini-конфигурационных файлов. Результат помещается в глобальную переменную
-#    _bashlyk_csvOptions2Ini для использования в udfIni
-#  INPUTS
-#    распределение переменных по указанным секциям (см. udfIni)
+#    get option value after binding command line arguments to the INI instance
+#    ( after <o>.bind.cli call )
+#  ARGUMENTS
+#    <option> - option name that used as long option of the CLI and key for
+#               array of the INI data
+#          -- - expected list of the values - serialized array
 #  RETURN VALUE
-#    0                            - Выполнено успешно
-#    iErrorEmptyOrMissingArgument - аргумент отсутствует
+#    MissingArgument - arguments is not specified
+#    InvalidArgument - invalid format of the argument
+#  OUTPUT
+#    option value
 #  EXAMPLE
-#   local sVoid="verbose;direct;log;" sMain="source;destination"
-#   local unify="*.tmp,*~,*.bak" replace="replace" unify="unify" acc="acc"
-#   local preExec="sUname=$(TZ=UTC date -R --date='@12345678'),date -R"
-#   local sMD5='592dbbd3a17e18e14b828c75898437e4'
-#   local sRules=":${sVoid} preExec:! main:${sMain} replace:- unify:= acc:+"
-#   local verbose="yes foo" direct="false" log="/var/log/test.log" source="last"
-#   local destination="/tmp/last.txt"
-#   udfOptions2Ini $sRules                                                      #? true
-#   _ csvOptions2Ini | md5sum >| grep ^${sMD5}                                  #? true
-#   #udfIniWrite /tmp/${$}.test.ini "$(_ csvOptions2Ini)"
-#   #udfIni /tmp/${$}.test.ini preExec:=
-#   #udfPrepare2Exec $preExec
+#    local rCLI
+#    rCLI='file{F}: exec{E}:- main-hint{H}: main-msg{M}: unify{U}:= acc:+'      #-
+#    _ sArg "-F CLI -E clear -H 'Hi!' -M test -U a.2 -U a.2 --acc=a --acc=b"    #-
+#    INI tGetopt
+#    tGetopt.bind.cli $rCLI                                                     #? true
+#    tGetopt.getopt file                                                        #? true
+#    tGetopt.getopt exec--                                                      #? true
+#    tGetopt.getopt main-hint                                                   #? true
+#    tGetopt.getopt main-msg                                                    #? true
+#    tGetopt.getopt unify--                                                     #? true
+#    tGetopt.getopt acc--                                                       #? true
+#    tGetopt.free
 #  SOURCE
-udfOptions2Ini() {
- local csv k s sClass sData sIni sRules sSection IFS=$' \t\n'
- [[ -n "$1" ]] || eval $(udfOnError return iErrorEmptyOrMissingArgument)
- for s in $*; do
-  sSection="${s%:*}"
-  sData="${s/$sSection/}"
-  sClass="${s#*:}"
-  sData=${sData/:/}
-  sData=${sData/[=\-+\!]/}
-  [[ "$sClass" == "$sData" ]] && sClass=
-  csv=""
-  [[ -n "$sClass" && -n "$sData" ]] && {
-   udfSetLastError iErrorNonValidArgument "$sClass"
-   continue
-  }
-  if [[ -z "$sData" ]]; then
-   [[ -n "${!sSection}" ]] && csv+="${!sSection};"
-  else
-   IFS=';'
-   for k in $sData; do
-    [[ -n "${!k}" ]] && csv+="$k=${!k};"
-   done
-   IFS=$' \t\n'
-  fi
-  [[ -n "$csv" ]] || continue
-  if [[ "$sClass" == "!" ]]; then
-   s="[${sSection}]:;${csv};:[${sSection}]"
-  else
-   s="[${sSection}];${csv};"
-  fi
-  sIni+=$s
- done
- _ csvOptions2Ini "${sIni//,/;}"
- return 0
+INI.getopt() {
+
+  udfOn MissingArgument "$@" || return $?
+
+  local -a a
+  local c o s IFS
+
+  s="$*" && c="$IFS" && IFS='-' && a=( $s ) && IFS="$c"
+
+  o=${FUNCNAME[0]%%.*}
+  eval "c=\${_h${o^^}[__cli__]}"
+
+  case "${#a[@]}" in
+
+    2)
+      s=${a[0]:-__global__}
+      k=${a[1]}
+      ;;
+
+    1)
+      s=__global__
+      k=${a[0]}
+      ;;
+
+    *)
+      eval $( udfOnError throw InvalidArgument "$*" )
+
+  esac
+
+  ${c}.get [${s}]${k}
+
 }
 #******

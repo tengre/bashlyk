@@ -1,5 +1,5 @@
 #
-# $Id: libstd.sh 575 2016-10-30 00:36:53+04:00 toor $
+# $Id: libstd.sh 629 2016-12-19 15:26:43+04:00 toor $
 #
 #****h* BASHLYK/libstd
 #  DESCRIPTION
@@ -19,7 +19,7 @@
 #  SOURCE
 [ -n "$BASH_VERSION" ] \
  || eval 'echo "bash interpreter for this script ($0) required ..."; exit 255'
-[[ -n "$_BASHLYK_LIBSTD" ]] && return 0 || _BASHLYK_LIBSTD=1
+[[ $_BASHLYK_LIBSTD ]] && return 0 || _BASHLYK_LIBSTD=1
 #******
 #****** libstd/External Modules
 # DESCRIPTION
@@ -41,7 +41,7 @@
 _bashlyk_iMaxOutputLines=1000
 #
 : ${_bashlyk_onError:=throw}
-: ${_bashlyk_sArg:=$*}
+: ${_bashlyk_sArg:="$@"}
 : ${_bashlyk_pathDat:=/tmp}
 : ${_bashlyk_sWSpaceAlias:=___}
 : ${_bashlyk_sUnnamedKeyword:=_bashlyk_unnamed_key_}
@@ -1397,7 +1397,7 @@ udfGetTimeInSec() {
 
 }
 #******
-#****f* libpid/udfGetFreeFD
+#****f* libstd/udfGetFreeFD
 #  SYNOPSIS
 #    udfGetFreeFD
 #  DESCRIPTION
@@ -1427,6 +1427,30 @@ udfGetFreeFD() {
 		fi
 
 	done
+
+}
+#******
+#****f* libstd/udfIsHash
+#  SYNOPSIS
+#    udfIsHash <variable>
+#  DESCRIPTION
+#    treated a variable as global associative array
+#  ARGUMENTS
+#    <variable> - variable name
+#  RETURN VALUE
+#    InvalidVariable - argument is not valid variable name
+#    InvalidHash     - argument is not hash variable
+#    Success         - argument is name of the associative array
+#  EXAMPLE
+#    declare -Ag -- hh='()' s5
+#    udfIsHash 5s                                                               #? $_bashlyk_iErrorInvalidVariable
+#    udfIsHash s5                                                               #? $_bashlyk_iErrorInvalidHash
+#    udfIsHash hh                                                               #? true
+#  SOURCE
+udfIsHash() {
+
+  udfOn InvalidVariable $1 || return $?
+  [[ $( declare -pA $1 2>/dev/null ) =~ ^declare.*-A ]] && return 0 || return $( _ iErrorInvalidHash )
 
 }
 #******

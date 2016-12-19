@@ -1,5 +1,5 @@
 #
-# $Id: libtst.sh 558 2016-09-23 15:40:27+04:00 toor $
+# $Id: libtst.sh 628 2016-12-19 00:27:35+04:00 toor $
 #
 #****h* BASHLYK/libtst
 #  DESCRIPTION
@@ -14,7 +14,7 @@
 #  SOURCE
 [ -n "$BASH_VERSION" ] || eval 'echo "bash interpreter for this script ($0) required ..."; exit 255'
 
-[[ -n "$_BASHLYK_LIBTST" ]] && return 0 || _BASHLYK_LIBTST=1
+[[ $_BASHLYK_LIBTST ]] && return 0 || _BASHLYK_LIBTST=1
 #******
 #****** libtst/External Modules
 # DESCRIPTION

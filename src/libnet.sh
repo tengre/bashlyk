@@ -1,5 +1,5 @@
 #
-# $Id: libnet.sh 550 2016-09-16 16:10:46+04:00 toor $
+# $Id: libnet.sh 628 2016-12-19 00:27:21+04:00 toor $
 #
 #****h* BASHLYK/libnet
 #  DESCRIPTION
@@ -14,7 +14,7 @@
 #  SOURCE
 [ -n "$BASH_VERSION" ] || eval 'echo "bash interpreter for this script ($0) required ..."; exit 255'
 
-[[ -n "$_BASHLYK_LIBTST" ]] && return 0 || _BASHLYK_LIBTST=1
+[[ $_BASHLYK_LIBNET ]] && return 0 || _BASHLYK_LIBNET=1
 #******
 #****** libnet/External Modules
 # DESCRIPTION

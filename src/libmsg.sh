@@ -1,5 +1,5 @@
 #
-# $Id: libmsg.sh 572 2016-10-28 15:21:35+04:00 toor $
+# $Id: libmsg.sh 628 2016-12-19 00:27:21+04:00 toor $
 #
 #****h* BASHLYK/libmsg
 #  DESCRIPTION
@@ -14,7 +14,7 @@
 #  SOURCE
 [ -n "$BASH_VERSION" ] || eval 'echo "bash interpreter for this script ($0) required ..."; exit 255'
 
-[[ -n "$_BASHLYK_LIBMSG" ]] && return 0 || _BASHLYK_LIBMSG=1
+[[ $_BASHLYK_LIBMSG ]] && return 0 || _BASHLYK_LIBMSG=1
 #******
 #****** libmsg/External Modules
 # DESCRIPTION

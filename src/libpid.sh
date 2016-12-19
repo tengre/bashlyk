@@ -1,5 +1,5 @@
 #
-# $Id: libpid.sh 575 2016-10-30 00:48:10+04:00 toor $
+# $Id: libpid.sh 628 2016-12-19 00:27:21+04:00 toor $
 #
 #****h* BASHLYK/libpid
 #  DESCRIPTION
@@ -17,7 +17,7 @@
 #  SOURCE
 [ -n "$BASH_VERSION" ] \
  || eval 'echo "bash interpreter for this script ($0) required ..."; exit 255'
-[[ -n "$_BASHLYK_LIBPID" ]] && return 0 || _BASHLYK_LIBPID=1
+[[ $_BASHLYK_LIBPID ]] && return 0 || _BASHLYK_LIBPID=1
 #******
 #****** libpid/External Modules
 # DESCRIPTION
@@ -37,7 +37,7 @@
 : ${_bashlyk_fnSock:=}
 : ${_bashlyk_s0:=${0##*/}}
 : ${_bashlyk_pathRun:=/tmp}
-: ${_bashlyk_sArg:=$*}
+: ${_bashlyk_sArg:="$@"}
 : ${_bashlyk_aRequiredCmd_pid:="head kill mkdir printf pgrep ps rm rmdir sleep xargs"}
 : ${_bashlyk_aExport_pid:="udfCheckStarted udfExitIfAlreadyStarted udfSetPid udfStopProcess"}
 #******
