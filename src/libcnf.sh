@@ -1,34 +1,34 @@
 #
-# $Id: libcnf.sh 628 2016-12-19 00:27:20+04:00 toor $
+# $Id: libcnf.sh 631 2016-12-19 23:50:55+04:00 toor $
 #
 #****h* BASHLYK/libcnf
 #  DESCRIPTION
-#    Чтение/запись файлов активных конфигураций
+#    management of the active configuration files
 #  AUTHOR
 #    Damir Sh. Yakupov <yds@bk.ru>
 #******
-#****d* libcnf/Required Once
+#****d* libcnf/ Compatibility сheck
 #  DESCRIPTION
-#    Глобальная переменная $_BASHLYK_LIBCNF обеспечивает
-#    защиту от повторного использования данного модуля.
-#    Отсутствие значения $BASH_VERSION предполагает несовместимость с
-#    c текущим командным интерпретатором
+#    - $BASH_VERSION    - no value is incompatible with the current shell
+#    - $BASH_VERSION    - required Bash major version 4 or more for this script
+#    - $_BASHLYK_LIBCNF - global variable provides protection against re-use of
+#                         this module
 #  SOURCE
-[ -n "$BASH_VERSION" ] \
- || eval 'echo "bash interpreter for this script ($0) required ..."; exit 255'
+[ -n "$BASH_VERSION" ] || eval 'echo "BASH interpreter for this script ($0) required ..."; exit 255'
+(( ${BASH_VERSINFO[0]} >= 4 )) || eval 'echo "required BASH version 4 or more for this script ($0) ..."; exit 255'
 [[ $_BASHLYK_LIBCNF ]] && return 0 || _BASHLYK_LIBCNF=1
 #******
-#****** libcnf/External Modules
+#****** libcnf/ Loading external modules
 # DESCRIPTION
-#   Using modules section
-#   Здесь указываются модули, код которых используется данной библиотекой
+#   read and execute required external modules
 # SOURCE
 : ${_bashlyk_pathLib:=/usr/share/bashlyk}
-[[ -s "${_bashlyk_pathLib}/libstd.sh" ]] && . "${_bashlyk_pathLib}/libstd.sh"
+[[ -s ${_bashlyk_pathLib}/libstd.sh ]] && . "${_bashlyk_pathLib}/libstd.sh"
+[[ -s ${_bashlyk_pathLib}/liberr.sh ]] && . "${_bashlyk_pathLib}/liberr.sh"
 #******
-#****v* libcnf/Init section
+#****v* libcnf/ Global Variables - init section
 #  DESCRIPTION
-#    Блок инициализации глобальных переменных
+#    init of the required global variables
 #  SOURCE
 : ${_bashlyk_sArg:="$@"}
 : ${_bashlyk_pathCnf:=$(pwd)}

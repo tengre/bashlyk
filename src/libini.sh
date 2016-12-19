@@ -1,5 +1,5 @@
 #
-# $Id: libini.sh 629 2016-12-19 15:26:43+04:00 toor $
+# $Id: libini.sh 631 2016-12-19 23:50:55+04:00 toor $
 #
 #****h* BASHLYK/libini
 #  DESCRIPTION
@@ -45,20 +45,20 @@
 #  AUTHOR
 #    Damir Sh. Yakupov <yds@bk.ru>
 #******
-#****d* libini/ Global Variables - once required
+#****d* libini/ Compatibility сheck
 #  DESCRIPTION
 #    - $BASH_VERSION    - no value is incompatible with the current shell
 #    - $BASH_VERSION    - required Bash major version 4 or more for this script
 #    - $_BASHLYK_LIBINI - global variable provides protection against re-use of
 #                         this module
 #  SOURCE
-[ -n "$BASH_VERSION" ]         || eval 'echo "BASH interpreter for this script ($0) required ..."; exit 255'
+[ -n "$BASH_VERSION" ] || eval 'echo "BASH interpreter for this script ($0) required ..."; exit 255'
 (( ${BASH_VERSINFO[0]} >= 4 )) || eval 'echo "required BASH version 4 or more for this script ($0) ..."; exit 255'
 [[ $_BASHLYK_LIBINI ]] && return 0 || _BASHLYK_LIBINI=1
 #******
-#****** libini/ Link external modules
+#****** libini/ Loading external modules
 # DESCRIPTION
-#   Used external modules
+#   read and execute required external modules
 # SOURCE
 : ${_bashlyk_pathLib:=/usr/share/bashlyk}
 [[ -s ${_bashlyk_pathLib}/libstd.sh ]] && . "${_bashlyk_pathLib}/libstd.sh"
@@ -76,14 +76,14 @@
 : ${_bashlyk_emailSubj:="${_bashlyk_sUser}@${HOSTNAME}::${_bashlyk_s0}"}
 : ${_bashlyk_envXSession:=}
 : ${_bashlyk_iniMethods:="__section.id __section.byindex __section.select __section.show __section.setRawData __section.getArray get set show save read load bind.cli getopt free"}
-: ${_bashlyk_aRequiredCmd_cfg:="date echo getopt hostname logname md5sum mkdir mv pwd rm stat touch"}
-: ${_bashlyk_aExport_cfg:="INI get set show save read load bind.cli getopt free"}
+: ${_bashlyk_aRequiredCmd_ini:="date echo getopt hostname logname md5sum mkdir mv pwd rm stat touch"}
+: ${_bashlyk_aExport_ini:="INI get set show save read load bind.cli getopt free"}
 #******
 #****f* public/INI
 #  SYNOPSIS
 #    INI [<id>]
 #  DESCRIPTION
-#    constructor for new instance <id> of the INI object
+#    constructor for new instance <id> of the INI "class" (object)
 #  NOTES
 #    public method
 #  ARGUMENTS
