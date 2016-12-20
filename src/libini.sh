@@ -1,5 +1,5 @@
 #
-# $Id: libini.sh 631 2016-12-19 23:50:55+04:00 toor $
+# $Id: libini.sh 632 2016-12-20 15:33:00+04:00 toor $
 #
 #****h* BASHLYK/libini
 #  DESCRIPTION
@@ -807,7 +807,7 @@ INI.read() {
   [[ ${hRawMode[@]}  ]] || local -A hRawMode
 
   ## TODO permit hi uid ?
-  if [[ ! $( stat -c %U $fn ) == $( _ sUser ) ]]; then
+  if [[ ! $( stat -c %u $fn ) =~ ^($UID|0)$ ]]; then
 
     eval $( udfOnError NotPermitted throw "$1 owned by $( stat -c %U $fn )" )
 
