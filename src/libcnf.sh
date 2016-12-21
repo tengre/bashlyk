@@ -1,5 +1,5 @@
 #
-# $Id: libcnf.sh 633 2016-12-20 16:42:48+04:00 toor $
+# $Id: libcnf.sh 634 2016-12-21 17:13:02+04:00 toor $
 #
 #****h* BASHLYK/libcnf
 #  DESCRIPTION
@@ -196,8 +196,6 @@ udfGetConfig() {
 #    grep "^pid=${$}$" $conf                                                    #? true
 #    grep "^s=\"$(uname -a)\"$" $conf                                           #? true
 #    grep "^$(_ sUnnamedKeyword).*=\"$(date -R -r $0)\"$" $conf                 #? true
-#    test -s $conf && . $conf                                                   #? true
-#    test "$s0" = $0 -a "$b" = true -a "$pid" = $$ -a "$s" = "$(uname -a)"      #? true
 #    cat $conf
 #    rm -f $conf
 #  SOURCE

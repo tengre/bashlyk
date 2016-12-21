@@ -1,5 +1,5 @@
 #
-# $Id: libini.sh 632 2016-12-20 15:33:00+04:00 toor $
+# $Id: libini.sh 634 2016-12-21 17:13:02+04:00 toor $
 #
 #****h* BASHLYK/libini
 #  DESCRIPTION
@@ -75,7 +75,7 @@
 : ${_bashlyk_emailRcpt:=postmaster}
 : ${_bashlyk_emailSubj:="${_bashlyk_sUser}@${HOSTNAME}::${_bashlyk_s0}"}
 : ${_bashlyk_envXSession:=}
-: ${_bashlyk_iniMethods:="__section.id __section.byindex __section.select __section.show __section.setRawData __section.getArray get set show save read load bind.cli getopt free"}
+: ${_bashlyk_methods_ini:="__section.id __section.byindex __section.select __section.show __section.setRawData __section.getArray get set show save read load bind.cli getopt free"}
 : ${_bashlyk_aRequiredCmd_ini:="date echo getopt hostname logname md5sum mkdir mv pwd rm stat touch"}
 : ${_bashlyk_aExport_ini:="INI get set show save read load bind.cli getopt free"}
 #******
@@ -93,14 +93,10 @@
 #    InvalidArgument - method not found
 #    InvalidVariable - invalid variable name for instance
 #  EXAMPLE
-#    local rc
 #    INI tnew                                                                   #? true
-#    declare -pf tnew.show >/dev/null 2>&1 && rc=true || rc=false               #-
-#    $rc                                                                        #? true
-#    declare -pf tnew.save >/dev/null 2>&1 && rc=true || rc=false               #-
-#    $rc                                                                        #? true
-#    declare -pf tnew.load >/dev/null 2>&1 && rc=true || rc=false               #-
-#    $rc                                                                        #? true
+#    declare -pf tnew.show >/dev/null 2>&1                                      #= true
+#    declare -pf tnew.save >/dev/null 2>&1                                      #= true
+#    declare -pf tnew.load >/dev/null 2>&1                                      #= true
 #    tnew.__section.id @ >| grep '__id__'                                       #? true
 #    tnew.free                                                                  #? true
 #  SOURCE
@@ -115,14 +111,13 @@ INI() {
 
   [[ $s == INI ]] && return 0
 
-  for s in $_bashlyk_iniMethods; do
+  for s in $_bashlyk_methods_ini; do
 
     f=$( declare -pf INI.${s} )
 
     [[ $f =~ ^(INI.${s}).\(\) ]] || eval $( udfOnError throw InvalidArgument "not instance $s method for $o object" )
-    f=${f/${BASH_REMATCH[1]}/${1}.$s}
 
-    eval "$f"
+    eval "${f/${BASH_REMATCH[1]}/${1}.$s}"
 
   done
 
@@ -239,7 +234,7 @@ INI.free() {
 
   [[ $o == INI ]] && return 0
 
-  for s in __section.get __section.set $_bashlyk_iniMethods; do
+  for s in __section.get __section.set $_bashlyk_methods_ini; do
 
     unset -f ${o}.$s
 
@@ -919,6 +914,10 @@ INI.read() {
 #                 - - replace early load data of the section
 #                 + - add data to the early loaded data of the section
 #                 = - add only unique data of the early loaded data
+#  NOTES
+#    The file name must not begin with a point or end with a point.
+#    configuration sources are ignored if they do not owned by the owner of the
+#    process or root.
 #  RETURN VALUE
 #    NoSuchFileOrDir - input file not exist
 #    MissingArgument - parameters and sections are not selected
@@ -1007,8 +1006,8 @@ INI.read() {
 #  SOURCE
 INI.load() {
 
-  udfOn NoSuchFileOrDir throw $1
   udfOn MissingArgument throw $2
+  [[ $1 =~ ^\.|\.$ ]] && eval $( udfOnError throw InvalidArgument "$1" )
 
   local -a a
   local -A h hKeyValue hRawMode
@@ -1024,7 +1023,11 @@ INI.load() {
   #
   if [[ ! $path && -f "/etc/$(_ pathPrefix)/$1" ]]; then
 
-    path="/etc/$(_ pathPrefix)"
+     path="/etc/$(_ pathPrefix)"
+
+  else
+
+    udfOn NoSuchFileOrDir $1 || return $?
 
   fi
 
