@@ -1,5 +1,5 @@
 #
-# $Id: libtst.sh 634 2016-12-21 17:13:02+04:00 toor $
+# $Id: libtst.sh 635 2016-12-21 22:01:35+04:00 toor $
 #
 #****h* BASHLYK/libtst
 #  DESCRIPTION
@@ -59,17 +59,15 @@ udfTest() {
 #******
 #****f* public/CNF
 #  SYNOPSIS
-#    CNF [<id>]
+#    CNF [<object>]
 #  DESCRIPTION
-#    constructor for new instance <id> of the CNF "class" (object)
-#  NOTES
-#    public method
+#    constructor for new instance <object> of the CNF "class"
 #  ARGUMENTS
-#    valid variable name for created instance, default - used class name CNF as
-#    instance
+#    valid name for created instance, default - used class name "CNF" as
+#    instance name
 #  RETURN VALUE
-#    InvalidArgument - method not found
-#    InvalidVariable - invalid variable name for instance
+#    InvalidArgument - listed in the $_bashlyk_methods_cnf method not found
+#    InvalidVariable - invalid name for instance
 #  EXAMPLE
 #    CNF tnew                                                                   #? true
 #    declare -pf tnew.load >/dev/null 2>&1                                      #= true
