@@ -1,5 +1,5 @@
 #
-# $Id: libcnf.sh 637 2016-12-22 17:25:06+04:00 toor $
+# $Id: libcnf.sh 638 2016-12-22 22:04:10+04:00 toor $
 #
 #****h* BASHLYK/libcnf
 #  DESCRIPTION
@@ -116,7 +116,7 @@ CNF.free() {
 
 }
 #******
-#****f* CNF private/CNF.__show
+#****if* CNF private/CNF.__show
 #  SYNOPSIS
 #    CNF.__show <file> [variable name s]
 #  DESCRIPTION
