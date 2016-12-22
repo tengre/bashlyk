@@ -1,5 +1,5 @@
 #
-# $Id: libini.sh 636 2016-12-22 16:53:32+04:00 toor $
+# $Id: libini.sh 637 2016-12-22 17:25:06+04:00 toor $
 #
 #****h* BASHLYK/libini
 #  DESCRIPTION
@@ -79,7 +79,7 @@
 : ${_bashlyk_aRequiredCmd_ini:="date echo getopt hostname logname md5sum mkdir mv pwd rm stat touch"}
 : ${_bashlyk_aExport_ini:="INI get set show save read load bind.cli getopt free"}
 #******
-#****f* public/INI
+#****f* INI public/INI
 #  SYNOPSIS
 #    INI [<id>]
 #  DESCRIPTION
@@ -125,21 +125,21 @@ INI() {
 
 }
 #******
-#****** libini/private
+#****** libini/INI private
 #  DESCRIPTION
 #    private "methods"
 #******
-#****** libini/public
+#****** libini/INI public
 #  DESCRIPTION
 #    public "methods"
 #******
-#****f* private/INI.__section.id
+#****f* INI private/INI.__section.id
 #  SYNOPSIS
 #    INI.__section.id [<section>]
 #  DESCRIPTION
 #    get a link of the storage for specified section or links for all storages.
 #  NOTES
-#    private method
+#    INI private method
 #  ARGUMENTS
 #    <section> - section name, '@' - all sections, default - unnamed 'global'
 #  OUTPUT
@@ -161,14 +161,14 @@ INI.__section.id() {
 
 }
 #******
-#****f* private/INI.__section.byindex
+#****f* INI private/INI.__section.byindex
 #  SYNOPSIS
 #    INI.__section.byindex [<index>]
 #  DESCRIPTION
 #    get the name of the section at the specified index, or number of then
 #    registered sections.
 #  NOTES
-#    private method
+#    INI private method
 #  ARGUMENTS
 #    <index> - index of the section in the common list in order of registration,
 #              default - total number of the registered sections
@@ -197,7 +197,7 @@ INI.__section.byindex() {
 
 }
 #******
-#****f* public/INI.free
+#****f* INI public/INI.free
 #  SYNOPSIS
 #    INI.free
 #  DESCRIPTION
@@ -242,14 +242,14 @@ INI.free() {
 
 }
 #******
-#****f* private/INI.__section.select
+#****f* INI private/INI.__section.select
 #  SYNOPSIS
 #    INI.__section.select [<section>]
 #  DESCRIPTION
-#    select current section of the instance, prepare private getter and setter
+#    select current section of the instance, prepare INI private getter and setter
 #    for the storage of the selected section
 #  NOTES
-#    private method
+#    INI private method
 #  ARGUMENTS
 #    <section> - section name, default - unnamed global
 #  EXAMPLE
@@ -288,7 +288,7 @@ INI.__section.select() {
 
 }
 #******
-#****f* private/INI.__section.show
+#****f* INI private/INI.__section.show
 #  SYNOPSIS
 #    INI.__section.show [<section>]
 #  DESCRIPTION
@@ -351,14 +351,14 @@ INI.__section.show() {
 
 }
 #******
-#****f* private/INI.__section.setRawData
+#****f* INI private/INI.__section.setRawData
 #  SYNOPSIS
 #    INI.__section.setRawData -|=|+ <data>
 #  DESCRIPTION
 #    set "raw" data record to the current section with special key prefix
 #    '_bashlyk_raw_...'
 #  NOTES
-#    private method
+#    INI private method
 #  ARGUMENTS
 #    '-', '+' - add "raw" record with incremented key like "_bashlyk_raw_incr=<No>"
 #    '='      - add or update "raw" unique record with key like
@@ -417,7 +417,7 @@ INI.__section.setRawData() {
 
 }
 #******
-#****f* private/INI.__section.getArray
+#****f* INI private/INI.__section.getArray
 #  SYNOPSIS
 #    INI.__section.getArray [<section>]
 #  DESCRIPTION
@@ -425,7 +425,7 @@ INI.__section.setRawData() {
 #    a unique "raw" records (with the prefix "_bashlyk_raw_uniq=...") or incremented
 #    records (with prefix "_bashlyk_raw_incr=...")
 #  NOTES
-#    private method
+#    INI private method
 #  ARGUMENTS
 #    <section> - specified section, default - unnamed global
 #  RETURN VALUE
@@ -478,7 +478,7 @@ INI.__section.getArray() {
 
 }
 #******
-#****f* public/INI.get
+#****f* INI public/INI.get
 #  SYNOPSIS
 #    INI.get [\[<section>\]]<key>
 #  DESCRIPTION
@@ -568,7 +568,7 @@ INI.get() {
 
 }
 #******
-#****f* public/INI.set
+#****f* INI public/INI.set
 #  SYNOPSIS
 #    INI.set [\[<section>\]]<key> = <value>
 #  DESCRIPTION
@@ -651,7 +651,7 @@ INI.set() {
 
 }
 #******
-#****f* public/INI.show
+#****f* INI public/INI.show
 #  SYNOPSIS
 #    INI.show
 #  DESCRIPTION
@@ -689,7 +689,7 @@ INI.show() {
 
 }
 #******
-#****f* public/INI.save
+#****f* INI public/INI.save
 #  SYNOPSIS
 #    INI.save <file>
 #  DESCRIPTION
@@ -736,7 +736,7 @@ INI.save() {
 
 }
 #******
-#****f* public/INI.read
+#****f* INI public/INI.read
 #  SYNOPSIS
 #    INI.read <filename>
 #  DESCRIPTION
@@ -898,7 +898,7 @@ INI.read() {
 
 }
 #******
-#****f* public/INI.load
+#****f* INI public/INI.load
 #  SYNOPSIS
 #    INI.load <file> <section>:(<options>)|<raw mode>) ...
 #  DESCRIPTION
@@ -1083,7 +1083,7 @@ INI.load() {
 
 }
 #******
-#****f* public/INI.bind.cli
+#****f* INI public/INI.bind.cli
 #  SYNOPSIS
 #    INI.bind.cli [<section>-]<option long name>{<short name>}[:[:=+]] ...
 #  DESCRIPTION
@@ -1169,7 +1169,7 @@ INI.bind.cli() {
 
 }
 #******
-#****f* public/INI.getopt
+#****f* INI public/INI.getopt
 #  SYNOPSIS
 #    INI.getopt <option>[--]
 #  DESCRIPTION
