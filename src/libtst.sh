@@ -1,5 +1,5 @@
 #
-# $Id: libtst.sh 635 2016-12-21 22:01:35+04:00 toor $
+# $Id: libtst.sh 636 2016-12-22 16:53:33+04:00 toor $
 #
 #****h* BASHLYK/libtst
 #  DESCRIPTION
@@ -37,7 +37,7 @@
 : ${_bashlyk_envXSession:=}
 : ${_bashlyk_aRequiredCmd_tst:=""}
 : ${_bashlyk_aExport_tst:="udfTest"}
-: ${_bashlyk_methods_cnf:="load save free"}
+: ${_bashlyk_methods_cnf:="__show load save free"}
 #******
 #****f* libtst/udfTest
 #  SYNOPSIS
@@ -98,9 +98,10 @@ CNF() {
 #******
 #****f* public/CNF.free
 #  SYNOPSIS
-#    CNF.free
+#    <object>.free
 #  DESCRIPTION
-#    destructor of the instance
+#     of the instance CNF class
+#    destructor for new instance <object> of the CNF "class"
 #  NOTES
 #    public method
 #  EXAMPLE
@@ -127,38 +128,29 @@ CNF.free() {
 
 }
 #******
-#****f* libtst/CNF.load
+#****f* libtst/CNF.__show
 #  SYNOPSIS
-#    CNF.load <file> [variable name s]
+#    CNF.__show <file> [variable name s]
 #  DESCRIPTION
-#    Reading active configuration by executing the source - a single file or a
-#    group of related files. For example, if <file> - is "a.b.c.conf" and it
-#    exists, are executed "conf", "c.conf", "b.c.conf", "a.b.c.conf" files if
-#    they exist, too.
-#    Configuration source search is performed on the following criteria:
-#      1. The name of the file does not contain the path - check the current
-#         directory, after the default directory configurations
-#      2. The file name contains the full path - the directory is used in which
-#         it is located
-#      3. The last attempt - to find the file in the "/etc" directory
+#    Safely reading of the active configuration by using the INI library.
+#    configuration source can be a single file or a group of related files. For
+#    example, if <file> - is "a.b.c.conf" and it exists, sequentially read
+#    "conf", "c.conf", "b.c.conf", "a.b.c.conf" files, if they exist, too.
+#    Search  source of the configuration is done on the following criteria (in
+#    the absence of the full path):
+#      1 in the default directory,
+#      2. in the current directory
+#      3. in the system directory "/ etc"
 #  NOTES
-#    The file name must not begin with a point or end with a point.
+#    The file name must not begin with a dot or end with a dot.
 #    configuration sources are ignored if they do not owned by the owner of the
 #    process or root.
 #  ARGUMENTS
 #    <file> - filename of the configuration
-#  RETURN VALUE
-#    MissingArgument - no arguments
-#    NoSuchFileOrDir - configuration file is not found
-#    InvalidArgument - name contains the point at the beginning or at the end of
-#                      the name
-#    Success on other cases
 #  OUTPUT
-#    Comma Separated Value string with "key=value" fields where key it is valid
-#    variable name
+#    a serialized CSV-string or an error code and message.
 #  EXAMPLE
 #    local b conf d pid s0 s
-#    CNF conf
 #    udfMakeTemp confMain suffix=.conf
 #    confChild="${confMain%/*}/child.${confMain##*/}"                           #-
 #    udfAddFile2Clean $confChild                                                #-
@@ -171,10 +163,8 @@ CNF.free() {
 #                                                                               #-
 #    EOFconf                                                                    #-
 #    cat $confMain
-#    conf.load $confMain                                                        #? true
-#    eval "$( CNF.load $confMain )"                                             #? true
-#    test "$s0" = $0 -a "$b" = true -a "$pid" = $$ -a "$s" = "$(uname -a)"      #? true
-#    echo "$s0 = $0 :: $b = true :: $pid = $$ :: $s = $(uname -a)"
+#    CNF conf
+#    conf.__show $confMain >| grep 'pid=$$\|b=true\|s="$(uname -a)"\|s0=$0\|;$' #? true
 #    rm -f $conf
 #    unset b conf pid s0 s
 #    cat <<'EOFchild' > $confChild                                              #-
@@ -186,30 +176,38 @@ CNF.free() {
 #                                                                               #-
 #    EOFchild                                                                   #-
 #    cat $confChild
-#    conf.load $confChild b pid                                                 #? true
-#    eval "$( conf.load $confChild b pid )"                                     #? true
+#    conf.__show $confChild b,pid >| grep 'pid=$$\|b=false\|;$'                 #? true
 #    conf.free
-#    test ""$b" = false -a "$pid" = $$"                                         #? true
-#    echo "$s0 = bash :: $b = false :: $pid = $$ :: $s = $(uname -a)"
 #    rm -f $confChild
-#    s=$( CNF.load $confChild )                                                 #? $_bashlyk_iErrorNoSuchFileOrDir
-#    s=$( CNF.load )                                                            #? $_bashlyk_iErrorEmptyOrMissingArgument
+#    _ onError return
+#    eval "$( CNF.__show $confChild )"                                          #? $_bashlyk_iErrorNoSuchFileOrDir
+#    eval "$( CNF.__show )"                                                     #? $_bashlyk_iErrorEmptyOrMissingArgument
 #  SOURCE
-CNF.load() {
+CNF.__show() {
 
   local fn id k o s
 
-  o=${FUNCNAME[0]%%.*}${RANDOM}
+  o="_cnf_${FUNCNAME[0]%%.*}_${RANDOM}"
 
-  udfOn MissingArgument $1 || return $?
-  udfOn NoSuchFileOrDir $1 || return $?
+  if [[ ! $1 ]]; then
+
+    udfOnError MissingArgument '1'
+    return $(_ MissingArgument )
+
+  fi
 
   fn=$1
   shift
   k="$@"
 
   INI $o
-  ${o}.load $fn ":${k// /,}"
+
+  if ! ${o}.load $fn ":${k// /,}"; then
+
+    udfOnError ${_bashlyk_iLastError[$BASHPID]} "$fn"
+    return $?
+
+  fi
 
   ${o}.__section.select
   id=$( ${o}.__section.id )
@@ -222,11 +220,78 @@ CNF.load() {
 
 }
 #******
+#****f* libtst/CNF.load
+#  SYNOPSIS
+#    CNF.load <file> [<variable>[, ]..]
+#  DESCRIPTION
+#    Safely reading of the active configuration by using the INI library.
+#    configuration source can be a single file or a group of related files. For
+#    example, if <file> - is "a.b.c.conf" and it exists, sequentially read
+#    "conf", "c.conf", "b.c.conf", "a.b.c.conf" files, if they exist, too.
+#    Search  source of the configuration is done on the following criteria (in
+#    the absence of the full path):
+#      1 in the default directory,
+#      2. in the current directory
+#      3. in the system directory "/etc"
+#  NOTES
+#    The file name must not begin with a point or end with a point.
+#    configuration sources are ignored if they do not owned by the owner of the
+#    process or root.
+#  ARGUMENTS
+#    <file>     - source of the configuration
+#    <variable> - set only this list of the variables from the configuration
+#  RETURN VALUE
+#    MissingArgument - no arguments
+#    NoSuchFileOrDir - configuration file is not found
+#    InvalidArgument - name contains the point at the beginning or at the end of
+#                      the name
+#    Success on other cases
+#  EXAMPLE
+#    local b conf pid s0 s
+#    udfMakeTemp confMain suffix=.conf
+#    confChild="${confMain%/*}/child.${confMain##*/}"                           #-
+#    udfAddFile2Clean $confChild                                                #-
+#    cat <<'EOFconf' > $confMain                                                #-
+#                                                                               #-
+#    s0=$0                                                                      #-
+#    b=true                                                                     #-
+#    pid=$$                                                                     #-
+#    s="$(uname -a)"                                                            #-
+#                                                                               #-
+#    EOFconf                                                                    #-
+#    cat $confMain
+#    CNF conf
+#    conf.load $confMain                                                        #? true
+#    echo "$s0 $b $pid $s" >| grep "$0\|true\|$$\|$(uname -a)"                  #? true
+#    rm -f $conf
+#    unset b conf pid s0 s
+#    cat <<'EOFchild' > $confChild                                              #-
+#                                                                               #-
+#    s0=bash                                                                    #-
+#    b=false                                                                    #-
+#    pid=$$                                                                     #-
+#    s="$(uname -a)"                                                            #-
+#                                                                               #-
+#    EOFchild                                                                   #-
+#    cat $confChild
+#    conf.load $confChild b pid                                                 #? true
+#    echo "$b $pid" >| grep "false\|$$"                                         #? true
+#    conf.free
+#    rm -f $confChild
+#    CNF.load $confChild                                                        #? $_bashlyk_iErrorNoSuchFileOrDir
+#    CNF.load                                                                   #? $_bashlyk_iErrorEmptyOrMissingArgument
+#  SOURCE
+CNF.load() {
+
+  eval "$( CNF.__show $@ )"
+
+}
+#******
 #****f* libtst/CNF.save
 #  SYNOPSIS
 #    CNF.save <file> "<comma separated key=value pairs>;"
 #  DESCRIPTION
-#    Write to <file> string in the format "key = value" from a fields of the
+#    Write to the <file> string in the format "key=value" from a fields of the
 #    second argument "<CSV>;"
 #    In the case where the filename does not contain the path, it is saved in a
 #    default directory, or is saved using a full path.
@@ -240,21 +305,15 @@ CNF.load() {
 #  RETURN VALUE
 #    MissingArgument    - no arguments
 #    NotExistNotCreated - target file not created or updated
-#    InvalidArgument    - name contains the point at the beginning or at the end of
-#                         the name
+#    InvalidArgument    - name contains the point at the beginning or at the end
+#                         of the name
 #    Success on other cases
 #  EXAMPLE
-#    local b conf d pid s0 s
 #    udfMakeTemp conf suffix=.conf
 #    CNF cnf
-#    cnf.save $conf "s0=$0;b=true;pid=$$;s=$(uname -a);$(date -R -r $0)"        #? true
-#    cnf.free                                                                   #? true
-#    grep "^s0=$0$" $conf                                                       #? true
-#    grep "^b=true$" $conf                                                      #? true
-#    grep "^pid=${$}$" $conf                                                    #? true
-#    grep "^s=\"$(uname -a)\"$" $conf                                           #? true
-#    grep "^$(_ sUnnamedKeyword).*=\"$(date -R -r $0)\"$" $conf                 #? true
-#    cat $conf
+#    cnf.save $conf "s0=$0;b=true;pid=$$;s=$(uname -a);$(date -R -r $0);"       #? true
+#    cat $conf >| grep "s0=$0\|b=true\|pid=$$\|s=\"$(uname -a)\""               #? true
+#    cnf.free
 #    rm -f $conf
 #  SOURCE
 CNF.save() {
@@ -284,22 +343,22 @@ CNF.save() {
 #  SYNOPSIS
 #    udfGetConfig <file>
 #  DESCRIPTION
-#    Reading active configuration by executing the source - a single file or a
-#    group of related files. For example, if <file> - is "a.b.c.conf" and it
-#    exists, are executed "conf", "c.conf", "b.c.conf", "a.b.c.conf" files if
-#    they exist, too.
-#    Configuration source search is performed on the following criteria:
-#      1. The name of the file does not contain the path - check the current
-#         directory, after the default directory configurations
-#      2. The file name contains the full path - the directory is used in which
-#         it is located
-#      3. The last attempt - to find the file in the "/etc" directory
+#    Safely reading of the active configuration by using the INI library.
+#    configuration source can be a single file or a group of related files. For
+#    example, if <file> - is "a.b.c.conf" and it exists, sequentially read
+#    "conf", "c.conf", "b.c.conf", "a.b.c.conf" files, if they exist, too.
+#    Search  source of the configuration is done on the following criteria (in
+#    the absence of the full path):
+#      1 in the default directory,
+#      2. in the current directory
+#      3. in the system directory "/etc"
 #  NOTES
 #    The file name must not begin with a point or end with a point.
 #    configuration sources are ignored if they do not owned by the owner of the
 #    process or root.
 #  ARGUMENTS
-#    <file> - filename of the configuration
+#    <file>     - source of the configuration
+#    <variable> - set only this list of the variables from the configuration
 #  RETURN VALUE
 #    MissingArgument - no arguments
 #    NoSuchFileOrDir - configuration file is not found
@@ -307,7 +366,7 @@ CNF.save() {
 #                      the name
 #    Success on other cases
 #  EXAMPLE
-#    local b conf d pid s0 s
+#    local b confChild confMain pid s0 s
 #    udfMakeTemp confMain suffix=.conf
 #    confChild="${confMain%/*}/child.${confMain##*/}"                           #-
 #    udfAddFile2Clean $confChild                                                #-
@@ -321,9 +380,7 @@ CNF.save() {
 #    EOFconf                                                                    #-
 #    cat $confMain
 #    udfGetConfig $confMain                                                     #? true
-#    test "$s0" = $0 -a "$b" = true -a "$pid" = $$ -a "$s" = "$(uname -a)"      #? true
-#    echo "$s0 = $0 :: $b = true :: $pid = $$ :: $s = $(uname -a)"
-#    rm -f $conf
+#    echo "$s0 $b $pid $s" >| grep "$0 true $$ $(uname -a)"                     #? true
 #    unset b conf pid s0 s
 #    cat <<'EOFchild' > $confChild                                              #-
 #                                                                               #-
@@ -335,16 +392,14 @@ CNF.save() {
 #    EOFchild                                                                   #-
 #    cat $confChild
 #    udfGetConfig $confChild pid b                                              #? true
-#    test "$b" = false -a "$pid" = $$                                           #? true
-#    echo "$b = false :: $pid = $$"
+#    echo "$b $pid" >| grep "false $$"                                          #? true
 #    rm -f $confChild
+#    udfGetConfig $confChild s                                                  #? $_bashlyk_iErrorNoSuchFileOrDir
 #    udfGetConfig                                                               #? $_bashlyk_iErrorEmptyOrMissingArgument
 #  SOURCE
 udfGetConfig() {
 
-  udfOn MissingArgument $1 || return $?
-
-  eval "$( CNF.load $@ )"
+  eval "$( CNF.__show $@ )"
 
 }
 #******
@@ -370,15 +425,11 @@ udfGetConfig() {
 #                         the name
 #    Success on other cases
 #  EXAMPLE
-#    local b conf d pid s0 s
 #    udfMakeTemp conf suffix=.conf
-#    udfSetConfig $conf "s0=$0;b=true;pid=$$;s=$(uname -a);$(date -R -r $0)"    #? true
-#    grep "^s0=$0$" $conf                                                       #? true
-#    grep "^b=true$" $conf                                                      #? true
-#    grep "^pid=${$}$" $conf                                                    #? true
-#    grep "^s=\"$(uname -a)\"$" $conf                                           #? true
-#    grep "^$(_ sUnnamedKeyword).*=\"$(date -R -r $0)\"$" $conf                 #? true
-#    cat $conf
+#    CNF cnf
+#    cnf.save $conf "s0=$0;b=true;pid=$$;s=$(uname -a);$(date -R -r $0);"       #? true
+#    cnf.free
+#    cat $conf >| grep "s0=$0\|b=true\|pid=$$\|s=\"$(uname -a)\""               #? true
 #    rm -f $conf
 #  SOURCE
 udfSetConfig() {

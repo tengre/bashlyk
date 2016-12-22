@@ -1,5 +1,5 @@
 #
-# $Id: libini.sh 634 2016-12-21 17:13:02+04:00 toor $
+# $Id: libini.sh 636 2016-12-22 16:53:32+04:00 toor $
 #
 #****h* BASHLYK/libini
 #  DESCRIPTION
@@ -1006,7 +1006,6 @@ INI.read() {
 #  SOURCE
 INI.load() {
 
-  udfOn MissingArgument throw $2
   [[ $1 =~ ^\.|\.$ ]] && eval $( udfOnError throw InvalidArgument "$1" )
 
   local -a a
