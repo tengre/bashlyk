@@ -1,5 +1,5 @@
 #
-# $Id: libmsg.sh 639 2016-12-23 16:09:41+04:00 toor $
+# $Id: libmsg.sh 640 2016-12-24 01:36:42+04:00 toor $
 #
 #****h* BASHLYK/libmsg
 #  DESCRIPTION
@@ -120,8 +120,7 @@ udfWarn() {
 #           чтения из него, иначе строка аргументов воспринимается как текст
 #           сообщения
 #    -   -  данные читаются из стандартного ввода
-#  RETURN VALUE
-#    0                            - сообщение успешно отправлено
+#  ERRORS
 #    iErrorEmptyOrMissingArgument - аргумент не задан
 #    iErrorCommandNotFound        - команда не найдена
 #  EXAMPLE
@@ -168,8 +167,7 @@ udfMail() {
 #    args - строка для вывода. Если имеется в качестве первого аргумента
 #           "-", то эта строка выводится заголовком для данных
 #           из стандартного ввода
-#  RETURN VALUE
-#    0   - сообщение успешно отправлено (передано выбранному транспорту)
+#  ERRORS
 #    iErrorEmptyOrMissingArgument - аргумент не задан
 #    iErrorCommandNotFound        - команда не найдена
 #  EXAMPLE
@@ -202,8 +200,7 @@ udfMessage() {
 #    arg -  Если это имя непустого существующего файла, то выполняется попытка
 #           чтения из него, иначе строка аргументов воспринимается как текст
 #           сообщения
-#  RETURN VALUE
-#    0                            - сообщение успешно отправлено
+#  ERRORS
 #    iErrorEmptyOrMissingArgument - аргумент не задан
 #    iErrorCommandNotFound        - команда не найдена
 #    iErrorXsessionNotFound       - X-сессия не обнаружена
@@ -234,8 +231,7 @@ udfNotify2X() {
 #    udfGetXSessionProperties
 #  DESCRIPTION
 #    установить некоторые переменные среды первой локальной X-сессии
-#  RETURN VALUE
-#    0                            - сообщение успешно отправлено
+#  ERRORS
 #    iErrorCommandNotFound        - команда не найдена
 #    iErrorXsessionNotFound       - X-сессия не обнаружена
 #    iErrorNotPermitted           - не разрешено
@@ -286,8 +282,7 @@ udfGetXSessionProperties() {
 #       text - текст сообщения
 #    timeout - время показа окна сообщения
 #       user - получатель сообщения
-#  RETURN VALUE
-#    0                            - сообщение успешно отправлено
+#  ERRORS
 #    iErrorEmptyOrMissingArgument - аргументы не заданы
 #    iErrorCommandNotFound        - команда не найдена
 #  EXAMPLE

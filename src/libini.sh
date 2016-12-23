@@ -1,5 +1,5 @@
 #
-# $Id: libini.sh 639 2016-12-23 16:09:40+04:00 toor $
+# $Id: libini.sh 640 2016-12-24 01:36:41+04:00 toor $
 #
 #****h* BASHLYK/libini
 #  DESCRIPTION
@@ -100,7 +100,7 @@ declare -r _bashlyk_exports_ini="                                              \
 #  ARGUMENTS
 #    valid variable name for created instance, default - used class name INI as
 #    instance
-#  RETURN VALUE
+#  ERRORS
 #    InvalidArgument - method not found
 #    InvalidVariable - invalid variable name for instance
 #  EXAMPLE
@@ -367,9 +367,8 @@ INI.__section.show() {
 #    '='      - add or update "raw" unique record with key like
 #               "_bashlyk_raw_uniq=<input data without spaces and quotes>"
 #    <data>   - input data, interpreted as "raw" record
-#  RETURN VALUE
+#  ERRORS
 #    InvalidArgument - unexpected "raw" mode
-#    Success for other cases
 #  EXAMPLE
 #    INI tSRawData
 #    tSRawData.__section.select "unique_values"
@@ -431,9 +430,8 @@ INI.__section.setRawData() {
 #    INI private method
 #  ARGUMENTS
 #    <section> - specified section, default - unnamed global
-#  RETURN VALUE
+#  ERRORS
 #    MissingArgument - arguments not found
-#    Success in other cases
 #  EXAMPLE
 #    INI tGA
 #    tGA.__section.select sect1
@@ -496,10 +494,9 @@ INI.__section.getArray() {
 #    <key>     - named key for "key=value" pair of the input data. For unnamed
 #                records this argument must be supressed, this cases return
 #                serialized array of the records (see INI.__section.getArray)
-#  RETURN VALUE
+#  ERRORS
 #    MissingArgument - arguments not found
 #    InvalidArgument - expected like a '[section]key', '[]key' or 'key'
-#    Success in other cases
 #  EXAMPLE
 #    INI tGet
 #    tGet.__section.select
@@ -583,11 +580,10 @@ INI.get() {
 #    <key>     - named key for "key=value" pair of the input data. For unnamed
 #                records this argument must be supressed or must have '-' '+'
 #                value, in this cases return serialized array of items
-#  RETURN VALUE
+#  ERRORS
 #    MissingArgument - arguments not found
 #    InvalidArgument - expected like a '[section]key = value', '[]key = value'
 #                      or 'key = value'
-#    Success in other cases
 #  EXAMPLE
 #    INI tSet
 #    tSet.set [section]key = is value
@@ -701,7 +697,7 @@ INI.show() {
 #    public method
 #  ARGUMENTS
 #    <file>  - target file for saving, full path required
-#  RETURN VALUE
+#  ERRORS
 #    MissingArgument    - the file name is not specified
 #    NotExistNotCreated - the target file is not created
 #  EXAMPLE
@@ -745,10 +741,9 @@ INI.save() {
 #  DESCRIPTION
 #    Handling a configuration from the single INI file. Read valid "key=value"
 #    pairs and as bonus "active" sections data only
-#  RETURN VALUE
+#  ERRORS
 #    NoSuchFileOrDir - input file not exist
 #    NotPermitted    - owner of the input file differ than owner of the process
-#    Success for the other cases
 #  EXAMPLE
 #   local c ini s S                                                             #-
 #   c=':void,main exec:- main:sTxt,b,iYo replace:- unify:= asstoass:+'          #-
@@ -921,7 +916,7 @@ INI.read() {
 #    The file name must not begin with a point or end with a point.
 #    configuration sources are ignored if they do not owned by the owner of the
 #    process or root.
-#  RETURN VALUE
+#  ERRORS
 #    NoSuchFileOrDir - input file not exist
 #    MissingArgument - parameters and sections are not selected
 #  EXAMPLE
@@ -1104,7 +1099,7 @@ INI.load() {
 #           +      - option is expected to have list of accumulated arguments
 #                    by default, option is included in the global section of the
 #                    INI instance data
-#  RETURN VALUE
+#  ERRORS
 #    MissingArgument - arguments is not specified
 #    InvalidArgument - invalid format of the arguments
 #  EXAMPLE
@@ -1182,7 +1177,7 @@ INI.bind.cli() {
 #    <option> - option name that used as long option of the CLI and key for
 #               array of the INI data
 #          -- - expected list of the values - serialized array
-#  RETURN VALUE
+#  ERRORS
 #    MissingArgument - arguments is not specified
 #    InvalidArgument - invalid format of the argument
 #  OUTPUT

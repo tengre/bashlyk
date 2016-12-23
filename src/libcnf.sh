@@ -1,5 +1,5 @@
 #
-# $Id: libcnf.sh 639 2016-12-23 16:09:41+04:00 toor $
+# $Id: libcnf.sh 640 2016-12-24 01:36:41+04:00 toor $
 #
 #****h* BASHLYK/libcnf
 #  DESCRIPTION
@@ -172,7 +172,7 @@ CNF.__show() {
 
   if [[ ! $1 ]]; then
 
-    udfOnError MissingArgument '1'
+    udfOnError return MissingArgument '1'
     return $(_ MissingArgument )
 
   fi
@@ -185,7 +185,7 @@ CNF.__show() {
 
   if ! ${o}.load $fn ":${k// /,}"; then
 
-    udfOnError ${_bashlyk_iLastError[$BASHPID]} "$fn"
+    udfOnError return ${_bashlyk_iLastError[$BASHPID]} "$fn"
     return $?
 
   fi
@@ -221,12 +221,11 @@ CNF.__show() {
 #  ARGUMENTS
 #    <file>     - source of the configuration
 #    <variable> - set only this list of the variables from the configuration
-#  RETURN VALUE
+#  ERRORS
 #    MissingArgument - no arguments
 #    NoSuchFileOrDir - configuration file is not found
 #    InvalidArgument - name contains the point at the beginning or at the end of
 #                      the name
-#    Success on other cases
 #  EXAMPLE
 #    local b conf pid s0 s
 #    udfMakeTemp confMain suffix=.conf
@@ -283,12 +282,11 @@ CNF.load() {
 #  NOTES
 #    It is important to take the arguments in double quotes, if they contain a
 #    whitespace or ';'
-#  RETURN VALUE
+#  ERRORS
 #    MissingArgument    - no arguments
 #    NotExistNotCreated - target file not created or updated
 #    InvalidArgument    - name contains the point at the beginning or at the end
 #                         of the name
-#    Success on other cases
 #  EXAMPLE
 #    udfMakeTemp conf suffix=.conf
 #    CNF cnf
@@ -340,12 +338,11 @@ CNF.save() {
 #  ARGUMENTS
 #    <file>     - source of the configuration
 #    <variable> - set only this list of the variables from the configuration
-#  RETURN VALUE
+#  ERRORS
 #    MissingArgument - no arguments
 #    NoSuchFileOrDir - configuration file is not found
 #    InvalidArgument - name contains the point at the beginning or at the end of
 #                      the name
-#    Success on other cases
 #  EXAMPLE
 #    local b confChild confMain pid s0 s
 #    udfMakeTemp confMain suffix=.conf

@@ -1,5 +1,5 @@
 #
-# $Id: libnet.sh 639 2016-12-23 16:09:41+04:00 toor $
+# $Id: libnet.sh 640 2016-12-24 01:36:42+04:00 toor $
 #
 #****h* BASHLYK/libnet
 #  DESCRIPTION
@@ -45,10 +45,9 @@ declare -r _bashlyk_exports_msg="udfGetValidIPsOnly udfGetValidCIDR"
 #    args - IP addresses and domain names (if resolved)
 #  OUTPUT
 #    separated by white space list of valid IPv4 addresses
-#  RETURN VALUE
+#  ERRORS
 #    MissingArgument - no arguments
 #    EmptyResult     - no result
-#    0               - found valid IPv4 addresses
 #  EXAMPLE
 #    udfGetValidIPsOnly                                                         #? $_bashlyk_iErrorEmptyOrMissingArgument
 #    udfGetValidIPsOnly 999.8.7.6                                               #? $_bashlyk_iErrorEmptyResult
@@ -88,10 +87,9 @@ udfGetValidIPsOnly() {
 #    args - IPv4 CIDR or addresses
 #  OUTPUT
 #    separated by white space list of valid IPv4 CIDR
-#  RETURN VALUE
+#  ERRORS
 #    MissingArgument - no arguments
 #    EmptyResult     - no result
-#    0               - found valid IPv4 CIDR
 #  EXAMPLE
 #    udfGetValidCIDR                                                            #? $_bashlyk_iErrorEmptyOrMissingArgument
 #    udfGetValidCIDR 999.8.7.6                                                  #? $_bashlyk_iErrorEmptyResult
