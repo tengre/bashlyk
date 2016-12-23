@@ -32,7 +32,7 @@ body
 {
     background-color:    rgb(255,255,255);
     color:               rgb(98,84,55);
-    font-family:         Arial, serif;
+    font-family:         ubuntu,serif;
     border-color:        rgb(226,199,143);
 }
 
@@ -88,7 +88,7 @@ p.item_name
 {
     background-color: rgb(98,84,55);
     color:            rgb(230,221,202);
-    font-family:      "Times New Roman", serif;
+    font-family:      serif;
     font-style:       normal;
     border-color:     rgb(0,0,0);
 }

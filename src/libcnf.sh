@@ -1,52 +1,45 @@
 #
-# $Id: libcnf.sh 638 2016-12-22 22:04:10+04:00 toor $
+# $Id: libcnf.sh 639 2016-12-23 16:09:41+04:00 toor $
 #
 #****h* BASHLYK/libcnf
 #  DESCRIPTION
 #    safe management of the active configuration files
+#  USES
+#    libstd liberr libini
 #  AUTHOR
 #    Damir Sh. Yakupov <yds@bk.ru>
 #******
-#****d* libcnf/ Compatibility сheck
+#****V* libcnf/BASH compability
 #  DESCRIPTION
-#    - $BASH_VERSION    - no value is incompatible with the current shell
-#    - $BASH_VERSION    - required Bash major version 4 or more for this script
-#    - $_BASHLYK_LIBCNF - global variable provides protection against re-use of
-#                         this module
+#    required BASH version 4.xx or more for this script
 #  SOURCE
 [ -n "$BASH_VERSION" ] || eval 'echo "BASH interpreter for this script ($0) required ..."; exit 255'
 (( ${BASH_VERSINFO[0]} >= 4 )) || eval 'echo "required BASH version 4 or more for this script ($0) ..."; exit 255'
-[[ $_BASHLYK_LIBCNF ]] && return 0 || _BASHLYK_LIBCNF=1
 #******
-#****** libcnf/ Loading external modules
+#****L* libcnf/library initialization
 # DESCRIPTION
-#   read and execute required external modules
+#   * $_BASHLYK_LIBCNF provides protection against re-using of this module
+#   * loading external libraries
 # SOURCE
+[[ $_BASHLYK_LIBCNF ]] && return 0 || _BASHLYK_LIBCNF=1
 : ${_bashlyk_pathLib:=/usr/share/bashlyk}
 [[ -s ${_bashlyk_pathLib}/libstd.sh ]] && . "${_bashlyk_pathLib}/libstd.sh"
 [[ -s ${_bashlyk_pathLib}/liberr.sh ]] && . "${_bashlyk_pathLib}/liberr.sh"
 [[ -s ${_bashlyk_pathLib}/libini.sh ]] && . "${_bashlyk_pathLib}/libini.sh"
 #******
-#****v* libcnf/ Global Variables - init section
+#****G* libcnf/Global Variables
 #  DESCRIPTION
-#    init of the required global variables
+#    global variables
 #  SOURCE
 : ${_bashlyk_sArg:="$@"}
 : ${_bashlyk_pathCnf:=$(pwd)}
 : ${_bashlyk_sUnnamedKeyword:=_bashlyk_unnamed_key_}
-: ${_bashlyk_aRequiredCmd_cnf:="awk date mkdir pwd tr"}
-: ${_bashlyk_aExport_cnf:="load save free udfGetConfig udfSetConfig"}
-: ${_bashlyk_methods_cnf:="__show load save free"}
+
+declare -r _bashlyk_externals_cnf="date mkdir pwd tr"
+declare -r _bashlyk_exports_cnf="CNF load save free udfGetConfig udfSetConfig"
+declare -r _bashlyk_methods_cnf="__show load save free"
 #******
-#****** libcnf/CNF private
-#  DESCRIPTION
-#    private "methods"
-#******
-#****** libcnf/CNF public
-#  DESCRIPTION
-#    public "methods"
-#******
-#****f* CNF public/CNF
+#****e* libcnf/CNF
 #  SYNOPSIS
 #    CNF [<object>]
 #  DESCRIPTION
@@ -54,7 +47,7 @@
 #  ARGUMENTS
 #    valid name for created instance, default - used class name "CNF" as
 #    instance name
-#  RETURN VALUE
+#  ERRORS
 #    InvalidArgument - listed in the $_bashlyk_methods_cnf method not found
 #    InvalidVariable - invalid name for instance
 #  EXAMPLE
@@ -85,7 +78,7 @@ CNF() {
 
 }
 #******
-#****f* CNF public/CNF.free
+#****e* libcnf/CNF.free
 #  SYNOPSIS
 #    <object>.free
 #  DESCRIPTION
@@ -116,7 +109,7 @@ CNF.free() {
 
 }
 #******
-#****if* CNF private/CNF.__show
+#****p* libcnf/CNF.__show
 #  SYNOPSIS
 #    CNF.__show <file> [variable name s]
 #  DESCRIPTION
@@ -208,7 +201,7 @@ CNF.__show() {
 
 }
 #******
-#****f* CNF public/CNF.load
+#****e* libcnf/CNF.load
 #  SYNOPSIS
 #    CNF.load <file> [<variable>[, ]..]
 #  DESCRIPTION
@@ -275,7 +268,7 @@ CNF.load() {
 
 }
 #******
-#****f* CNF public/CNF.save
+#****e* libcnf/CNF.save
 #  SYNOPSIS
 #    CNF.save <file> "<comma separated key=value pairs>;"
 #  DESCRIPTION
@@ -327,7 +320,7 @@ CNF.save() {
 
 }
 #******
-#****f* CNF public/udfGetConfig
+#****e* libcnf/udfGetConfig
 #  SYNOPSIS
 #    udfGetConfig <file>
 #  DESCRIPTION
@@ -391,7 +384,7 @@ udfGetConfig() {
 
 }
 #******
-#****f* CNF public/udfSetConfig
+#****e* libcnf/udfSetConfig
 #  SYNOPSIS
 #    udfSetConfig <file> "<comma separated key=value pairs>;"
 #  DESCRIPTION

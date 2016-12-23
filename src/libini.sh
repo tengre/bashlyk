@@ -1,5 +1,5 @@
 #
-# $Id: libini.sh 637 2016-12-22 17:25:06+04:00 toor $
+# $Id: libini.sh 639 2016-12-23 16:09:40+04:00 toor $
 #
 #****h* BASHLYK/libini
 #  DESCRIPTION
@@ -24,6 +24,8 @@
 #       long and short options of configuration parameters.
 #     - parsing the command line arguments and their binding to configuration
 #       data that allows you to override selected parameters of the INI-file.
+#  USES
+#    libstd liberr
 #  EXAMPLE
 #    INI ini
 #    ini.bind.cli config{c}: source{s}:-- help{h} mode{m}: dry-run
@@ -45,41 +47,50 @@
 #  AUTHOR
 #    Damir Sh. Yakupov <yds@bk.ru>
 #******
-#****d* libini/ Compatibility сheck
+#****V* libini/BASH compability
 #  DESCRIPTION
-#    - $BASH_VERSION    - no value is incompatible with the current shell
-#    - $BASH_VERSION    - required Bash major version 4 or more for this script
-#    - $_BASHLYK_LIBINI - global variable provides protection against re-use of
-#                         this module
+#    $BASH_VERSION - required Bash major version 4 or more for this script
 #  SOURCE
 [ -n "$BASH_VERSION" ] || eval 'echo "BASH interpreter for this script ($0) required ..."; exit 255'
 (( ${BASH_VERSINFO[0]} >= 4 )) || eval 'echo "required BASH version 4 or more for this script ($0) ..."; exit 255'
-[[ $_BASHLYK_LIBINI ]] && return 0 || _BASHLYK_LIBINI=1
 #******
-#****** libini/ Loading external modules
+#******
+#****L* libini/library initialization
 # DESCRIPTION
-#   read and execute required external modules
+#   * $_BASHLYK_LIBINI provides protection against re-using of this module
+#   * loading external libraries
 # SOURCE
+[[ $_BASHLYK_LIBINI ]] && return 0 || _BASHLYK_LIBINI=1
 : ${_bashlyk_pathLib:=/usr/share/bashlyk}
 [[ -s ${_bashlyk_pathLib}/libstd.sh ]] && . "${_bashlyk_pathLib}/libstd.sh"
 [[ -s ${_bashlyk_pathLib}/liberr.sh ]] && . "${_bashlyk_pathLib}/liberr.sh"
 #******
-#****v* libini/ Global Variables - init section
+#****G* libini/Global Variables
 #  DESCRIPTION
-#    init of the required global variables
+#    global variables
 #  SOURCE
-: ${_bashlyk_sUser:=$USER}
-: ${_bashlyk_sLogin:=$(logname 2>/dev/null)}
-: ${HOSTNAME:=$(hostname 2>/dev/null)}
-: ${_bashlyk_bNotUseLog:=1}
-: ${_bashlyk_emailRcpt:=postmaster}
-: ${_bashlyk_emailSubj:="${_bashlyk_sUser}@${HOSTNAME}::${_bashlyk_s0}"}
-: ${_bashlyk_envXSession:=}
-: ${_bashlyk_methods_ini:="__section.id __section.byindex __section.select __section.show __section.setRawData __section.getArray get set show save read load bind.cli getopt free"}
-: ${_bashlyk_aRequiredCmd_ini:="date echo getopt hostname logname md5sum mkdir mv pwd rm stat touch"}
-: ${_bashlyk_aExport_ini:="INI get set show save read load bind.cli getopt free"}
+: ${_bashlyk_sArg:="$@"}
+: ${_bashlyk_pathIni:=$(pwd)}
+
+declare -r _bashlyk_methods_ini="                                              \
+                                                                               \
+    __section.id __section.byindex __section.select __section.show             \
+    __section.setRawData __section.getArray get set show save read             \
+    load bind.cli getopt free                                                  \
+                                                                               \
+"
+declare -r _bashlyk_externals_ini="                                            \
+                                                                               \
+     date echo getopt md5sum mkdir mv pwd rm stat touch                        \
+                                                                               \
+"
+declare -r _bashlyk_exports_ini="                                              \
+                                                                               \
+  INI get set show save read load bind.cli getopt free                         \
+                                                                               \
+"
 #******
-#****f* INI public/INI
+#****e* libini/INI
 #  SYNOPSIS
 #    INI [<id>]
 #  DESCRIPTION
@@ -125,15 +136,7 @@ INI() {
 
 }
 #******
-#****** libini/INI private
-#  DESCRIPTION
-#    private "methods"
-#******
-#****** libini/INI public
-#  DESCRIPTION
-#    public "methods"
-#******
-#****f* INI private/INI.__section.id
+#****p* libini/INI.__section.id
 #  SYNOPSIS
 #    INI.__section.id [<section>]
 #  DESCRIPTION
@@ -161,7 +164,7 @@ INI.__section.id() {
 
 }
 #******
-#****f* INI private/INI.__section.byindex
+#****p* libini/INI.__section.byindex
 #  SYNOPSIS
 #    INI.__section.byindex [<index>]
 #  DESCRIPTION
@@ -197,7 +200,7 @@ INI.__section.byindex() {
 
 }
 #******
-#****f* INI public/INI.free
+#****e* libini/INI.free
 #  SYNOPSIS
 #    INI.free
 #  DESCRIPTION
@@ -242,7 +245,7 @@ INI.free() {
 
 }
 #******
-#****f* INI private/INI.__section.select
+#****p* libini/INI.__section.select
 #  SYNOPSIS
 #    INI.__section.select [<section>]
 #  DESCRIPTION
@@ -288,7 +291,7 @@ INI.__section.select() {
 
 }
 #******
-#****f* INI private/INI.__section.show
+#****p* libini/INI.__section.show
 #  SYNOPSIS
 #    INI.__section.show [<section>]
 #  DESCRIPTION
@@ -351,7 +354,7 @@ INI.__section.show() {
 
 }
 #******
-#****f* INI private/INI.__section.setRawData
+#****p* libini/INI.__section.setRawData
 #  SYNOPSIS
 #    INI.__section.setRawData -|=|+ <data>
 #  DESCRIPTION
@@ -417,7 +420,7 @@ INI.__section.setRawData() {
 
 }
 #******
-#****f* INI private/INI.__section.getArray
+#****p* libini/INI.__section.getArray
 #  SYNOPSIS
 #    INI.__section.getArray [<section>]
 #  DESCRIPTION
@@ -478,7 +481,7 @@ INI.__section.getArray() {
 
 }
 #******
-#****f* INI public/INI.get
+#****e* libini/INI.get
 #  SYNOPSIS
 #    INI.get [\[<section>\]]<key>
 #  DESCRIPTION
@@ -568,7 +571,7 @@ INI.get() {
 
 }
 #******
-#****f* INI public/INI.set
+#****e* libini/INI.set
 #  SYNOPSIS
 #    INI.set [\[<section>\]]<key> = <value>
 #  DESCRIPTION
@@ -651,7 +654,7 @@ INI.set() {
 
 }
 #******
-#****f* INI public/INI.show
+#****e* libini/INI.show
 #  SYNOPSIS
 #    INI.show
 #  DESCRIPTION
@@ -689,7 +692,7 @@ INI.show() {
 
 }
 #******
-#****f* INI public/INI.save
+#****e* libini/INI.save
 #  SYNOPSIS
 #    INI.save <file>
 #  DESCRIPTION
@@ -736,7 +739,7 @@ INI.save() {
 
 }
 #******
-#****f* INI public/INI.read
+#****e* libini/INI.read
 #  SYNOPSIS
 #    INI.read <filename>
 #  DESCRIPTION
@@ -898,7 +901,7 @@ INI.read() {
 
 }
 #******
-#****f* INI public/INI.load
+#****e* libini/INI.load
 #  SYNOPSIS
 #    INI.load <file> <section>:(<options>)|<raw mode>) ...
 #  DESCRIPTION
@@ -1083,7 +1086,7 @@ INI.load() {
 
 }
 #******
-#****f* INI public/INI.bind.cli
+#****e* libini/INI.bind.cli
 #  SYNOPSIS
 #    INI.bind.cli [<section>-]<option long name>{<short name>}[:[:=+]] ...
 #  DESCRIPTION
@@ -1169,7 +1172,7 @@ INI.bind.cli() {
 
 }
 #******
-#****f* INI public/INI.getopt
+#****e* libini/INI.getopt
 #  SYNOPSIS
 #    INI.getopt <option>[--]
 #  DESCRIPTION

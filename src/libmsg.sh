@@ -1,5 +1,5 @@
 #
-# $Id: libmsg.sh 628 2016-12-19 00:27:21+04:00 toor $
+# $Id: libmsg.sh 639 2016-12-23 16:09:41+04:00 toor $
 #
 #****h* BASHLYK/libmsg
 #  DESCRIPTION
@@ -7,26 +7,27 @@
 #  AUTHOR
 #    Damir Sh. Yakupov <yds@bk.ru>
 #******
-#****d* libmsg/Once required
+#****V* libmsg/BASH compability
 #  DESCRIPTION
-#    Эта глобальная переменная обеспечивает защиту от повторного использования данного модуля
-#    Отсутствие значения $BASH_VERSION предполагает несовместимость c текущим командным интерпретатором
+#    required BASH version 4.xx or more for this script
 #  SOURCE
-[ -n "$BASH_VERSION" ] || eval 'echo "bash interpreter for this script ($0) required ..."; exit 255'
-
-[[ $_BASHLYK_LIBMSG ]] && return 0 || _BASHLYK_LIBMSG=1
+[ -n "$BASH_VERSION" ] || eval 'echo "BASH interpreter for this script ($0) required ..."; exit 255'
+(( ${BASH_VERSINFO[0]} >= 4 )) || eval 'echo "required BASH version 4 or more for this script ($0) ..."; exit 255'
 #******
-#****** libmsg/External Modules
+#****L* libmsg/library initialization
 # DESCRIPTION
-#   Using modules section
-#   Здесь указываются модули, код которых используется данной библиотекой
+#   * $_BASHLYK_LIBCNF provides protection against re-using of this module
+#   * loading external libraries
 # SOURCE
+[[ $_BASHLYK_LIBMSG ]] && return 0 || _BASHLYK_LIBMSG=1
 : ${_bashlyk_pathLib:=/usr/share/bashlyk}
 [[ -s ${_bashlyk_pathLib}/libstd.sh ]] && . "${_bashlyk_pathLib}/libstd.sh"
 [[ -s ${_bashlyk_pathLib}/liberr.sh ]] && . "${_bashlyk_pathLib}/liberr.sh"
 #******
-#****v* libmsg/Init section
+#****G* libmsg/Global variables
 #  DESCRIPTION
+#    global variables
+#  SOURCE
 : ${_bashlyk_sUser:=$USER}
 : ${_bashlyk_sLogin:=$(logname 2>/dev/null)}
 : ${HOSTNAME:=$(hostname 2>/dev/null)}
@@ -34,10 +35,19 @@
 : ${_bashlyk_emailRcpt:=postmaster}
 : ${_bashlyk_emailSubj:="${_bashlyk_sUser}@${HOSTNAME}::${_bashlyk_s0}"}
 : ${_bashlyk_envXSession:=}
-: ${_bashlyk_aRequiredCmd_msg:="cat cut echo grep head hostname logname mail printf \
-  ps rm sort stat tee uniq which write notify-send|kdialog|zenity|xmessage"}
-: ${_bashlyk_aExport_msg:="udfEcho udfGetXSessionProperties udfMail udfMessage \
-  udfNotify2X udfNotifyCommand udfWarn"}
+
+declare -r _bashlyk_externals_msg="                                            \
+                                                                               \
+    cat cut echo grep head hostname logname mail printf ps rm sort             \
+    stat tee uniq which write notify-send|kdialog|zenity|xmessage              \
+                                                                               \
+"
+declare -r _bashlyk_exports_msg="                                              \
+                                                                               \
+    udfEcho udfGetXSessionProperties udfMail udfMessage udfNotify2X            \
+    udfNotifyCommand udfWarn                                                   \
+                                                                               \
+"
 #******
 #****f* libmsg/udfEcho
 #  SYNOPSIS
