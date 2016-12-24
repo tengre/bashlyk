@@ -1,5 +1,5 @@
 #
-# $Id: libpid.sh 628 2016-12-19 00:27:21+04:00 toor $
+# $Id: libpid.sh 641 2016-12-25 01:50:37+04:00 toor $
 #
 #****h* BASHLYK/libpid
 #  DESCRIPTION
@@ -8,38 +8,48 @@
 #  AUTHOR
 #    Damir Sh. Yakupov <yds@bk.ru>
 #******
-#****d* libpid/Require Once
+#***iV* liberr/BASH Compability
 #  DESCRIPTION
-#    Глобальная переменная $_BASHLYK_LIBPID обеспечивает
-#    защиту от повторного использования данного модуля
-#    Отсутствие значения $BASH_VERSION предполагает несовместимость с
-#    c текущим командным интерпретатором
+#    BASH version 4.xx or more required for this script
 #  SOURCE
-[ -n "$BASH_VERSION" ] \
- || eval 'echo "bash interpreter for this script ($0) required ..."; exit 255'
-[[ $_BASHLYK_LIBPID ]] && return 0 || _BASHLYK_LIBPID=1
+[ -n "$BASH_VERSION" ] && (( ${BASH_VERSINFO[0]} >= 4 )) || eval '             \
+                                                                               \
+    echo "[!] BASH shell version 4.xx required for ${0}, abort.."; exit 255    \
+                                                                               \
+'
 #******
-#****** libpid/External Modules
+#  $_BASHLYK_LIBPID provides protection against re-using of this module
+[[ $_BASHLYK_LIBPID ]] && return 0 || _BASHLYK_LIBPID=1
+#****L* libpid/Used libraries
 # DESCRIPTION
-#   Using modules section
-#   Здесь указываются модули, код которых используется данной библиотекой
+#   Loading external libraries
 # SOURCE
 : ${_bashlyk_pathLib:=/usr/share/bashlyk}
 [[ -s ${_bashlyk_pathLib}/libstd.sh ]] && . "${_bashlyk_pathLib}/libstd.sh"
 #******
-#****v* libpid/Init section
+#****G* libpid/Global Variables
 #  DESCRIPTION
-#    Блок инициализации глобальных переменных
+#    Global variables of the library
 #  SOURCE
 : ${_bashlyk_afoClean:=}
 : ${_bashlyk_afdClean:=}
 : ${_bashlyk_fnPid:=}
 : ${_bashlyk_fnSock:=}
+
 : ${_bashlyk_s0:=${0##*/}}
 : ${_bashlyk_pathRun:=/tmp}
 : ${_bashlyk_sArg:="$@"}
-: ${_bashlyk_aRequiredCmd_pid:="head kill mkdir printf pgrep ps rm rmdir sleep xargs"}
-: ${_bashlyk_aExport_pid:="udfCheckStarted udfExitIfAlreadyStarted udfSetPid udfStopProcess"}
+
+declare -r _bashlyk_externals_pid="                                            \
+                                                                               \
+    head kill mkdir printf pgrep ps rm rmdir sleep xargs                       \
+                                                                               \
+"
+declare -r _bashlyk_exports_pid="                                              \
+                                                                               \
+    udfCheckStarted udfExitIfAlreadyStarted udfSetPid udfStopProcess           \
+                                                                               \
+"
 #******
 #****f* libpid/udfCheckStarted
 #  SYNOPSIS

@@ -1,5 +1,5 @@
 #
-# $Id: liberr.sh 628 2016-12-19 00:27:21+04:00 toor $
+# $Id: liberr.sh 641 2016-12-25 01:50:37+04:00 toor $
 #
 #****h* BASHLYK/liberr
 #  DESCRIPTION
@@ -10,32 +10,28 @@
 #  AUTHOR
 #    Damir Sh. Yakupov <yds@bk.ru>
 #******
-#****d* liberr/Once required
+#***iV* liberr/BASH Compability
 #  DESCRIPTION
-#    Эта глобальная переменная обеспечивает
-#    защиту от повторного использования данного модуля
-#    Отсутствие значения $BASH_VERSION предполагает несовместимость с
-#    c текущим командным интерпретатором
+#    BASH version 4.xx or more required for this script
 #  SOURCE
-[ -n "$BASH_VERSION" ] \
- || eval 'echo "bash interpreter for this script ($0) required ..."; exit 255'
-[[ $_BASHLYK_LIBERR ]] && return 0 || _BASHLYK_LIBERR=1
+[ -n "$BASH_VERSION" ] && (( ${BASH_VERSINFO[0]} >= 4 )) || eval '             \
+                                                                               \
+    echo "[!] BASH shell version 4.xx required for ${0}, abort.."; exit 255    \
+                                                                               \
+'
 #******
-#****** liberr/External Modules
+#  $_BASHLYK_LIBERR provides protection against re-using of this module
+[[ $_BASHLYK_LIBERR ]] && return 0 || _BASHLYK_LIBERR=1
+#****L* liberr/Used libraries
 # DESCRIPTION
-#   Using modules section
-#   Здесь указываются модули, код которых используется данной библиотекой
+#   Loading external libraries
 # SOURCE
 : ${_bashlyk_pathLib:=/usr/share/bashlyk}
 [[ -s ${_bashlyk_pathLib}/libmsg.sh ]] && . "${_bashlyk_pathLib}/libmsg.sh"
 #******
-#****v* liberr/Init section
+#****G* liberr/Global Variables
 #  DESCRIPTION
-#    Блок инициализации глобальных переменных
-#    * $_bashlyk_sArg - аргументы командной строки вызова сценария
-#    * $_bashlyk_sWSpaceAlias - заменяющая пробел последовательность символов
-#    * $_bashlyk_aRequiredCmd_opt - список используемых в данном модуле внешних
-#    утилит
+#    Global variables of the library
 #  SOURCE
 _bashlyk_iErrorUnknown=254
 _bashlyk_iErrorUnexpected=254
@@ -96,13 +92,19 @@ _bashlyk_hError[$_bashlyk_iErrorTryBoxException]="try box exception"
 #
 : ${_bashlyk_onError:=throw}
 : ${_bashlyk_sArg:="$@"}
-: ${_bashlyk_aRequiredCmd_err:="echo printf sed which"}
-: ${_bashlyk_aExport_err:="udfCommandNotFound udfEmptyArgument udfEmptyOrMissingArgument   \
-  udfEmptyResult udfEmptyVariable udfInvalidVariable udfMissingArgument udfOn              \
-  udfOnCommandNotFound udfOnEmptyOrMissingArgument udfOnEmptyVariable udfOnError           \
-  udfOnError1 udfOnError2 udfSetLastError udfStackTrace udfThrow udfThrowOnCommandNotFound \
-  udfThrowOnEmptyOrMissingArgument udfThrowOnEmptyVariable udfTryEveryLine                 \
-  udfWarnOnCommandNotFound udfWarnOnEmptyOrMissingArgument udfWarnOnEmptyVariable"}
+
+declare -r _bashlyk_aRequiredCmd_err="sed which"
+declare -r _bashlyk_aExport_err="                                              \
+                                                                               \
+    udfCommandNotFound udfEmptyArgument udfEmptyOrMissingArgument              \
+    udfEmptyResult udfEmptyVariable udfInvalidVariable udfMissingArgument      \
+    udfOn udfOnCommandNotFound udfOnEmptyOrMissingArgument udfOnEmptyVariable  \
+    udfOnError udfOnError1 udfOnError2 udfSetLastError udfStackTrace udfThrow  \
+    udfThrowOnCommandNotFound udfThrowOnEmptyOrMissingArgument udfTryEveryLine \
+    udfThrowOnEmptyVariable udfWarnOnCommandNotFound udfWarnOnEmptyVariable    \
+    udfWarnOnEmptyOrMissingArgument                                            \
+                                                                               \
+"
 #******
 #****f* liberr/udfSetLastError
 #  SYNOPSIS

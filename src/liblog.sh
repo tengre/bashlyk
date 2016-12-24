@@ -1,5 +1,5 @@
 #
-# $Id: liblog.sh 628 2016-12-19 00:27:21+04:00 toor $
+# $Id: liblog.sh 641 2016-12-25 01:50:36+04:00 toor $
 #
 #****h* BASHLYK/liblog
 #  DESCRIPTION
@@ -9,38 +9,38 @@
 #  AUTHOR
 #    Damir Sh. Yakupov <yds@bk.ru>
 #******
-#****d* liblog/Once required
+#***iV* liberr/BASH Compability
 #  DESCRIPTION
-#    Эта глобальная переменная обеспечивает
-#    защиту от повторного использования данного модуля
-#    Отсутствие значения $BASH_VERSION предполагает несовместимость с
-#    c текущим командным интерпретатором
+#    BASH version 4.xx or more required for this script
 #  SOURCE
-[ -n "$BASH_VERSION" ] \
- || eval 'echo "bash interpreter for this script ($0) required ..."; exit 255'
-[[ $_BASHLYK_LIBLOG ]] && return 0 || _BASHLYK_LIBLOG=1
+[ -n "$BASH_VERSION" ] && (( ${BASH_VERSINFO[0]} >= 4 )) || eval '             \
+                                                                               \
+    echo "[!] BASH shell version 4.xx required for ${0}, abort.."; exit 255    \
+                                                                               \
+'
 #******
-#****** liblog/External modules
+[[ $_BASHLYK_LIBLOG ]] && return 0 || _BASHLYK_LIBLOG=1
+#****L* liblog/Used libraries
 #  DESCRIPTION
-#    Using modules section
-#    Здесь указываются модули, код которых используется данной библиотекой
+#    Loading external libraries
 #  SOURCE
 : ${_bashlyk_pathLib:=/usr/share/bashlyk}
-[[ -s "${_bashlyk_pathLib}/libstd.sh" ]] && . "${_bashlyk_pathLib}/libstd.sh"
-[[ -s "${_bashlyk_pathLib}/libmsg.sh" ]] && . "${_bashlyk_pathLib}/libmsg.sh"
+[[ -s ${_bashlyk_pathLib}/libstd.sh ]] && . "${_bashlyk_pathLib}/libstd.sh"
+[[ -s ${_bashlyk_pathLib}/libmsg.sh ]] && . "${_bashlyk_pathLib}/libmsg.sh"
 #******
-#****v* liblog/Init section
+#****G* liblog/Global variables
 #  DESCRIPTION
-#    Блок инициализации глобальных переменных
+#    Global variables of the library
 #  SOURCE
+: ${_bashlyk_pidLogSock:=}
+: ${_bashlyk_fnLogSock:=}
+
 : ${HOSTNAME:=$(hostname)}
 : ${DEBUGLEVEL:=0}
 : ${_bashlyk_pathLog:=/tmp}
 : ${_bashlyk_s0:=${0##*/}}
 : ${_bashlyk_sId:=${_bashlyk_s0%.sh}}
 : ${_bashlyk_pathRun:=/tmp}
-: ${_bashlyk_pidLogSock:=}
-: ${_bashlyk_fnLogSock:=}
 : ${_bashlyk_iStartTimeStamp:=$(date "+%s")}
 : ${_bashlyk_sUser:=$USER}
 : ${_bashlyk_emailRcpt:=postmaster}
@@ -49,10 +49,18 @@
 : ${_bashlyk_bUseSyslog:=0}
 : ${_bashlyk_bNotUseLog:=1}
 : ${_bashlyk_sCond4Log:=redirect}
-: ${_bashlyk_aRequiredCmd_log:="date dirname echo hostname logger mkdir mkfifo \
-  printf rm touch tty"}
-: ${_bashlyk_aExport_log:="_fnLog udfCheck4LogUse udfDebug udfFinally udfIsInteract \
-  udfIsTerminal udfLog udfLogger udfSetLog udfSetLogSocket udfUptime"}
+
+declare -r _bashlyk_aRequiredCmd_log="                                         \
+                                                                               \
+    date dirname hostname logger mkdir mkfifo rm touch tty                     \
+                                                                               \
+"
+declare -r _bashlyk_aExport_log="                                              \
+                                                                               \
+     udfCheck4LogUse udfDebug udfFinally udfUptime udfLog udfLogger            \
+     udfSetLog udfSetLogSocket udfIsTerminal udfIsInteract _fnLog              \
+                                                                               \
+"
 #******
 #****f* liblog/udfLogger
 #  SYNOPSIS

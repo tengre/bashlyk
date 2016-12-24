@@ -1,49 +1,57 @@
 #
-# $Id: libcsv.sh 628 2016-12-19 00:27:20+04:00 toor $
+# $Id: libcsv.sh 641 2016-12-25 01:50:36+04:00 toor $
 #
 #****h* BASHLYK/libcsv
 #  DESCRIPTION
-#    Управление пассивными конфигурационными файлов в стиле INI. Имеется
-#    возможность подгрузки исполнимого контента
+#    Management of the configuration files in the INI-style
+#  USES libstd libopt
 #  AUTHOR
 #    Damir Sh. Yakupov <yds@bk.ru>
 #******
-#****d* libcsv/Required Once
+#***iV* liberr/BASH Compability
 #  DESCRIPTION
-#    Глобальная переменная $_BASHLYK_LIBINI обеспечивает
-#    защиту от повторного использования данного модуля
-#    Отсутствие значения $BASH_VERSION предполагает несовместимость с
-#    c текущим командным интерпретатором
+#    BASH version 4.xx or more required for this script
 #  SOURCE
-[ -n "$BASH_VERSION" ] \
- || eval 'echo "bash interpreter for this script ($0) required ..."; exit 255'
-[[ $_BASHLYK_LIBCSV ]] && return 0 || _BASHLYK_LIBCSV=1
+[ -n "$BASH_VERSION" ] && (( ${BASH_VERSINFO[0]} >= 4 )) || eval '             \
+                                                                               \
+    echo "[!] BASH shell version 4.xx required for ${0}, abort.."; exit 255    \
+                                                                               \
+'
 #******
-#****** libcsv/External Modules
+[[ $_BASHLYK_LIBCSV ]] && return 0 || _BASHLYK_LIBCSV=1
+#****L* libcsv/Used libraries
 # DESCRIPTION
-#   Using modules section
-#   Здесь указываются модули, код которых используется данной библиотекой
+#   Loading external libraries
 # SOURCE
 : ${_bashlyk_pathLib:=/usr/share/bashlyk}
-[[ -s "${_bashlyk_pathLib}/libstd.sh" ]] && . "${_bashlyk_pathLib}/libstd.sh"
-[[ -s "${_bashlyk_pathLib}/libopt.sh" ]] && . "${_bashlyk_pathLib}/libopt.sh"
+[[ -s ${_bashlyk_pathLib}/libstd.sh ]] && . "${_bashlyk_pathLib}/libstd.sh"
+[[ -s ${_bashlyk_pathLib}/libopt.sh ]] && . "${_bashlyk_pathLib}/libopt.sh"
 #******
-#****v* libcsv/Init section
+#****G* libcsv/Global variables
 #  DESCRIPTION
-#    Блок инициализации глобальных переменных
+#    Global variables of the library
 #  SOURCE
-: ${_bashlyk_sArg:="$@"}
-: ${_bashlyk_pathIni:=$(pwd)}
 : ${_bashlyk_bSetOptions:=}
 : ${_bashlyk_csvOptions2Ini:=}
+
+: ${_bashlyk_sArg:="$@"}
+: ${_bashlyk_pathIni:=$(pwd)}
 : ${_bashlyk_sUnnamedKeyword:=_bashlyk_ini_void_autoKey_}
-: ${_bashlyk_aRequiredCmd_ini:="awk cat cut dirname echo false grep mawk mkdir \
-  mv printf pwd rm sed sort touch tr true uniq xargs"}
-: ${_bashlyk_aExport_ini:="udfAssembly udfCsvHash2Raw udfCsvKeys udfCsvOrder   \
-  udfGetCsvSection udfGetIni udfGetIniSection udfIni udfIni2Csv udfIniChange   \
-  udfIniGroup2Csv udfReadIniSection udfIniGroupSection2Csv udfIniSection2Csv   \
-  udfIniWrite udfOptions2Ini udfSelectEnumFromCsvHash udfSetVarFromCsv         \
-  udfSetVarFromIni"}
+
+declare -r _bashlyk_externals_csv="                                            \
+                                                                               \
+    awk cat cut dirname false grep mawk mkdir                                  \
+    mv pwd rm sed sort touch tr true uniq xargs                                \
+                                                                               \
+"
+declare -r _bashlyk_exports_csv="                                              \
+                                                                               \
+    udfAssembly udfCsvHash2Raw udfCsvKeys udfCsvOrder udfGetCsvSection         \
+    udfGetIni udfGetIniSection udfIni udfIni2Csv udfIniChange udfIniGroup2Csv  \
+    udfReadIniSection udfIniGroupSection2Csv udfIniSection2Csv udfIniWrite     \
+    udfOptions2Ini udfSelectEnumFromCsvHash udfSetVarFromCsv udfSetVarFromIni  \
+                                                                               \
+"
 #******
 #****f* libcsv/udfGetIniSection
 #  SYNOPSIS

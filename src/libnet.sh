@@ -1,5 +1,5 @@
 #
-# $Id: libnet.sh 640 2016-12-24 01:36:42+04:00 toor $
+# $Id: libnet.sh 641 2016-12-25 01:50:36+04:00 toor $
 #
 #****h* BASHLYK/libnet
 #  DESCRIPTION
@@ -7,34 +7,37 @@
 #  AUTHOR
 #    Damir Sh. Yakupov <yds@bk.ru>
 #******
-#****V* libnet/BASH compability
+#***iV* liberr/BASH Compability
 #  DESCRIPTION
-#    required BASH version 4.xx or more for this script
+#    BASH version 4.xx or more required for this script
 #  SOURCE
-[ -n "$BASH_VERSION" ] || eval 'echo "BASH interpreter for this script ($0) required ..."; exit 255'
-(( ${BASH_VERSINFO[0]} >= 4 )) || eval 'echo "required BASH version 4 or more for this script ($0) ..."; exit 255'
+[ -n "$BASH_VERSION" ] && (( ${BASH_VERSINFO[0]} >= 4 )) || eval '             \
+                                                                               \
+    echo "[!] BASH shell version 4.xx required for ${0}, abort.."; exit 255    \
+                                                                               \
+'
 #******
-#****L* libnet/library initialization
-# DESCRIPTION
-#   * $_BASHLYK_LIBCNF provides protection against re-using of this module
-#   * loading external libraries
-# SOURCE
+#  $_BASHLYK_LIBNET provides protection against re-using of this module
 [[ $_BASHLYK_LIBNET ]] && return 0 || _BASHLYK_LIBNET=1
+#****L* libnet/Used libraries
+# DESCRIPTION
+#   Loading external libraries
+# SOURCE
 : ${_bashlyk_pathLib:=/usr/share/bashlyk}
 [[ -s ${_bashlyk_pathLib}/libstd.sh ]] && . "${_bashlyk_pathLib}/libstd.sh"
 [[ -s ${_bashlyk_pathLib}/liberr.sh ]] && . "${_bashlyk_pathLib}/liberr.sh"
 #******
 #****G* libnet/Global variables
 #  DESCRIPTION
-#    global variables
+#    global variables of the library
 #  SOURCE
 : ${_bashlyk_sArg:="$@"}
 : ${_bashlyk_pathCnf:=$(pwd)}
 
 declare -r _reIPv4='[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+'
 declare -r _peIPv4='\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}'
-declare -r _bashlyk_externals_msg="dig echo grep ipcalc sipcalc xargs"
-declare -r _bashlyk_exports_msg="udfGetValidIPsOnly udfGetValidCIDR"
+declare -r _bashlyk_externals_net="dig echo grep ipcalc sipcalc xargs"
+declare -r _bashlyk_exports_net="udfGetValidIPsOnly udfGetValidCIDR"
 #******
 #****f* libnet/udfGetValidIPsOnly
 #  SYNOPSIS

@@ -7,7 +7,6 @@ options:
     --tell
     --toc
     --index
-    --internal
     --charset UTF-8
     --css ./robodoc.css
     --syntaxcolors_enable quotes,squotes,line_comments,keywords,non_alpha

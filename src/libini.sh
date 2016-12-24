@@ -1,9 +1,9 @@
 #
-# $Id: libini.sh 640 2016-12-24 01:36:41+04:00 toor $
+# $Id: libini.sh 641 2016-12-25 01:50:35+04:00 toor $
 #
 #****h* BASHLYK/libini
 #  DESCRIPTION
-#    management of the configuration files in the INI-style. Implemented
+#    Management of the configuration files in the INI-style. Implemented
 #    capabilities and features:
 #     - associative arrays are used to store the INI configuration data
 #     - OOP style used for a treatment of the INI configuration data:
@@ -47,27 +47,30 @@
 #  AUTHOR
 #    Damir Sh. Yakupov <yds@bk.ru>
 #******
-#****V* libini/BASH compability
+#***iV* liberr/BASH Compability
 #  DESCRIPTION
-#    $BASH_VERSION - required Bash major version 4 or more for this script
+#    BASH version 4.xx or more required for this script
 #  SOURCE
-[ -n "$BASH_VERSION" ] || eval 'echo "BASH interpreter for this script ($0) required ..."; exit 255'
-(( ${BASH_VERSINFO[0]} >= 4 )) || eval 'echo "required BASH version 4 or more for this script ($0) ..."; exit 255'
+[ -n "$BASH_VERSION" ] && (( ${BASH_VERSINFO[0]} >= 4 )) || eval '             \
+                                                                               \
+    echo "[!] BASH shell version 4.xx required for ${0}, abort.."; exit 255    \
+                                                                               \
+'
 #******
-#******
-#****L* libini/library initialization
-# DESCRIPTION
-#   * $_BASHLYK_LIBINI provides protection against re-using of this module
-#   * loading external libraries
-# SOURCE
+#  $_BASHLYK_LIBINI provides protection against re-using of this module
 [[ $_BASHLYK_LIBINI ]] && return 0 || _BASHLYK_LIBINI=1
+#******
+#****L* libini/Used libraries
+# DESCRIPTION
+#   Loading external libraries
+# SOURCE
 : ${_bashlyk_pathLib:=/usr/share/bashlyk}
 [[ -s ${_bashlyk_pathLib}/libstd.sh ]] && . "${_bashlyk_pathLib}/libstd.sh"
 [[ -s ${_bashlyk_pathLib}/liberr.sh ]] && . "${_bashlyk_pathLib}/liberr.sh"
 #******
 #****G* libini/Global Variables
 #  DESCRIPTION
-#    global variables
+#    Global variables of the library
 #  SOURCE
 : ${_bashlyk_sArg:="$@"}
 : ${_bashlyk_pathIni:=$(pwd)}
@@ -81,12 +84,12 @@ declare -r _bashlyk_methods_ini="                                              \
 "
 declare -r _bashlyk_externals_ini="                                            \
                                                                                \
-     date echo getopt md5sum mkdir mv pwd rm stat touch                        \
+    date echo getopt md5sum mkdir mv pwd rm stat touch                         \
                                                                                \
 "
 declare -r _bashlyk_exports_ini="                                              \
                                                                                \
-  INI get set show save read load bind.cli getopt free                         \
+    INI get set show save read load bind.cli getopt free                       \
                                                                                \
 "
 #******

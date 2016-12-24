@@ -1,5 +1,5 @@
 #
-# $Id: libold.sh 628 2016-12-19 00:29:51+04:00 toor $
+# $Id: libold.sh 641 2016-12-25 01:56:51+04:00 toor $
 #
 #****h* BASHLYK/libold
 #  DESCRIPTION
@@ -8,41 +8,52 @@
 #  AUTHOR
 #    Damir Sh. Yakupov <yds@bk.ru>
 #******
-#****d* libold/Required Once
+#***iV* libold/BASH Compability
 #  DESCRIPTION
-#    Глобальная переменная $_BASHLYK_LIBINI обеспечивает
-#    защиту от повторного использования данного модуля
-#    Отсутствие значения $BASH_VERSION предполагает несовместимость с
-#    c текущим командным интерпретатором
+#    BASH version 4.xx or more required for this script
 #  SOURCE
-[ -n "$BASH_VERSION" ] \
- || eval 'echo "bash interpreter for this script ($0) required ..."; exit 255'
-[[ $_BASHLYK_LIBOLD ]] && return 0 || _BASHLYK_LIBOLD=1
+[ -n "$BASH_VERSION" ] && (( ${BASH_VERSINFO[0]} >= 4 )) || eval '             \
+                                                                               \
+    echo "[!] BASH shell version 4.xx required for ${0}, abort.."; exit 255    \
+                                                                               \
+'
 #******
-#****** libold/External Modules
+#  $_BASHLYK_LIBOLD provides protection against re-using of this module
+[[ $_BASHLYK_LIBOLD ]] && return 0 || _BASHLYK_LIBOLD=1
+#****L* libold/Used libraries
 # DESCRIPTION
-#   Using modules section
-#   Здесь указываются модули, код которых используется данной библиотекой
+#   Loading external libraries
 # SOURCE
 : ${_bashlyk_pathLib:=/usr/share/bashlyk}
-[[ -s "${_bashlyk_pathLib}/libstd.sh" ]] && . "${_bashlyk_pathLib}/libstd.sh"
-[[ -s "${_bashlyk_pathLib}/libopt.sh" ]] && . "${_bashlyk_pathLib}/libopt.sh"
-[[ -s "${_bashlyk_pathLib}/libcsv.sh" ]] && . "${_bashlyk_pathLib}/libcsv.sh"
+[[ -s ${_bashlyk_pathLib}/libstd.sh ]] && . "${_bashlyk_pathLib}/libstd.sh"
+[[ -s ${_bashlyk_pathLib}/liberr.sh ]] && . "${_bashlyk_pathLib}/liberr.sh"
+[[ -s ${_bashlyk_pathLib}/libopt.sh ]] && . "${_bashlyk_pathLib}/libopt.sh"
+[[ -s ${_bashlyk_pathLib}/libcsv.sh ]] && . "${_bashlyk_pathLib}/libcsv.sh"
 #******
-#****v* libold/Init section
+#****G* libold/Global variables
 #  DESCRIPTION
-#    Блок инициализации глобальных переменных
+#    global variables of the library
 #  SOURCE
-: ${_bashlyk_sArg:="$@"}
-: ${_bashlyk_pathIni:=$(pwd)}
 : ${_bashlyk_bSetOptions:=}
 : ${_bashlyk_csvOptions2Ini:=}
+
+: ${_bashlyk_sArg:="$@"}
+: ${_bashlyk_pathIni:=$(pwd)}
 : ${_bashlyk_sUnnamedKeyword:=_bashlyk_ini_void_autoKey_}
-: ${_bashlyk_aRequiredCmd_ini:="awk cat cut dirname echo false grep mawk mkdir \
-  mv printf pwd rm sed sort touch tr true uniq xargs"}
-: ${_bashlyk_aExport_ini:="udfCsvKeys2Var udfCsvOrder2Var udfGetCsvSection2Var \
-  udfGetIni2Var udfGetIniSection2Var udfIni2CsvVar udfIniGroup2CsvVar          \
-  udfIniGroupSection2CsvVar udfIniSection2CsvVar udfReadIniSection2Var"}
+
+declare -r _bashlyk_externals_old="                                            \
+                                                                               \
+    awk cat cut dirname false grep mawk mkdir                                  \
+    mv pwd rm sed sort touch tr true uniq xargs                                \
+                                                                               \
+"
+declare -r _bashlyk_exports_old="                                              \
+                                                                               \
+    udfCsvKeys2Var udfCsvOrder2Var udfGetCsvSection2Var udfGetIni2Var          \
+    udfGetIniSection2Var udfIniGroupSection2CsvVar udfIniGroup2CsvVar          \
+    udfIniSection2CsvVar udfReadIniSection2Var udfIni2CsvVar                   \
+                                                                               \
+"
 #******
 #****f* libold/udfGetIniSection2Var
 #  SYNOPSIS

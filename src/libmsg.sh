@@ -1,5 +1,5 @@
 #
-# $Id: libmsg.sh 640 2016-12-24 01:36:42+04:00 toor $
+# $Id: libmsg.sh 641 2016-12-25 01:50:35+04:00 toor $
 #
 #****h* BASHLYK/libmsg
 #  DESCRIPTION
@@ -7,26 +7,29 @@
 #  AUTHOR
 #    Damir Sh. Yakupov <yds@bk.ru>
 #******
-#****V* libmsg/BASH compability
+#***iV* liberr/BASH Compability
 #  DESCRIPTION
-#    required BASH version 4.xx or more for this script
+#    BASH version 4.xx or more required for this script
 #  SOURCE
-[ -n "$BASH_VERSION" ] || eval 'echo "BASH interpreter for this script ($0) required ..."; exit 255'
-(( ${BASH_VERSINFO[0]} >= 4 )) || eval 'echo "required BASH version 4 or more for this script ($0) ..."; exit 255'
+[ -n "$BASH_VERSION" ] && (( ${BASH_VERSINFO[0]} >= 4 )) || eval '             \
+                                                                               \
+    echo "[!] BASH shell version 4.xx required for ${0}, abort.."; exit 255    \
+                                                                               \
+'
 #******
-#****L* libmsg/library initialization
-# DESCRIPTION
-#   * $_BASHLYK_LIBCNF provides protection against re-using of this module
-#   * loading external libraries
-# SOURCE
+#  $_BASHLYK_LIBMSG provides protection against re-using of this module
 [[ $_BASHLYK_LIBMSG ]] && return 0 || _BASHLYK_LIBMSG=1
+#****L* libmsg/Used libraries
+# DESCRIPTION
+#   Loading external libraries
+# SOURCE
 : ${_bashlyk_pathLib:=/usr/share/bashlyk}
 [[ -s ${_bashlyk_pathLib}/libstd.sh ]] && . "${_bashlyk_pathLib}/libstd.sh"
 [[ -s ${_bashlyk_pathLib}/liberr.sh ]] && . "${_bashlyk_pathLib}/liberr.sh"
 #******
 #****G* libmsg/Global variables
 #  DESCRIPTION
-#    global variables
+#    Global variables of the library
 #  SOURCE
 : ${_bashlyk_sUser:=$USER}
 : ${_bashlyk_sLogin:=$(logname 2>/dev/null)}

@@ -1,5 +1,5 @@
 #
-# $Id: libstd.sh 629 2016-12-19 15:26:43+04:00 toor $
+# $Id: libstd.sh 641 2016-12-25 01:50:36+04:00 toor $
 #
 #****h* BASHLYK/libstd
 #  DESCRIPTION
@@ -10,66 +10,75 @@
 #  AUTHOR
 #    Damir Sh. Yakupov <yds@bk.ru>
 #******
-#****d* libstd/Once required
+#***iV* liberr/BASH Compability
 #  DESCRIPTION
-#    Эта глобальная переменная обеспечивает
-#    защиту от повторного использования данного модуля
-#    Отсутствие значения $BASH_VERSION предполагает несовместимость с
-#    c текущим командным интерпретатором
+#    BASH version 4.xx or more required for this script
 #  SOURCE
-[ -n "$BASH_VERSION" ] \
- || eval 'echo "bash interpreter for this script ($0) required ..."; exit 255'
-[[ $_BASHLYK_LIBSTD ]] && return 0 || _BASHLYK_LIBSTD=1
+[ -n "$BASH_VERSION" ] && (( ${BASH_VERSINFO[0]} >= 4 )) || eval '             \
+                                                                               \
+    echo "[!] BASH shell version 4.xx required for ${0}, abort.."; exit 255    \
+                                                                               \
+'
 #******
-#****** libstd/External Modules
+#  $_BASHLYK_LIBSTD provides protection against re-using of this module
+[[ $_BASHLYK_LIBSTD ]] && return 0 || _BASHLYK_LIBSTD=1
+#****L* libstd/Used libraries
 # DESCRIPTION
-#   Using modules section
-#   Здесь указываются модули, код которых используется данной библиотекой
+#   Loading external libraries
 # SOURCE
 : ${_bashlyk_pathLib:=/usr/share/bashlyk}
 [[ -s ${_bashlyk_pathLib}/liberr.sh ]] && . "${_bashlyk_pathLib}/liberr.sh"
 [[ -s ${_bashlyk_pathLib}/libmsg.sh ]] && . "${_bashlyk_pathLib}/libmsg.sh"
 #******
-#****v* libstd/Init section
+#****v* libstd/Global Variables
 #  DESCRIPTION
+#    Global variables of the library
 #    Блок инициализации глобальных переменных
 #    * $_bashlyk_sArg - аргументы командной строки вызова сценария
 #    * $_bashlyk_sWSpaceAlias - заменяющая пробел последовательность символов
 #    * $_bashlyk_aRequiredCmd_opt - список используемых в данном модуле внешних
 #    утилит
 #  SOURCE
-_bashlyk_iMaxOutputLines=1000
-#
-: ${_bashlyk_onError:=throw}
-: ${_bashlyk_sArg:="$@"}
-: ${_bashlyk_pathDat:=/tmp}
-: ${_bashlyk_sWSpaceAlias:=___}
-: ${_bashlyk_sUnnamedKeyword:=_bashlyk_unnamed_key_}
-: ${_bashlyk_s0:=${0##*/}}
-: ${_bashlyk_sId:=${_bashlyk_s0%.sh}}
 : ${_bashlyk_afoClean:=}
 : ${_bashlyk_afdClean:=}
 : ${_bashlyk_ajobClean:=}
 : ${_bashlyk_apidClean:=}
 : ${_bashlyk_pidLogSock:=}
-: ${_bashlyk_sUser:=$USER}
-: ${_bashlyk_sLogin:=$(logname 2>/dev/null)}
-: ${HOSTNAME:=$(hostname 2>/dev/null)}
-: ${_bashlyk_bNotUseLog:=1}
-: ${_bashlyk_emailRcpt:=postmaster}
-: ${_bashlyk_emailSubj:="${_bashlyk_sUser}@${HOSTNAME}::${_bashlyk_s0}"}
-: ${_bashlyk_reMetaRules:='34=":40=(:41=):59=;:91=[:92=\\:93=]:61=='}
 : ${_bashlyk_envXSession:=}
-: ${_bashlyk_aRequiredCmd_std:="cat chgrp chmod chown cut date echo grep hostname kill \
-  logname md5sum mkdir mkfifo mktemp pgrep ps pwd rm rmdir sed sleep tempfile touch tr \
-  which xargs"}
-: ${_bashlyk_aExport_std:="_ _ARGUMENTS _gete _getv _pathDat _s0 _set udfAddFile2Clean    \
-  udfAddFD2Clean udfAddFO2Clean udfAddFObj2Clean udfAddJob2Clean udfAddPath2Clean         \
-  udfAddPid2Clean udfAlias2WSpace udfBaseId udfBashlykUnquote udfCheckCsv udfCleanQueue   \
-  udfDate udfGetFreeFD udfGetMd5 udfGetPathMd5 udfIsNumber udfIsValidVariable             \
-  udfLocalVarFromCSV udfMakeTemp udfMakeTempV udfOnTrap udfPrepare2Exec udfPrepareByType  \
-  udfQuoteIfNeeded udfSerialize udfShellExec udfShowVariable udfTimeStamp udfWSpace2Alias \
-  udfXml"}
+#
+: ${_bashlyk_sArg:="$@"}
+: ${_bashlyk_s0:=${0##*/}}
+: ${_bashlyk_sUser:=$USER}
+: ${_bashlyk_pathDat:=/tmp}
+: ${_bashlyk_bNotUseLog:=1}
+: ${_bashlyk_onError:=throw}
+: ${_bashlyk_sWSpaceAlias:=___}
+: ${_bashlyk_emailRcpt:=postmaster}
+: ${_bashlyk_sId:=${_bashlyk_s0%.sh}}
+: ${HOSTNAME:=$(hostname 2>/dev/null)}
+: ${_bashlyk_sUnnamedKeyword:=_bashlyk_unnamed_key_}
+: ${_bashlyk_reMetaRules:='34=":40=(:41=):59=;:91=[:92=\\:93=]:61=='}
+: ${_bashlyk_emailSubj:="${_bashlyk_sUser}@${HOSTNAME}::${_bashlyk_s0}"}
+
+declare -r _bashlyk_iMaxOutputLines=1000
+declare -r _bashlyk_aRequiredCmd_std="                                         \
+                                                                               \
+    cat chgrp chmod chown cut date echo grep hostname kill logname md5sum      \
+    mkdir mkfifo mktemp pgrep ps pwd rm rmdir sed sleep tempfile touch tr      \
+    which xargs                                                                \
+                                                                               \
+"
+declare -r _bashlyk_aExport_std="
+
+    _ _ARGUMENTS _gete _getv _pathDat _s0 _set udfAddFile2Clean udfAddFD2Clean \
+    udfAddFO2Clean udfAddFObj2Clean udfAddJob2Clean udfAddPath2Clean udfBaseId \
+    udfAddPid2Clean udfAlias2WSpace udfBashlykUnquote udfCheckCsv udfGetMd5    \
+    udfCleanQueue udfDate udfGetFreeFD  udfGetPathMd5 udfIsNumber udfSerialize \
+    udfIsValidVariable udfLocalVarFromCSV udfMakeTemp udfMakeTempV udfOnTrap   \
+    udfPrepareByType udfQuoteIfNeeded udfShellExec udfShowVariable udfXml      \
+    udfTimeStamp udfWSpace2Alias udfPrepare2Exec                               \
+
+"
 #******
 #****f* libstd/udfIsNumber
 #  SYNOPSIS
