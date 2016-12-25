@@ -1,5 +1,5 @@
 #
-# $Id: libold.sh 641 2016-12-25 01:56:51+04:00 toor $
+# $Id: libold.sh 642 2016-12-26 00:00:27+04:00 toor $
 #
 #****h* BASHLYK/libold
 #  DESCRIPTION
@@ -68,10 +68,10 @@ declare -r _bashlyk_exports_old="                                              \
 #    varname - валидный идентификатор переменной (без "$ "). Результат в виде
 #              CSV; строки формата "ключ=значение;" будет помещен в
 #              соответствующую переменную.
-#  RETURN VALUE
-#    0                            - Выполнено успешно
-#    iErrorNonValidVariable       - аргумент <varname> не является валидным идентификатором переменной
-#    iErrorEmptyOrMissingArgument - аргумент отсутствует
+#  ERRORS
+#    NotValidVariable - аргумент <varname> не является валидным идентификатором
+#                       переменной
+#    MissingArgument  - аргумент отсутствует
 #  EXAMPLE
 #    #пример приведен в описании udfGetIniSection
 #  SOURCE
@@ -95,10 +95,10 @@ udfGetIniSection2Var() {
 #    varname - идентификатор переменной (без "$"). При его наличии результат
 #              будет помещен в соответствующую переменную. При отсутствии такого
 #              идентификатора результат будет выдан на стандартный вывод
-#  RETURN VALUE
-#     0                           - Выполнено успешно
-#    iErrorNonValidVariable       - аргумент <varname> не является валидным идентификатором переменной
-#    iErrorEmptyOrMissingArgument - аргумент отсутствует или файл конфигурации не найден
+#  ERRORS
+#    NotValidVariable - аргумент <varname> не является валидным идентификатором
+#                       переменной
+#    MissingArgument  - аргумент отсутствует или файл конфигурации не найден
 #  EXAMPLE
 #    #пример приведен в описании udfIniGroup2Csv
 #  SOURCE
@@ -122,10 +122,10 @@ udfReadIniSection2Var() {
 #              разделённой символом ";" CSV-строки, поля которого содержат
 #              данные в формате "<key>=<value>;...", будет помещен в
 #              соответствующую переменну.
-#  RETURN VALUE
-#   0                            - Выполнено успешно
-#   iErrorNonValidVariable       - аргумент <varname> не является валидным идентификатором переменной
-#   iErrorEmptyOrMissingArgument - аргумент отсутствует
+#  ERRORS
+#   NotValidVariable - аргумент <varname> не является валидным идентификатором
+#                      переменной
+#   MissingArgument  - аргумент отсутствует
 #  EXAMPLE
 #    #пример приведен в описании udfCsvOrder
 #  SOURCE
@@ -148,10 +148,10 @@ udfCsvOrder2Var() {
 #            "key=value"
 #  varname - валидный идентификатор переменной. Результат в виде строки ключей,
 #            разделенной пробелами, будет помещёна в соответствующую переменную
-#  RETURN VALUE
-#    0                            - Выполнено успешно
-#    iErrorNonValidVariable       - аргумент <varname> не является валидным идентификатором переменной
-#    iErrorEmptyOrMissingArgument - аргумент отсутствует
+#  ERRORS
+#    NotValidVariable - аргумент <varname> не является валидным идентификатором
+#                       переменной
+#    MissingArgument  - аргумент отсутствует
 #  EXAMPLE
 #    #пример приведен в описании udfCsvKeys
 #  SOURCE
@@ -174,10 +174,9 @@ udfCsvKeys2Var() {
 #              CSV-строки в формате "[section];<key>=<value>;..." будет
 #              помещён в соответствующую переменную
 #    section - список имен секций, данные которых нужно получить
-#  RETURN VALUE
-#    0                            - Выполнено успешно
-#    iErrorNonValidVariable       - не валидный идентификатор переменной
-#    iErrorEmptyOrMissingArgument - аргументы отсутствуют
+#  ERRORS
+#    NotValidVariable - не валидный идентификатор переменной
+#    MissingArgument  - аргументы отсутствуют
 #  EXAMPLE
 #    #пример приведен в описании udfGetIni
 #  SOURCE
@@ -202,10 +201,9 @@ udfGetIni2Var() {
 #    varname - валидный идентификатор переменной (без "$ "). Результат в виде
 #              CSV; строки формата "ключ=значение;" будет помещен в
 #              соответствующую переменную.
-#  RETURN VALUE
-#    0                            - Выполнено успешно
-#    iErrorNonValidVariable       - аргумент не является валидным идентификатором переменной
-#    iErrorEmptyOrMissingArgument - отсутствует аргумент
+#  ERRORS
+#    NotValidVariable - аргумент не является валидным идентификатором переменной
+#    MissingArgument  - отсутствует аргумент
 #  EXAMPLE
 #    local csv='[];a=b;c=d e;[s1];a=f;c=g h;[s2];a=k;c=l m;' csvResult
 #    udfGetCsvSection2Var csvResult "$csv"
@@ -237,10 +235,10 @@ udfGetCsvSection2Var() {
 #    varname - идентификатор переменной (без "$"). При его наличии результат
 #              будет помещен в соответствующую переменную. При отсутствии такого
 #              идентификатора результат будет выдан на стандартный вывод
-#  RETURN VALUE
-#     0  - Выполнено успешно
-#    iErrorNonValidVariable       - аргумент <varname> не является валидным идентификатором переменной
-#    iErrorEmptyOrMissingArgument - аргумент отсутствует или файл конфигурации не найден
+#  ERRORS
+#    NotValidVariable - аргумент <varname> не является валидным идентификатором
+#                       переменной
+#    MissingArgument  - аргумент отсутствует или файл конфигурации не найден
 #  EXAMPLE
 #    #пример приведен в описании udfIniGroupSection2Csv
 #  SOURCE
@@ -267,10 +265,10 @@ udfIniSection2CsvVar() {
 #              разделенной символом ";" CSV-строки, в полях которого содержатся
 #              конфигурационные данные в формате "<key>=<value>;..." будет
 #              помещён в соответствующую переменную
-#  RETURN VALUE
-#    0                            - Выполнено успешно
-#    iErrorNonValidVariable       - аргумент <varname> не является валидным идентификатором переменной
-#    iErrorEmptyOrMissingArgument - аргумент отсутствует
+#  ERRORS
+#    NotValidVariable - аргумент <varname> не является валидным идентификатором
+#                       переменной
+#    MissingArgument  - аргумент отсутствует
 #  EXAMPLE
 #    #пример приведен в описании udfIniGroupSection2Csv
 #  SOURCE
@@ -293,10 +291,10 @@ udfIniGroupSection2CsvVar() {
 #              CSV; строки формата "[секция];ключ=значение;" будет помещен в
 #              соответствующую переменную.
 #    file    - имя файла конфигурации
-#  RETURN VALUE
-#    0                            - Выполнено успешно
-#    iErrorNonValidVariable       - аргумент <varname> не является валидным идентификатором переменной
-#    iErrorEmptyOrMissingArgument - аргумент отсутствует
+#  ERRORS
+#    NotValidVariable - аргумент <varname> не является валидным идентификатором
+#                       переменной
+#    MissingArgument  - аргумент отсутствует
 #  EXAMPLE
 #    #пример приведен в описании udfIni2Csv
 #  SOURCE
@@ -319,10 +317,10 @@ udfIni2CsvVar() {
 #              CSV; строки формата "[секция];ключ=значение;" будет помещен в
 #              соответствующую переменную.
 #    file    - имя файла конфигурации
-#  RETURN VALUE
-#    0                            - Выполнено успешно
-#    iErrorNonValidVariable       - аргумент <varname> не является валидным идентификатором переменной
-#    iErrorEmptyOrMissingArgument - аргумент отсутствует
+#  ERRORS
+#    NotValidVariable - аргумент <varname> не является валидным идентификатором
+#                       переменной
+#    MissingArgument  - аргумент отсутствует
 #  EXAMPLE
 #    #пример приведен в описании udfIniGroup2Csv
 #  SOURCE

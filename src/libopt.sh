@@ -1,5 +1,5 @@
 #
-# $Id: libopt.sh 641 2016-12-25 01:50:36+04:00 toor $
+# $Id: libopt.sh 642 2016-12-26 00:00:27+04:00 toor $
 #
 #****h* BASHLYK/libopt
 #  DESCRIPTION
@@ -54,11 +54,10 @@ declare -r _bashlyk_aExport_opt="                                              \
 #    args   - опции с аргументами
 #  OUTPUT
 #   Ассоциативный массив в виде CSV строки
-#  RETURN VALUE
-#    0                            - успешная операция
-#    iErrorEmptyOrMissingArgument - аргумент не задан
-#    iErrorNonValidArgument       - неправильная опция
-#    iErrorEmptyResult            - пустой результат
+#  ERRORS
+#    MissingArgument  - аргумент не задан
+#    NonValidArgument - неправильная опция
+#    EmptyResult      - пустой результат
 #  EXAMPLE
 #   udfGetOptHash 'job:,force' --job main --force >| grep "^job=main;force=1;$" #? true
 #   udfGetOptHash                                                               #? ${_bashlyk_iErrorEmptyOrMissingArgument}
@@ -104,9 +103,8 @@ udfGetOptHash() {
 #    соответствующих переменных.
 #  INPUTS
 #    arg - CSV строка
-#  RETURN VALUE
-#    iErrorEmptyOrMissingArgument - аргумент не задан
-#    0                            - успешная операция
+#  ERRORS
+#    MissingArgument - аргумент не задан
 #  EXAMPLE
 #    local job bForce
 #    udfSetOptHash "job=main;bForce=1;"                                         #? true
@@ -136,9 +134,8 @@ udfSetOptHash() {
 #  INPUTS
 #    csvopt - список ожидаемых опций
 #    args   - опции с аргументами
-#  RETURN VALUE
-#    iErrorEmptyOrMissingArgument - аргумент не задан
-#    0                            - успешная операция
+#  ERRORS
+#    MissingArgument - аргумент не задан
 #  EXAMPLE
 #    local job bForce
 #    udfGetOpt job:,bForce --job main --bForce                                  #? true
@@ -161,9 +158,8 @@ udfGetOpt() {
 #    hash - ассоциативный массив в виде CSV строки c разделителем ";"
 #  OUTPUT
 #    аргумент <hash> без подстрок ";<pair>;"
-#  RETURN VALUE
-#    iErrorEmptyOrMissingArgument - аргумент не задан
-#    0                            - успешная операция
+#  ERRORS
+#    MissingArgument - аргумент не задан
 #  EXAMPLE
 #    local s="job=main;bForce=1"
 #    udfExcludePairFromHash 'save=1' "${s};save=1;" >| grep "^${s}$"            #? true

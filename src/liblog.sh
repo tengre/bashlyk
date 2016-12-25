@@ -1,5 +1,5 @@
 #
-# $Id: liblog.sh 641 2016-12-25 01:50:36+04:00 toor $
+# $Id: liblog.sh 642 2016-12-26 00:00:27+04:00 toor $
 #
 #****h* BASHLYK/liblog
 #  DESCRIPTION
@@ -262,12 +262,11 @@ udfFinally() { echo "$@ uptime $( udfUptime ) sec"; }
 #    Установка механизма ведения лога согласно ранее установленных условий.
 #    Используется специальный сокет для того чтобы отмечать тегами строки
 #    журнала.
-#  Return VALUE
-#     0                        - Выполнено успешно
-#     1                        - Сокет не создан, но стандартный вывод
-#                                перенаправляется в файл лога (без тегирования)
-#     iErrorNotExistNotCreated - Каталог для сокета не существует и не может
-#                                быть создан
+#  ERRORS
+#     1                  - Сокет не создан, но стандартный вывод
+#                          перенаправляется в файл лога (без тегирования)
+#     NotExistNotCreated - Каталог для сокета не существует и не может
+#                          быть создан
 #  EXAMPLE
 #    local fnLog=$(mktemp --suffix=.log || tempfile -s .test.log)               #? true
 #    _ fnLog $fnLog                                                             #? true
@@ -284,7 +283,7 @@ udfSetLogSocket() {
  fi
  mkdir -p ${_bashlyk_pathRun} || {
   udfWarn "Warn: path for Sockets ${_bashlyk_pathRun} not created..."
-  eval $(udfOnError return iErrorNotExistNotCreated 'path ${_bashlyk_pathRun} is not created...')
+  eval $(udfOnError return NotExistNotCreated 'path ${_bashlyk_pathRun} is not created...')
  }
  [[ -a "$fnSock" ]] && rm -f $fnSock
  if mkfifo -m 0600 $fnSock >/dev/null 2>&1; then
@@ -307,9 +306,9 @@ udfSetLogSocket() {
 #    udfSetLog [arg]
 #  DESCRIPTION
 #    Установка файла лога
-#  RETURN VALUE
-#     0   - Выполнено
-#     255   - невозможно использовать файл лога, аварийное завершение сценария
+#  ERRORS
+#     NotExistNotCreated - файл лога создать не удается, аварийное завершение
+#                          сценария
 #  EXAMPLE
 #    local fnLog=$(mktemp --suffix=.log || tempfile -s .test.log)               #? true
 #    rm -f $fnLog
@@ -328,8 +327,8 @@ udfSetLog() {
             _bashlyk_pathLog=$(dirname ${_bashlyk_fnLog})
          ;;
  esac
- mkdir -p "$_bashlyk_pathLog" || eval $(udfOnError throw iErrorNotExistNotCreated 'path $_bashlyk_pathLog is not created...')
- touch "$_bashlyk_fnLog"      || eval $(udfOnError throw iErrorNotExistNotCreated 'file $_bashlyk_fnLog not usable for logging')
+ mkdir -p "$_bashlyk_pathLog" || eval $(udfOnError throw NotExistNotCreated 'path $_bashlyk_pathLog is not created...')
+ touch "$_bashlyk_fnLog"      || eval $(udfOnError throw NotExistNotCreated 'file $_bashlyk_fnLog not usable for logging')
  udfSetLogSocket
  return 0
 }
@@ -367,9 +366,9 @@ _fnLog() {
 #    Текст отладочного сообщения (аргумент "message"), если его уровень
 #    (аргумент "level") не больше заданного для сценария переменной DEBUGLEVEL
 #  RETURN VALUE
-#    0                            - уровень "level" не больше DEBUGLEVEL
-#    1                            - уровень "level"    больше DEBUGLEVEL
-#    iErrorEmptyOrMissingArgument - аргументы отсутствуют
+#    0               - уровень "level" не больше DEBUGLEVEL
+#    1               - уровень "level"    больше DEBUGLEVEL
+#    MissingArgument - аргументы отсутствуют
 #  EXAMPLE
 #    DEBUGLEVEL=0
 #    udfDebug                                                                   #? $_bashlyk_iErrorEmptyOrMissingArgument
@@ -382,7 +381,7 @@ _fnLog() {
 #  SOURCE
 udfDebug() {
  local i re='^[0-9]+$' IFS=$' \t\n'
- [[ -n "$*" ]] && i=$1 || eval $(udfOnError return iErrorEmptyOrMissingArgument)
+ [[ -n "$*" ]] && i=$1 || eval $(udfOnError return MissingArgument)
  shift
  [[ "$i" =~ ^[0-9]+$ ]] || i=0
  (( $DEBUGLEVEL >= $i )) || return 1

@@ -1,5 +1,5 @@
 #
-# $Id: libstd.sh 641 2016-12-25 01:50:36+04:00 toor $
+# $Id: libstd.sh 642 2016-12-26 00:00:27+04:00 toor $
 #
 #****h* BASHLYK/libstd
 #  DESCRIPTION
@@ -93,9 +93,9 @@ declare -r _bashlyk_aExport_std="
 #             после цифр для указания признака числа, например,
 #             порядка. (регистр не имеет значения)
 #  RETURN VALUE
-#    0                            - аргумент является натуральным числом
-#    iErrorNonValidArgument       - аргумент не является натуральным числом
-#    iErrorEmptyOrMissingArgument - аргумент не задан
+#    0                - аргумент является натуральным числом
+#    NotValidArgument - аргумент не является натуральным числом
+#    MissingArgument  - аргумент не задан
 #  EXAMPLE
 #    udfIsNumber 12                                                             #? true
 #    udfIsNumber 34k k                                                          #? true
@@ -207,8 +207,8 @@ udfShowVariable() {
 #  INPUTS
 #    arg - проверяемое значение
 #  RETURN VALUE
-#    0                            - аргумент валидный идентификатор
-#    iErrorNonValidVariable       - аргумент невалидный идентификатор (или не задан)
+#    0                - аргумент валидный идентификатор
+#    NotValidVariable - аргумент невалидный идентификатор (или не задан)
 #  EXAMPLE
 #    udfIsValidVariable                                                         #? $_bashlyk_iErrorNonValidVariable
 #    udfIsValidVariable "12w"                                                   #? $_bashlyk_iErrorNonValidVariable
@@ -312,8 +312,7 @@ udfAlias2WSpace() {
 #    if -v option or valid variable is omitted then name of created temporary
 #    filesystem object being printed to the standard output
 #
-#  RETURN VALUE
-#    0                  - success
+#  ERRORS
 #    NotExistNotCreated - temporary file system object is not created
 #    InvalidVariable    - used invalid variable name
 #    EmptyResult        - name for temporary object missing
@@ -505,8 +504,7 @@ udfMakeTemp() {
 #    keep[file] - create file, keep after done
 #    keepdir    - create directory, keep after done
 #    prefix     - prefix for name (5 letters)
-#  RETURN VALUE
-#    0                  - success
+#  ERRORS
 #    NotExistNotCreated - temporary file system object is not created
 #    InvalidVariable    - used invalid variable name
 #    EmptyResult        - name for temporary object missing
@@ -890,10 +888,9 @@ _pathDat() {
 #    <arg> - valid name of variable or valid name item of array
 #  OUTPUT
 #    converted input string, if necessary
-#  RETURN VALUE
-#    iErrorEmptyOrMissingArgument - аргумент не задан
-#    iErrorNonValidVariable       - не валидный идентификатор
-#    0                            - успешная операция
+#  ERRORS
+#    MissingArgument  - аргумент не задан
+#    NotValidVariable - не валидный идентификатор
 #  EXAMPLE
 #    _bashlyk_onError=return
 #    udfPrepareByType                                                           #? $_bashlyk_iErrorEmptyOrMissingArgument
@@ -932,10 +929,9 @@ udfPrepareByType() {
 #  OUTPUT
 #    Вывод значения переменной $_bashlyk_<subname> в режиме get, если не указана
 #    приемная переменная и нет знака "="
-#  RETURN VALUE
-#    iErrorEmptyOrMissingArgument - аргумент не задан
-#    iErrorNonValidVariable       - не валидный идентификатор
-#    0                            - успешная операция
+#  ERRORS
+#    MissingArgument  - аргумент не задан
+#    NotValidVariable - не валидный идентификатор
 #  EXAMPLE
 #    local sS sWSpaceAlias pid=$BASHPID k=key1 v=val1
 #    _ k=sWSpaceAlias
@@ -1004,10 +1000,9 @@ _(){
 #                может быть опущена, в этом случае приемником становится
 #                переменная <subname>
 #    <subname> - содержательная часть глобальной имени ${_bashlyk_<subname>}
-#  RETURN VALUE
-#    iErrorEmptyOrMissingArgument - аргумент не задан
-#    iErrorNonValidVariable       - не валидный идентификатор
-#    0                            - успешная операция
+#  ERRORS
+#    MissingArgument  - аргумент не задан
+#    NotValidVariable - не валидный идентификатор
 #  EXAMPLE
 #    local sS sWSpaceAlias
 #    _getv sWSpaceAlias sS
@@ -1035,9 +1030,8 @@ _getv() {
 #    Вывести значение глобальной переменной $_bashlyk_<subname>
 #  INPUTS
 #    <subname> - содержательная часть глобальной имени ${_bashlyk_<subname>}
-#  RETURN VALUE
-#    iErrorEmptyOrMissingArgument - аргумент не задан
-#    0                            - успешная операция
+#  ERRORS
+#    MissingArgument - аргумент не задан
 #  EXAMPLE
 #    _gete sWSpaceAlias >| grep "^${_bashlyk_sWSpaceAlias}$"                    #? true
 #  SOURCE
@@ -1055,9 +1049,8 @@ _gete() {
 #  INPUTS
 #    <subname> - содержательная часть глобальной имени ${_bashlyk_<subname>}
 #    <value>   - новое значение, в случае отсутствия - пустая строка
-#  RETURN VALUE
-#    iErrorEmptyOrMissingArgument - аргумент не задан
-#    0                            - успешная операция
+#  ERRORS
+#    MissingArgument - аргумент не задан
 #  EXAMPLE
 #    local sWSpaceAlias=$(_ sWSpaceAlias)
 #    _set sWSpaceAlias _-_
@@ -1088,12 +1081,11 @@ _set() {
 #  OUTPUT
 #    separated by a ";" CSV-string in fields that contain data in the format
 #    "<key> = <value>; ..."
-#  RETURN VALUE
+#  ERRORS
 #    EmptyResult     - empty result
 #    MissingArgument - no arguments
 #    InvalidArgument - invalid argument
 #    InvalidVariable - invalid variable for output assign
-#    0               - success
 #  EXAMPLE
 #    local cmd=udfCheckCsv csv="a=b;a=c;s=a b c d e f;test value" v1 v2
 #    local re='^a=b;a=c;s="a b c d e f";_bashlyk_unnamed_key_0="test value";$'
@@ -1205,11 +1197,10 @@ udfGetMd5() {
 #    <path>  - начальный каталог
 #  OUTPUT
 #    Список MD5-сумм и имён нескрытых файлов в каталоге <path> рекурсивно
-#  RETURN VALUE
-#    iErrorEmptyOrMissingArgument - аргумент не задан
-#    iErrorNoSuchFileOrDir        - путь не доступен
-#    iErrorNotPermitted           - нет прав
-#    0                            - успешная операция
+#  ERRORS
+#    MissingArgument - аргумент не задан
+#    NoSuchFileOrDir - путь не доступен
+#    NotPermitted    - нет прав
 #  EXAMPLE
 #    local path=$(udfMakeTemp type=dir)
 #    touch ${path}/testfile
@@ -1243,9 +1234,8 @@ udfGetPathMd5() {
 #    data     - XML tag content
 #  OUTPUT
 #    Show compiled XML code
-#  RETURN VALUE
-#    iErrorEmptyOrMissingArgument - аргумент не задан
-#    0                            - успешная операция
+#  ERRORS
+#    MissingArgument - аргумент не задан
 #  EXAMPLE
 #    local sTag='date TO="+0400" TZ="MSK"' sContent='Mon, 22 Apr 2013 15:55:50'
 #    local sXml='<date TO="+0400" TZ="MSK">Mon, 22 Apr 2013 15:55:50</date>'
@@ -1268,9 +1258,8 @@ udfXml() {
 #    variables - list of variables
 #  OUTPUT
 #    Show csv string
-#  RETURN VALUE
-#    iErrorEmptyOrMissingArgument - аргумент не задан
-#    0                            - успешная операция
+#  ERRORS
+#    MissingArgument - аргумент не задан
 #  EXAMPLE
 #    local sUname="$(uname -a)" sDate="" s=100
 #    udfSerialize sUname sDate s >| grep "^sUname=.*s=100;$"                                                                 #? true
@@ -1313,9 +1302,8 @@ udfBashlykUnquote() {
 #  DESCRIPTION
 #    Prepare string from comma separated lists (ex. INI options) for definition
 #    of the local variables by using eval
-#  RETURN VALUE
-#    iErrorEmptyOrMissingArgument - аргумент не задан
-#    0                            - успешная операция
+#  ERRORS
+#    MissingArgument - аргумент не задан
 #  EXAMPLE
 #    udfLocalVarFromCSV a1,b2,c3                                                #? true
 #    udfLocalVarFromCSV a1 b2,c3                                                #? true
@@ -1350,11 +1338,10 @@ udfLocalVarFromCSV() {
 #    -v <var>                    - set the result to valid variable <var>
 #  ARGUMENTS
 #    <numbers>[sec,min,hour,...] - human-readable string of date&time
-#  RETURN VALUE
-#    InvalidArgument              - invalid or missing arguments, number with
-#                                   a time suffix expected
-#    EmptyResult                  - no result
-#    0                            - success
+#  ERRORS
+#    InvalidArgument - invalid or missing arguments, number with a time suffix
+#                      expected
+#    EmptyResult     - no result
 #  EXAMPLE
 #    local v s=${RANDOM:0:2} #-
 #    udfGetTimeInSec                                                            #? $_bashlyk_iErrorInvalidArgument

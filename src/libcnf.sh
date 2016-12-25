@@ -1,5 +1,5 @@
 #
-# $Id: libcnf.sh 641 2016-12-25 01:50:35+04:00 toor $
+# $Id: libcnf.sh 642 2016-12-26 00:00:27+04:00 toor $
 #
 #****h* BASHLYK/libcnf
 #  DESCRIPTION
@@ -399,12 +399,11 @@ udfGetConfig() {
 #  NOTES
 #    It is important to take the arguments in double quotes, if they contain a
 #    whitespace or ';'
-#  RETURN VALUE
+#  ERRORS
 #    MissingArgument    - no arguments
 #    NotExistNotCreated - target file not created or updated
 #    InvalidArgument    - name contains the point at the beginning or at the end of
 #                         the name
-#    Success on other cases
 #  EXAMPLE
 #    udfMakeTemp conf suffix=.conf
 #    CNF cnf

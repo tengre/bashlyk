@@ -1,5 +1,5 @@
 #
-# $Id: libmsg.sh 641 2016-12-25 01:50:35+04:00 toor $
+# $Id: libmsg.sh 642 2016-12-26 00:00:27+04:00 toor $
 #
 #****h* BASHLYK/libmsg
 #  DESCRIPTION
@@ -124,8 +124,8 @@ udfWarn() {
 #           сообщения
 #    -   -  данные читаются из стандартного ввода
 #  ERRORS
-#    iErrorEmptyOrMissingArgument - аргумент не задан
-#    iErrorCommandNotFound        - команда не найдена
+#    MissingArgument - аргумент не задан
+#    CommandNotFound - команда не найдена
 #  EXAMPLE
 ##  TODO уточнить по каждому варианту
 #    ##local emailOptions=$(_ emailOptions)
@@ -171,8 +171,8 @@ udfMail() {
 #           "-", то эта строка выводится заголовком для данных
 #           из стандартного ввода
 #  ERRORS
-#    iErrorEmptyOrMissingArgument - аргумент не задан
-#    iErrorCommandNotFound        - команда не найдена
+#    MissingArgument - аргумент не задан
+#    CommandNotFound - команда не найдена
 #  EXAMPLE
 #    local sBody="notification testing" sSubj="bashlyk::libmsg::udfMessage"
 #    echo "$sBody" | udfMessage - "$sSubj"                                      #? true
@@ -204,10 +204,10 @@ udfMessage() {
 #           чтения из него, иначе строка аргументов воспринимается как текст
 #           сообщения
 #  ERRORS
-#    iErrorEmptyOrMissingArgument - аргумент не задан
-#    iErrorCommandNotFound        - команда не найдена
-#    iErrorXsessionNotFound       - X-сессия не обнаружена
-#    iErrorNotPermitted           - не разрешено
+#    MissingArgument  - аргумент не задан
+#    CommandNotFound  - команда не найдена
+#    XsessionNotFound - X-сессия не обнаружена
+#    NotPermitted     - не разрешено
 #  EXAMPLE
 #    local sBody="notification testing" sSubj="bashlyk::libmsg::udfNotify2X" rc
 #    udfNotify2X "${sSubj}\n----\n${sBody}\n"
@@ -235,9 +235,9 @@ udfNotify2X() {
 #  DESCRIPTION
 #    установить некоторые переменные среды первой локальной X-сессии
 #  ERRORS
-#    iErrorCommandNotFound        - команда не найдена
-#    iErrorXsessionNotFound       - X-сессия не обнаружена
-#    iErrorNotPermitted           - не разрешено
+#    CommandNotFound  - команда не найдена
+#    XsessionNotFound - X-сессия не обнаружена
+#    NotPermitted     - не разрешено
 #    ## TODO улучшить тест
 #  EXAMPLE
 #    udfGetXSessionProperties || echo "X-Session error ($?)"
@@ -257,7 +257,7 @@ udfGetXSessionProperties() {
    userX=$(stat -c %U /proc/$pid)
    [[ -n "$userX" ]] || continue
    [[ "$user" == "$userX" || "$user" == "root" ]] || continue
-   ## TODO если много X-сессий - позволить rootу выбирать оптимальный
+   ## TODO many X-Sessions ? 
    sB="$(grep -az DBUS_SESSION_BUS_ADDRESS= /proc/${pid}/environ)"
    sD="$(grep -az DISPLAY= /proc/${pid}/environ)"
    sX="$(grep -az XAUTHORITY= /proc/${pid}/environ)"
@@ -286,8 +286,8 @@ udfGetXSessionProperties() {
 #    timeout - время показа окна сообщения
 #       user - получатель сообщения
 #  ERRORS
-#    iErrorEmptyOrMissingArgument - аргументы не заданы
-#    iErrorCommandNotFound        - команда не найдена
+#    MissingArgument - аргументы не заданы
+#    CommandNotFound - команда не найдена
 #  EXAMPLE
 #    local title="bashlyk::libmsg::udfNotifyCommand" body="notification testing"
 #    local rc

@@ -1,5 +1,5 @@
 #
-# $Id: liberr.sh 641 2016-12-25 01:50:37+04:00 toor $
+# $Id: liberr.sh 642 2016-12-26 00:00:28+04:00 toor $
 #
 #****h* BASHLYK/liberr
 #  DESCRIPTION
@@ -115,10 +115,10 @@ declare -r _bashlyk_aExport_err="                                              \
 #  INPUTS
 #    <number> - error code - number or predefined name as 'iErrorXXX' or 'XXX'
 #    <string> - error text
-#  RETURN VALUE
-#    iErrorEmptyOrMissingArgument - arguments missing
-#    iErrorUnknown                - first argument is non valid
-#    1-255                        - valid value of first argument
+#  ERRORS
+#    MissingArgument - arguments missing
+#    Unknown         - first argument is non valid
+#    1-255           - valid value of first argument
 #  EXAMPLE
 #    local pid=$BASHPID
 #    udfSetLastError                                                            #? $_bashlyk_iErrorEmptyOrMissingArgument

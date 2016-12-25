@@ -1,5 +1,5 @@
 #
-# $Id: libcsv.sh 641 2016-12-25 01:50:36+04:00 toor $
+# $Id: libcsv.sh 642 2016-12-26 00:00:27+04:00 toor $
 #
 #****h* BASHLYK/libcsv
 #  DESCRIPTION
@@ -77,11 +77,10 @@ declare -r _bashlyk_exports_csv="                                              \
 #  OUTPUT
 #              разделенный символом ";" строка, в полях которого содержатся
 #              конфигурационные данные в формате "<key>=<value>;..."
-#  RETURN VALUE
-#   0                            - Выполнено успешно
-#   iErrorNoSuchFileOrDir        - файл конфигурации не найден
-#   iErrorEmptyOrMissingArgument - аргумент не задан
-#   iErrorEmptyResult            - результат отсутствует
+#  ERRORS
+#   NoSuchFileOrDir - файл конфигурации не найден
+#   MissingArgument - аргумент не задан
+#   EmptyResult     - результат отсутствует
 #  EXAMPLE
 #    local csv='b=true;_bashlyk_ini_test_autoKey_0="iXo Xo = 19";_bashlyk_ini_test_autoKey_1="simple line";iXo=1921;iYo=1080;sTxt="foo bar";'
 #    local sTxt="foo bar" b=true iXo=1921 iYo=1080 ini iniChild
@@ -143,10 +142,9 @@ udfGetIniSection() {
 #  OUTPUT
 #              разделенный символом ";" строка, в полях которого содержатся
 #              данные в формате "<key>=<value>;..."
-#  RETURN VALUE
-#    0                            - Выполнено успешно
-#    iErrorEmptyOrMissingArgument - аргумент отсутствует
-#    iErrorEmptyResult            - пустой результат
+#  ERRORS
+#    MissingArgument - аргумент отсутствует
+#    EmptyResult     - пустой результат
 #  EXAMPLE
 #    local csv='sTxt=bar;b=false;iXo=21;iYo=1080;sTxt=foo bar;b=true;iXo=1920;'
 #    local csvResult
@@ -202,9 +200,8 @@ _CsvOrder_EOF
 #    keys - идентификаторы переменных (без "$ "). При их наличии будет
 #           произведена инициализация в соответствующие переменные значений
 #           совпадающих ключей CSV-строки
-#  RETURN VALUE
-#    0                            - Выполнено успешно
-#    iErrorEmptyOrMissingArgument - аргумент(ы) отсутствуют
+#  ERRORS
+#    MissingArgument - аргумент(ы) отсутствуют
 #  EXAMPLE
 #    local b sTxt iXo iYo
 #    local csv='sTxt=bar;b=false;iXo=21;iYo=1080;sTxt=foo = bar;b=true;iXo=1920;'
@@ -245,9 +242,8 @@ udfSetVarFromCsv() {
 #    keys    - идентификаторы переменных (без "$ "). При их наличии будет
 #              произведена инициализация в соответствующие переменные значений
 #              совпадающих ключей CSV-строки
-#  RETURN VALUE
-#    iErrorEmptyOrMissingArgument - аргумент(ы) отсутствуют
-#     0                           - Выполнено успешно
+#  ERRORS
+#    MissingArgument - аргумент(ы) отсутствуют
 #  EXAMPLE
 #    local sResult='true:foo bar:1024:768'
 #    local sTxt b iXo iYo ini
@@ -280,9 +276,8 @@ udfSetVarFromIni() {
 #              "key=value"
 #  OUTPUT
 #              строка ключей
-#  RETURN VALUE
-#    0                            - Выполнено успешно
-#    iErrorEmptyOrMissingArgument - Ошибка: аргумент отсутствует
+#  ERRORS
+#    MissingArgument - Ошибка: аргумент отсутствует
 #  EXAMPLE
 #    local csv='sTxt="foo bar";b=true;iXo=1921;iYo=1080;' sResult
 #    udfCsvKeys "$csv" | xargs >| grep "^sTxt b iXo iYo$"                       #? true
@@ -318,10 +313,9 @@ udfCsvKeys() {
 #              или до конца конфигурационного файла, если секций нет
 #  OUTPUT
 #              строка CSV;
-#  RETURN VALUE
-#   0  - Выполнено успешно
-#   iErrorNoSuchFileOrDir - аргумент не задан или это не файл конфигурации
-#   iErrorEmptyResult     - функция не возвращает результат
+#  ERRORS
+#   NoSuchFileOrDir - аргумент не задан или это не файл конфигурации
+#   EmptyResult     - функция не возвращает результат
 #  EXAMPLE
 #    local csv='sTxt="foo bar";b=true;iXo=1921;iYo=1080;_bashlyk_ini_test_autoKey_0="simple line";'
 #    local sTxt="foo bar" b=true iXo=1921 iYo=1080 ini iniChild csvResult
@@ -382,10 +376,9 @@ udfReadIniSection() {
 #           в виде копии "<file>.bak"
 #    csv; - CSV-строка, разделённая ";", поля которой содержат данные вида
 #           "[<section>];<key>=<value>;..."
-#  RETURN VALUE
-#    0  - Выполнено успешно
-#    iErrorNotExistNotCreated     - путь не существует и не создан
-#    iErrorEmptyOrMissingArgument - аргументы отсутствуют
+#  ERRORS
+#    NotExistNotCreated - путь не существует и не создан
+#    MissingArgument    - аргументы отсутствуют
 #  EXAMPLE
 #    ## TODO дополнить тесты по второму аргументу
 #    local ini csv='[];void=0;[exec]:;"TZ_bashlyk_&#61_UTC date -R --date_bashlyk_&#61_'@12345679'";sUname_bashlyk_&#61_"$_bashlyk_&#40_uname_bashlyk_&#41_";:[exec];[main];sTxt="foo = bar";b=true;iXo=1921;[replace];"after replacing";[unify];*.bak;*.tmp;*~;[acc];;*.bak;*.tmp;;*.bak;*.tmp;*~;'
@@ -437,9 +430,8 @@ udfIniWrite() {
 #            отсутствии этого аргумента изменения производятся в блоке от
 #            начала файла до первого заголовка секции "[<...>]" данных или до
 #            конца конфигурационного файла, если секций нет вообще
-#  RETURN VALUE
-#    0                            - Выполнено успешно
-#    iErrorEmptyOrMissingArgument - аргументы отсутствуют
+#  ERRORS
+#    MissingArgument - аргументы отсутствуют
 #  EXAMPLE
 #    local csv='sTxt="foo bar";b=true;iXo=1921;iYo=999;' csvResult
 #    local re='b=.*;_b.*auto.*0="= value".*auto.*1=.*key = value".*sTxt=".*ar";'
@@ -499,11 +491,10 @@ udfIniChange() {
 #     +       - накопление данных
 #     !       - замена данных (активная секция)
 #
-#  RETURN VALUE
-#    0                            - Выполнено успешно
-#    iErrorNonValidVariable       - невалидный идентификатор переменной
-#    iErrorNoSuchFileOrDir        - файл конфигурации не найден
-#    iErrorEmptyOrMissingArgument - аргументы отсутствуют
+#  ERRORS
+#    NotValidVariable - невалидный идентификатор переменной
+#    NoSuchFileOrDir  - файл конфигурации не найден
+#    MissingArgument  - аргументы отсутствуют
 #  EXAMPLE
 #    local sTxt="foo = bar" b=true iXo=1921 iYo=1080 ini iniChild
 #    local exec replace unify acc sVoid=void sMain='sTxt;b;iXo'
@@ -590,7 +581,6 @@ udfIni() {
   bashlyk_udfIni_csvSection=$(udfGetCsvSection "$bashlyk_udfIni_csv" "$bashlyk_udfIni_sSection")
   if [[ "$bashlyk_udfIni_s" == "${bashlyk_udfIni_s%:[=\-+\!]*}" ]]; then
    bashlyk_udfIni_aVar="${bashlyk_udfIni_s#*:}"
-   ## TODO продумать расширение имен переменных до вида "имяСекции_переменная"
    udfSetVarFromCsv "$bashlyk_udfIni_csvSection" ${bashlyk_udfIni_aVar//;/ }
   else
    bashlyk_udfIni_cClass="${bashlyk_udfIni_s#*:}"
@@ -603,7 +593,7 @@ udfIni() {
    eval 'export $bashlyk_udfIni_sSection="$(udfCsvHash2Raw "$bashlyk_udfIni_csvSection" "$bashlyk_udfIni_sSection")"'
   fi
  done
- ## TODO вложенные кавычки: " " ""
+ ## TODO internal double quoted: " " ""
  return 0
 }
 #******
@@ -618,9 +608,8 @@ udfIni() {
 #     section - любое количество имен секций, данные которых нужно получить.
 #               По умолчанию и всегда выполняется сериализация "безымянной"
 #               секции
-#  RETURN VALUE
-#    0                            - Выполнено успешно
-#    iErrorEmptyOrMissingArgument - аргументы отсутствуют или файл конфигурации не найден
+#  ERRORS
+#    MissingArgument - аргументы отсутствуют или файл конфигурации не найден
 #  EXAMPLE
 #    local csv='b=true;_bashlyk_ini_test_autoKey_0="iXo Xo = 19";_bashlyk_ini_test_autoKey_1="simple line";iXo=1921;iYo=1080;sTxt="foo bar";'
 #    local sTxt="foo bar" b=true iXo=1921 iYo=1080 ini iniChild
@@ -683,8 +672,6 @@ udfGetCsvSection() {
 #    csv - строка сериализации данных ini-файлов
 #  OUTPUT
 #    csv; строка без заголовка секции [tag]
-#  RETURN VALUE
-#     0  - Выполнено успешно
 #  EXAMPLE
 #    local csv='[];a=b;_bashlyk_ini_void_autoKey_0="d = e";[s1];_bashlyk_ini_s1_autoKey_0=f=0;c=g h;[s2];a=k;_bashlyk_ini_s2_autoKey_0=l m;'
 #    udfSelectEnumFromCsvHash "$csv"    >| grep '^"d = e";$'                    #? true
@@ -715,8 +702,6 @@ udfSelectEnumFromCsvHash() {
 #    csv - строка сериализации данных ini-файлов
 #  OUTPUT
 #    csv; строка без заголовка секции [tag]
-#  RETURN VALUE
-#     0  - Выполнено успешно
 #  EXAMPLE
 #    local csv='[];_bashlyk_csv_record=;a=b;_bashlyk_ini_void_autoKey_0="d = e";[s1];_bashlyk_ini_s1_autoKey_0=f=0;c=g h;[s2];a=k;_bashlyk_ini_s2_autoKey_0=l m;'
 #    udfCsvHash2Raw "$csv"    >| grep '^a=b;"d = e";$'                          #? true
@@ -753,10 +738,8 @@ udfCsvHash2Raw() {
 #  OUTPUT
 #    строки CSV, разделенных ';', каждое поле которой содержит данные в формате
 #    "<ключ>=<значение>" согласно данных строки секции
-#  RETURN VALUE
-#    0                            - Выполнено успешно
-#    iErrorEmptyOrMissingArgument - аргумент отсутствует или файл конфигурации
-#                                   не найден
+#  ERRORS
+#    MissingArgument - аргумент отсутствует или файл конфигурации не найден
 #  EXAMPLE
 #    local csv='sTxt="foo bar";b=true;iXo=1921;iYo=1080;_bashlyk_ini_test_autoKey_0="simple line";'
 #    local sTxt="foo bar" b=true iXo=1921 iYo=1080 ini iniChild csvResult
@@ -799,10 +782,9 @@ udfIniSection2Csv() {
 #  OUTPUT
 #              разделенный символом ";" строка, в полях которого содержатся
 #              конфигурационные данные в формате "<key>=<value>;..."
-#  RETURN VALUE
-#    0                            - Выполнено успешно
-#    iErrorNoSuchFileOrDir        - файл конфигурации не найден
-#    iErrorEmptyOrMissingArgument - аргумент отсутствует
+#  ERRORS
+#    NoSuchFileOrDir - файл конфигурации не найден
+#    MissingArgument - аргумент отсутствует
 #  EXAMPLE
 #    local csv='b=true;_bashlyk_ini_test_autoKey_0="iXo Xo = 19";_bashlyk_ini_test_autoKey_1="simple line";iXo=1921;iYo=1080;sTxt="foo bar";'
 #    local sTxt="foo bar" b=true iXo=1921 iYo=1080 ini iniChild
@@ -867,10 +849,8 @@ udfIniGroupSection2Csv() {
 #  OUTPUT
 #    строки CSV, разделенных ';', каждое поле которой содержит данные в формате
 #    "[<секция>];<ключ>=<значение>" согласно данных секции.
-#  RETURN VALUE
-#    0                            - Выполнено успешно
-#    iErrorEmptyOrMissingArgument - аргумент отсутствует или файл конфигурации
-#                                   не найден
+#  ERRORS
+#    MissingArgument - аргумент отсутствует или файл конфигурации не найден
 #  EXAMPLE
 #    local ini re
 #    re='sTxt="-S-(da.*-R).*y_1="^_s.*e^_";\[exec\].*=$(.*\[ -n "$sUname" \] .*'
@@ -921,11 +901,10 @@ udfIni2Csv() {
 #  OUTPUT
 #              разделенный символом ";" CSV-строка, в полях которого содержатся
 #              конфигурационные данные в формате "[<section>];<key>=<value>;..."
-#  RETURN VALUE
-#    0                            - Выполнено успешно
-#    iErrorNoSuchFileOrDir        - файл конфигурации не найден
-#    iErrorEmptyOrMissingArgument - аргумент отсутствует или нет входных данных
-#    iErrorEmptyResult            - результат отсутствует
+#  ERRORS
+#    NoSuchFileOrDir - файл конфигурации не найден
+#    MissingArgument - аргумент отсутствует или нет входных данных
+#    EmptyResult     - результат отсутствует
 #  EXAMPLE
 #    local re='\[test\];_b.*d=;sTxt=foo;.*autoKey_0=.*_b.*d=;.*foo bar.*o=1080;'
 #    local sTxt=foo b=false iXo=1921 iYo=80 ini iniChild csvResult
@@ -1012,9 +991,8 @@ udfIniGroup2Csv() {
 #    _bashlyk_csvOptions2Ini для использования в udfIni
 #  INPUTS
 #    распределение переменных по указанным секциям (см. udfIni)
-#  RETURN VALUE
-#    0                            - Выполнено успешно
-#    iErrorEmptyOrMissingArgument - аргумент отсутствует
+#  ERRORS
+#    MissingArgument - аргумент отсутствует
 #  EXAMPLE
 #   local sVoid="verbose;direct;log;" sMain="source;destination"
 #   local unify="*.tmp,*~,*.bak" replace="replace" unify="unify" acc="acc"
