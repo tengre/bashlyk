@@ -1,5 +1,5 @@
 #
-# $Id: liblog.sh 642 2016-12-26 00:00:27+04:00 toor $
+# $Id: liblog.sh 643 2016-12-26 13:49:26+04:00 toor $
 #
 #****h* BASHLYK/liblog
 #  DESCRIPTION
@@ -57,8 +57,8 @@ declare -r _bashlyk_aRequiredCmd_log="                                         \
 "
 declare -r _bashlyk_aExport_log="                                              \
                                                                                \
-     udfCheck4LogUse udfDebug udfFinally udfUptime udfLog udfLogger            \
-     udfSetLog udfSetLogSocket udfIsTerminal udfIsInteract _fnLog              \
+    udfCheck4LogUse udfDebug udfFinally udfUptime udfLog udfLogger             \
+    udfSetLog udfSetLogSocket udfIsTerminal udfIsInteract _fnLog               \
                                                                                \
 "
 #******

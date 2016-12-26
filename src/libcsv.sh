@@ -1,5 +1,5 @@
 #
-# $Id: libcsv.sh 642 2016-12-26 00:00:27+04:00 toor $
+# $Id: libcsv.sh 643 2016-12-26 13:49:26+04:00 toor $
 #
 #****h* BASHLYK/libcsv
 #  DESCRIPTION
@@ -504,16 +504,16 @@ udfIniChange() {
 #    iniChild="$(dirname $ini)/child.$(basename $ini)"
 #
 #    cat <<'EOFini' > ${ini}                                                    #-
-#    void	=	1                                                               #-
+#    void	=	1                                                       #-
 #[exec]:                                                                        #-
 #    TZ=UTC date -R --date='@12345678'                                          #-
 #    sUname="$(uname -a)"                                                       #-
 #:[exec]                                                                        #-
 #[main]                                                                         #-
-#    sTxt	=	$(date -R)                                                      #-
-#    b		=	false                                                           #-
-#    iXo Xo	=	19                                                              #-
-#    iYo	=	80                                                              #-
+#    sTxt	=	$(date -R)                                              #-
+#    b		=	false                                                   #-
+#    iXo Xo	=	19                                                      #-
+#    iYo	=	80                                                      #-
 #    `simple line`                                                              #-
 #[replace]                                                                      #-
 #    before replacing                                                           #-
@@ -526,18 +526,18 @@ udfIniChange() {
 #                                                                               #-
 #    EOFini                                                                     #-
 #    cat <<'EOFiniChild' > ${iniChild}                                          #-
-#    void	=	0                                                               #-
-#    [main]	                                                                    #-
-#    sTxt	=	foo = bar                                                       #-
-#    b		=	true                                                            #-
-#    iXo	=	1921                                                            #-
-#    iYo	=	1080                                                            #-
+#    void	=	0                                                       #-
+#    [main]	                                                                #-
+#    sTxt	=	foo = bar                                               #-
+#    b		=	true                                                    #-
+#    iXo	=	1921                                                    #-
+#    iYo	=	1080                                                    #-
 #[exec]:                                                                        #-
 #    TZ=UTC date -R --date='@12345679'                                          #-
 #    sUname="$(uname)"                                                          #-
 #:[exec]                                                                        #-
 #[replace]                                                                      #-
-#	after replacing                                                             #-
+#	after replacing                                                         #-
 #[unify]                                                                        #-
 #    *.bak                                                                      #-
 #    *.tmp                                                                      #-

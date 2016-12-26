@@ -1,5 +1,5 @@
 #
-# $Id: libcnf.sh 642 2016-12-26 00:00:27+04:00 toor $
+# $Id: libcnf.sh 643 2016-12-26 11:37:56+04:00 toor $
 #
 #****h* BASHLYK/libcnf
 #  DESCRIPTION
@@ -122,9 +122,9 @@ CNF.free() {
 #    "conf", "c.conf", "b.c.conf", "a.b.c.conf" files, if they exist, too.
 #    Search  source of the configuration is done on the following criteria (in
 #    the absence of the full path):
-#      1 in the default directory,
+#      1. in the default directory,
 #      2. in the current directory
-#      3. in the system directory "/ etc"
+#      3. in the system directory "/etc"
 #  NOTES
 #    The file name must not begin with a dot or end with a dot.
 #    configuration sources are ignored if they do not owned by the owner of the
@@ -214,7 +214,7 @@ CNF.__show() {
 #    "conf", "c.conf", "b.c.conf", "a.b.c.conf" files, if they exist, too.
 #    Search  source of the configuration is done on the following criteria (in
 #    the absence of the full path):
-#      1 in the default directory,
+#      1. in the default directory,
 #      2. in the current directory
 #      3. in the system directory "/etc"
 #  NOTES
@@ -331,7 +331,7 @@ CNF.save() {
 #    "conf", "c.conf", "b.c.conf", "a.b.c.conf" files, if they exist, too.
 #    Search  source of the configuration is done on the following criteria (in
 #    the absence of the full path):
-#      1 in the default directory,
+#      1. in the default directory,
 #      2. in the current directory
 #      3. in the system directory "/etc"
 #  NOTES
