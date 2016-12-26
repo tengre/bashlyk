@@ -1,5 +1,5 @@
 #
-# $Id: libini.sh 641 2016-12-25 01:50:35+04:00 toor $
+# $Id: libini.sh 644 2016-12-26 17:28:03+04:00 toor $
 #
 #****h* BASHLYK/libini
 #  DESCRIPTION
@@ -111,7 +111,7 @@ declare -r _bashlyk_exports_ini="                                              \
 #    declare -pf tnew.show >/dev/null 2>&1                                      #= true
 #    declare -pf tnew.save >/dev/null 2>&1                                      #= true
 #    declare -pf tnew.load >/dev/null 2>&1                                      #= true
-#    tnew.__section.id @ >| grep '__id__'                                       #? true
+#    tnew.__section.id @ >| grep _hTNEWSettings                                 #? true
 #    tnew.free                                                                  #? true
 #  SOURCE
 INI() {
@@ -121,7 +121,8 @@ INI() {
   udfOn InvalidVariable throw $s
 
   declare -ag -- _a${s^^}="()"
-  declare -Ag -- _h${s^^}="([__id__]=__id__)"
+  declare -Ag -- _h${s^^}Settings="([iSpacesAroundTheEqual]=4)"
+  declare -Ag -- _h${s^^}="([__settings__]=_h${s^^}Settings)"
 
   [[ $s == INI ]] && return 0
 
@@ -134,6 +135,7 @@ INI() {
     eval "${f/${BASH_REMATCH[1]}/${1}.$s}"
 
   done
+
 
   return 0
 
@@ -155,7 +157,7 @@ INI() {
 #    INI tSectionId2
 #    tSectionId1.__section.select
 #    tSectionId1.__section.id   >| grep ^_hTSECTIONID1_aaac3ffb13380885c7f49.*$ #? true
-#    tSectionId2.__section.id @ >| grep ^__id__$                                #? true
+#    tSectionId2.__section.id @ >| grep ^_hTSECTIONID2Settings$                 #? true
 #    tSectionId1.free
 #    tSectionId2.free
 #  SOURCE
@@ -231,12 +233,13 @@ INI.free() {
 
   for s in $( ${o}.__section.id @ ); do
 
-    [[ $s =~ ^[[:blank:]]*$|^__id__$ ]] && continue || unset -v $s
+    [[ $s =~ ^[[:blank:]]*$ ]] && continue || unset -v $s
 
   done
 
   unset -v _a${o^^}
   unset -v _h${o^^}
+  unset -v _h${o^^}Settings
 
   [[ $o == INI ]] && return 0
 
@@ -267,7 +270,7 @@ INI.free() {
 #    tSel.__section.select tSect                                                #? true
 #    tSel.__section.set key "is value"
 #    tSel.__section.get key >| grep '^is value$'                                #? true
-#    tSel.__section.id @ >| md5sum - | grep ^180d2f8ad60b98865dfe06b8710b3a.*-$ #? true
+#    tSel.__section.id @ >| grep -P "_hTSEL(Settings|aaac3ffb133|eb87bef48b9)"  #? true
 #    tSel.free
 #  SOURCE
 INI.__section.select() {
@@ -279,7 +282,7 @@ INI.__section.select() {
 
   if [[ ! $id ]]; then
 
-    #eval "(( \${#_h${o^^}[@]} > 0 )) || declare -Ag -- _h${o^^}='([__id__]=__id__)'"
+    #eval "(( \${#_h${o^^}[@]} > 0 )) || declare -Ag -- _h${o^^}='([__settings__]=???)'"
     #eval "(( \${#_a${o^^}[@]} > 0 )) || declare -ag -- _a${o^^}='()'"
     id=$(md5sum <<< "$s")
     id="_h${o^^}_${id:0:32}"
@@ -312,12 +315,22 @@ INI.__section.select() {
 #    tSShow.__section.set key "unnamed section"
 #    tSShow.__section.show >| md5sum | grep ^67d9d58badfb9e5e568e72adcc5c95.*-$ #? true
 #    tSShow.free
+#    INI tSShow2
+#    tSShow2.__section.select __settings__
+#    tSShow2.__section.set iPadding 0
+#    tSShow2.__section.select tSect2
+#    tSShow2.__section.set key "is value"
+#    tSShow2.__section.show tSect2 >| md5sum - | grep ^bfffce5fb8c749ba8c44.*-$ #? true
+#    tSShow2.free
 #  SOURCE
 INI.__section.show() {
 
-  local i iKeyWidth iC id o sA sU
+  local i iKeyWidth iC id iPadding o sA sU
 
   o=${FUNCNAME[0]%%.*}
+
+  iPadding=$( ${o}.get [__settings__]iPadding )
+  udfIsNumber $iPadding || iPadding=4
 
   ${o}.__section.select $1
   id=$( ${o}.__section.id $1 )
@@ -347,7 +360,16 @@ INI.__section.show() {
 
       iKeyWidth=$( ${o}.__section.get _bashlyk_key_width )
       udfIsNumber $iKeyWidth || iKeyWidth=''
-      eval "for i in "\${!$id[@]}"; do [[ \$i =~ ^_bashlyk_ ]] || printf -- '\t%${iKeyWidth}s    =    %s\n' \"\$i\" \"\${$id[\$i]}\"; done;"
+      eval "                                                                   \
+                                                                               \
+          for i in "\${!$id[@]}"; do                                           \
+            if [[ ! \$i =~ ^_bashlyk_ ]]; then                                 \
+              printf -- '\t%${iKeyWidth}s%${iPadding}s=%${iPadding}s%s\n'      \
+                \"\$i\" \"\" \"\"  \"\${$id[\$i]}\";                           \
+            fi                                                                 \
+          done;                                                                \
+                                                                               \
+      "
 
     fi
 
@@ -673,7 +695,7 @@ INI.set() {
 #  SOURCE
 INI.show() {
 
-  local o s
+  local i o s
 
   o=${FUNCNAME[0]%%.*}
 
@@ -682,7 +704,7 @@ INI.show() {
   for (( i=0; i < $( ${o}.__section.byindex ); i++ )); do
 
     s="$( ${o}.__section.byindex $i )"
-    [[ $s =~ ^(__global__|__id__)$ ]] && continue
+    [[ $s =~ ^(__global__|__settings__)$ ]] && continue
     ${o}.__section.show "$s"
 
   done
