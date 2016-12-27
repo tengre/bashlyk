@@ -1,5 +1,5 @@
 #
-# $Id: libini.sh 644 2016-12-26 17:28:03+04:00 toor $
+# $Id: libini.sh 645 2016-12-27 17:09:06+04:00 toor $
 #
 #****h* BASHLYK/libini
 #  DESCRIPTION
@@ -316,21 +316,18 @@ INI.__section.select() {
 #    tSShow.__section.show >| md5sum | grep ^67d9d58badfb9e5e568e72adcc5c95.*-$ #? true
 #    tSShow.free
 #    INI tSShow2
-#    tSShow2.__section.select __settings__
-#    tSShow2.__section.set iPadding 0
-#    tSShow2.__section.select tSect2
-#    tSShow2.__section.set key "is value"
-#    tSShow2.__section.show tSect2 >| md5sum - | grep ^bfffce5fb8c749ba8c44.*-$ #? true
+#    tSShow2.set [ __settings__ ] bConfMode = true
+#    tSShow2.set [ tSect2 ] keyFirst  = is first value
+#    tSShow2.set [ tSect2 ] keySecond = is second value
+#    tSShow2.__section.show tSect2 >| md5sum -
+###| grep ^33399f06175078f75e59.*-$ #? true
 #    tSShow2.free
 #  SOURCE
 INI.__section.show() {
 
-  local i iKeyWidth iC id iPadding o sA sU
+  local i iKeyWidth iC id iPadding o q sA sU
 
   o=${FUNCNAME[0]%%.*}
-
-  iPadding=$( ${o}.get [__settings__]iPadding )
-  udfIsNumber $iPadding || iPadding=4
 
   ${o}.__section.select $1
   id=$( ${o}.__section.id $1 )
@@ -360,11 +357,26 @@ INI.__section.show() {
 
       iKeyWidth=$( ${o}.__section.get _bashlyk_key_width )
       udfIsNumber $iKeyWidth || iKeyWidth=''
+
+      iPadding=$( ${o}.get [__settings__]iPadding )
+      udfIsNumber $iPadding || iPadding=4
+
+      if [[ $( ${o}.get [__settings__]bConfMode ) =~ ^(true|yes|1)$ ]]; then
+
+        q="\042"
+        iPadding=0
+
+      else
+
+        q=''
+
+      fi
+
       eval "                                                                   \
                                                                                \
           for i in "\${!$id[@]}"; do                                           \
             if [[ ! \$i =~ ^_bashlyk_ ]]; then                                 \
-              printf -- '\t%${iKeyWidth}s%${iPadding}s=%${iPadding}s%s\n'      \
+              printf -- '\t%${iKeyWidth}s%${iPadding}s=%${iPadding}s$q%s$q\n'  \
                 \"\$i\" \"\" \"\"  \"\${$id[\$i]}\";                           \
             fi                                                                 \
           done;                                                                \
@@ -632,7 +644,7 @@ INI.set() {
   udfOn MissingArgument $* || return $?
 
   local -a a
-  local ISF o k s v
+  local iKeyWidth ISF o k s v
 
   o="$*" && s="$IFS" && IFS='[]' && a=( $o ) && IFS="$s"
   o=${FUNCNAME[0]%%.*}
@@ -669,6 +681,10 @@ INI.set() {
 
   else
 
+     iKeyWidth=$( ${o}.__section.get _bashlyk_key_width )
+     udfIsNumber iKeyWidth || iKeyWidth=0
+
+    (( ${#k} > iKeyWidth )) && ${o}.__section.set _bashlyk_key_width ${#k}
     ${o}.__section.set "$k" "$v"
 
   fi
