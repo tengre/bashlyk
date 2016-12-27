@@ -1,5 +1,5 @@
 #
-# $Id: libini.sh 645 2016-12-27 17:09:06+04:00 toor $
+# $Id: libini.sh 646 2016-12-28 02:13:04+04:00 toor $
 #
 #****h* BASHLYK/libini
 #  DESCRIPTION
@@ -111,8 +111,8 @@ declare -r _bashlyk_exports_ini="                                              \
 #    declare -pf tnew.show >/dev/null 2>&1                                      #= true
 #    declare -pf tnew.save >/dev/null 2>&1                                      #= true
 #    declare -pf tnew.load >/dev/null 2>&1                                      #= true
-#    tnew.__section.id @ >| grep _hTNEWSettings                                 #? true
-#    tnew.free                                                                  #? true
+#    tnew.__section.id @ >| grep _hTNEW_settings                                #? true
+#    tnew.free
 #  SOURCE
 INI() {
 
@@ -121,8 +121,8 @@ INI() {
   udfOn InvalidVariable throw $s
 
   declare -ag -- _a${s^^}="()"
-  declare -Ag -- _h${s^^}Settings="([iSpacesAroundTheEqual]=4)"
-  declare -Ag -- _h${s^^}="([__settings__]=_h${s^^}Settings)"
+  declare -Ag -- _h${s^^}_settings="()"
+  declare -Ag -- _h${s^^}="([__settings__]=_h${s^^}_settings)"
 
   [[ $s == INI ]] && return 0
 
@@ -156,8 +156,8 @@ INI() {
 #    INI tSectionId1
 #    INI tSectionId2
 #    tSectionId1.__section.select
-#    tSectionId1.__section.id   >| grep ^_hTSECTIONID1_aaac3ffb13380885c7f49.*$ #? true
-#    tSectionId2.__section.id @ >| grep ^_hTSECTIONID2Settings$                 #? true
+#    tSectionId1.__section.id   >| grep ^_hTSECTIONID1_[[:xdigit:]]*$           #? true
+#    tSectionId2.__section.id @ >| grep ^_hTSECTIONID2_settings$                #? true
 #    tSectionId1.free
 #    tSectionId2.free
 #  SOURCE
@@ -239,7 +239,7 @@ INI.free() {
 
   unset -v _a${o^^}
   unset -v _h${o^^}
-  unset -v _h${o^^}Settings
+  unset -v _h${o^^}_settings
 
   [[ $o == INI ]] && return 0
 
@@ -270,7 +270,7 @@ INI.free() {
 #    tSel.__section.select tSect                                                #? true
 #    tSel.__section.set key "is value"
 #    tSel.__section.get key >| grep '^is value$'                                #? true
-#    tSel.__section.id @ >| grep -P "_hTSEL(Settings|aaac3ffb133|eb87bef48b9)"  #? true
+#    tSel.__section.id @ >| grep -P "^_hTSEL.*(settings|[[:xdigit:]]*)$"        #? true
 #    tSel.free
 #  SOURCE
 INI.__section.select() {
@@ -282,10 +282,9 @@ INI.__section.select() {
 
   if [[ ! $id ]]; then
 
-    #eval "(( \${#_h${o^^}[@]} > 0 )) || declare -Ag -- _h${o^^}='([__settings__]=???)'"
-    #eval "(( \${#_a${o^^}[@]} > 0 )) || declare -ag -- _a${o^^}='()'"
-    id=$(md5sum <<< "$s")
-    id="_h${o^^}_${id:0:32}"
+    id=$(sha1sum <<< "$s")
+    id="_h${o^^}_${id:0:40}"
+
     declare -Ag -- $id="()"
 
     eval "_h${o^^}[$s]=$id; _a${o^^}[\${#_a${o^^}[@]}]=\"$s\""
