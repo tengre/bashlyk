@@ -1,5 +1,5 @@
 #
-# $Id: libcnf.sh 643 2016-12-26 11:37:56+04:00 toor $
+# $Id: libcnf.sh 647 2016-12-28 16:57:47+04:00 toor $
 #
 #****h* BASHLYK/libcnf
 #  DESCRIPTION
@@ -38,83 +38,12 @@
 : ${_bashlyk_pathCnf:=$(pwd)}
 : ${_bashlyk_sUnnamedKeyword:=_bashlyk_unnamed_key_}
 
-declare -r _bashlyk_externals_cnf="date mkdir pwd tr"
-declare -r _bashlyk_exports_cnf="CNF load save free udfGetConfig udfSetConfig"
-declare -r _bashlyk_methods_cnf="__show load save free"
+declare -r _bashlyk_externals_cnf="mkdir pwd"
+declare -r _bashlyk_exports_cnf="udfGetConfig udfSetConfig"
 #******
-#****e* libcnf/CNF
+#****p* libcnf/__getconfig
 #  SYNOPSIS
-#    CNF [<object>]
-#  DESCRIPTION
-#    constructor for new instance <object> of the CNF "class"
-#  ARGUMENTS
-#    valid name for created instance, default - used class name "CNF" as
-#    instance name
-#  ERRORS
-#    InvalidArgument - listed in the $_bashlyk_methods_cnf method not found
-#    InvalidVariable - invalid name for instance
-#  EXAMPLE
-#    CNF tnew                                                                   #? true
-#    declare -pf tnew.load >/dev/null 2>&1                                      #= true
-#    declare -pf tnew.save >/dev/null 2>&1                                      #= true
-#    tnew.free
-#  SOURCE
-CNF() {
-
-  local f s=${1:-CNF}
-
-  udfOn InvalidVariable throw $s
-
-  [[ $s == CNF ]] && return 0
-
-  for s in $_bashlyk_methods_cnf; do
-
-    f=$( declare -pf CNF.${s} )
-
-    [[ $f =~ ^(CNF.${s}).\(\) ]] || eval $( udfOnError throw InvalidArgument "not instance $s method for $o object" )
-
-    eval "${f/${BASH_REMATCH[1]}/${1}.$s}"
-
-  done
-
-  return 0
-
-}
-#******
-#****e* libcnf/CNF.free
-#  SYNOPSIS
-#    <object>.free
-#  DESCRIPTION
-#    destructor for new instance <object> of the CNF "class"
-#  NOTES
-#    public method
-#  EXAMPLE
-#    CNF tFree
-#    declare -pf tFree.load >/dev/null 2>&1                                     #= true
-#    declare -pf tFree.save >/dev/null 2>&1                                     #= true
-#    tFree.free                                                                 #? true
-#    declare -pf tFree.load >/dev/null 2>&1                                     #= false
-#    declare -pf tFree.save >/dev/null 2>&1                                     #= false
-#  SOURCE
-CNF.free() {
-
-  local o s
-
-  o=${FUNCNAME[0]%%.*}
-
-  [[ $o == CNF ]] && return 0
-
-  for s in $_bashlyk_methods_cnf; do
-
-    unset -f ${o}.$s
-
-  done
-
-}
-#******
-#****p* libcnf/CNF.__show
-#  SYNOPSIS
-#    CNF.__show <file> [variable name s]
+#    CNF.__getconfig <file> [variable name s]
 #  DESCRIPTION
 #    Safely reading of the active configuration by using the INI library.
 #    configuration source can be a single file or a group of related files. For
@@ -134,7 +63,7 @@ CNF.free() {
 #  OUTPUT
 #    a serialized CSV-string or an error code and message.
 #  EXAMPLE
-#    local b conf d pid s0 s
+#    local b confChild confMain pid s s0
 #    udfMakeTemp confMain suffix=.conf
 #    confChild="${confMain%/*}/child.${confMain##*/}"                           #-
 #    udfAddFile2Clean $confChild                                                #-
@@ -147,31 +76,29 @@ CNF.free() {
 #                                                                               #-
 #    EOFconf                                                                    #-
 #    cat $confMain
-#    CNF conf
-#    conf.__show $confMain >| grep 'pid=$$\|b=true\|s="$(uname -a)"\|s0=$0\|;$' #? true
-#    rm -f $conf
-#    unset b conf pid s0 s
+#    __getconfig $confMain >| grep 'pid=$$\|b=true\|s="$(uname -a)"\|s0=$0\|;$' #? true
+#    unset b pid s s0
 #    cat <<'EOFchild' > $confChild                                              #-
 #                                                                               #-
 #    s0=bash                                                                    #-
 #    b=false                                                                    #-
 #    pid=$$                                                                     #-
 #    s="$(uname -a)"                                                            #-
+#    test=test                                                                  #-
 #                                                                               #-
 #    EOFchild                                                                   #-
 #    cat $confChild
-#    conf.__show $confChild b,pid >| grep 'pid=$$\|b=false\|;$'                 #? true
-#    conf.free
+#    __getconfig $confChild b,pid >| grep 'pid=$$\|b=false\|;$'                 #? true
 #    rm -f $confChild
 #    _ onError return
-#    eval "$( CNF.__show $confChild )"                                          #? $_bashlyk_iErrorNoSuchFileOrDir
-#    eval "$( CNF.__show )"                                                     #? $_bashlyk_iErrorEmptyOrMissingArgument
+#    eval "$( __getconfig $confChild )"                                         #? $_bashlyk_iErrorNoSuchFileOrDir
+#    eval "$( __getconfig )"                                                    #? $_bashlyk_iErrorEmptyOrMissingArgument
 #  SOURCE
-CNF.__show() {
+__getconfig() {
 
   local fn id k o s
 
-  o="_cnf_${FUNCNAME[0]%%.*}_${RANDOM}"
+  o="${FUNCNAME[0]%%.*}_${RANDOM}${RANDOM}"
 
   if [[ ! $1 ]]; then
 
@@ -196,128 +123,18 @@ CNF.__show() {
   ${o}.__section.select
   id=$( ${o}.__section.id )
 
-  eval "for k in \${!$id[@]}; do [[ \$k =~ ^_bashlyk_ ]] && continue; udfIsValidVariable \$k && s+=\$k=\"\${$id[\$k]}\"\;; done;"
+  eval "                                                                       \
+                                                                               \
+    for k in \${!$id[@]}; do                                                   \
+      [[ \$k =~ ^_bashlyk_ ]] && continue;                                     \
+      udfIsValidVariable \$k && s+=\$k=\"\${$id[\$k]}\"\;;                     \
+    done;                                                                      \
+                                                                               \
+  "
 
   ${o}.free
 
   echo "$s"
-
-}
-#******
-#****e* libcnf/CNF.load
-#  SYNOPSIS
-#    CNF.load <file> [<variable>[, ]..]
-#  DESCRIPTION
-#    Safely reading of the active configuration by using the INI library.
-#    configuration source can be a single file or a group of related files. For
-#    example, if <file> - is "a.b.c.conf" and it exists, sequentially read
-#    "conf", "c.conf", "b.c.conf", "a.b.c.conf" files, if they exist, too.
-#    Search  source of the configuration is done on the following criteria (in
-#    the absence of the full path):
-#      1. in the default directory,
-#      2. in the current directory
-#      3. in the system directory "/etc"
-#  NOTES
-#    The file name must not begin with a point or end with a point.
-#    configuration sources are ignored if they do not owned by the owner of the
-#    process or root.
-#  ARGUMENTS
-#    <file>     - source of the configuration
-#    <variable> - set only this list of the variables from the configuration
-#  ERRORS
-#    MissingArgument - no arguments
-#    NoSuchFileOrDir - configuration file is not found
-#    InvalidArgument - name contains the point at the beginning or at the end of
-#                      the name
-#  EXAMPLE
-#    local b conf pid s0 s
-#    udfMakeTemp confMain suffix=.conf
-#    confChild="${confMain%/*}/child.${confMain##*/}"                           #-
-#    udfAddFile2Clean $confChild                                                #-
-#    cat <<'EOFconf' > $confMain                                                #-
-#                                                                               #-
-#    s0=$0                                                                      #-
-#    b=true                                                                     #-
-#    pid=$$                                                                     #-
-#    s="$(uname -a)"                                                            #-
-#                                                                               #-
-#    EOFconf                                                                    #-
-#    cat $confMain
-#    CNF conf
-#    conf.load $confMain                                                        #? true
-#    echo "$s0 $b $pid $s" >| grep "$0\|true\|$$\|$(uname -a)"                  #? true
-#    rm -f $conf
-#    unset b conf pid s0 s
-#    cat <<'EOFchild' > $confChild                                              #-
-#                                                                               #-
-#    s0=bash                                                                    #-
-#    b=false                                                                    #-
-#    pid=$$                                                                     #-
-#    s="$(uname -a)"                                                            #-
-#                                                                               #-
-#    EOFchild                                                                   #-
-#    cat $confChild
-#    conf.load $confChild b pid                                                 #? true
-#    echo "$b $pid" >| grep "false\|$$"                                         #? true
-#    conf.free
-#    rm -f $confChild
-#    CNF.load $confChild                                                        #? $_bashlyk_iErrorNoSuchFileOrDir
-#    CNF.load                                                                   #? $_bashlyk_iErrorEmptyOrMissingArgument
-#  SOURCE
-CNF.load() {
-
-  eval "$( CNF.__show $@ )"
-
-}
-#******
-#****e* libcnf/CNF.save
-#  SYNOPSIS
-#    CNF.save <file> "<comma separated key=value pairs>;"
-#  DESCRIPTION
-#    Write to the <file> string in the format "key=value" from a fields of the
-#    second argument "<CSV>;"
-#    In the case where the filename does not contain the path, it is saved in a
-#    default directory, or is saved using a full path.
-#  ARGUMENTS
-#    <file> - file name of the active configuration
-#    "<comma separated key=value pairs>;" - CSV-string, divided by ";", fields
-#             that contain the data of the form "key = value"
-#  NOTES
-#    It is important to take the arguments in double quotes, if they contain a
-#    whitespace or ';'
-#  ERRORS
-#    MissingArgument    - no arguments
-#    NotExistNotCreated - target file not created or updated
-#    InvalidArgument    - name contains the point at the beginning or at the end
-#                         of the name
-#  EXAMPLE
-#    udfMakeTemp conf suffix=.conf
-#    CNF cnf
-#    cnf.save $conf "s0=$0;b=true;pid=$$;s=$(uname -a);$(date -R -r $0);"       #? true
-#    cat $conf >| grep "s0=$0\|b=true\|pid=$$\|s=\"$(uname -a)\""               #? true
-#    cnf.free
-#    rm -f $conf
-#  SOURCE
-CNF.save() {
-
-  local conf IFS=$' \t\n' pathCnf="$_bashlyk_pathCnf"
-
-  [[ $1 && $2 ]] || eval $( udfOnError return MissingArgument )
-
-  [[ "$1" != "${1##*/}" ]] && pathCnf="${1%/*}"
-
-  mkdir -p "$pathCnf" || eval $( udfOnError return NotExistNotCreated "$pathCnf" )
-
-  conf="${pathCnf}/${1##*/}"
-
-  {
-
-    printf -- '#\n# created %s by %s\n#\n' "$( date -R )" "$( _ sUser )"
-    udfCheckCsv "$2" | tr ';' '\n'
-
-  } >> $conf 2>/dev/null
-
-  return 0
 
 }
 #******
@@ -347,7 +164,7 @@ CNF.save() {
 #    InvalidArgument - name contains the point at the beginning or at the end of
 #                      the name
 #  EXAMPLE
-#    local b confChild confMain pid s0 s
+#    local b confChild confMain pid s s0
 #    udfMakeTemp confMain suffix=.conf
 #    confChild="${confMain%/*}/child.${confMain##*/}"                           #-
 #    udfAddFile2Clean $confChild                                                #-
@@ -362,7 +179,7 @@ CNF.save() {
 #    cat $confMain
 #    udfGetConfig $confMain                                                     #? true
 #    echo "$s0 $b $pid $s" >| grep "$0 true $$ $(uname -a)"                     #? true
-#    unset b conf pid s0 s
+#    unset b pid s0 s
 #    cat <<'EOFchild' > $confChild                                              #-
 #                                                                               #-
 #    s0=bash                                                                    #-
@@ -380,7 +197,7 @@ CNF.save() {
 #  SOURCE
 udfGetConfig() {
 
-  eval "$( CNF.__show $@ )"
+  eval "$( __getconfig $@ )"
 
 }
 #******
@@ -406,15 +223,37 @@ udfGetConfig() {
 #                         the name
 #  EXAMPLE
 #    udfMakeTemp conf suffix=.conf
-#    CNF cnf
-#    cnf.save $conf "s0=$0;b=true;pid=$$;s=$(uname -a);$(date -R -r $0);"       #? true
-#    cnf.free
+#    udfSetConfig $conf "s0=$0;b=true;pid=$$;s=$(uname -a);$(date -R -r $0);"   #? true
 #    cat $conf >| grep "s0=$0\|b=true\|pid=$$\|s=\"$(uname -a)\""               #? true
 #    rm -f $conf
 #  SOURCE
 udfSetConfig() {
 
-  CNF.save "$@"
+  udfOn MissingArgument throw "$@"
+
+  local conf path o s
+
+  [[ "$1" != "${1##*/}" ]] && path="${1%/*}" || path="$( _ pathCnf )"
+  conf="${path}/${1##*/}"
+
+  mkdir -p $path && touch $conf || eval $( udfOnError throw NotExistNotCreated "$conf" )
+
+  o="${FUNCNAME[0]%%.*}_${RANDOM}${RANDOM}"
+  INI $o
+  ${o}.set [ __settings__ ]bConfMode = true
+
+  while read -t 4; do
+
+    ${o}.set $REPLY
+
+  done< <( echo -e "${2//;/\\\n}" )
+
+  ${o}.save $conf
+  s=$?
+
+  ${o}.free
+
+  return $s
 
 }
 #******

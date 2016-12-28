@@ -1,5 +1,5 @@
 #
-# $Id: libstd.sh 642 2016-12-26 00:00:27+04:00 toor $
+# $Id: libstd.sh 647 2016-12-28 16:57:47+04:00 toor $
 #
 #****h* BASHLYK/libstd
 #  DESCRIPTION
@@ -239,7 +239,16 @@ udfIsValidVariable() {
 #    udfQuoteIfNeeded two words >| grep '^".*"$'                                #? true
 #  SOURCE
 udfQuoteIfNeeded() {
- [[ "$*" =~ [[:space:]] ]] &&  echo "\"$*\"" || echo "$*"
+
+  if [[ "$*" =~ [[:space:]] && ! "$*" =~ ^\".*\"$ ]]; then
+
+    echo "\"$*\""
+
+  else
+
+    echo "$*"
+
+  fi
 }
 #******
 #****f* libstd/udfWSpace2Alias
@@ -1134,8 +1143,8 @@ udfCheckCsv() {
 		s=${s/\[*\][;]/}
 		s=${s//[\'\"]/}
 
-		k="$(echo ${s%%=*}|xargs)"
-		v="$(echo ${s#*=}|xargs)"
+		k="$( echo ${s%%=*} )"
+		v="$( echo ${s#*=} )"
 
 		[[ -n "$k" ]] || continue
 		if [[ "$k" == "$v" || -n "$(echo "$k" | grep '.*[[:space:]+].*')" ]]; then

@@ -1,5 +1,5 @@
 #
-# $Id: libini.sh 646 2016-12-28 02:13:04+04:00 toor $
+# $Id: libini.sh 647 2016-12-28 17:09:47+04:00 toor $
 #
 #****h* BASHLYK/libini
 #  DESCRIPTION
@@ -84,7 +84,7 @@ declare -r _bashlyk_methods_ini="                                              \
 "
 declare -r _bashlyk_externals_ini="                                            \
                                                                                \
-    date echo getopt md5sum mkdir mv pwd rm stat touch                         \
+    date echo getopt sha1sum mkdir mv pwd rm stat touch                        \
                                                                                \
 "
 declare -r _bashlyk_exports_ini="                                              \
@@ -318,13 +318,13 @@ INI.__section.select() {
 #    tSShow2.set [ __settings__ ] bConfMode = true
 #    tSShow2.set [ tSect2 ] keyFirst  = is first value
 #    tSShow2.set [ tSect2 ] keySecond = is second value
-#    tSShow2.__section.show tSect2 >| md5sum -
-###| grep ^33399f06175078f75e59.*-$ #? true
+#    tSShow2.set [ tSect2 ] keyThird  = is_third_value
+#    tSShow2.__section.show tSect2 >| md5sum - | grep ^7fa0321f9ef5bb7c4ca2.*-$ #? true
 #    tSShow2.free
 #  SOURCE
 INI.__section.show() {
 
-  local i iKeyWidth iC id iPadding o q sA sU
+  local iC id k o sA sU
 
   o=${FUNCNAME[0]%%.*}
 
@@ -338,7 +338,7 @@ INI.__section.show() {
 
   if [[ $sU == "=" ]]; then
 
-    eval "for i in "\${!$id[@]}"; do [[ \$i =~ ^_bashlyk_raw_uniq= ]] && printf -- '%s\n' \"\${$id[\$i]}\"; done;"
+    eval "for k in "\${!$id[@]}"; do [[ \$k =~ ^_bashlyk_raw_uniq= ]] && printf -- '%s\n' \"\${$id[\$k]}\"; done;"
 
   else
 
@@ -346,13 +346,15 @@ INI.__section.show() {
 
     if udfIsNumber $iC && (( iC > 0 )); then
 
-      for (( i=0; i < $iC; i++ )); do
+      for (( k=0; k < $iC; k++ )); do
 
-        ${o}.__section.get "_bashlyk_raw_incr=$i"
+        ${o}.__section.get "_bashlyk_raw_incr=$k"
 
       done
 
     else
+
+      local bQuote iKeyWidth iPadding v
 
       iKeyWidth=$( ${o}.__section.get _bashlyk_key_width )
       udfIsNumber $iKeyWidth || iKeyWidth=''
@@ -362,23 +364,24 @@ INI.__section.show() {
 
       if [[ $( ${o}.get [__settings__]bConfMode ) =~ ^(true|yes|1)$ ]]; then
 
-        q="\042"
+        bQuote=true
         iPadding=0
 
       else
 
-        q=''
+        bQuote=''
 
       fi
 
       eval "                                                                   \
-                                                                               \
-          for i in "\${!$id[@]}"; do                                           \
-            if [[ ! \$i =~ ^_bashlyk_ ]]; then                                 \
-              printf -- '\t%${iKeyWidth}s%${iPadding}s=%${iPadding}s$q%s$q\n'  \
-                \"\$i\" \"\" \"\"  \"\${$id[\$i]}\";                           \
-            fi                                                                 \
-          done;                                                                \
+        for k in "\${!$id[@]}"; do                                             \
+          if [[ ! \$k =~ ^_bashlyk_ ]]; then                                   \
+            v=\${$id[\$k]};                                                    \
+            [[ \$bQuote ]] && v=\$( udfQuoteIfNeeded \$v );                    \
+            printf -- '\t%${iKeyWidth}s%${iPadding}s=%${iPadding}s%s\n'        \
+              \"\$k\" \"\" \"\"  \"\$v\";                                      \
+          fi                                                                   \
+        done;                                                                  \
                                                                                \
       "
 
@@ -637,9 +640,13 @@ INI.get() {
 #    tSet.get [section2] >| md5sum | grep ^8c6e9c4833a07c3d451eacbef0813534.*-$ #? true
 #    tSet.get [section1] >| md5sum | grep ^9cb6e155955235c701959b4253d7417b.*-$ #? true
 #    tSet.free
+#    INI blin
+#    blin.set Thu, 30 Jun 2016 08:55:36 +0400
+#    blin.show
+#    blin.free
 #  SOURCE
 INI.set() {
-
+  ## TODO ignore bad arguments or raw mode ?
   udfOn MissingArgument $* || return $?
 
   local -a a
@@ -654,12 +661,14 @@ INI.set() {
       s=${a[1]:-__global__}
       k=${a[2]%%=*}
       v=${a[2]#*=}
+      [[ $k == ${a[2]} && $v == ${a[2]} ]] && k="_bashlyk_raw_uniq=${k//[\'\"\\ ]/}"
       ;;
 
     1)
       s=__global__
       k=${a[0]%%=*}
       v=${a[0]#*=}
+      [[ $k == ${a[0]} && $v == ${a[0]} ]] && k="_bashlyk_raw_uniq=${k//[\'\"\\ ]/}"
       ;;
 
     *)
@@ -680,10 +689,15 @@ INI.set() {
 
   else
 
-     iKeyWidth=$( ${o}.__section.get _bashlyk_key_width )
-     udfIsNumber iKeyWidth || iKeyWidth=0
+    iKeyWidth=$( ${o}.__section.get _bashlyk_key_width )
+    udfIsNumber iKeyWidth || iKeyWidth=0
 
-    (( ${#k} > iKeyWidth )) && ${o}.__section.set _bashlyk_key_width ${#k}
+    if [[ ! $k =~ ^_bashlyk_ ]]; then
+
+      (( ${#k} > iKeyWidth )) && ${o}.__section.set _bashlyk_key_width ${#k}
+
+    fi
+
     ${o}.__section.set "$k" "$v"
 
   fi
