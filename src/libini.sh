@@ -1,5 +1,5 @@
 #
-# $Id: libini.sh 647 2016-12-28 17:09:47+04:00 toor $
+# $Id: libini.sh 648 2016-12-28 22:31:07+04:00 toor $
 #
 #****h* BASHLYK/libini
 #  DESCRIPTION
@@ -316,10 +316,10 @@ INI.__section.select() {
 #    tSShow.free
 #    INI tSShow2
 #    tSShow2.set [ __settings__ ] bConfMode = true
-#    tSShow2.set [ tSect2 ] keyFirst  = is first value
-#    tSShow2.set [ tSect2 ] keySecond = is second value
-#    tSShow2.set [ tSect2 ] keyThird  = is_third_value
-#    tSShow2.__section.show tSect2 >| md5sum - | grep ^7fa0321f9ef5bb7c4ca2.*-$ #? true
+#    tSShow2.set [ tSect2 ] keyFirst   = is first value
+#    tSShow2.set [ tSect2 ] keySecond  = is second value
+#    tSShow2.set [ tSect2 ] keyOneWord = is_one_world_value
+#    tSShow2.__section.show tSect2 >| md5sum - | grep ^f4bea0366a1f110343bf.*-$ #? true
 #    tSShow2.free
 #  SOURCE
 INI.__section.show() {
@@ -640,10 +640,11 @@ INI.get() {
 #    tSet.get [section2] >| md5sum | grep ^8c6e9c4833a07c3d451eacbef0813534.*-$ #? true
 #    tSet.get [section1] >| md5sum | grep ^9cb6e155955235c701959b4253d7417b.*-$ #? true
 #    tSet.free
-#    INI blin
-#    blin.set Thu, 30 Jun 2016 08:55:36 +0400
-#    blin.show
-#    blin.free
+#    _ onError return
+#    INI InvalidInput
+#    InvalidInput.set Thu, 30 Jun 2016 08:55:36 +0400                           #? $_bashlyk_iErrorInvalidArgument
+#    InvalidInput.set [section] Thu, 30 Jun 2016 08:55:36 +0400                 #? $_bashlyk_iErrorInvalidArgument
+#    InvalidInput.free
 #  SOURCE
 INI.set() {
   ## TODO ignore bad arguments or raw mode ?
@@ -661,18 +662,20 @@ INI.set() {
       s=${a[1]:-__global__}
       k=${a[2]%%=*}
       v=${a[2]#*=}
-      [[ $k == ${a[2]} && $v == ${a[2]} ]] && k="_bashlyk_raw_uniq=${k//[\'\"\\ ]/}"
+      [[ $k == ${a[2]} && $v == ${a[2]} ]] \
+        && eval $( udfOnError InvalidArgument "${a[2]}" )
       ;;
 
     1)
       s=__global__
       k=${a[0]%%=*}
       v=${a[0]#*=}
-      [[ $k == ${a[0]} && $v == ${a[0]} ]] && k="_bashlyk_raw_uniq=${k//[\'\"\\ ]/}"
+      [[ $k == ${a[0]} && $v == ${a[0]} ]] \
+        && eval $( udfOnError InvalidArgument "${a[0]}" )
       ;;
 
     *)
-      eval $( udfOnError throw InvalidArgument "$* - $(declare -p a)" )
+      eval $( udfOnError InvalidArgument "$* - $(declare -p a)" )
       ;;
 
   esac
@@ -690,14 +693,9 @@ INI.set() {
   else
 
     iKeyWidth=$( ${o}.__section.get _bashlyk_key_width )
-    udfIsNumber iKeyWidth || iKeyWidth=0
+    udfIsNumber $iKeyWidth || iKeyWidth=0
 
-    if [[ ! $k =~ ^_bashlyk_ ]]; then
-
-      (( ${#k} > iKeyWidth )) && ${o}.__section.set _bashlyk_key_width ${#k}
-
-    fi
-
+    (( ${#k} > iKeyWidth )) && ${o}.__section.set _bashlyk_key_width ${#k}
     ${o}.__section.set "$k" "$v"
 
   fi

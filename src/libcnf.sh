@@ -1,5 +1,5 @@
 #
-# $Id: libcnf.sh 647 2016-12-28 16:57:47+04:00 toor $
+# $Id: libcnf.sh 648 2016-12-28 22:31:07+04:00 toor $
 #
 #****h* BASHLYK/libcnf
 #  DESCRIPTION
@@ -43,7 +43,7 @@ declare -r _bashlyk_exports_cnf="udfGetConfig udfSetConfig"
 #******
 #****p* libcnf/__getconfig
 #  SYNOPSIS
-#    CNF.__getconfig <file> [variable name s]
+#    __getconfig <file> [variable name s]
 #  DESCRIPTION
 #    Safely reading of the active configuration by using the INI library.
 #    configuration source can be a single file or a group of related files. For
@@ -185,12 +185,13 @@ __getconfig() {
 #    s0=bash                                                                    #-
 #    b=false                                                                    #-
 #    pid=$$                                                                     #-
-#    s="$(uname -a)"                                                            #-
+#    s="$(uname)"                                                               #-
+#    test=test                                                                  #-
 #                                                                               #-
 #    EOFchild                                                                   #-
 #    cat $confChild
-#    udfGetConfig $confChild pid b                                              #? true
-#    echo "$b $pid" >| grep "false $$"                                          #? true
+#    udfGetConfig $confChild pid b test                                         #? true
+#    echo "$b $pid $test" >| grep "false $$ test"                               #? true
 #    rm -f $confChild
 #    udfGetConfig $confChild s                                                  #? $_bashlyk_iErrorNoSuchFileOrDir
 #    udfGetConfig                                                               #? $_bashlyk_iErrorEmptyOrMissingArgument
