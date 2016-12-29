@@ -1,5 +1,5 @@
 #
-# $Id$
+# $Id: testunit.awk 639 2016-12-23 16:09:41+04:00 toor $
 #
 
 BEGIN {
@@ -9,7 +9,7 @@ BEGIN {
 }
 
 
-/^#\*\*\*\*f\* .*$/ {
+/^#\*\*\*\*[fepm]\* .*$/ {
  if (b == 0) {
   print "echo -- "f" testing  done. >> $_bashlyk_TestUnit_fnLog 2>&1"
   print "}"

@@ -1,5 +1,5 @@
 #
-# $Id: libnet.sh 628 2016-12-19 00:27:21+04:00 toor $
+# $Id: libnet.sh 641 2016-12-25 01:50:36+04:00 toor $
 #
 #****h* BASHLYK/libnet
 #  DESCRIPTION
@@ -7,30 +7,37 @@
 #  AUTHOR
 #    Damir Sh. Yakupov <yds@bk.ru>
 #******
-#****d* libnet/Once required
+#***iV* liberr/BASH Compability
 #  DESCRIPTION
-#    Эта глобальная переменная обеспечивает защиту от повторного использования данного модуля
-#    Отсутствие значения $BASH_VERSION предполагает несовместимость c текущим командным интерпретатором
+#    BASH version 4.xx or more required for this script
 #  SOURCE
-[ -n "$BASH_VERSION" ] || eval 'echo "bash interpreter for this script ($0) required ..."; exit 255'
-
-[[ $_BASHLYK_LIBNET ]] && return 0 || _BASHLYK_LIBNET=1
+[ -n "$BASH_VERSION" ] && (( ${BASH_VERSINFO[0]} >= 4 )) || eval '             \
+                                                                               \
+    echo "[!] BASH shell version 4.xx required for ${0}, abort.."; exit 255    \
+                                                                               \
+'
 #******
-#****** libnet/External Modules
+#  $_BASHLYK_LIBNET provides protection against re-using of this module
+[[ $_BASHLYK_LIBNET ]] && return 0 || _BASHLYK_LIBNET=1
+#****L* libnet/Used libraries
 # DESCRIPTION
-#   Using modules section
-#   Здесь указываются модули, код которых используется данной библиотекой
+#   Loading external libraries
 # SOURCE
 : ${_bashlyk_pathLib:=/usr/share/bashlyk}
 [[ -s ${_bashlyk_pathLib}/libstd.sh ]] && . "${_bashlyk_pathLib}/libstd.sh"
 [[ -s ${_bashlyk_pathLib}/liberr.sh ]] && . "${_bashlyk_pathLib}/liberr.sh"
 #******
-_reIPv4='[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+'
-_peIPv4='\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}'
-#****v* libnet/Init section
+#****G* libnet/Global variables
 #  DESCRIPTION
-: ${_bashlyk_aRequiredCmd_msg:="dig echo grep ipcalc sipcalc xargs"}
-: ${_bashlyk_aExport_msg:="udfGetValidIPsOnly udfGetValidCIDR"}
+#    global variables of the library
+#  SOURCE
+: ${_bashlyk_sArg:="$@"}
+: ${_bashlyk_pathCnf:=$(pwd)}
+
+declare -r _reIPv4='[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+'
+declare -r _peIPv4='\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}'
+declare -r _bashlyk_externals_net="dig echo grep ipcalc sipcalc xargs"
+declare -r _bashlyk_exports_net="udfGetValidIPsOnly udfGetValidCIDR"
 #******
 #****f* libnet/udfGetValidIPsOnly
 #  SYNOPSIS
@@ -41,10 +48,9 @@ _peIPv4='\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}'
 #    args - IP addresses and domain names (if resolved)
 #  OUTPUT
 #    separated by white space list of valid IPv4 addresses
-#  RETURN VALUE
+#  ERRORS
 #    MissingArgument - no arguments
 #    EmptyResult     - no result
-#    0               - found valid IPv4 addresses
 #  EXAMPLE
 #    udfGetValidIPsOnly                                                         #? $_bashlyk_iErrorEmptyOrMissingArgument
 #    udfGetValidIPsOnly 999.8.7.6                                               #? $_bashlyk_iErrorEmptyResult
@@ -84,10 +90,9 @@ udfGetValidIPsOnly() {
 #    args - IPv4 CIDR or addresses
 #  OUTPUT
 #    separated by white space list of valid IPv4 CIDR
-#  RETURN VALUE
+#  ERRORS
 #    MissingArgument - no arguments
 #    EmptyResult     - no result
-#    0               - found valid IPv4 CIDR
 #  EXAMPLE
 #    udfGetValidCIDR                                                            #? $_bashlyk_iErrorEmptyOrMissingArgument
 #    udfGetValidCIDR 999.8.7.6                                                  #? $_bashlyk_iErrorEmptyResult

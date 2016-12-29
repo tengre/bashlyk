@@ -1,6 +1,6 @@
 #!/bin/bash
 #
-# $Id: bashlyk 625 2016-12-15 16:30:45+04:00 toor $
+# $Id: bashlyk 641 2016-12-25 01:56:51+04:00 toor $
 #
 #****h* BASHLYK/bashlyk
 #  DESCRIPTION
@@ -10,16 +10,20 @@
 #  AUTHOR
 #    Damir Sh. Yakupov <yds@bk.ru>
 #******
-#****d* bashlyk/Required Once
+#***iV* bashlyk/BASH Compability
 #  DESCRIPTION
-#    Глобальная переменная $_BASHLYK обеспечивает
-#    защиту от повторного использования данного сценария
+#    BASH version 4.xx or more required for this script
 #  SOURCE
-[[ -n "$_BASHLYK" ]] && return 0 || _BASHLYK=1
+[ -n "$BASH_VERSION" ] && (( ${BASH_VERSINFO[0]} >= 4 )) || eval '             \
+                                                                               \
+    echo "[!] BASH shell version 4.xx required for ${0}, abort.."; exit 255    \
+                                                                               \
+'
 #******
-#****v* bashlyk/Init section
+[[ -n "$_BASHLYK" ]] && return 0 || _BASHLYK=1
+#****G* bashlyk/Global variables
 #  DESCRIPTION
-#    Блок инициализации глобальных переменных
+#    global variables of the library
 #  SOURCE
 [[ -s "/etc/bashlyk/bashlyk.conf" ]] && . /etc/bashlyk/bashlyk.conf
 : ${_bashlyk_aLib:="std,err,pid,cnf,ini,opt,log,net,csv,msg"}

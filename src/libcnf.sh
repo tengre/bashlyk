@@ -1,150 +1,260 @@
 #
-# $Id: libcnf.sh 631 2016-12-19 23:50:55+04:00 toor $
+# $Id: libcnf.sh 649 2016-12-29 10:45:47+04:00 toor $
 #
 #****h* BASHLYK/libcnf
 #  DESCRIPTION
-#    management of the active configuration files
+#    safe management of the active configuration files
+#  USES
+#    libstd liberr libini
 #  AUTHOR
 #    Damir Sh. Yakupov <yds@bk.ru>
 #******
-#****d* libcnf/ Compatibility сheck
+#***iV* liberr/BASH Compability
 #  DESCRIPTION
-#    - $BASH_VERSION    - no value is incompatible with the current shell
-#    - $BASH_VERSION    - required Bash major version 4 or more for this script
-#    - $_BASHLYK_LIBCNF - global variable provides protection against re-use of
-#                         this module
+#    BASH version 4.xx or more required for this script
 #  SOURCE
-[ -n "$BASH_VERSION" ] || eval 'echo "BASH interpreter for this script ($0) required ..."; exit 255'
-(( ${BASH_VERSINFO[0]} >= 4 )) || eval 'echo "required BASH version 4 or more for this script ($0) ..."; exit 255'
-[[ $_BASHLYK_LIBCNF ]] && return 0 || _BASHLYK_LIBCNF=1
+[ -n "$BASH_VERSION" ] && (( ${BASH_VERSINFO[0]} >= 4 )) || eval '             \
+                                                                               \
+    echo "[!] BASH shell version 4.xx required for ${0}, abort.."; exit 255    \
+                                                                               \
+'
 #******
-#****** libcnf/ Loading external modules
+#  $_BASHLYK_LIBCNF provides protection against re-using of this module
+[[ $_BASHLYK_LIBCNF ]] && return 0 || _BASHLYK_LIBCNF=1
+#****L* libcnf/Used libraries
 # DESCRIPTION
-#   read and execute required external modules
+#   Loading external libraries
 # SOURCE
 : ${_bashlyk_pathLib:=/usr/share/bashlyk}
 [[ -s ${_bashlyk_pathLib}/libstd.sh ]] && . "${_bashlyk_pathLib}/libstd.sh"
 [[ -s ${_bashlyk_pathLib}/liberr.sh ]] && . "${_bashlyk_pathLib}/liberr.sh"
+[[ -s ${_bashlyk_pathLib}/libini.sh ]] && . "${_bashlyk_pathLib}/libini.sh"
 #******
-#****v* libcnf/ Global Variables - init section
+#****G* libcnf/Global Variables
 #  DESCRIPTION
-#    init of the required global variables
+#    Global variables of the library
 #  SOURCE
 : ${_bashlyk_sArg:="$@"}
 : ${_bashlyk_pathCnf:=$(pwd)}
 : ${_bashlyk_sUnnamedKeyword:=_bashlyk_unnamed_key_}
-: ${_bashlyk_aRequiredCmd_cnf:="awk date dirname echo mkdir printf pwd tr"}
-: ${_bashlyk_aExport_cnf:="udfGetConfig udfSetConfig"}
+
+declare -r _bashlyk_externals_cnf="mkdir pwd"
+declare -r _bashlyk_exports_cnf="udfGetConfig udfSetConfig"
 #******
-#****f* libcnf/udfGetConfig
+#****p* libcnf/__getconfig
+#  SYNOPSIS
+#    __getconfig <file> [variable name s]
+#  DESCRIPTION
+#    Safely reading of the active configuration by using the INI library.
+#    configuration source can be a single file or a group of related files. For
+#    example, if <file> - is "a.b.c.conf" and it exists, sequentially read
+#    "conf", "c.conf", "b.c.conf", "a.b.c.conf" files, if they exist, too.
+#    Search  source of the configuration is done on the following criteria (in
+#    the absence of the full path):
+#      1. in the default directory,
+#      2. in the current directory
+#      3. in the system directory "/etc"
+#  NOTES
+#    The file name must not begin with a dot or end with a dot.
+#    configuration sources are ignored if they do not owned by the owner of the
+#    process or root.
+#  ARGUMENTS
+#    <file> - filename of the configuration
+#  OUTPUT
+#    a serialized CSV-string or an error code and message.
+#  EXAMPLE
+#    local b confChild confMain pid s s0
+#    udfMakeTemp confMain suffix=.conf
+#    confChild="${confMain%/*}/child.${confMain##*/}"                           #-
+#    udfAddFile2Clean $confChild                                                #-
+#    cat <<'EOFconf' > $confMain                                                #-
+#                                                                               #-
+#    s0=$0                                                                      #-
+#    b=true                                                                     #-
+#    pid=$$                                                                     #-
+#    s="$(uname -a)"                                                            #-
+#                                                                               #-
+#    EOFconf                                                                    #-
+#    cat $confMain
+#    __getconfig $confMain >| grep 'pid=$$\|b=true\|s="$(uname -a)"\|s0=$0\|;$' #? true
+#    unset b pid s s0
+#    cat <<'EOFchild' > $confChild                                              #-
+#                                                                               #-
+#    s0=bash                                                                    #-
+#    b=false                                                                    #-
+#    pid=$$                                                                     #-
+#    s="$(uname -a)"                                                            #-
+#    test=test                                                                  #-
+#                                                                               #-
+#    EOFchild                                                                   #-
+#    cat $confChild
+#    __getconfig $confChild b,pid >| grep 'pid=$$\|b=false\|;$'                 #? true
+#    rm -f $confChild
+#    _ onError return
+#    eval "$( __getconfig $confChild )"                                         #? $_bashlyk_iErrorNoSuchFileOrDir
+#    eval "$( __getconfig )"                                                    #? $_bashlyk_iErrorEmptyOrMissingArgument
+#  SOURCE
+__getconfig() {
+
+  local fn id k o s
+
+  o="${FUNCNAME[0]%%.*}_${RANDOM}${RANDOM}"
+
+  if [[ ! $1 ]]; then
+
+    udfOnError return MissingArgument '1'
+    return $(_ MissingArgument )
+
+  fi
+
+  fn=$1
+  shift
+  k="$@"
+
+  INI $o
+
+  if ! ${o}.load $fn ":${k// /,}"; then
+
+    udfOnError return ${_bashlyk_iLastError[$BASHPID]} "$fn"
+    return $?
+
+  fi
+
+  ${o}.__section.select
+  id=$( ${o}.__section.id )
+
+  eval "                                                                       \
+                                                                               \
+    for k in \${!$id[@]}; do                                                   \
+      [[ \$k =~ ^_bashlyk_ ]] && continue;                                     \
+      udfIsValidVariable \$k && s+=\$k=\"\${$id[\$k]}\"\;;                     \
+    done;                                                                      \
+                                                                               \
+  "
+
+  ${o}.free
+
+  echo "$s"
+
+}
+#******
+#****e* libcnf/udfGetConfig
 #  SYNOPSIS
 #    udfGetConfig <file>
 #  DESCRIPTION
-#    Найти и выполнить <file> и предварительно все другие файлы, от которых он
-#    зависит. Такие файлы должны находится в том же каталоге. То есть, если
-#    <file> это "a.b.c.conf", то вначале применяются файлы "conf" "c.conf",
-#    "b.c.conf" если таковые существуют.
-#    Поиск выполняется по следующим критериям:
-#     1. Если имя файла -это неполный путь, то
-#     в начале проверяется текущий каталог, затем каталог конфигураций по
-#     умолчанию
-#     2. Если имя файла - полный путь, то каталог в котором он расположен
-#     3. Последняя попытка - найти файл в каталоге /etc
-#    Важно: имя <file> не должно начинаться с точки и им заканчиваться!
-#  INPUTS
-#    file     - имя файла конфигурации
-#  RETURN VALUE
-#    iErrorEmptyOrMissingArgument - аргумент не задан
-#    iErrorNoSuchFileOrDir        - файл конфигурации не найден
-#    0                            - успешная операция
+#    Safely reading of the active configuration by using the INI library.
+#    configuration source can be a single file or a group of related files. For
+#    example, if <file> - is "a.b.c.conf" and it exists, sequentially read
+#    "conf", "c.conf", "b.c.conf", "a.b.c.conf" files, if they exist, too.
+#    Search  source of the configuration is done on the following criteria (in
+#    the absence of the full path):
+#      1. in the default directory,
+#      2. in the current directory
+#      3. in the system directory "/etc"
+#  NOTES
+#    The file name must not begin with a point or end with a point.
+#    configuration sources are ignored if they do not owned by the owner of the
+#    process or root.
+#  ARGUMENTS
+#    <file>     - source of the configuration
+#    <variable> - set only this list of the variables from the configuration
+#  ERRORS
+#    MissingArgument - no arguments
+#    NoSuchFileOrDir - configuration file is not found
+#    InvalidArgument - name contains the point at the beginning or at the end of
+#                      the name
 #  EXAMPLE
-#    local b conf d pid s0 s
-#    # TODO "историческая" проверка в текущем каталоге временно убрана (.)
-#    conf=$(mktemp --suffix=.conf || tempfile -d /tmp -s .test.conf)            #? true
-#    printf "s0=$0\nb=true\npid=$$\ns=\"$(uname -a)\"\n" >| tee $conf           #? true
-#    udfGetConfig $conf                                                         #? true
-#    test "$s0" = $0 -a "$b" = true -a "$pid" = $$ -a "$s" = "$(uname -a)"      #? true
-#    rm -f $conf                                                                #? true
-#    b='' conf='' d='' pid='' s0='' sS=''
-#    conf=$(mktemp --suffix=.conf || tempfile -s .test.conf)                    #? true
-#    printf "s0=$0\nb=true\npid=$$\ns=\"$(uname -a)\"\n" >| tee $conf           #? true
-#    udfGetConfig $conf                                                         #? true
-#    test "$s0" = $0 -a "$b" = true -a "$pid" = $$ -a "$s" = "$(uname -a)"      #? true
-#    rm -f $conf
-#    udfGetConfig $conf                                                         #? $_bashlyk_iErrorNoSuchFileOrDir
+#    local b confChild confMain pid s s0
+#    udfMakeTemp confMain suffix=.conf
+#    confChild="${confMain%/*}/child.${confMain##*/}"                           #-
+#    udfAddFile2Clean $confChild                                                #-
+#    cat <<'EOFconf' > $confMain                                                #-
+#                                                                               #-
+#    s0=$0                                                                      #-
+#    b=true                                                                     #-
+#    pid=$$                                                                     #-
+#    s="$(uname -a)"                                                            #-
+#                                                                               #-
+#    EOFconf                                                                    #-
+#    cat $confMain
+#    udfGetConfig $confMain                                                     #? true
+#    echo "$s0 $b $pid $s" >| grep "$0 true $$ $(uname -a)"                     #? true
+#    unset b pid s0 s
+#    cat <<'EOFchild' > $confChild                                              #-
+#                                                                               #-
+#    s0=bash                                                                    #-
+#    b=false                                                                    #-
+#    pid=$$                                                                     #-
+#    s="$(uname)"                                                               #-
+#    test=test                                                                  #-
+#                                                                               #-
+#    EOFchild                                                                   #-
+#    cat $confChild
+#    udfGetConfig $confChild pid b test                                         #? true
+#    echo "$b $pid $test" >| grep "false $$ test"                               #? true
+#    rm -f $confChild
+#    udfGetConfig $confChild s                                                  #? $_bashlyk_iErrorNoSuchFileOrDir
 #    udfGetConfig                                                               #? $_bashlyk_iErrorEmptyOrMissingArgument
 #  SOURCE
 udfGetConfig() {
- local bashlyk_aconf_MROATHra bashlyk_conf_MROATHra bashlyk_s_MROATHra
- local bashlyk_pathCnf_MROATHra="$_bashlyk_pathCnf" IFS=$' \t\n'
- #
- [[ -n "$1" ]] || eval $(udfOnError return iErrorEmptyOrMissingArgument)
- #
- [[ "$1" == "${1##*/}" && -f "${bashlyk_pathCnf_MROATHra}/$1" ]] || bashlyk_pathCnf_MROATHra=
- [[ "$1" == "${1##*/}" && -f "$1" ]] && bashlyk_pathCnf_MROATHra=$(pwd)
- [[ "$1" != "${1##*/}" && -f "$1" ]] && bashlyk_pathCnf_MROATHra=$(dirname $1)
- #
- if [[ -z "$bashlyk_pathCnf_MROATHra" ]]; then
-  [[ -f "/etc/${_bashlyk_pathPrefix}/$1" ]] \
-   && bashlyk_pathCnf_MROATHra="/etc/${_bashlyk_pathPrefix}" \
-   || eval $(udfOnError return iErrorNoSuchFileOrDir)
- fi
- #
- bashlyk_conf_MROATHra=
- bashlyk_aconf_MROATHra=$(echo "${1##*/}" | awk 'BEGIN{FS="."} {for (i=NF;i>=1;i--) printf $i" "}')
- for bashlyk_s_MROATHra in $bashlyk_aconf_MROATHra; do
-  [[ -n "$bashlyk_s_MROATHra" ]] || continue
-  [[ -n "$bashlyk_conf_MROATHra" ]] \
-   && bashlyk_conf_MROATHra="${bashlyk_s_MROATHra}.${bashlyk_conf_MROATHra}" \
-   || bashlyk_conf_MROATHra="$bashlyk_s_MROATHra"
-  [[ -s "${bashlyk_pathCnf_MROATHra}/${bashlyk_conf_MROATHra}" ]] \
-   && . "${bashlyk_pathCnf_MROATHra}/${bashlyk_conf_MROATHra}"
- done
- return 0
+
+  eval "$( __getconfig $@ )"
+
 }
 #******
-#****f* libcnf/udfSetConfig
+#****e* libcnf/udfSetConfig
 #  SYNOPSIS
-#    udfSetConfig <file> "<csv;>"
+#    udfSetConfig <file> "<comma separated key=value pairs>;"
 #  DESCRIPTION
-#    Дополнить <file> строками вида "key=value" из аргумента <csv;>
-#    Расположение файла определяется по следующим критериям:
-#     Если имя файла -это неполный путь, то он сохраняется в каталоге по
-#     умолчанию, иначе по полному пути.
-#  INPUTS
-#    <file> - имя файла конфигурации
-#    <csv;> - CSV-строка, разделённая ";", поля которой содержат данные вида
-#             "key=value"
-#    Важно! Экранировать аргументы двойными кавычками, если есть вероятность
-#    наличия в них пробелов
-#  RETURN VALUE
-#    iErrorEmptyOrMissingArgument - аргумент не задан
-#    iErrorNotExistNotCreated     - файл не существует и не создан
-#    0                            - успешная операция
+#    Write to <file> string in the format "key = value" from a fields of the
+#    second argument "<CSV>;"
+#    In the case where the filename does not contain the path, it is saved in a
+#    default directory, or is saved using a full path.
+#  ARGUMENTS
+#    <file> - file name of the active configuration
+#    "<comma separated key=value pairs>;" - CSV-string, divided by ";", fields
+#             that contain the data of the form "key = value"
+#  NOTES
+#    It is important to take the arguments in double quotes, if they contain a
+#    whitespace or ';'
+#  ERRORS
+#    MissingArgument    - no arguments
+#    NotExistNotCreated - target file not created or updated
+#    InvalidArgument    - name contains the point at the beginning or at the end of
+#                         the name
 #  EXAMPLE
-#    local b conf d pid s0 s
-#    conf=$(mktemp --suffix=.conf || tempfile -s .test.conf)                    #? true
-#    udfSetConfig $conf "s0=$0;b=true;pid=$$;s=$(uname -a);$(date -R -r $0)"    #? true
-#    grep "^s0=$0$" $conf                                                       #? true
-#    grep "^b=true$" $conf                                                      #? true
-#    grep "^pid=${$}$" $conf                                                    #? true
-#    grep "^s=\"$(uname -a)\"$" $conf                                           #? true
-#    grep "^$(_ sUnnamedKeyword).*=\"$(date -R -r $0)\"$" $conf                 #? true
-#    test -s $conf && . $conf                                                   #? true
-#    test "$s0" = $0 -a "$b" = true -a "$pid" = $$ -a "$s" = "$(uname -a)"      #? true
+#    udfMakeTemp conf suffix=.conf
+#    udfSetConfig $conf "s0=$0;b=true;pid=$$;s=$(uname -a);$(date -R -r $0);"   #? true
+#    cat $conf >| grep "s0=$0\|b=true\|pid=$$\|s=\"$(uname -a)\""               #? true
 #    rm -f $conf
 #  SOURCE
 udfSetConfig() {
- local conf IFS=$' \t\n' pathCnf="$_bashlyk_pathCnf"
- [[ -n "$1" && -n "$2" ]] || eval $(udfOnError return iErrorEmptyOrMissingArgument)
- #
- [[ "$1" != "${1##*/}" ]] && pathCnf="$(dirname $1)"
- mkdir -p "$pathCnf" || eval $(udfOnError return iErrorNotExistNotCreated '$pathCnf')
- conf="${pathCnf}/${1##*/}"
- {
-  echo "# Created $(date -R) by $USER via $0 (pid $$)"
-  udfCheckCsv "$2" | tr ';' '\n'
- } >> $conf 2>/dev/null
- return 0
+
+  udfOn MissingArgument throw "$@"
+
+  local conf path o s
+
+  [[ "$1" != "${1##*/}" ]] && path="${1%/*}" || path="$( _ pathCnf )"
+  conf="${path}/${1##*/}"
+
+  mkdir -p $path && touch $conf || eval $( udfOnError throw NotExistNotCreated "$conf" )
+
+  o="${FUNCNAME[0]%%.*}_${RANDOM}${RANDOM}"
+  INI $o
+  ${o}.set [ __settings__ ] bConfMode = true
+
+  while read -t 4; do
+
+    ${o}.set $REPLY
+
+  done< <( echo -e "${2//[;,]/\\\n}" )
+
+  ${o}.save $conf
+  s=$?
+
+  ${o}.free
+
+  return $s
+
 }
 #******

@@ -1,5 +1,5 @@
 #
-# $Id: libmsg.sh 628 2016-12-19 00:27:21+04:00 toor $
+# $Id: libmsg.sh 642 2016-12-26 00:00:27+04:00 toor $
 #
 #****h* BASHLYK/libmsg
 #  DESCRIPTION
@@ -7,26 +7,30 @@
 #  AUTHOR
 #    Damir Sh. Yakupov <yds@bk.ru>
 #******
-#****d* libmsg/Once required
+#***iV* liberr/BASH Compability
 #  DESCRIPTION
-#    Эта глобальная переменная обеспечивает защиту от повторного использования данного модуля
-#    Отсутствие значения $BASH_VERSION предполагает несовместимость c текущим командным интерпретатором
+#    BASH version 4.xx or more required for this script
 #  SOURCE
-[ -n "$BASH_VERSION" ] || eval 'echo "bash interpreter for this script ($0) required ..."; exit 255'
-
-[[ $_BASHLYK_LIBMSG ]] && return 0 || _BASHLYK_LIBMSG=1
+[ -n "$BASH_VERSION" ] && (( ${BASH_VERSINFO[0]} >= 4 )) || eval '             \
+                                                                               \
+    echo "[!] BASH shell version 4.xx required for ${0}, abort.."; exit 255    \
+                                                                               \
+'
 #******
-#****** libmsg/External Modules
+#  $_BASHLYK_LIBMSG provides protection against re-using of this module
+[[ $_BASHLYK_LIBMSG ]] && return 0 || _BASHLYK_LIBMSG=1
+#****L* libmsg/Used libraries
 # DESCRIPTION
-#   Using modules section
-#   Здесь указываются модули, код которых используется данной библиотекой
+#   Loading external libraries
 # SOURCE
 : ${_bashlyk_pathLib:=/usr/share/bashlyk}
 [[ -s ${_bashlyk_pathLib}/libstd.sh ]] && . "${_bashlyk_pathLib}/libstd.sh"
 [[ -s ${_bashlyk_pathLib}/liberr.sh ]] && . "${_bashlyk_pathLib}/liberr.sh"
 #******
-#****v* libmsg/Init section
+#****G* libmsg/Global variables
 #  DESCRIPTION
+#    Global variables of the library
+#  SOURCE
 : ${_bashlyk_sUser:=$USER}
 : ${_bashlyk_sLogin:=$(logname 2>/dev/null)}
 : ${HOSTNAME:=$(hostname 2>/dev/null)}
@@ -34,10 +38,19 @@
 : ${_bashlyk_emailRcpt:=postmaster}
 : ${_bashlyk_emailSubj:="${_bashlyk_sUser}@${HOSTNAME}::${_bashlyk_s0}"}
 : ${_bashlyk_envXSession:=}
-: ${_bashlyk_aRequiredCmd_msg:="cat cut echo grep head hostname logname mail printf \
-  ps rm sort stat tee uniq which write notify-send|kdialog|zenity|xmessage"}
-: ${_bashlyk_aExport_msg:="udfEcho udfGetXSessionProperties udfMail udfMessage \
-  udfNotify2X udfNotifyCommand udfWarn"}
+
+declare -r _bashlyk_externals_msg="                                            \
+                                                                               \
+    cat cut echo grep head hostname logname mail printf ps rm sort             \
+    stat tee uniq which write notify-send|kdialog|zenity|xmessage              \
+                                                                               \
+"
+declare -r _bashlyk_exports_msg="                                              \
+                                                                               \
+    udfEcho udfGetXSessionProperties udfMail udfMessage udfNotify2X            \
+    udfNotifyCommand udfWarn                                                   \
+                                                                               \
+"
 #******
 #****f* libmsg/udfEcho
 #  SYNOPSIS
@@ -110,10 +123,9 @@ udfWarn() {
 #           чтения из него, иначе строка аргументов воспринимается как текст
 #           сообщения
 #    -   -  данные читаются из стандартного ввода
-#  RETURN VALUE
-#    0                            - сообщение успешно отправлено
-#    iErrorEmptyOrMissingArgument - аргумент не задан
-#    iErrorCommandNotFound        - команда не найдена
+#  ERRORS
+#    MissingArgument - аргумент не задан
+#    CommandNotFound - команда не найдена
 #  EXAMPLE
 ##  TODO уточнить по каждому варианту
 #    ##local emailOptions=$(_ emailOptions)
@@ -158,10 +170,9 @@ udfMail() {
 #    args - строка для вывода. Если имеется в качестве первого аргумента
 #           "-", то эта строка выводится заголовком для данных
 #           из стандартного ввода
-#  RETURN VALUE
-#    0   - сообщение успешно отправлено (передано выбранному транспорту)
-#    iErrorEmptyOrMissingArgument - аргумент не задан
-#    iErrorCommandNotFound        - команда не найдена
+#  ERRORS
+#    MissingArgument - аргумент не задан
+#    CommandNotFound - команда не найдена
 #  EXAMPLE
 #    local sBody="notification testing" sSubj="bashlyk::libmsg::udfMessage"
 #    echo "$sBody" | udfMessage - "$sSubj"                                      #? true
@@ -192,12 +203,11 @@ udfMessage() {
 #    arg -  Если это имя непустого существующего файла, то выполняется попытка
 #           чтения из него, иначе строка аргументов воспринимается как текст
 #           сообщения
-#  RETURN VALUE
-#    0                            - сообщение успешно отправлено
-#    iErrorEmptyOrMissingArgument - аргумент не задан
-#    iErrorCommandNotFound        - команда не найдена
-#    iErrorXsessionNotFound       - X-сессия не обнаружена
-#    iErrorNotPermitted           - не разрешено
+#  ERRORS
+#    MissingArgument  - аргумент не задан
+#    CommandNotFound  - команда не найдена
+#    XsessionNotFound - X-сессия не обнаружена
+#    NotPermitted     - не разрешено
 #  EXAMPLE
 #    local sBody="notification testing" sSubj="bashlyk::libmsg::udfNotify2X" rc
 #    udfNotify2X "${sSubj}\n----\n${sBody}\n"
@@ -224,11 +234,10 @@ udfNotify2X() {
 #    udfGetXSessionProperties
 #  DESCRIPTION
 #    установить некоторые переменные среды первой локальной X-сессии
-#  RETURN VALUE
-#    0                            - сообщение успешно отправлено
-#    iErrorCommandNotFound        - команда не найдена
-#    iErrorXsessionNotFound       - X-сессия не обнаружена
-#    iErrorNotPermitted           - не разрешено
+#  ERRORS
+#    CommandNotFound  - команда не найдена
+#    XsessionNotFound - X-сессия не обнаружена
+#    NotPermitted     - не разрешено
 #    ## TODO улучшить тест
 #  EXAMPLE
 #    udfGetXSessionProperties || echo "X-Session error ($?)"
@@ -248,7 +257,7 @@ udfGetXSessionProperties() {
    userX=$(stat -c %U /proc/$pid)
    [[ -n "$userX" ]] || continue
    [[ "$user" == "$userX" || "$user" == "root" ]] || continue
-   ## TODO если много X-сессий - позволить rootу выбирать оптимальный
+   ## TODO many X-Sessions ? 
    sB="$(grep -az DBUS_SESSION_BUS_ADDRESS= /proc/${pid}/environ)"
    sD="$(grep -az DISPLAY= /proc/${pid}/environ)"
    sX="$(grep -az XAUTHORITY= /proc/${pid}/environ)"
@@ -276,10 +285,9 @@ udfGetXSessionProperties() {
 #       text - текст сообщения
 #    timeout - время показа окна сообщения
 #       user - получатель сообщения
-#  RETURN VALUE
-#    0                            - сообщение успешно отправлено
-#    iErrorEmptyOrMissingArgument - аргументы не заданы
-#    iErrorCommandNotFound        - команда не найдена
+#  ERRORS
+#    MissingArgument - аргументы не заданы
+#    CommandNotFound - команда не найдена
 #  EXAMPLE
 #    local title="bashlyk::libmsg::udfNotifyCommand" body="notification testing"
 #    local rc

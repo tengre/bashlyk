@@ -1,9 +1,9 @@
 #
-# $Id: libini.sh 632 2016-12-20 15:33:00+04:00 toor $
+# $Id: libini.sh 648 2016-12-28 22:31:07+04:00 toor $
 #
 #****h* BASHLYK/libini
 #  DESCRIPTION
-#    management of the configuration files in the INI-style. Implemented
+#    Management of the configuration files in the INI-style. Implemented
 #    capabilities and features:
 #     - associative arrays are used to store the INI configuration data
 #     - OOP style used for a treatment of the INI configuration data:
@@ -24,6 +24,8 @@
 #       long and short options of configuration parameters.
 #     - parsing the command line arguments and their binding to configuration
 #       data that allows you to override selected parameters of the INI-file.
+#  USES
+#    libstd liberr
 #  EXAMPLE
 #    INI ini
 #    ini.bind.cli config{c}: source{s}:-- help{h} mode{m}: dry-run
@@ -45,41 +47,53 @@
 #  AUTHOR
 #    Damir Sh. Yakupov <yds@bk.ru>
 #******
-#****d* libini/ Compatibility сheck
+#***iV* liberr/BASH Compability
 #  DESCRIPTION
-#    - $BASH_VERSION    - no value is incompatible with the current shell
-#    - $BASH_VERSION    - required Bash major version 4 or more for this script
-#    - $_BASHLYK_LIBINI - global variable provides protection against re-use of
-#                         this module
+#    BASH version 4.xx or more required for this script
 #  SOURCE
-[ -n "$BASH_VERSION" ] || eval 'echo "BASH interpreter for this script ($0) required ..."; exit 255'
-(( ${BASH_VERSINFO[0]} >= 4 )) || eval 'echo "required BASH version 4 or more for this script ($0) ..."; exit 255'
+[ -n "$BASH_VERSION" ] && (( ${BASH_VERSINFO[0]} >= 4 )) || eval '             \
+                                                                               \
+    echo "[!] BASH shell version 4.xx required for ${0}, abort.."; exit 255    \
+                                                                               \
+'
+#******
+#  $_BASHLYK_LIBINI provides protection against re-using of this module
 [[ $_BASHLYK_LIBINI ]] && return 0 || _BASHLYK_LIBINI=1
 #******
-#****** libini/ Loading external modules
+#****L* libini/Used libraries
 # DESCRIPTION
-#   read and execute required external modules
+#   Loading external libraries
 # SOURCE
 : ${_bashlyk_pathLib:=/usr/share/bashlyk}
 [[ -s ${_bashlyk_pathLib}/libstd.sh ]] && . "${_bashlyk_pathLib}/libstd.sh"
 [[ -s ${_bashlyk_pathLib}/liberr.sh ]] && . "${_bashlyk_pathLib}/liberr.sh"
 #******
-#****v* libini/ Global Variables - init section
+#****G* libini/Global Variables
 #  DESCRIPTION
-#    init of the required global variables
+#    Global variables of the library
 #  SOURCE
-: ${_bashlyk_sUser:=$USER}
-: ${_bashlyk_sLogin:=$(logname 2>/dev/null)}
-: ${HOSTNAME:=$(hostname 2>/dev/null)}
-: ${_bashlyk_bNotUseLog:=1}
-: ${_bashlyk_emailRcpt:=postmaster}
-: ${_bashlyk_emailSubj:="${_bashlyk_sUser}@${HOSTNAME}::${_bashlyk_s0}"}
-: ${_bashlyk_envXSession:=}
-: ${_bashlyk_iniMethods:="__section.id __section.byindex __section.select __section.show __section.setRawData __section.getArray get set show save read load bind.cli getopt free"}
-: ${_bashlyk_aRequiredCmd_ini:="date echo getopt hostname logname md5sum mkdir mv pwd rm stat touch"}
-: ${_bashlyk_aExport_ini:="INI get set show save read load bind.cli getopt free"}
+: ${_bashlyk_sArg:="$@"}
+: ${_bashlyk_pathIni:=$(pwd)}
+
+declare -r _bashlyk_methods_ini="                                              \
+                                                                               \
+    __section.id __section.byindex __section.select __section.show             \
+    __section.setRawData __section.getArray get set show save read             \
+    load bind.cli getopt free                                                  \
+                                                                               \
+"
+declare -r _bashlyk_externals_ini="                                            \
+                                                                               \
+    date echo getopt sha1sum mkdir mv pwd rm stat touch                        \
+                                                                               \
+"
+declare -r _bashlyk_exports_ini="                                              \
+                                                                               \
+    INI get set show save read load bind.cli getopt free                       \
+                                                                               \
+"
 #******
-#****f* public/INI
+#****e* libini/INI
 #  SYNOPSIS
 #    INI [<id>]
 #  DESCRIPTION
@@ -89,20 +103,16 @@
 #  ARGUMENTS
 #    valid variable name for created instance, default - used class name INI as
 #    instance
-#  RETURN VALUE
+#  ERRORS
 #    InvalidArgument - method not found
 #    InvalidVariable - invalid variable name for instance
 #  EXAMPLE
-#    local rc
 #    INI tnew                                                                   #? true
-#    declare -pf tnew.show >/dev/null 2>&1 && rc=true || rc=false               #-
-#    $rc                                                                        #? true
-#    declare -pf tnew.save >/dev/null 2>&1 && rc=true || rc=false               #-
-#    $rc                                                                        #? true
-#    declare -pf tnew.load >/dev/null 2>&1 && rc=true || rc=false               #-
-#    $rc                                                                        #? true
-#    tnew.__section.id @ >| grep '__id__'                                       #? true
-#    tnew.free                                                                  #? true
+#    declare -pf tnew.show >/dev/null 2>&1                                      #= true
+#    declare -pf tnew.save >/dev/null 2>&1                                      #= true
+#    declare -pf tnew.load >/dev/null 2>&1                                      #= true
+#    tnew.__section.id @ >| grep _hTNEW_settings                                #? true
+#    tnew.free
 #  SOURCE
 INI() {
 
@@ -111,40 +121,33 @@ INI() {
   udfOn InvalidVariable throw $s
 
   declare -ag -- _a${s^^}="()"
-  declare -Ag -- _h${s^^}="([__id__]=__id__)"
+  declare -Ag -- _h${s^^}_settings="()"
+  declare -Ag -- _h${s^^}="([__settings__]=_h${s^^}_settings)"
 
   [[ $s == INI ]] && return 0
 
-  for s in $_bashlyk_iniMethods; do
+  for s in $_bashlyk_methods_ini; do
 
     f=$( declare -pf INI.${s} )
 
     [[ $f =~ ^(INI.${s}).\(\) ]] || eval $( udfOnError throw InvalidArgument "not instance $s method for $o object" )
-    f=${f/${BASH_REMATCH[1]}/${1}.$s}
 
-    eval "$f"
+    eval "${f/${BASH_REMATCH[1]}/${1}.$s}"
 
   done
+
 
   return 0
 
 }
 #******
-#****** libini/private
-#  DESCRIPTION
-#    private "methods"
-#******
-#****** libini/public
-#  DESCRIPTION
-#    public "methods"
-#******
-#****f* private/INI.__section.id
+#****p* libini/INI.__section.id
 #  SYNOPSIS
 #    INI.__section.id [<section>]
 #  DESCRIPTION
 #    get a link of the storage for specified section or links for all storages.
 #  NOTES
-#    private method
+#    INI private method
 #  ARGUMENTS
 #    <section> - section name, '@' - all sections, default - unnamed 'global'
 #  OUTPUT
@@ -153,8 +156,8 @@ INI() {
 #    INI tSectionId1
 #    INI tSectionId2
 #    tSectionId1.__section.select
-#    tSectionId1.__section.id   >| grep ^_hTSECTIONID1_aaac3ffb13380885c7f49.*$ #? true
-#    tSectionId2.__section.id @ >| grep ^__id__$                                #? true
+#    tSectionId1.__section.id   >| grep ^_hTSECTIONID1_[[:xdigit:]]*$           #? true
+#    tSectionId2.__section.id @ >| grep ^_hTSECTIONID2_settings$                #? true
 #    tSectionId1.free
 #    tSectionId2.free
 #  SOURCE
@@ -166,14 +169,14 @@ INI.__section.id() {
 
 }
 #******
-#****f* private/INI.__section.byindex
+#****p* libini/INI.__section.byindex
 #  SYNOPSIS
 #    INI.__section.byindex [<index>]
 #  DESCRIPTION
 #    get the name of the section at the specified index, or number of then
 #    registered sections.
 #  NOTES
-#    private method
+#    INI private method
 #  ARGUMENTS
 #    <index> - index of the section in the common list in order of registration,
 #              default - total number of the registered sections
@@ -202,7 +205,7 @@ INI.__section.byindex() {
 
 }
 #******
-#****f* public/INI.free
+#****e* libini/INI.free
 #  SYNOPSIS
 #    INI.free
 #  DESCRIPTION
@@ -230,16 +233,17 @@ INI.free() {
 
   for s in $( ${o}.__section.id @ ); do
 
-    [[ $s =~ ^[[:blank:]]*$|^__id__$ ]] && continue || unset -v $s
+    [[ $s =~ ^[[:blank:]]*$ ]] && continue || unset -v $s
 
   done
 
   unset -v _a${o^^}
   unset -v _h${o^^}
+  unset -v _h${o^^}_settings
 
   [[ $o == INI ]] && return 0
 
-  for s in __section.get __section.set $_bashlyk_iniMethods; do
+  for s in __section.get __section.set $_bashlyk_methods_ini; do
 
     unset -f ${o}.$s
 
@@ -247,14 +251,14 @@ INI.free() {
 
 }
 #******
-#****f* private/INI.__section.select
+#****p* libini/INI.__section.select
 #  SYNOPSIS
 #    INI.__section.select [<section>]
 #  DESCRIPTION
-#    select current section of the instance, prepare private getter and setter
+#    select current section of the instance, prepare INI private getter and setter
 #    for the storage of the selected section
 #  NOTES
-#    private method
+#    INI private method
 #  ARGUMENTS
 #    <section> - section name, default - unnamed global
 #  EXAMPLE
@@ -266,7 +270,7 @@ INI.free() {
 #    tSel.__section.select tSect                                                #? true
 #    tSel.__section.set key "is value"
 #    tSel.__section.get key >| grep '^is value$'                                #? true
-#    tSel.__section.id @ >| md5sum - | grep ^180d2f8ad60b98865dfe06b8710b3a.*-$ #? true
+#    tSel.__section.id @ >| grep -P "^_hTSEL.*(settings|[[:xdigit:]]*)$"        #? true
 #    tSel.free
 #  SOURCE
 INI.__section.select() {
@@ -278,10 +282,9 @@ INI.__section.select() {
 
   if [[ ! $id ]]; then
 
-    #eval "(( \${#_h${o^^}[@]} > 0 )) || declare -Ag -- _h${o^^}='([__id__]=__id__)'"
-    #eval "(( \${#_a${o^^}[@]} > 0 )) || declare -ag -- _a${o^^}='()'"
-    id=$(md5sum <<< "$s")
-    id="_h${o^^}_${id:0:32}"
+    id=$(sha1sum <<< "$s")
+    id="_h${o^^}_${id:0:40}"
+
     declare -Ag -- $id="()"
 
     eval "_h${o^^}[$s]=$id; _a${o^^}[\${#_a${o^^}[@]}]=\"$s\""
@@ -293,7 +296,7 @@ INI.__section.select() {
 
 }
 #******
-#****f* private/INI.__section.show
+#****p* libini/INI.__section.show
 #  SYNOPSIS
 #    INI.__section.show [<section>]
 #  DESCRIPTION
@@ -311,10 +314,17 @@ INI.__section.select() {
 #    tSShow.__section.set key "unnamed section"
 #    tSShow.__section.show >| md5sum | grep ^67d9d58badfb9e5e568e72adcc5c95.*-$ #? true
 #    tSShow.free
+#    INI tSShow2
+#    tSShow2.set [ __settings__ ] bConfMode = true
+#    tSShow2.set [ tSect2 ] keyFirst   = is first value
+#    tSShow2.set [ tSect2 ] keySecond  = is second value
+#    tSShow2.set [ tSect2 ] keyOneWord = is_one_world_value
+#    tSShow2.__section.show tSect2 >| md5sum - | grep ^f4bea0366a1f110343bf.*-$ #? true
+#    tSShow2.free
 #  SOURCE
 INI.__section.show() {
 
-  local i iKeyWidth iC id o sA sU
+  local iC id k o sA sU
 
   o=${FUNCNAME[0]%%.*}
 
@@ -328,7 +338,7 @@ INI.__section.show() {
 
   if [[ $sU == "=" ]]; then
 
-    eval "for i in "\${!$id[@]}"; do [[ \$i =~ ^_bashlyk_raw_uniq= ]] && printf -- '%s\n' \"\${$id[\$i]}\"; done;"
+    eval "for k in "\${!$id[@]}"; do [[ \$k =~ ^_bashlyk_raw_uniq= ]] && printf -- '%s\n' \"\${$id[\$k]}\"; done;"
 
   else
 
@@ -336,17 +346,44 @@ INI.__section.show() {
 
     if udfIsNumber $iC && (( iC > 0 )); then
 
-      for (( i=0; i < $iC; i++ )); do
+      for (( k=0; k < $iC; k++ )); do
 
-        ${o}.__section.get "_bashlyk_raw_incr=$i"
+        ${o}.__section.get "_bashlyk_raw_incr=$k"
 
       done
 
     else
 
+      local bQuote iKeyWidth iPadding v
+
       iKeyWidth=$( ${o}.__section.get _bashlyk_key_width )
       udfIsNumber $iKeyWidth || iKeyWidth=''
-      eval "for i in "\${!$id[@]}"; do [[ \$i =~ ^_bashlyk_ ]] || printf -- '\t%${iKeyWidth}s    =    %s\n' \"\$i\" \"\${$id[\$i]}\"; done;"
+
+      iPadding=$( ${o}.get [__settings__]iPadding )
+      udfIsNumber $iPadding || iPadding=4
+
+      if [[ $( ${o}.get [__settings__]bConfMode ) =~ ^(true|yes|1)$ ]]; then
+
+        bQuote=true
+        iPadding=0
+
+      else
+
+        bQuote=''
+
+      fi
+
+      eval "                                                                   \
+        for k in "\${!$id[@]}"; do                                             \
+          if [[ ! \$k =~ ^_bashlyk_ ]]; then                                   \
+            v=\${$id[\$k]};                                                    \
+            [[ \$bQuote ]] && v=\$( udfQuoteIfNeeded \$v );                    \
+            printf -- '\t%${iKeyWidth}s%${iPadding}s=%${iPadding}s%s\n'        \
+              \"\$k\" \"\" \"\"  \"\$v\";                                      \
+          fi                                                                   \
+        done;                                                                  \
+                                                                               \
+      "
 
     fi
 
@@ -356,22 +393,21 @@ INI.__section.show() {
 
 }
 #******
-#****f* private/INI.__section.setRawData
+#****p* libini/INI.__section.setRawData
 #  SYNOPSIS
 #    INI.__section.setRawData -|=|+ <data>
 #  DESCRIPTION
 #    set "raw" data record to the current section with special key prefix
 #    '_bashlyk_raw_...'
 #  NOTES
-#    private method
+#    INI private method
 #  ARGUMENTS
 #    '-', '+' - add "raw" record with incremented key like "_bashlyk_raw_incr=<No>"
 #    '='      - add or update "raw" unique record with key like
 #               "_bashlyk_raw_uniq=<input data without spaces and quotes>"
 #    <data>   - input data, interpreted as "raw" record
-#  RETURN VALUE
+#  ERRORS
 #    InvalidArgument - unexpected "raw" mode
-#    Success for other cases
 #  EXAMPLE
 #    INI tSRawData
 #    tSRawData.__section.select "unique_values"
@@ -422,7 +458,7 @@ INI.__section.setRawData() {
 
 }
 #******
-#****f* private/INI.__section.getArray
+#****p* libini/INI.__section.getArray
 #  SYNOPSIS
 #    INI.__section.getArray [<section>]
 #  DESCRIPTION
@@ -430,12 +466,11 @@ INI.__section.setRawData() {
 #    a unique "raw" records (with the prefix "_bashlyk_raw_uniq=...") or incremented
 #    records (with prefix "_bashlyk_raw_incr=...")
 #  NOTES
-#    private method
+#    INI private method
 #  ARGUMENTS
 #    <section> - specified section, default - unnamed global
-#  RETURN VALUE
+#  ERRORS
 #    MissingArgument - arguments not found
-#    Success in other cases
 #  EXAMPLE
 #    INI tGA
 #    tGA.__section.select sect1
@@ -483,7 +518,7 @@ INI.__section.getArray() {
 
 }
 #******
-#****f* public/INI.get
+#****e* libini/INI.get
 #  SYNOPSIS
 #    INI.get [\[<section>\]]<key>
 #  DESCRIPTION
@@ -498,10 +533,9 @@ INI.__section.getArray() {
 #    <key>     - named key for "key=value" pair of the input data. For unnamed
 #                records this argument must be supressed, this cases return
 #                serialized array of the records (see INI.__section.getArray)
-#  RETURN VALUE
+#  ERRORS
 #    MissingArgument - arguments not found
 #    InvalidArgument - expected like a '[section]key', '[]key' or 'key'
-#    Success in other cases
 #  EXAMPLE
 #    INI tGet
 #    tGet.__section.select
@@ -573,7 +607,7 @@ INI.get() {
 
 }
 #******
-#****f* public/INI.set
+#****e* libini/INI.set
 #  SYNOPSIS
 #    INI.set [\[<section>\]]<key> = <value>
 #  DESCRIPTION
@@ -585,11 +619,10 @@ INI.get() {
 #    <key>     - named key for "key=value" pair of the input data. For unnamed
 #                records this argument must be supressed or must have '-' '+'
 #                value, in this cases return serialized array of items
-#  RETURN VALUE
+#  ERRORS
 #    MissingArgument - arguments not found
 #    InvalidArgument - expected like a '[section]key = value', '[]key = value'
 #                      or 'key = value'
-#    Success in other cases
 #  EXAMPLE
 #    INI tSet
 #    tSet.set [section]key = is value
@@ -607,13 +640,18 @@ INI.get() {
 #    tSet.get [section2] >| md5sum | grep ^8c6e9c4833a07c3d451eacbef0813534.*-$ #? true
 #    tSet.get [section1] >| md5sum | grep ^9cb6e155955235c701959b4253d7417b.*-$ #? true
 #    tSet.free
+#    _ onError return
+#    INI InvalidInput
+#    InvalidInput.set Thu, 30 Jun 2016 08:55:36 +0400                           #? $_bashlyk_iErrorInvalidArgument
+#    InvalidInput.set [section] Thu, 30 Jun 2016 08:55:36 +0400                 #? $_bashlyk_iErrorInvalidArgument
+#    InvalidInput.free
 #  SOURCE
 INI.set() {
-
+  ## TODO ignore bad arguments or raw mode ?
   udfOn MissingArgument $* || return $?
 
   local -a a
-  local ISF o k s v
+  local iKeyWidth ISF o k s v
 
   o="$*" && s="$IFS" && IFS='[]' && a=( $o ) && IFS="$s"
   o=${FUNCNAME[0]%%.*}
@@ -624,16 +662,20 @@ INI.set() {
       s=${a[1]:-__global__}
       k=${a[2]%%=*}
       v=${a[2]#*=}
+      [[ $k == ${a[2]} && $v == ${a[2]} ]] \
+        && eval $( udfOnError InvalidArgument "${a[2]}" )
       ;;
 
     1)
       s=__global__
       k=${a[0]%%=*}
       v=${a[0]#*=}
+      [[ $k == ${a[0]} && $v == ${a[0]} ]] \
+        && eval $( udfOnError InvalidArgument "${a[0]}" )
       ;;
 
     *)
-      eval $( udfOnError throw InvalidArgument "$* - $(declare -p a)" )
+      eval $( udfOnError InvalidArgument "$* - $(declare -p a)" )
       ;;
 
   esac
@@ -650,13 +692,17 @@ INI.set() {
 
   else
 
+    iKeyWidth=$( ${o}.__section.get _bashlyk_key_width )
+    udfIsNumber $iKeyWidth || iKeyWidth=0
+
+    (( ${#k} > iKeyWidth )) && ${o}.__section.set _bashlyk_key_width ${#k}
     ${o}.__section.set "$k" "$v"
 
   fi
 
 }
 #******
-#****f* public/INI.show
+#****e* libini/INI.show
 #  SYNOPSIS
 #    INI.show
 #  DESCRIPTION
@@ -676,7 +722,7 @@ INI.set() {
 #  SOURCE
 INI.show() {
 
-  local o s
+  local i o s
 
   o=${FUNCNAME[0]%%.*}
 
@@ -685,7 +731,7 @@ INI.show() {
   for (( i=0; i < $( ${o}.__section.byindex ); i++ )); do
 
     s="$( ${o}.__section.byindex $i )"
-    [[ $s =~ ^(__global__|__id__)$ ]] && continue
+    [[ $s =~ ^(__global__|__settings__)$ ]] && continue
     ${o}.__section.show "$s"
 
   done
@@ -694,7 +740,7 @@ INI.show() {
 
 }
 #******
-#****f* public/INI.save
+#****e* libini/INI.save
 #  SYNOPSIS
 #    INI.save <file>
 #  DESCRIPTION
@@ -703,7 +749,7 @@ INI.show() {
 #    public method
 #  ARGUMENTS
 #    <file>  - target file for saving, full path required
-#  RETURN VALUE
+#  ERRORS
 #    MissingArgument    - the file name is not specified
 #    NotExistNotCreated - the target file is not created
 #  EXAMPLE
@@ -741,16 +787,15 @@ INI.save() {
 
 }
 #******
-#****f* public/INI.read
+#****e* libini/INI.read
 #  SYNOPSIS
 #    INI.read <filename>
 #  DESCRIPTION
 #    Handling a configuration from the single INI file. Read valid "key=value"
 #    pairs and as bonus "active" sections data only
-#  RETURN VALUE
+#  ERRORS
 #    NoSuchFileOrDir - input file not exist
 #    NotPermitted    - owner of the input file differ than owner of the process
-#    Success for the other cases
 #  EXAMPLE
 #   local c ini s S                                                             #-
 #   c=':void,main exec:- main:sTxt,b,iYo replace:- unify:= asstoass:+'          #-
@@ -903,7 +948,7 @@ INI.read() {
 
 }
 #******
-#****f* public/INI.load
+#****e* libini/INI.load
 #  SYNOPSIS
 #    INI.load <file> <section>:(<options>)|<raw mode>) ...
 #  DESCRIPTION
@@ -919,7 +964,11 @@ INI.read() {
 #                 - - replace early load data of the section
 #                 + - add data to the early loaded data of the section
 #                 = - add only unique data of the early loaded data
-#  RETURN VALUE
+#  NOTES
+#    The file name must not begin with a point or end with a point.
+#    configuration sources are ignored if they do not owned by the owner of the
+#    process or root.
+#  ERRORS
 #    NoSuchFileOrDir - input file not exist
 #    MissingArgument - parameters and sections are not selected
 #  EXAMPLE
@@ -1007,8 +1056,7 @@ INI.read() {
 #  SOURCE
 INI.load() {
 
-  udfOn NoSuchFileOrDir throw $1
-  udfOn MissingArgument throw $2
+  [[ $1 =~ ^\.|\.$ ]] && eval $( udfOnError throw InvalidArgument "$1" )
 
   local -a a
   local -A h hKeyValue hRawMode
@@ -1024,7 +1072,11 @@ INI.load() {
   #
   if [[ ! $path && -f "/etc/$(_ pathPrefix)/$1" ]]; then
 
-    path="/etc/$(_ pathPrefix)"
+     path="/etc/$(_ pathPrefix)"
+
+  else
+
+    udfOn NoSuchFileOrDir $1 || return $?
 
   fi
 
@@ -1081,7 +1133,7 @@ INI.load() {
 
 }
 #******
-#****f* public/INI.bind.cli
+#****e* libini/INI.bind.cli
 #  SYNOPSIS
 #    INI.bind.cli [<section>-]<option long name>{<short name>}[:[:=+]] ...
 #  DESCRIPTION
@@ -1099,7 +1151,7 @@ INI.load() {
 #           +      - option is expected to have list of accumulated arguments
 #                    by default, option is included in the global section of the
 #                    INI instance data
-#  RETURN VALUE
+#  ERRORS
 #    MissingArgument - arguments is not specified
 #    InvalidArgument - invalid format of the arguments
 #  EXAMPLE
@@ -1167,7 +1219,7 @@ INI.bind.cli() {
 
 }
 #******
-#****f* public/INI.getopt
+#****e* libini/INI.getopt
 #  SYNOPSIS
 #    INI.getopt <option>[--]
 #  DESCRIPTION
@@ -1177,7 +1229,7 @@ INI.bind.cli() {
 #    <option> - option name that used as long option of the CLI and key for
 #               array of the INI data
 #          -- - expected list of the values - serialized array
-#  RETURN VALUE
+#  ERRORS
 #    MissingArgument - arguments is not specified
 #    InvalidArgument - invalid format of the argument
 #  OUTPUT

@@ -1,5 +1,5 @@
 #
-# $Id: liblog.sh 628 2016-12-19 00:27:21+04:00 toor $
+# $Id: liblog.sh 643 2016-12-26 13:49:26+04:00 toor $
 #
 #****h* BASHLYK/liblog
 #  DESCRIPTION
@@ -9,38 +9,38 @@
 #  AUTHOR
 #    Damir Sh. Yakupov <yds@bk.ru>
 #******
-#****d* liblog/Once required
+#***iV* liberr/BASH Compability
 #  DESCRIPTION
-#    Эта глобальная переменная обеспечивает
-#    защиту от повторного использования данного модуля
-#    Отсутствие значения $BASH_VERSION предполагает несовместимость с
-#    c текущим командным интерпретатором
+#    BASH version 4.xx or more required for this script
 #  SOURCE
-[ -n "$BASH_VERSION" ] \
- || eval 'echo "bash interpreter for this script ($0) required ..."; exit 255'
-[[ $_BASHLYK_LIBLOG ]] && return 0 || _BASHLYK_LIBLOG=1
+[ -n "$BASH_VERSION" ] && (( ${BASH_VERSINFO[0]} >= 4 )) || eval '             \
+                                                                               \
+    echo "[!] BASH shell version 4.xx required for ${0}, abort.."; exit 255    \
+                                                                               \
+'
 #******
-#****** liblog/External modules
+[[ $_BASHLYK_LIBLOG ]] && return 0 || _BASHLYK_LIBLOG=1
+#****L* liblog/Used libraries
 #  DESCRIPTION
-#    Using modules section
-#    Здесь указываются модули, код которых используется данной библиотекой
+#    Loading external libraries
 #  SOURCE
 : ${_bashlyk_pathLib:=/usr/share/bashlyk}
-[[ -s "${_bashlyk_pathLib}/libstd.sh" ]] && . "${_bashlyk_pathLib}/libstd.sh"
-[[ -s "${_bashlyk_pathLib}/libmsg.sh" ]] && . "${_bashlyk_pathLib}/libmsg.sh"
+[[ -s ${_bashlyk_pathLib}/libstd.sh ]] && . "${_bashlyk_pathLib}/libstd.sh"
+[[ -s ${_bashlyk_pathLib}/libmsg.sh ]] && . "${_bashlyk_pathLib}/libmsg.sh"
 #******
-#****v* liblog/Init section
+#****G* liblog/Global variables
 #  DESCRIPTION
-#    Блок инициализации глобальных переменных
+#    Global variables of the library
 #  SOURCE
+: ${_bashlyk_pidLogSock:=}
+: ${_bashlyk_fnLogSock:=}
+
 : ${HOSTNAME:=$(hostname)}
 : ${DEBUGLEVEL:=0}
 : ${_bashlyk_pathLog:=/tmp}
 : ${_bashlyk_s0:=${0##*/}}
 : ${_bashlyk_sId:=${_bashlyk_s0%.sh}}
 : ${_bashlyk_pathRun:=/tmp}
-: ${_bashlyk_pidLogSock:=}
-: ${_bashlyk_fnLogSock:=}
 : ${_bashlyk_iStartTimeStamp:=$(date "+%s")}
 : ${_bashlyk_sUser:=$USER}
 : ${_bashlyk_emailRcpt:=postmaster}
@@ -49,10 +49,18 @@
 : ${_bashlyk_bUseSyslog:=0}
 : ${_bashlyk_bNotUseLog:=1}
 : ${_bashlyk_sCond4Log:=redirect}
-: ${_bashlyk_aRequiredCmd_log:="date dirname echo hostname logger mkdir mkfifo \
-  printf rm touch tty"}
-: ${_bashlyk_aExport_log:="_fnLog udfCheck4LogUse udfDebug udfFinally udfIsInteract \
-  udfIsTerminal udfLog udfLogger udfSetLog udfSetLogSocket udfUptime"}
+
+declare -r _bashlyk_aRequiredCmd_log="                                         \
+                                                                               \
+    date dirname hostname logger mkdir mkfifo rm touch tty                     \
+                                                                               \
+"
+declare -r _bashlyk_aExport_log="                                              \
+                                                                               \
+    udfCheck4LogUse udfDebug udfFinally udfUptime udfLog udfLogger             \
+    udfSetLog udfSetLogSocket udfIsTerminal udfIsInteract _fnLog               \
+                                                                               \
+"
 #******
 #****f* liblog/udfLogger
 #  SYNOPSIS
@@ -254,12 +262,11 @@ udfFinally() { echo "$@ uptime $( udfUptime ) sec"; }
 #    Установка механизма ведения лога согласно ранее установленных условий.
 #    Используется специальный сокет для того чтобы отмечать тегами строки
 #    журнала.
-#  Return VALUE
-#     0                        - Выполнено успешно
-#     1                        - Сокет не создан, но стандартный вывод
-#                                перенаправляется в файл лога (без тегирования)
-#     iErrorNotExistNotCreated - Каталог для сокета не существует и не может
-#                                быть создан
+#  ERRORS
+#     1                  - Сокет не создан, но стандартный вывод
+#                          перенаправляется в файл лога (без тегирования)
+#     NotExistNotCreated - Каталог для сокета не существует и не может
+#                          быть создан
 #  EXAMPLE
 #    local fnLog=$(mktemp --suffix=.log || tempfile -s .test.log)               #? true
 #    _ fnLog $fnLog                                                             #? true
@@ -276,7 +283,7 @@ udfSetLogSocket() {
  fi
  mkdir -p ${_bashlyk_pathRun} || {
   udfWarn "Warn: path for Sockets ${_bashlyk_pathRun} not created..."
-  eval $(udfOnError return iErrorNotExistNotCreated 'path ${_bashlyk_pathRun} is not created...')
+  eval $(udfOnError return NotExistNotCreated 'path ${_bashlyk_pathRun} is not created...')
  }
  [[ -a "$fnSock" ]] && rm -f $fnSock
  if mkfifo -m 0600 $fnSock >/dev/null 2>&1; then
@@ -299,9 +306,9 @@ udfSetLogSocket() {
 #    udfSetLog [arg]
 #  DESCRIPTION
 #    Установка файла лога
-#  RETURN VALUE
-#     0   - Выполнено
-#     255   - невозможно использовать файл лога, аварийное завершение сценария
+#  ERRORS
+#     NotExistNotCreated - файл лога создать не удается, аварийное завершение
+#                          сценария
 #  EXAMPLE
 #    local fnLog=$(mktemp --suffix=.log || tempfile -s .test.log)               #? true
 #    rm -f $fnLog
@@ -320,8 +327,8 @@ udfSetLog() {
             _bashlyk_pathLog=$(dirname ${_bashlyk_fnLog})
          ;;
  esac
- mkdir -p "$_bashlyk_pathLog" || eval $(udfOnError throw iErrorNotExistNotCreated 'path $_bashlyk_pathLog is not created...')
- touch "$_bashlyk_fnLog"      || eval $(udfOnError throw iErrorNotExistNotCreated 'file $_bashlyk_fnLog not usable for logging')
+ mkdir -p "$_bashlyk_pathLog" || eval $(udfOnError throw NotExistNotCreated 'path $_bashlyk_pathLog is not created...')
+ touch "$_bashlyk_fnLog"      || eval $(udfOnError throw NotExistNotCreated 'file $_bashlyk_fnLog not usable for logging')
  udfSetLogSocket
  return 0
 }
@@ -359,9 +366,9 @@ _fnLog() {
 #    Текст отладочного сообщения (аргумент "message"), если его уровень
 #    (аргумент "level") не больше заданного для сценария переменной DEBUGLEVEL
 #  RETURN VALUE
-#    0                            - уровень "level" не больше DEBUGLEVEL
-#    1                            - уровень "level"    больше DEBUGLEVEL
-#    iErrorEmptyOrMissingArgument - аргументы отсутствуют
+#    0               - уровень "level" не больше DEBUGLEVEL
+#    1               - уровень "level"    больше DEBUGLEVEL
+#    MissingArgument - аргументы отсутствуют
 #  EXAMPLE
 #    DEBUGLEVEL=0
 #    udfDebug                                                                   #? $_bashlyk_iErrorEmptyOrMissingArgument
@@ -374,7 +381,7 @@ _fnLog() {
 #  SOURCE
 udfDebug() {
  local i re='^[0-9]+$' IFS=$' \t\n'
- [[ -n "$*" ]] && i=$1 || eval $(udfOnError return iErrorEmptyOrMissingArgument)
+ [[ -n "$*" ]] && i=$1 || eval $(udfOnError return MissingArgument)
  shift
  [[ "$i" =~ ^[0-9]+$ ]] || i=0
  (( $DEBUGLEVEL >= $i )) || return 1
