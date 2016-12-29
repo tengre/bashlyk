@@ -1,5 +1,5 @@
 #
-# $Id: libcnf.sh 648 2016-12-28 22:31:07+04:00 toor $
+# $Id: libcnf.sh 649 2016-12-29 10:45:47+04:00 toor $
 #
 #****h* BASHLYK/libcnf
 #  DESCRIPTION
@@ -241,13 +241,13 @@ udfSetConfig() {
 
   o="${FUNCNAME[0]%%.*}_${RANDOM}${RANDOM}"
   INI $o
-  ${o}.set [ __settings__ ]bConfMode = true
+  ${o}.set [ __settings__ ] bConfMode = true
 
   while read -t 4; do
 
     ${o}.set $REPLY
 
-  done< <( echo -e "${2//;/\\\n}" )
+  done< <( echo -e "${2//[;,]/\\\n}" )
 
   ${o}.save $conf
   s=$?
