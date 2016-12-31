@@ -1,5 +1,5 @@
 #
-# $Id: libpid.sh 641 2016-12-25 01:50:37+04:00 toor $
+# $Id: libpid.sh 651 2016-12-31 15:05:24+04:00 toor $
 #
 #****h* BASHLYK/libpid
 #  DESCRIPTION
@@ -80,19 +80,20 @@ declare -r _bashlyk_exports_pid="                                              \
 #  SOURCE
 udfCheckStarted() {
 
-	udfOn EmptyOrMissingArgument "$*" || return $?
+  udfOn EmptyOrMissingArgument "$*" || return $?
 
-	local re="\\b${1}\\b"
+  local re="\\b${1}\\b"
 
-	udfIsNumber $1 || return $( _ iErrorNotValidArgument )
+  udfIsNumber $1 || return $( _ iErrorNotValidArgument )
 
-	[[ "$$" == "$1" ]] && return $( _ iErrorCurrentProcess )
+  [[ "$$" == "$1" ]] && return $( _ iErrorCurrentProcess )
 
-	shift
+  shift
 
-	[[ "$( pgrep -d' ' -f "$*" )" =~ $re && "$( pgrep -d' ' ${1##*/} )" =~ $re ]] || return $(_ iErrorNoSuchProcess)
+  [[ "$( pgrep -d' ' -f "$*" )" =~ $re && "$( pgrep -d' ' ${1##*/} )" =~ $re ]] \
+    || return $(_ iErrorNoSuchProcess)
 
-	return 0
+  return 0
 
 }
 #******
@@ -146,94 +147,94 @@ udfCheckStarted() {
 #  SOURCE
 udfStopProcess() {
 
-	udfOn EmptyOrMissingArgument "$@" || return $?
+  udfOn EmptyOrMissingArgument "$@" || return $?
 
-	local bChild i iStopped pid rc re s
-	local -a a
+  local bChild i iStopped pid rc re s
+  local -a a
 
-	for s in $*; do
+  for s in $*; do
 
-		case "$s" in
+    case "$s" in
 
-			pid=*)
-				i="${s#*=}"
-				a=( ${i//,/ } )
-				shift
-			;;
+      pid=*)
+             i="${s#*=}"
+             a=( ${i//,/ } )
+             shift
+      ;;
 
-			childs)
-				bChild=1
-				shift
-			;;
+      childs)
+             bChild=1
+             shift
+      ;;
 
-		esac
+    esac
 
-	done
+  done
 
-	rc=$( _ iErrorNoSuchProcess )
+  rc=$( _ iErrorNoSuchProcess )
 
-	udfOn EmptyOrMissingArgument "${a[*]}" || a=( $( pgrep -d' ' ${1##*/} ) )
-	udfOn EmptyOrMissingArgument "${a[*]}" || return $rc
+  udfOn EmptyOrMissingArgument "${a[*]}" || a=( $( pgrep -d' ' ${1##*/} ) )
+  udfOn EmptyOrMissingArgument "${a[*]}" || return $rc
 
-	iStopped=0
-	for (( i=0; i<${#a[*]}; i++ )) ; do
+  iStopped=0
+  for (( i=0; i<${#a[*]}; i++ )) ; do
 
-		pid=${a[i]}
+    pid=${a[i]}
 
-		if ! udfIsNumber $pid; then
+    if ! udfIsNumber $pid; then
 
-			rc=$( _ iErrorInvalidArgument )
-			continue
+      rc=$( _ iErrorInvalidArgument )
+      continue
 
-		fi
+    fi
 
-		if (( pid == $$ )); then
+    if (( pid == $$ )); then
 
-			rc=$( _ iErrorCurrentProcess )
-			continue
+      rc=$( _ iErrorCurrentProcess )
+      continue
 
-		fi
+    fi
 
-		re="\\b${pid}\\b"
+    re="\\b${pid}\\b"
 
-		if [[ -n "$bChild" && ! "$( pgrep -P $$ )" =~ $re ]]; then
+    if [[ $bChild && ! "$( pgrep -P $$ )" =~ $re ]]; then
 
-			rc=$( _ iErrorNotChildProcess )
-			continue
+      rc=$( _ iErrorNotChildProcess )
+      continue
 
-		fi
+    fi
 
-		for s in 15 9; do
+    for s in 15 9; do
 
-			if [[  "$( pgrep -d' ' ${1##*/} )" =~ $re && "$( pgrep -d' ' -f "$*" )" =~ $re ]]; then
+      if [[  "$( pgrep -d' ' ${1##*/} )" =~ $re && "$( pgrep -d' ' -f "$*" )" =~ $re ]]; then
 
-				if kill -${s} $pid; then
+        if kill -${s} $pid; then
 
-					a[i]=""
-					: $(( iStopped++ ))
+          a[i]=""
+          : $(( iStopped++ ))
 
-				else
+        else
 
-					rc=$( _ iErrorNotPermitted )
+          rc=$( _ iErrorNotPermitted )
 
-				fi
+        fi
 
-			else
+      else
 
-				a[i]=""
-				break
+        a[i]=""
+        break
 
-			fi
+      fi
 
-		done
+    done
 
-	done
+  done
 
-	s="${a[*]}"
+  s="${a[*]}"
 
-	[[ $iStopped != 0 && -z "${s// /}" ]] || return $rc
+  [[ $iStopped != 0 && -z "${s// /}" ]] || return $rc
 
-	return 0
+  return 0
 
 }
 #******
@@ -265,62 +266,63 @@ udfStopProcess() {
 #  SOURCE
 udfSetPid() {
 
-	local fnPid pid
+  local fnPid pid
 
-	if [[ -n "$( _ sArg )" ]]; then
+  if [[ -n "$( _ sArg )" ]]; then
 
-		fnPid="$( _ pathRun )/$( udfGetMd5 $( _ s0 ) $( _ sArg ) ).pid"
+    fnPid="$( _ pathRun )/$( udfGetMd5 $( _ s0 ) $( _ sArg ) ).pid"
 
-	else
+  else
 
-		fnPid="$( _ pathRun )/$( _ s0 ).pid"
+    fnPid="$( _ pathRun )/$( _ s0 ).pid"
 
-	fi
+  fi
 
-	mkdir -p "${fnPid%/*}" || eval $( udfOnError retecho NotExistNotCreated "${fnPid%/*}" )
+  mkdir -p "${fnPid%/*}" \
+    || eval $( udfOnError retecho NotExistNotCreated "${fnPid%/*}" )
 
-	fd=$( udfGetFreeFD )
-	udfThrowOnEmptyVariable fd
+  fd=$( udfGetFreeFD )
+  udfThrowOnEmptyVariable fd
 
-	eval "exec $fd>>${fnPid}"
+  eval "exec $fd>>${fnPid}"
 
-	[[ -s $fnPid ]] && pid=$( head -n 1 $fnPid )
+  [[ -s $fnPid ]] && pid=$( head -n 1 $fnPid )
 
-	if eval "flock -n $fd"; then
+  if eval "flock -n $fd"; then
 
-		if udfCheckStarted "$pid" $( _ s0 ) $( _ sArg ); then
+    if udfCheckStarted "$pid" $( _ s0 ) $( _ sArg ); then
 
-			eval $( udfOnError retecho AlreadyStarted "$pid" )
+      eval $( udfOnError retecho AlreadyStarted "$pid" )
 
-		fi
+    fi
 
-		if printf -- "%s\n%s\n" "$$" "$0 $( _ sArg )" > $fnPid; then
+    if printf -- "%s\n%s\n" "$$" "$0 $( _ sArg )" > $fnPid; then
 
-			_ fnPid $fnPid
-			udfAddFO2Clean $fnPid
-			udfAddFD2Clean $fd
+      _ fnPid $fnPid
+      udfAddFO2Clean $fnPid
+      udfAddFD2Clean $fd
 
-		else
+    else
 
-			eval $( udfOnError retecho NotExistNotCreated "$fnPid" )
+      eval $( udfOnError retecho NotExistNotCreated "$fnPid" )
 
-		fi
+    fi
 
-	else
+  else
 
-		if udfCheckStarted "$pid" $( _ s0 ) $( _ sArg ); then
+    if udfCheckStarted "$pid" $( _ s0 ) $( _ sArg ); then
 
-			eval $( udfOnError retecho AlreadyStarted "$pid" )
+      eval $( udfOnError retecho AlreadyStarted "$pid" )
 
-		else
+    else
 
-			eval $( udfOnError retecho AlreadyLocked "$fnPid" )
+      eval $( udfOnError retecho AlreadyLocked "$fnPid" )
 
-		fi
+    fi
 
-	fi
+  fi
 
-	return 0
+  return 0
 
 }
 #******
@@ -343,9 +345,7 @@ udfSetPid() {
 #  SOURCE
 udfExitIfAlreadyStarted() {
 
-	udfSetPid || exit $?
+  udfSetPid || exit $?
 
 }
 #******
-# TODO проверить на используемость udfClean
-

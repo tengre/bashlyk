@@ -1,5 +1,5 @@
 #
-# $Id: libopt.sh 642 2016-12-26 00:00:27+04:00 toor $
+# $Id: libopt.sh 651 2016-12-31 15:05:31+04:00 toor $
 #
 #****h* BASHLYK/libopt
 #  DESCRIPTION
@@ -64,34 +64,53 @@ declare -r _bashlyk_aExport_opt="                                              \
 #   udfGetOptHash 'bar:,foo' --job main --force                                 #? ${_bashlyk_iErrorNonValidArgument}
 #  SOURCE
 udfGetOptHash() {
- local k v csvKeys csvHash sOpt bFound IFS=$' \t\n'
- #
- [[ -n "$*" ]] || eval $(udfOnError return iErrorEmptyOrMissingArgument)
- #
- csvKeys="$1"
- shift
- sOpt="$(getopt -l $csvKeys -n $0 -- $0 $@ 2>/dev/null)" || eval $(udfOnError return iErrorNonValidArgument $@)
- eval set -- "$sOpt"
- while true; do
-  [[ -n "$1" ]] || break
-  bFound=
-  for k in ${csvKeys//,/ }; do
-   v=${k//:/}
-   [[ "--$v" == "$1" ]] && bFound=1 || continue
-   if [[ "$k" =~ :$ ]]; then
-    csvHash+="$v=$(udfAlias2WSpace $2);"
-    shift 2
-   else
-    csvHash+="$v=1;"
-    shift
-   fi
+
+  udfOn MissingArgument $* || return $?
+
+  local k v csvKeys csvHash sOpt bFound IFS=$' \t\n'
+
+  csvKeys="$1"
+  shift
+
+  sOpt="$( getopt -l $csvKeys -n $0 -- $0 $@ 2>/dev/null )" \
+    || eval $( udfOnError return NotValidArgument $@ )
+
+  eval set -- "$sOpt"
+
+  while true; do
+
+    [[ $1 ]] || break
+    bFound=
+
+    for k in ${csvKeys//,/ }; do
+
+      v=${k//:/}
+
+      [[ "--$v" == "$1" ]] && bFound=1 || continue
+
+      if [[ "$k" =~ :$ ]]; then
+
+       csvHash+="$v=$(udfAlias2WSpace $2);"
+       shift 2
+
+      else
+
+        csvHash+="$v=1;"
+        shift
+
+      fi
+
+   done
+
+   [[ -z "$bFound" ]] && shift
+
   done
-  [[ -z "$bFound" ]] && shift
- done
- shift
- ## TODO ситуация iErrorEmptyResult недостижима ?
- [[ -n "$csvHash" ]] && echo "$csvHash" || eval $(udfOnError return iErrorEmptyResult)
- #return 0
+
+  shift
+
+  ## TODO ситуация iErrorEmptyResult недостижима ?
+  [[ $csvHash ]] && echo "$csvHash" || eval $( udfOnError return EmptyResult )
+
 }
 #******
 #****f* libopt/udfSetOptHash
@@ -113,15 +132,19 @@ udfGetOptHash() {
 #    ## TODO коды возврата проверить
 #  SOURCE
 udfSetOptHash() {
- local _bashlyk_udfGetOptHash_confTmp IFS=$' \t\n'
- #
- [[ -n "$*" ]] || eval $(udfOnError return iErrorEmptyOrMissingArgument)
- #
- udfMakeTemp   _bashlyk_udfGetOptHash_confTmp
- udfSetConfig $_bashlyk_udfGetOptHash_confTmp "$*" || eval $(udfOnError return)
- udfGetConfig $_bashlyk_udfGetOptHash_confTmp      || eval $(udfOnError return)
- rm -f $_bashlyk_udfGetOptHash_confTmp
- return 0
+
+  udfOn MissingArgument $* || return $?
+
+  local _bashlyk_udfGetOptHash_confTmp IFS=$' \t\n'
+
+  udfMakeTemp   _bashlyk_udfGetOptHash_confTmp
+  udfSetConfig $_bashlyk_udfGetOptHash_confTmp "$*" || eval $(udfOnError return)
+  udfGetConfig $_bashlyk_udfGetOptHash_confTmp      || eval $(udfOnError return)
+
+  rm -f $_bashlyk_udfGetOptHash_confTmp
+
+  return 0
+
 }
 #******
 #****f* libopt/udfGetOpt
@@ -142,8 +165,10 @@ udfSetOptHash() {
 #    echo "dbg $job :: $bForce" >| grep "^dbg main :: 1$"                       #? true
 #  SOURCE
 udfGetOpt() {
- udfSetOptHash $(udfGetOptHash $*)
- _bashlyk_bSetOptions=1
+
+  udfSetOptHash $(udfGetOptHash $*)
+  _bashlyk_bSetOptions=1
+
 }
 #******
 #****f* libopt/udfExcludePairFromHash
@@ -165,12 +190,14 @@ udfGetOpt() {
 #    udfExcludePairFromHash 'save=1' "${s};save=1;" >| grep "^${s}$"            #? true
 #  SOURCE
 udfExcludePairFromHash() {
- local s="$1" IFS=$' \t\n'
- #
- [[ -n "$*" ]] || eval $(udfOnError return iErrorEmptyOrMissingArgument)
- #
- shift
- echo "${*//;$s;/}"
- #return 0
+
+  udfOn MissingArgument $* || return $?
+
+  local s="$1" IFS=$' \t\n'
+
+  shift
+
+  echo "${*//;$s;/}"
+
 }
 #******

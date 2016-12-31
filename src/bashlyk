@@ -1,6 +1,6 @@
 #!/bin/bash
 #
-# $Id: bashlyk 641 2016-12-25 01:56:51+04:00 toor $
+# $Id: bashlyk 651 2016-12-31 15:05:25+04:00 toor $
 #
 #****h* BASHLYK/bashlyk
 #  DESCRIPTION
@@ -48,59 +48,81 @@
 #    временном каталоге, обычно /tmp
 #  SOURCE
 udfInit() {
- local pathCnf pathRoot pathRun pathLog pathDat sHome IFS=$' \t\n'
- #
- _bashlyk_sId=${_bashlyk:-bashlyk}
- [ -n "$_bashlyk" ] && _bashlyk_pathPrefix="${_bashlyk}" \
-  || _bashlyk_pathPrefix=bashlyk
 
- _bashlyk_sUser=$(ps -p $$ -o user=)
- _bashlyk_sGroup=$(ps -p $$ -o group=)
+  local pathCnf pathRoot pathRun pathLog pathDat sHome IFS=$' \t\n'
 
- case $_bashlyk_sUser in
-  'root')
-   _bashlyk_pathCnf="/etc/${_bashlyk_pathPrefix}"
-   _bashlyk_pathIni="/etc/${_bashlyk_pathPrefix}"
-   _bashlyk_pathRun="/var/run/${_bashlyk_pathPrefix}"
-   _bashlyk_pathLog="/var/log/${_bashlyk_pathPrefix}"
-   _bashlyk_pathDat="/var/lib/${_bashlyk_pathPrefix}"
-   [[ -s "/etc/${_bashlyk_pathPrefix}/bashlyk.conf" ]] \
-    && . "/etc/${_bashlyk_pathPrefix}/bashlyk.conf"
-   ;;
-  *)
-   if [[ -z "$HOME" || ! -O "$HOME" ]]; then
-    sHome=$(getent passwd $_bashlyk_sUser | cut -d ":" -f 6)
-    [[ -n "$sHome" && -d "$sHome" && -O "$sHome" ]] || \
-     sHome="/tmp/${$}_${_bashlyk_sUser}"
-   else
-    sHome=$HOME
-   fi
-   _bashlyk_pathRun="${sHome}/.cache/${_bashlyk_pathPrefix}/run"
-   _bashlyk_pathLog="${sHome}/.local/share/${_bashlyk_pathPrefix}/log"
-   _bashlyk_pathDat="${sHome}/.local/share/${_bashlyk_pathPrefix}/lib"
-   _bashlyk_pathCnf="${sHome}/.config/${_bashlyk_pathPrefix}"
-   _bashlyk_pathIni="${sHome}/.config/${_bashlyk_pathPrefix}"
-   [[ -s "${sHome}/.config/bashlyk/bashlyk.conf" ]] && \
-    . "${sHome}/.config/bashlyk/bashlyk.conf"
-   [[ -s "${sHome}/.config/${_bashlyk_pathPrefix}/bashlyk.conf" ]] && \
-    . "${sHome}/.config/${_bashlyk_pathPrefix}/bashlyk.conf"
-  ;;
- esac
+  _bashlyk_sId=${_bashlyk:-bashlyk}
 
- [ -t 1 ] && _bashlyk_bInteract=1 || _bashlyk_bInteract=0
- tty > /dev/null 2>&1 && _bashlyk_bTerminal=1 || _bashlyk_bTerminal=0
- #
- if [[ "$_bashlyk_sArg" =~ bashlyk-test ]]; then
-  _bashlyk_aUnit="$(echo "${_bashlyk_sArg#*--bashlyk-test=}" | cut -f1 -d' ' \
-   | tr ',' ' ' | grep -v '\-\-bashlyk-test')"
-  [[ -n "$_bashlyk_aUnit" ]] || _bashlyk_aUnit="$(echo ${_bashlyk_aLib} | tr ',' ' ')"
-  _bashlyk_sMode='test'
-  export _bashlyk_pathCnf _bashlyk_pathRun _bashlyk_pathDat _bashlyk_pathLog
-  export _bashlyk_sLogin _bashlyk_bUseMail _bashlyk_sUser _bashlyk_sGroup
- else
-  _bashlyk_sMode='lib'
- fi
- [[ -n "$_bashlyk_aUnit" ]] || _bashlyk_aUnit="$(echo ${_bashlyk_aLib} | tr ',' ' ')"
+  [[ $_bashlyk ]] \
+    && _bashlyk_pathPrefix="${_bashlyk}" \
+    || _bashlyk_pathPrefix='bashlyk'
+
+  _bashlyk_sUser=$(ps -p $$ -o user=)
+  _bashlyk_sGroup=$(ps -p $$ -o group=)
+
+  case $_bashlyk_sUser in
+
+    'root')
+
+            _bashlyk_pathCnf="/etc/${_bashlyk_pathPrefix}"
+            _bashlyk_pathIni="/etc/${_bashlyk_pathPrefix}"
+            _bashlyk_pathRun="/var/run/${_bashlyk_pathPrefix}"
+            _bashlyk_pathLog="/var/log/${_bashlyk_pathPrefix}"
+            _bashlyk_pathDat="/var/lib/${_bashlyk_pathPrefix}"
+            [[ -s "/etc/${_bashlyk_pathPrefix}/bashlyk.conf" ]] \
+             && . "/etc/${_bashlyk_pathPrefix}/bashlyk.conf"
+    ;;
+
+         *)
+            if [[ -z "$HOME" || ! -O "$HOME" ]]; then
+
+              sHome=$(getent passwd $_bashlyk_sUser | cut -d ":" -f 6)
+              [[ $sHome && -d "$sHome" && -O "$sHome" ]] || \
+               sHome="/tmp/${$}_${_bashlyk_sUser}"
+
+            else
+
+              sHome=$HOME
+
+            fi
+
+            _bashlyk_pathRun="${sHome}/.cache/${_bashlyk_pathPrefix}/run"
+            _bashlyk_pathLog="${sHome}/.local/share/${_bashlyk_pathPrefix}/log"
+            _bashlyk_pathDat="${sHome}/.local/share/${_bashlyk_pathPrefix}/lib"
+            _bashlyk_pathCnf="${sHome}/.config/${_bashlyk_pathPrefix}"
+            _bashlyk_pathIni="${sHome}/.config/${_bashlyk_pathPrefix}"
+
+            [[ -s "${sHome}/.config/bashlyk/bashlyk.conf" ]] \
+              && . "${sHome}/.config/bashlyk/bashlyk.conf"
+
+            [[ -s "${sHome}/.config/${_bashlyk_pathPrefix}/bashlyk.conf" ]] \
+              && . "${sHome}/.config/${_bashlyk_pathPrefix}/bashlyk.conf"
+
+         ;;
+  esac
+
+  [[ -t 1 ]] && _bashlyk_bInteract=1 || _bashlyk_bInteract=0
+  tty > /dev/null 2>&1 && _bashlyk_bTerminal=1 || _bashlyk_bTerminal=0
+
+  if [[ "$_bashlyk_sArg" =~ bashlyk-test ]]; then
+
+    _bashlyk_aUnit="$(echo "${_bashlyk_sArg#*--bashlyk-test=}" | cut -f1 -d' ' \
+      | tr ',' ' ' | grep -v '\-\-bashlyk-test')"
+
+    [[ $_bashlyk_aUnit ]] || _bashlyk_aUnit="$(echo $_bashlyk_aLib|tr ',' ' ')"
+
+    _bashlyk_sMode='test'
+
+    export _bashlyk_pathIni _bashlyk_pathRun _bashlyk_pathDat _bashlyk_pathLog
+    export _bashlyk_sLogin _bashlyk_bUseMail _bashlyk_sUser _bashlyk_sGroup
+
+  else
+
+    _bashlyk_sMode='lib'
+
+  fi
+
+  [[ $_bashlyk_aUnit ]] || _bashlyk_aUnit="$(echo $_bashlyk_aLib | tr ',' ' ')"
 }
 #******
 #****f* bashlyk/udfMain
@@ -113,46 +135,46 @@ udfInit() {
 #  SOURCE
 udfMain() {
 
-	local cmd fn s IFS=$' \t\n'
+  local cmd fn s IFS=$' \t\n'
 
-	udfInit
+  udfInit
 
-	if [[ "$_bashlyk_sMode" == "test" ]]; then
+  if [[ "$_bashlyk_sMode" == "test" ]]; then
 
-		cmd=${_bashlyk_pathLib}/testunit.sh
+    cmd=${_bashlyk_pathLib}/testunit.sh
 
-		[[ -x "$cmd" ]] || eval 'echo "Error: $cmd not found..."; exit 255'
+    [[ -x "$cmd" ]] || eval 'echo "Error: $cmd not found..."; exit 255'
 
-		for s in $_bashlyk_aUnit; do $cmd $s; done
+    for s in $_bashlyk_aUnit; do $cmd $s; done
 
-		exit $?
+    exit $?
 
-	else
+  else
 
-		for s in $_bashlyk_aUnit; do
+    for s in $_bashlyk_aUnit; do
 
-			fn=${_bashlyk_pathLib}/lib${s}.sh
-			[[ -s "$fn" ]] && . $fn || eval 'echo "Error: $fn not found..."; exit 255'
+      fn=${_bashlyk_pathLib}/lib${s}.sh
+      [[ -s "$fn" ]] && . $fn || eval 'echo "Error: $fn not found..."; exit 255'
 
-		done
+    done
 
-	fi
+  fi
 
-	unset _bashlyk_aUnit _bashlyk_sMode
+  unset _bashlyk_aUnit _bashlyk_sMode
 
-	[[ $_bashlyk_log == "nouse" ]] && return 0
+  [[ $_bashlyk_log == "nouse" ]] && return 0
 
-	case ${_bashlyk_sCond4Log} in
+  case ${_bashlyk_sCond4Log} in
 
-		redirect) _bashlyk_bNotUseLog=$_bashlyk_bInteract ;;
-		  noterm) _bashlyk_bNotUseLog=$_bashlyk_bTerminal ;;
-		       *) _bashlyk_bNotUseLog=$_bashlyk_bInteract ;;
+    redirect) _bashlyk_bNotUseLog=$_bashlyk_bInteract ;;
+      noterm) _bashlyk_bNotUseLog=$_bashlyk_bTerminal ;;
+           *) _bashlyk_bNotUseLog=$_bashlyk_bInteract ;;
 
-	esac
+  esac
 
-	[[ "$_bashlyk_bNotUseLog" != "0" ]] || udfSetLog
+  [[ "$_bashlyk_bNotUseLog" != "0" ]] || udfSetLog
 
-	return 0
+  return 0
 
 }
 #******

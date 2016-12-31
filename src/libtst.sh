@@ -1,5 +1,5 @@
 #
-# $Id: libtst.sh 641 2016-12-25 01:56:50+04:00 toor $
+# $Id: libtst.sh 651 2016-12-31 15:05:29+04:00 toor $
 #
 #****h* BASHLYK/libtst
 #  DESCRIPTION
@@ -25,12 +25,10 @@
 # SOURCE
 : ${_bashlyk_pathLib:=/usr/share/bashlyk}
 [[ -s ${_bashlyk_pathLib}/libstd.sh ]] && . "${_bashlyk_pathLib}/libstd.sh"
-[[ -s ${_bashlyk_pathLib}/liberr.sh ]] && . "${_bashlyk_pathLib}/liberr.sh"
 #******
 #****v* libtst/Global Variables
 #  DESCRIPTION
 #    Global variables of the library
-#  SOURCE
 #  SOURCE
 : ${_bashlyk_sUser:=$USER}
 : ${_bashlyk_bNotUseLog:=1}
@@ -54,9 +52,14 @@ declare -r _bashlyk_exports_tst="udfTest"
 #  RETURN VALUE
 #    ...
 #  EXAMPLE
-#    udfTest #? true
+#    udfTest                                                                    #? $_bashlyk_iErrorMissingArgument
+#    udfTest test                                                               #? true
 #  SOURCE
 udfTest() {
- return 0
+
+  udfOn MissingArgument $1 || return $?
+
+  return 0
+
 }
 #******

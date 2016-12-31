@@ -1,5 +1,5 @@
 #
-# $Id: libnet.sh 641 2016-12-25 01:50:36+04:00 toor $
+# $Id: libnet.sh 651 2016-12-31 15:05:27+04:00 toor $
 #
 #****h* BASHLYK/libnet
 #  DESCRIPTION
@@ -60,24 +60,27 @@ declare -r _bashlyk_exports_net="udfGetValidIPsOnly udfGetValidCIDR"
 #  SOURCE
 udfGetValidIPsOnly() {
 
-	udfOn MissingArgument "$*" || return $?
+  udfOn MissingArgument "$*" || return $?
 
-	local s sDig
-	local -A h
+  local s sDig
+  local -A h
 
-	for s in $*; do
+  for s in $*; do
 
-		[[ $s =~ ^[0-9.]+$ ]] && ipcalc "$s" | grep '^INVALID ADDRESS:' && continue
-		sipcalc -d4 "$s" | grep '^-\[ERR :' && continue
-		sDig=$( dig +short $s | xargs )
-		[[ -n "$sDig" ]] && s="$sDig"
-		h[$s]=$s
+    [[ $s =~ ^[0-9.]+$ ]] && ipcalc "$s" | grep '^INVALID ADDRESS:' && continue
 
-	done >/dev/null 2>&1
+    sipcalc -d4 "$s" | grep '^-\[ERR :' && continue
 
-	echo "${h[@]}"
+    sDig=$( dig +short $s | xargs )
+    [[ $sDig ]] && s="$sDig"
 
-	udfOn EmptyResult return "${h[@]}"
+    h[$s]=$s
+
+  done >/dev/null 2>&1
+
+  echo "${h[@]}"
+
+  udfOn EmptyResult return "${h[@]}"
 
 }
 #******
@@ -104,38 +107,38 @@ udfGetValidIPsOnly() {
 #  SOURCE
 udfGetValidCIDR() {
 
-	udfThrowOnEmptyVariable _reIPv4
-	udfOn MissingArgument "$*" || return $?
+  udfThrowOnEmptyVariable _reIPv4
+  udfOn MissingArgument "$*" || return $?
 
-	local s i
-	local -A h
+  local s i
+  local -A h
 
-	for s in $*; do
+  for s in $*; do
 
-	[[ $s =~ $_reIPv4 ]] || continue
+  [[ $s =~ $_reIPv4 ]] || continue
 
-	i=${s##*/}
+  i=${s##*/}
 
-	if [[ $s == $i ]]; then
+  if [[ $s == $i ]]; then
 
-		s=$( udfGetValidIPsOnly $s ) || continue
+    s=$( udfGetValidIPsOnly $s ) || continue
 
-	else
+  else
 
-		udfIsNumber $i && (( i <= 32 )) || continue
+    udfIsNumber $i && (( i <= 32 )) || continue
 
-		s=$( udfGetValidIPsOnly ${s%/*} ) || continue
-		s="${s}/${i}"
+    s=$( udfGetValidIPsOnly ${s%/*} ) || continue
+    s="${s}/${i}"
 
-	fi
+  fi
 
-	[[ -n "$s" ]] && h[$s]="$s"
+  [[ $s ]] && h[$s]="$s"
 
-	done
+  done
 
-	echo "${h[@]}"
+  echo "${h[@]}"
 
-	udfOn EmptyResult return "${h[@]}"
+  udfOn EmptyResult return "${h[@]}"
 
 }
 #******

@@ -1,5 +1,5 @@
 #
-# $Id: liblog.sh 643 2016-12-26 13:49:26+04:00 toor $
+# $Id: liblog.sh 651 2016-12-31 15:05:30+04:00 toor $
 #
 #****h* BASHLYK/liblog
 #  DESCRIPTION
@@ -108,35 +108,61 @@ declare -r _bashlyk_aExport_log="                                              \
 #    _ bTerminal "$bTerminal"
 #  SOURCE
 udfLogger() {
- local bSysLog bUseLog sTagLog IFS=$' \t\n'
- bSysLog=0
- bUseLog=0
- sTagLog="${_bashlyk_s0}[$(printf -- "%05d" $$)]"
- [[ -z "$_bashlyk_bUseSyslog" || "$_bashlyk_bUseSyslog" -eq 0 ]] && bSysLog=0 || bSysLog=1
- if [[ -z "$_bashlyk_bNotUseLog" ]]; then
-  udfCheck4LogUse && bUseLog=1 || bUseLog=0
- else
-  (( $_bashlyk_bNotUseLog != 0 )) && bUseLog=0 || bUseLog=1
- fi
- mkdir -p "$_bashlyk_pathLog" || eval $(udfOnError throw iErrorNotExistNotCreated 'path ${_bashlyk_pathLog} is not created...')
- udfAddPath2Clean $_bashlyk_pathLog
 
- case "${bSysLog}${bUseLog}" in
-  00)
-   echo "$@"
-  ;;
-  01)
-   udfTimeStamp "$HOSTNAME $sTagLog: ${*//%/%%}" >> $_bashlyk_fnLog
-  ;;
-  10)
-   echo "$*"
-   logger -t "$sTagLog" "$*"
-  ;;
-  11)
-   udfTimeStamp "$HOSTNAME $sTagLog: ${*//%/%%}" >> $_bashlyk_fnLog
-   logger -t "$sTagLog" "$*"
-  ;;
- esac
+  local bSysLog bUseLog sTagLog IFS=$' \t\n'
+
+  bSysLog=0
+  bUseLog=0
+
+  sTagLog="${_bashlyk_s0}[$(printf -- "%05d" $$)]"
+
+  if [[ -z "$_bashlyk_bUseSyslog" || "$_bashlyk_bUseSyslog" -eq 0 ]]; then
+
+    bSysLog=0
+
+  else
+
+    bSysLog=1
+
+  fi
+
+  if [[ $_bashlyk_bNotUseLog ]]; then
+
+    (( $_bashlyk_bNotUseLog != 0 )) && bUseLog=0 || bUseLog=1
+
+  else
+
+    udfCheck4LogUse && bUseLog=1 || bUseLog=0
+
+  fi
+
+  mkdir -p "$_bashlyk_pathLog" \
+    || eval $( udfOnError throw NotExistNotCreated "${_bashlyk_pathLog}" )
+
+  udfAddPath2Clean $_bashlyk_pathLog
+
+  case "${bSysLog}${bUseLog}" in
+
+    00)
+        echo "$@"
+     ;;
+
+    01)
+        udfTimeStamp "$HOSTNAME $sTagLog: ${*//%/%%}" >> $_bashlyk_fnLog
+     ;;
+
+    10)
+        echo "$*"
+        logger -t "$sTagLog" "$*"
+     ;;
+
+    11)
+        udfTimeStamp "$HOSTNAME $sTagLog: ${*//%/%%}" >> $_bashlyk_fnLog
+        logger -t "$sTagLog" "$*"
+     ;;
+
+  esac
+
 }
 #******
 #****f* liblog/udfLog
@@ -157,15 +183,22 @@ udfLogger() {
 #    echo test | udfLog - tag >| grep "tag test"                                #? true
 #  SOURCE
 udfLog() {
- local s sPrefix IFS=$' \t\n'
- #
- if [[ "$1" == "-" ]]; then
-  shift
-  [[ -n "$*" ]] && sPrefix="$* " || sPrefix=
-  while read s; do [[ -n "$s" ]] && udfLogger "${sPrefix}${s}"; done
- else
-  [[ -n "$*" ]] && udfLogger "$*"
- fi
+
+  local s sPrefix IFS=$' \t\n'
+
+  if [[ "$1" == "-" ]]; then
+
+    shift
+    [[ $* ]] && sPrefix="$* " || sPrefix=
+
+    while read -t 60 s; do [[ $s ]] && udfLogger "${sPrefix}${s}"; done
+
+  else
+
+    [[ $* ]] && udfLogger "$*"
+
+  fi
+
 }
 #******
 #****f* liblog/udfIsInteract
@@ -183,8 +216,12 @@ udfLog() {
 #    udfIsInteract                                                              #= false
 #  SOURCE
 udfIsInteract() {
- [[ -t 1 && -t 0 && -n "$TERM" && "$TERM" != "dumb" ]] && _bashlyk_bInteract=1 || _bashlyk_bInteract=0
- return $_bashlyk_bInteract
+
+  [[ -t 1 && -t 0 && $TERM && "$TERM" != "dumb" ]] \
+    && _bashlyk_bInteract=1 || _bashlyk_bInteract=0
+
+  return $_bashlyk_bInteract
+
 }
 #******
 #****f* liblog/udfIsTerminal
@@ -200,8 +237,10 @@ udfIsInteract() {
 #    udfIsTerminal                                                              #= false
 #  SOURCE
 udfIsTerminal() {
- tty > /dev/null 2>&1 && _bashlyk_bTerminal=1 || _bashlyk_bTerminal=0
- return $_bashlyk_bTerminal
+
+  tty > /dev/null 2>&1 && _bashlyk_bTerminal=1 || _bashlyk_bTerminal=0
+  return $_bashlyk_bTerminal
+
 }
 #******
 #****f* liblog/udfCheck4LogUse
@@ -217,18 +256,22 @@ udfIsTerminal() {
 #    udfCheck4LogUse                                                            #= false
 #  SOURCE
 udfCheck4LogUse() {
- udfIsTerminal
- udfIsInteract
- #
- case ${_bashlyk_sCond4Log} in
-  redirect)
-           _bashlyk_bNotUseLog=$_bashlyk_bInteract ;;
-    noterm)
-           _bashlyk_bNotUseLog=$_bashlyk_bTerminal ;;
-         *)
-           _bashlyk_bNotUseLog=$_bashlyk_bInteract ;;
- esac
- return $_bashlyk_bNotUseLog
+
+  udfIsTerminal
+  udfIsInteract
+
+  case ${_bashlyk_sCond4Log} in
+
+    redirect)
+              _bashlyk_bNotUseLog=$_bashlyk_bInteract ;;
+      noterm)
+              _bashlyk_bNotUseLog=$_bashlyk_bTerminal ;;
+           *)
+              _bashlyk_bNotUseLog=$_bashlyk_bInteract ;;
+  esac
+
+  return $_bashlyk_bNotUseLog
+
 }
 #******
 #****f* liblog/udfUptime
@@ -275,30 +318,49 @@ udfFinally() { echo "$@ uptime $( udfUptime ) sec"; }
 #    rm -f $fnLog
 #  SOURCE
 udfSetLogSocket() {
- local fnSock IFS=$' \t\n'
- if [[ -n "$_bashlyk_sArg" ]]; then
-  fnSock="${_bashlyk_pathRun}/$(udfGetMd5 ${_bashlyk_s0} ${_bashlyk_sArg}).${$}.socket"
- else
-  fnSock="${_bashlyk_pathRun}/${_bashlyk_s0}.${$}.socket"
- fi
- mkdir -p ${_bashlyk_pathRun} || {
-  udfWarn "Warn: path for Sockets ${_bashlyk_pathRun} not created..."
-  eval $(udfOnError return NotExistNotCreated 'path ${_bashlyk_pathRun} is not created...')
- }
- [[ -a "$fnSock" ]] && rm -f $fnSock
- if mkfifo -m 0600 $fnSock >/dev/null 2>&1; then
-  ( udfLog - < $fnSock )&
-  _bashlyk_pidLogSock=$!
-  exec >>$fnSock 2>&1
- else
-  udfWarn "Warn: Socket $fnSock not created..."
-  exec >>$_bashlyk_fnLog 2>&1
-  _bashlyk_fnLogSock=$_bashlyk_fnLog
-  return 1
- fi
- _bashlyk_fnLogSock=$fnSock
- udfAddFile2Clean $fnSock
- return 0
+
+  local fnSock IFS=$' \t\n'
+
+  if [[ $_bashlyk_sArg ]]; then
+
+    fnSock="$(udfGetMd5 ${_bashlyk_s0} ${_bashlyk_sArg}).${$}.socket"
+    fnSock="${_bashlyk_pathRun}/${fnSock}"
+
+  else
+
+    fnSock="${_bashlyk_pathRun}/${_bashlyk_s0}.${$}.socket"
+
+  fi
+
+  mkdir -p ${_bashlyk_pathRun} \
+    || eval $( udfOnError retwarn NotExistNotCreated "${_bashlyk_pathRun}" )
+
+  [[ -a "$fnSock" ]] && rm -f $fnSock
+
+  if mkfifo -m 0600 $fnSock >/dev/null 2>&1; then
+
+    ( udfLog - < $fnSock )&
+    _bashlyk_pidLogSock=$!
+    exec >>$fnSock 2>&1
+
+  else
+
+    udfWarn "Warn: Socket $fnSock not created..."
+
+    exec >>$_bashlyk_fnLog 2>&1
+
+    _bashlyk_fnLogSock=$_bashlyk_fnLog
+
+    return 1
+
+  fi
+
+  _bashlyk_fnLogSock=$fnSock
+
+  udfAddFile2Clean $fnSock
+
+  return 0
+
 }
 #******
 #****f* liblog/udfSetLog
@@ -317,20 +379,27 @@ udfSetLogSocket() {
 #    rm -f $fnLog
 #  SOURCE
 udfSetLog() {
- local IFS=$' \t\n'
- #
- case "$1" in
-        '') ;;
-  ${1##*/}) _bashlyk_fnLog="${_bashlyk_pathLog}/$1";;
-         *)
-            _bashlyk_fnLog="$1"
-            _bashlyk_pathLog=$(dirname ${_bashlyk_fnLog})
-         ;;
- esac
- mkdir -p "$_bashlyk_pathLog" || eval $(udfOnError throw NotExistNotCreated 'path $_bashlyk_pathLog is not created...')
- touch "$_bashlyk_fnLog"      || eval $(udfOnError throw NotExistNotCreated 'file $_bashlyk_fnLog not usable for logging')
- udfSetLogSocket
- return 0
+  local IFS=$' \t\n'
+
+  case "$1" in
+          '') ;;
+    ${1##*/}) _bashlyk_fnLog="${_bashlyk_pathLog}/$1";;
+           *)
+              _bashlyk_fnLog="$1"
+              _bashlyk_pathLog=${_bashlyk_fnLog%/*}
+           ;;
+  esac
+
+  mkdir -p "$_bashlyk_pathLog" \
+    || eval $(udfOnError throw NotExistNotCreated "$_bashlyk_pathLog")
+
+  touch "$_bashlyk_fnLog" \
+    || eval $(udfOnError throw NotExistNotCreated "$_bashlyk_fnLog")
+
+  udfSetLogSocket
+
+  return 0
+
 }
 #******
 #****f* liblog/_fnLog
@@ -349,7 +418,9 @@ udfSetLog() {
 #    rm -f $fnLog
 #  SOURCE
 _fnLog() {
- [[ -n "$1" ]] && udfSetLog "$1" || _ fnLog
+
+  [[ $1 ]] && udfSetLog "$1" || _ fnLog
+
 }
 #******
 #****f* liblog/udfDebug
@@ -380,12 +451,17 @@ _fnLog() {
 #    udfDebug non valid test level 5                                            #? true
 #  SOURCE
 udfDebug() {
- local i re='^[0-9]+$' IFS=$' \t\n'
- [[ -n "$*" ]] && i=$1 || eval $(udfOnError return MissingArgument)
- shift
- [[ "$i" =~ ^[0-9]+$ ]] || i=0
- (( $DEBUGLEVEL >= $i )) || return 1
- [[ -n "$*" ]] && echo "$*" >&2
- return 0
+
+  local i re='^[0-9]+$' IFS=$' \t\n'
+
+  [[ $* ]] && i=$1 || eval $(udfOnError return MissingArgument)
+  shift
+
+  [[ "$i" =~ ^[0-9]+$ ]]  || i=0
+  (( $DEBUGLEVEL >= $i )) || return 1
+  [[ $* ]] && echo "$*" >&2
+
+  return 0
+
 }
 #******

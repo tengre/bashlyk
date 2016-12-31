@@ -1,5 +1,5 @@
 #
-# $Id$
+# $Id: testunit.sh 651 2016-12-31 15:05:31+04:00 toor $
 #
 #****h* BASHLYK/testunit
 #  DESCRIPTION
@@ -16,7 +16,7 @@
 : ${_bashlyk_pathLib:=/usr/share/bashlyk}
 : ${_bashlyk_pathLog:=/tmp}
 : ${_bashlyk_TestUnit_iCount=0}
-: ${_bashlyk_TestUnit_fnTmp=$(mktemp 2>/dev/null || tempfile)}
+: ${_bashlyk_TestUnit_fnTmp=$( mktemp 2>/dev/null || tempfile || echo "/tmp/${RANDOM}${RANDOM}" )}
 #******
 #****f* testunit/udfTestUnitMsg
 #  SYNOPSIS
@@ -25,27 +25,42 @@
 #   bashlyk library test unit stdout
 #  SOURCE
 udfTestUnitMsg() {
- local rc0=$? rc1 rc2='' IFS=$' \t\n'
- case "$1" in
-   true) rc1=0;;
-  false) rc1=1;;
-      *) rc1=$1;;
-     '') return 255
- esac
- [[ "$rc0" == "$rc1" ]] && rc2='.' || rc2='?'
- echo -n "$rc2"
- {
-  if [[ "$rc2" == '?' ]]; then
-   _bashlyk_TestUnit_iCount=$((_bashlyk_TestUnit_iCount+1))
-   echo "--[?]: status $rc0 ( must have $rc1 )"
-   echo "--[?]: file: ${BASH_SOURCE[1]} function: ${FUNCNAME[1]}"
-   echo -n "--[?]: line: ${BASH_LINENO[0]}: "
-   head -n ${BASH_LINENO[0]} ${BASH_SOURCE[1]} | tail -n 1
-  else
-   echo "-- ok"
-  fi
- } >> $_bashlyk_TestUnit_fnLog
- return 0
+
+  local rc0=$? rc1 rc2='' IFS=$' \t\n'
+
+  case "$1" in
+
+     true) rc1=0;;
+    false) rc1=1;;
+        *) rc1=$1;;
+       '') return 255;;
+
+  esac
+
+  [[ "$rc0" == "$rc1" ]] && rc2='.' || rc2='?'
+
+  echo -n "$rc2"
+
+  {
+
+    if [[ "$rc2" == '?' ]]; then
+
+      _bashlyk_TestUnit_iCount=$((_bashlyk_TestUnit_iCount+1))
+      echo "--[?]: status $rc0 ( must have $rc1 )"
+      echo "--[?]: file: ${BASH_SOURCE[1]} function: ${FUNCNAME[1]}"
+      echo -n "--[?]: line: ${BASH_LINENO[0]}: "
+      head -n ${BASH_LINENO[0]} ${BASH_SOURCE[1]} | tail -n 1
+
+    else
+
+      echo "-- ok"
+
+    fi
+
+  } >> $_bashlyk_TestUnit_fnLog
+
+  return 0
+
 }
 #******
 #****f* testunit/udfError
@@ -55,9 +70,11 @@ udfTestUnitMsg() {
 #   Вывод указанного сообщения об ошибке c последующим завершением сценария
 #  SOURCE
 udfError() {
- local rc=$?
- echo "$*"
- exit $rc
+
+  local rc=$?
+  echo "$*"
+  exit $rc
+
 }
 #******
 #****f* testunit/udfMain
@@ -65,23 +82,39 @@ udfError() {
 #   main function libraries test unit
 #  SOURCE
 udfMain() {
- [[ -n "$1" ]] || return 255
- local a s fn IFS=$' \t\n'
- fn=${_bashlyk_pathLib}/lib${1}.sh
- [[ -s "$fn" ]] && . $fn || return 254
- mkdir -p $_bashlyk_pathLog || udfError "path $_bashlyk_pathLog not exist..."
- _bashlyk_TestUnit_fnLog=${_bashlyk_pathLog}/${1}.testunit.log
- mawk -f ${_bashlyk_pathLib}/testunit.awk -- $fn > $_bashlyk_TestUnit_fnTmp
- echo "testunit for $fn library" > $_bashlyk_TestUnit_fnLog
- echo -n "${fn}: "
- . $_bashlyk_TestUnit_fnTmp
- if [[ $? == "0" && "$_bashlyk_TestUnit_iCount" == "0" ]]; then
-  echo " ok."
-  rm -f $_bashlyk_TestUnit_fnTmp
- else
-  echo " fail.."
-  echo "found $_bashlyk_TestUnit_iCount errors. See \"[?]: status\" lines from $_bashlyk_TestUnit_fnLog"
- fi
+
+  [[ $1 ]] || return 254
+
+  local a s fn IFS=$' \t\n'
+
+  fn=${_bashlyk_pathLib}/lib${1}.sh
+
+  [[ -s "$fn" ]] && . $fn || return 254
+
+  mkdir -p $_bashlyk_pathLog || udfError "path $_bashlyk_pathLog not exist..."
+
+  _bashlyk_TestUnit_fnLog=${_bashlyk_pathLog}/${1}.testunit.log
+
+  mawk -f ${_bashlyk_pathLib}/testunit.awk -- $fn > $_bashlyk_TestUnit_fnTmp
+
+  echo "testunit for $fn library" > $_bashlyk_TestUnit_fnLog
+  echo -n "${fn}: "
+
+  . $_bashlyk_TestUnit_fnTmp
+
+  if [[ $? == "0" && "$_bashlyk_TestUnit_iCount" == "0" ]]; then
+
+    echo " ok."
+    rm -f $_bashlyk_TestUnit_fnTmp
+
+  else
+
+    echo " fail.."
+    echo "found $_bashlyk_TestUnit_iCount errors. See \"[?]: status\" lines from $_bashlyk_TestUnit_fnLog"
+
+  fi
+
 }
 #******
+
 udfMain $*

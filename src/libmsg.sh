@@ -1,5 +1,5 @@
 #
-# $Id: libmsg.sh 642 2016-12-26 00:00:27+04:00 toor $
+# $Id: libmsg.sh 651 2016-12-31 15:05:24+04:00 toor $
 #
 #****h* BASHLYK/libmsg
 #  DESCRIPTION
@@ -69,14 +69,20 @@ declare -r _bashlyk_exports_msg="                                              \
 #    echo body | udfEcho - subject | tr -d '\n' >| grep -w "^subject----body$"  #? true
 #  SOURCE
 udfEcho() {
- if [[ "$1" == "-" ]]; then
-  shift
-  [[ -n "$1" ]] && printf -- "%s\n----\n" "$*"
-  ## TODO alarm required...
-  cat
- else
-  [[ -n "$1" ]] && echo $*
- fi
+
+  if [[ "$1" == "-" ]]; then
+
+    shift
+    [[ $1 ]] && printf -- "%s\n----\n" "$*"
+    ## TODO alarm required...
+    cat
+
+  else
+
+    [[ $1 ]] && echo $*
+
+  fi
+
 }
 #******
 #****f* libmsg/udfWarn
@@ -105,11 +111,11 @@ udfEcho() {
 #  SOURCE
 udfWarn() {
 
-	local s IFS=$' \t\n'
+  local s IFS=$' \t\n'
 
-	[[ -n "$*" ]] && s="$*" || s="${_bashlyk_sLastError[$BASHPID]}"
+  [[ $* ]] && s="$*" || s="${_bashlyk_sLastError[$BASHPID]}"
 
-	[[ "$_bashlyk_bNotUseLog" != "0" ]] && udfEcho $s || udfMessage $s
+  [[ "$_bashlyk_bNotUseLog" != "0" ]] && udfEcho $s || udfMessage $s
 
 }
 #******
@@ -135,27 +141,34 @@ udfWarn() {
 #    ##_ emailOptions "$emailOptions"
 #  SOURCE
 udfMail() {
- local sTo=$_bashlyk_sLogin IFS=$' \t\n'
- #
- [[ -n "$1" ]] || eval $(udfOnError return iErrorEmptyOrMissingArgument)
- #
- which mail >/dev/null 2>&1 || eval $(udfOnError return iErrorCommandNotFound 'mail')
 
- [[ -n "$sTo" ]] || sTo=$_bashlyk_sUser
- [[ -n "$sTo" ]] || sTo=postmaster
+  udfOn MissingArgument $1 || return $?
 
- {
-  case "$1" in
-   -)
-     udfEcho $*
-     ;;
-   *)
-     [[ -s "$*" ]] && cat "$*" || echo "$*"
-     ;;
-  esac
- } | mail -e -s "${_bashlyk_emailSubj}" $_bashlyk_emailOptions $sTo
+  local sTo=$_bashlyk_sLogin IFS=$' \t\n'
 
- return $?
+  which mail >/dev/null 2>&1 || eval $(udfOnError return CommandNotFound 'mail')
+
+  [[ $sTo ]] || sTo=$_bashlyk_sUser
+  [[ $sTo ]] || sTo=postmaster
+
+  {
+
+    case "$1" in
+
+      -)
+         udfEcho $*
+       ;;
+
+      *)
+         [[ -s "$*" ]] && cat "$*" || echo "$*"
+       ;;
+
+    esac
+
+  } | mail -e -s "${_bashlyk_emailSubj}" $_bashlyk_emailOptions $sTo
+
+  return $?
+
 }
 #******
 #****f* libmsg/udfMessage
@@ -179,19 +192,25 @@ udfMail() {
 #    [[ $? -eq 0 ]] && sleep 2
 #  SOURCE
 udfMessage() {
- local fnTmp i=$(_ iMaxOutputLines) IFS=$' \t\n'
 
- udfIsNumber $i || i=9999
+  local fnTmp i=$(_ iMaxOutputLines) IFS=$' \t\n'
 
- udfMakeTemp fnTmp
- udfEcho $* | tee -a $fnTmp | head -n $i
+  udfIsNumber $i || i=9999
 
- udfNotify2X $fnTmp || udfMail $fnTmp || {
-  [[ -n "$_bashlyk_sLogin" ]] && write $_bashlyk_sLogin < $fnTmp
- } || cat $fnTmp
- i=$?
- rm -f $fnTmp
- return $i
+  udfMakeTemp fnTmp
+  udfEcho $* | tee -a $fnTmp | head -n $i
+
+  udfNotify2X $fnTmp || udfMail $fnTmp || {
+
+    [[ $_bashlyk_sLogin ]] && write $_bashlyk_sLogin < $fnTmp
+
+  } || cat $fnTmp
+
+  i=$?
+  rm -f $fnTmp
+
+  return $i
+
 }
 #******
 #****f* libmsg/udfNotify2X
@@ -216,17 +235,23 @@ udfMessage() {
 #    [[ $rc -eq 0 ]] && sleep 2
 #  SOURCE
 udfNotify2X() {
- local iTimeout=8 s IFS=$' \t\n'
- #
- [[ -n "$1" ]] || eval $(udfOnError return iErrorEmptyOrMissingArgument)
- #
- [[ -s "$*" ]] && s="$(< "$*")" || s="$(echo -e "$*")"
 
- for cmd in notify-send kdialog zenity xmessage; do
-  udfNotifyCommand $cmd "$(_ emailSubj)" "$s" "$iTimeout" && break
- done
- (( $? == 0 )) || eval $(udfOnError return iErrorCommandNotFound '$cmd')
- return 0
+  udfOn MissingArgument $1 || return $?
+
+  local iTimeout=8 s IFS=$' \t\n'
+
+  [[ -s "$*" ]] && s="$(< "$*")" || s="$(echo -e "$*")"
+
+  for cmd in notify-send kdialog zenity xmessage; do
+
+    udfNotifyCommand $cmd "$(_ emailSubj)" "$s" "$iTimeout" && break
+
+  done
+
+  (( $? == 0 )) || eval $( udfOnError return CommandNotFound '$cmd' )
+
+  return 0
+
 }
 #******
 #****f* libmsg/udfGetXSessionProperties
@@ -243,34 +268,48 @@ udfNotify2X() {
 #    udfGetXSessionProperties || echo "X-Session error ($?)"
 #  SOURCE
 udfGetXSessionProperties() {
- local a pid s sB sD sX sudo user userX IFS=$' \t\n'
- #
- a="x-session-manager gnome-session gnome-session-flashback lxsession mate-session-manager openbox razorqt-session xfce4-session kwin twin"
- user=$(_ sUser)
- #
- [[ "$user" == "root" && -n "$SUDO_USER" ]] && user=$SUDO_USER
 
- a+=" $(grep "Exec=.*" /usr/share/xsessions/*.desktop 2>/dev/null | cut -f 2 -d"=" | sort | uniq )"
+  local a pid s sB sD sX sudo user userX IFS=$' \t\n'
 
- for s in $a; do
-  for pid in $(pgrep -f "${s##*/}"); do
-   userX=$(stat -c %U /proc/$pid)
-   [[ -n "$userX" ]] || continue
-   [[ "$user" == "$userX" || "$user" == "root" ]] || continue
-   ## TODO many X-Sessions ? 
-   sB="$(grep -az DBUS_SESSION_BUS_ADDRESS= /proc/${pid}/environ)"
-   sD="$(grep -az DISPLAY= /proc/${pid}/environ)"
-   sX="$(grep -az XAUTHORITY= /proc/${pid}/environ)"
-   [[ -n "$sB" && -n "$sD" && -n "$sX" ]] && break 2
-  done
- done 2>/dev/null
+  a="x-session-manager gnome-session gnome-session-flashback lxsession mate-session-manager openbox razorqt-session xfce4-session kwin twin"
+  user=$(_ sUser)
 
- [[ -n "$userX" ]] || eval $(udfOnError return iErrorXsessionNotFound)
- [[ "$user" == "$userX" || "$user" == "root" ]] || eval $(udfOnError return iErrorNotPermitted)
- [[ -n "$sB" && -n "$sD" && -n "$sX" ]] || eval $(udfOnError return iErrorEmptyOrMissingArgument)
- [[ "$(_ sUser)" == "root" ]] && sudo="sudo -u $userX" || sudo=''
- _ sXSessionProp "$sudo $sD $sX $sB"
- return 0
+  [[ "$user" == "root" && $SUDO_USER ]] && user=$SUDO_USER
+
+  a+=" $(grep "Exec=.*" /usr/share/xsessions/*.desktop 2>/dev/null | cut -f 2 -d"=" | sort | uniq )"
+
+  for s in $a; do
+
+    for pid in $(pgrep -f "${s##*/}"); do
+
+      userX=$(stat -c %U /proc/$pid)
+      [[ -n "$userX" ]] || continue
+      [[ "$user" == "$userX" || "$user" == "root" ]] || continue
+
+      ## TODO many X-Sessions ?
+      sB="$(grep -az DBUS_SESSION_BUS_ADDRESS= /proc/${pid}/environ)"
+      sD="$(grep -az DISPLAY= /proc/${pid}/environ)"
+      sX="$(grep -az XAUTHORITY= /proc/${pid}/environ)"
+
+      [[ $sB && $sD && $sX ]] && break 2
+
+   done
+
+  done 2>/dev/null
+
+  [[ $userX ]] || eval $(udfOnError return XsessionNotFound)
+
+  [[ "$user" == "$userX" || "$user" == "root" ]] \
+    || eval $(udfOnError return NotPermitted)
+
+  [[ $sB && $sD && $sX ]] || eval $( udfOnError return MissingArgument )
+
+  [[ "$(_ sUser)" == "root" ]] && sudo="sudo -u $userX" || sudo=''
+
+  _ sXSessionProp "$sudo $sD $sX $sB"
+
+  return 0
+
 }
 #******
 #****f* libmsg/udfNotifyCommand
@@ -308,30 +347,38 @@ udfGetXSessionProperties() {
 #    echo $? >| grep "$(_ iErrorCommandNotFound)\|0"                            #? true
 #  SOURCE
 udfNotifyCommand() {
- local h t rc X IFS=$' \t\n'
- #
- [[ -n "$4" ]] || eval $(udfOnError iErrorEmptyOrMissingArgument)
- #
- udfIsNumber "$4" && t=$4 || t=8
- [[ -n "$(_ sXSessionProp)" ]] || udfGetXSessionProperties || return $?
- X=$(_ sXSessionProp)
- #
- declare -A h=(                                                                                                  \
-  [notify-send]="$X $1 -t $t \"$2 via $1\" \"$(printf -- "%s" "$3")\""                                           \
-  [kdialog]="$X $1 --title \"$2 via $1\" --passivepopup \"$(printf -- "%s" "$3")\" $t"                           \
-  [zenity]="$X $1 --notification --timeout $(($t/2)) --text \"$(printf -- "%s via %s\n\n%s\n" "$2" "$1" "$3")\"" \
-  [xmessage]="$X $1 -center -timeout $t \"$(printf -- "%s via %s\n\n%s\n" "$2" "$1" "$3")\" 2>/dev/null"         \
- )
 
- if [[ -x "$(which "$1")" ]]; then
-  eval "${h[$1]}"
-  rc=$?
-  [[ "$1" == "zenity" && "$rc" == "5" ]] && rc=0
- else
-  rc=$(_ iErrorCommandNotFound)
-  udfSetLastError $rc "$1"
- fi
+  udfOn MissingArgument $4 || return $?
 
- return $rc
+  local h t rc X IFS=$' \t\n'
+
+  udfIsNumber $4 && t=$4 || t=8
+
+  [[ $(_ sXSessionProp) ]] || udfGetXSessionProperties || return $?
+
+  X=$(_ sXSessionProp)
+  #
+  declare -A h=(                                                                                                   \
+    [notify-send]="$X $1 -t $t \"$2 via $1\" \"$(printf -- "%s" "$3")\""                                           \
+    [kdialog]="$X $1 --title \"$2 via $1\" --passivepopup \"$(printf -- "%s" "$3")\" $t"                           \
+    [zenity]="$X $1 --notification --timeout $(($t/2)) --text \"$(printf -- "%s via %s\n\n%s\n" "$2" "$1" "$3")\"" \
+    [xmessage]="$X $1 -center -timeout $t \"$(printf -- "%s via %s\n\n%s\n" "$2" "$1" "$3")\" 2>/dev/null"         \
+  )
+
+  if [[ -x "$(which "$1")" ]]; then
+
+    eval "${h[$1]}"
+    rc=$?
+    [[ "$1" == "zenity" && "$rc" == "5" ]] && rc=0
+
+  else
+
+    rc=$( _ iErrorCommandNotFound )
+    udfSetLastError $rc "$1"
+
+  fi
+
+  return $rc
+
 }
 #******

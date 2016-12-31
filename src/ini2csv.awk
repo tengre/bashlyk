@@ -1,60 +1,82 @@
 #
-# $Id$
+# $Id: ini2csv.awk 651 2016-12-31 15:05:26+04:00 toor $
 #
 
 BEGIN {
- b = 0; i = 0; csv="[];"; s="_bashlyk_ini_void_autoKey_"
+
+  b = 0; i = 0; csv="[];"; s="_bashlyk_ini_void_autoKey_"
+
 }
 
 /^ *#|^$/ { next }
 
 /\[.*\]:?$/ {
- if ( b == 0 ) {
-  if (match($0, /\[.*\]:/)) { b = 1; gsub(":", "") }
-  sTag = $0; sub(/\].*/, "", sTag); sub(/.*\[/, "", sTag); gsub(/ /, "_", sTag);
-  csv = csv"["sTag"];"
-  s = "_bashlyk_ini_"sTag"_autoKey_"
-  i = 0
-  next
- } else {
-  if (match($0, /:\[.*\]/)) { b = 0; next }
- }
+
+  if ( b == 0 ) {
+
+    if (match($0, /\[.*\]:/)) { b = 1; gsub(":", "") }
+    sTag = $0; sub(/\].*/, "", sTag); sub(/.*\[/, "", sTag); gsub(/ /, "_", sTag);
+    csv = csv"["sTag"];"
+    s = "_bashlyk_ini_"sTag"_autoKey_"
+    i = 0
+    next
+
+  } else {
+
+   if (match($0, /:\[.*\]/)) { b = 0; next }
+
+  }
+
 }
 
 $1=$1 {
 
- if ( b == 1) {
-  gsub("\(", "_bashlyk_\&#40_")
-  gsub("\)", "_bashlyk_\&#41_")
-  gsub(";",  "_bashlyk_\&#59_")
-  gsub("\[", "_bashlyk_\&#91_")
-  gsub("\\", "_bashlyk_\&#92_")
-  gsub("\]", "_bashlyk_\&#93_")
-  gsub("=",  "_bashlyk_\&#61_")
-  gsub("\"", "_bashlyk_\&#34_")
- } else {
-  gsub("\$\(", "-S-(")
-  gsub("\`"  , "^_")
- }
+  if ( b == 1) {
 
- s0 = $0
+    gsub("\(", "_bashlyk_\&#40_")
+    gsub("\)", "_bashlyk_\&#41_")
+    gsub(";",  "_bashlyk_\&#59_")
+    gsub("\[", "_bashlyk_\&#91_")
+    gsub("\\", "_bashlyk_\&#92_")
+    gsub("\]", "_bashlyk_\&#93_")
+    gsub("=",  "_bashlyk_\&#61_")
+    gsub("\"", "_bashlyk_\&#34_")
 
- if ( match(s0, /= *.*$/) < 2 ) {
-  if ( match(s0, /[ =]/) ) { s0 = "\""s0"\"" }
-  csv = csv""s""i++"="s0";"
- } else {
-  v = substr($0, RSTART+1, RLENGTH)
-  k = substr($0, 1, RSTART-1)
-  sub(/ *$/, "", k)
-  if ( match(k, /[ ]/) ) {
-   if ( match(s0, /[ =]/) ) { s0 = "\""s0"\"" }
-   csv = csv""s""i++"="s0";"
   } else {
-   sub(/^ */, "", v)
-   if ( match(v, /[ =]/) ) { v = "\""v"\"" }
-   csv = csv""k"="v";"
+
+    gsub("\$\(", "-S-(")
+    gsub("\`"  , "^_")
+
   }
- }
+
+  s0 = $0
+
+  if ( match(s0, /= *.*$/) < 2 ) {
+
+    if ( match(s0, /[ =]/) ) { s0 = "\""s0"\"" }
+    csv = csv""s""i++"="s0";"
+
+  } else {
+
+    v = substr($0, RSTART+1, RLENGTH)
+    k = substr($0, 1, RSTART-1)
+    sub(/ *$/, "", k)
+
+    if ( match(k, /[ ]/) ) {
+
+      if ( match(s0, /[ =]/) ) { s0 = "\""s0"\"" }
+      csv = csv""s""i++"="s0";"
+
+    } else {
+
+      sub(/^ */, "", v)
+      if ( match(v, /[ =]/) ) { v = "\""v"\"" }
+      csv = csv""k"="v";"
+
+    }
+
+  }
+
 }
 
 END { print csv }
