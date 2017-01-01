@@ -1,5 +1,5 @@
 #
-# $Id: libini.sh 648 2016-12-28 22:31:07+04:00 toor $
+# $Id: libini.sh 652 2017-01-02 01:25:42+04:00 toor $
 #
 #****h* BASHLYK/libini
 #  DESCRIPTION
@@ -1072,7 +1072,7 @@ INI.load() {
   #
   if [[ ! $path && -f "/etc/$(_ pathPrefix)/$1" ]]; then
 
-     path="/etc/$(_ pathPrefix)"
+    path="/etc/$( _ pathPrefix )"
 
   else
 

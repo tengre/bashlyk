@@ -1,5 +1,5 @@
 #
-# $Id: libcnf.sh 649 2016-12-29 10:45:47+04:00 toor $
+# $Id: libcnf.sh 652 2017-01-02 01:25:42+04:00 toor $
 #
 #****h* BASHLYK/libcnf
 #  DESCRIPTION
@@ -116,7 +116,7 @@ __getconfig() {
   if ! ${o}.load $fn ":${k// /,}"; then
 
     udfOnError return ${_bashlyk_iLastError[$BASHPID]} "$fn"
-    return $?
+    return ${_bashlyk_iLastError[$BASHPID]}
 
   fi
 

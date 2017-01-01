@@ -1,5 +1,5 @@
 #
-# $Id: liberr.sh 651 2016-12-31 15:05:26+04:00 toor $
+# $Id: liberr.sh 652 2017-01-02 01:25:42+04:00 toor $
 #
 #****h* BASHLYK/liberr
 #  DESCRIPTION
@@ -248,7 +248,7 @@ udfOnError() {
 
   local rs=$? sAction=$_bashlyk_onError sMessage='' s IFS=$' \t\n'
 
-  case "$sAction" in
+  case "${sAction,,}" in
 
     echo|exit|exitecho|exitwarn|retecho|retwarn|return|warn|throw)
     ;;
@@ -259,7 +259,7 @@ udfOnError() {
 
   esac
 
-  case "$1" in
+  case "${1,,}" in
 
     echo|exit|exitecho|exitwarn|retecho|retwarn|return|warn|throw)
       sAction=$1
@@ -314,7 +314,7 @@ udfOnError() {
 
   fi
 
-  case "$sAction" in
+  case "${sAction,,}" in
 
            echo) sAction="";             sMessage="echo  Warn: ${rs} >&2;";;
         retecho) sAction="; return \$?"; sMessage="echo Error: ${rs} >&2;";;
@@ -384,7 +384,7 @@ udfThrow() {
 
   udfIsNumber $rc || rc=$i
 
-  eval $(udfOnError exitwarn $rc $*)
+  eval $( udfOnError exitwarn $rc $* )
 
 }
 #******
@@ -429,7 +429,7 @@ udfTryEveryLine() {
   i=0
 
   udfMakeTemp fn
-  #
+
   while read s; do
 
     i=$((i+1))
@@ -527,20 +527,20 @@ udfOn() {
 
   shift
 
-  case "${1^^}" in
+  case "${1,,}" in
 
-      ECHO) cmd='retecho'; shift;;
-      EXIT) cmd='exit';    shift;;
-      WARN) cmd='retwarn'; shift;;
-     THROW) cmd='throw';   shift;;
-    RETURN) cmd='return';  shift;;
-        '')
+      'echo')  cmd='retecho'; shift;;
+      'exit')  cmd='exit';    shift;;
+      'warn')  cmd='retwarn'; shift;;
+     'throw')  cmd='throw';   shift;;
+    'return')  cmd='return';  shift;;
+          '')
 
-            [[ $e =~ ^(Empty|Missing) && ! $e =~ EmptyVariable ]] \
-              || e='MissingArgument'
-            eval $( udfOnError $cmd $e 'no arguments' )
+               [[ $e =~ ^(Empty|Missing) && ! $e =~ EmptyVariable ]] \
+                 || e='MissingArgument'
+               eval $( udfOnError $cmd $e 'no arguments' )
 
-          ;;
+           ;;
 
   esac
 

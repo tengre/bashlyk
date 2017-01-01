@@ -1,5 +1,5 @@
 #
-# $Id: libold.sh 642 2016-12-26 00:00:27+04:00 toor $
+# $Id: libold.sh 652 2017-01-02 01:25:42+04:00 toor $
 #
 #****h* BASHLYK/libold
 #  DESCRIPTION
@@ -76,10 +76,14 @@ declare -r _bashlyk_exports_old="                                              \
 #    #пример приведен в описании udfGetIniSection
 #  SOURCE
 udfGetIniSection2Var() {
- [[ -n "$2" ]] || eval $(udfOnError return iErrorEmptyOrMissingArgument)
- udfIsValidVariable $1 || eval $(udfOnError return $? '$1')
- eval 'export ${1}="$(udfGetIniSection "$2" $3)"'
- return 0
+
+  udfOn InvalidVariable $1 || return $?
+  udfOn NoSuchFileOrDir $2 || return $?
+
+  eval 'export $1="$(udfGetIniSection "$2" $3)"'
+
+  return 0
+
 }
 #******
 #****f* libold/udfReadIniSection2Var
@@ -103,11 +107,14 @@ udfGetIniSection2Var() {
 #    #пример приведен в описании udfIniGroup2Csv
 #  SOURCE
 udfReadIniSection2Var() {
- local IFS=$' \t\n'
- [[ -n "$2" && -f "$2" ]] || eval $(udfOnError return iErrorEmptyOrMissingArgument)
- udfIsValidVariable $1 || eval $(udfOnError return $? '$1')
- eval 'export ${1}="$(udfReadIniSection "$2" $3)"'
- return 0
+
+  udfOn InvalidVariable $1 || return $?
+  udfOn NoSuchFileOrDir $2 || return $?
+
+  eval 'export $1="$(udfReadIniSection "$2" $3)"'
+
+  return 0
+
 }
 #******
 #****f* libold/udfCsvOrder2Var
@@ -130,12 +137,14 @@ udfReadIniSection2Var() {
 #    #пример приведен в описании udfCsvOrder
 #  SOURCE
 udfCsvOrder2Var() {
- local IFS=$' \t\n'
- #
- [[ -n "$2" ]] || eval $(udfOnError return iErrorEmptyOrMissingArgument)
- udfIsValidVariable $1 || eval $(udfOnError return $? '$1')
- eval 'export ${1}="$(udfCsvOrder "$2")"'
- return 0
+
+  udfOn InvalidVariable $1 || return $?
+  udfOn MissingArgument $2 || return $?
+
+  eval 'export $1="$(udfCsvOrder "$2")"'
+
+  return 0
+
 }
 #******
 #****f* libold/udfCsvKeys2Var
@@ -156,11 +165,14 @@ udfCsvOrder2Var() {
 #    #пример приведен в описании udfCsvKeys
 #  SOURCE
 udfCsvKeys2Var() {
- local IFS=$' \t\n'
- [[ -n "$2" ]] || eval $(udfOnError return iErrorEmptyOrMissingArgument)
- udfIsValidVariable $1 || eval $(udfOnError return $? '$1')
- eval 'export ${1}="$(udfCsvKeys "$2")"'
- return 0
+
+  udfOn InvalidVariable $1 || return $?
+  udfOn MissingArgument $2 || return $?
+
+  eval 'export $1="$( udfCsvKeys "$2" )"'
+
+  return 0
+
 }
 #******
 #****f* libold/udfGetIni2Var
@@ -181,13 +193,17 @@ udfCsvKeys2Var() {
 #    #пример приведен в описании udfGetIni
 #  SOURCE
 udfGetIni2Var() {
- local bashlyk_GetIni2Var_ini="$2" bashlyk_GetIni2Var_s="$1" IFS=$' \t\n'
- #
- [[ -n "$2" && -f "$2" ]] || eval $(udfOnError return iErrorEmptyOrMissingArgument)
- udfIsValidVariable $1 || eval $(udfOnError return $? '$1')
- shift 2
- eval 'export ${bashlyk_GetIni2Var_s}="$(udfGetIni ${bashlyk_GetIni2Var_ini} $*)"'
- return 0
+
+  udfOn InvalidVariable $1 || return $?
+  udfOn NoSuchFileOrDir $2 || return $?
+
+  local bashlyk_GetIni2Var_s="$1"
+
+  shift
+  eval 'export $bashlyk_GetIni2Var_s="$( udfGetIni $* )"'
+
+  return 0
+
 }
 #******
 #****f* libold/udfGetCsvSection2Var
@@ -214,12 +230,14 @@ udfGetIni2Var() {
 #    echo $csvResult >| grep '^a=k;c=l m;$'                                     #? true
 #  SOURCE
 udfGetCsvSection2Var() {
- local IFS=$' \t\n'
- #
- [ -n "$2" ] || eval $(udfOnError return iErrorEmptyOrMissingArgument)
- udfIsValidVariable $1 || eval $(udfOnError return $? '$1')
- eval 'export ${1}="$(udfGetCsvSection "$2" $3)"'
- return 0
+
+  udfOn InvalidVariable $1 || return $?
+  udfOn MissingArgument $2 || return $?
+
+  eval 'export $1="$( udfGetCsvSection "$2" $3 )"'
+
+  return 0
+
 }
 #******
 #****f* libold/udfIniSection2CsvVar
@@ -243,12 +261,14 @@ udfGetCsvSection2Var() {
 #    #пример приведен в описании udfIniGroupSection2Csv
 #  SOURCE
 udfIniSection2CsvVar() {
- local IFS=$' \t\n'
- #
- [[ -n "$2" && -f "$2" ]] || eval $(udfOnError return iErrorEmptyOrMissingArgument)
- udfIsValidVariable $1 || eval $(udfOnError return $? '$1')
- eval 'export ${1}="$(udfIniSection2Csv "$2" $3)"'
- return 0
+
+  udfOn InvalidVariable $1 || return $?
+  udfOn NoSuchFileOrDir $2 || return $?
+
+  eval 'export $1="$( udfIniSection2Csv "$2" $3 )"'
+
+  return 0
+
 }
 #******
 #****f* libold/udfIniGroupSection2CsvVar
@@ -273,12 +293,14 @@ udfIniSection2CsvVar() {
 #    #пример приведен в описании udfIniGroupSection2Csv
 #  SOURCE
 udfIniGroupSection2CsvVar() {
- local IFS=$' \t\n'
- #
- [[ -n "$2" ]] || eval $(udfOnError return iErrorEmptyOrMissingArgument)
- udfIsValidVariable $1 || eval $(udfOnError return $? '$1')
- eval 'export ${1}="$(udfIniGroupSection2Csv "$2" $3)"'
- return 0
+
+  udfOn InvalidVariable $1 || return $?
+  udfOn MissingArgument $2 || return $?
+
+  eval 'export $1="$( udfIniGroupSection2Csv "$2" $3 )"'
+
+  return 0
+
 }
 #******
 #****f* libold/udfIni2CsvVar
@@ -299,12 +321,14 @@ udfIniGroupSection2CsvVar() {
 #    #пример приведен в описании udfIni2Csv
 #  SOURCE
 udfIni2CsvVar() {
- local IFS=$' \t\n'
- #
- [[ -n "$2" ]] || eval $(udfOnError return iErrorEmptyOrMissingArgument)
- udfIsValidVariable $1 || eval $(udfOnError return $? '$1')
- eval 'export ${1}="$(udfIni2Csv "$2")"'
- return 0
+
+  udfOn InvalidVariable $1 || return $?
+  udfOn MissingArgument $2 || return $?
+
+  eval 'export $1="$( udfIni2Csv "$2" )"'
+
+  return 0
+
 }
 #******
 #****f* libold/udfIniGroup2CsvVar
@@ -325,11 +349,13 @@ udfIni2CsvVar() {
 #    #пример приведен в описании udfIniGroup2Csv
 #  SOURCE
 udfIniGroup2CsvVar() {
- local IFS=$' \t\n'
- #
- [[ -n "$2" ]] || eval $(udfOnError return iErrorEmptyOrMissingArgument)
- udfIsValidVariable $1 || eval $(udfOnError return $? '$1')
- eval 'export ${1}="$(udfIniGroup2Csv "$2")"'
- return 0
+
+  udfOn InvalidVariable $1 || return $?
+  udfOn MissingArgument $2 || return $?
+
+  eval 'export $1="$( udfIniGroup2Csv "$2" )"'
+
+  return 0
+
 }
 #******
