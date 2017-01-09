@@ -1,11 +1,12 @@
 #
-# $Id: libcnf.sh 652 2017-01-02 01:25:42+04:00 toor $
+# $Id: libcnf.sh 655 2017-01-09 17:10:07+04:00 toor $
 #
 #****h* BASHLYK/libcnf
 #  DESCRIPTION
-#    safe management of the active configuration files
+#    Safe management of the active configuration files by using INI library
+#    Deprecated, for backward compability
 #  USES
-#    libstd liberr libini
+#    libstd libini
 #  AUTHOR
 #    Damir Sh. Yakupov <yds@bk.ru>
 #******
@@ -27,7 +28,6 @@
 # SOURCE
 : ${_bashlyk_pathLib:=/usr/share/bashlyk}
 [[ -s ${_bashlyk_pathLib}/libstd.sh ]] && . "${_bashlyk_pathLib}/libstd.sh"
-[[ -s ${_bashlyk_pathLib}/liberr.sh ]] && . "${_bashlyk_pathLib}/liberr.sh"
 [[ -s ${_bashlyk_pathLib}/libini.sh ]] && . "${_bashlyk_pathLib}/libini.sh"
 #******
 #****G* libcnf/Global Variables

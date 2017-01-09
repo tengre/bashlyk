@@ -1,9 +1,10 @@
 #
-# $Id: libcsv.sh 654 2017-01-09 16:09:13+04:00 toor $
+# $Id: libcsv.sh 655 2017-01-09 17:10:07+04:00 toor $
 #
 #****h* BASHLYK/libcsv
 #  DESCRIPTION
 #    Management of the configuration files in the INI-style
+#    Deprecated, for backward compability
 #  USES
 #    libstd libopt
 #  AUTHOR

@@ -1,11 +1,10 @@
 #
-# $Id: liblog.sh 654 2017-01-09 16:09:13+04:00 toor $
+# $Id: liblog.sh 655 2017-01-09 17:26:26+04:00 toor $
 #
 #****h* BASHLYK/liblog
 #  DESCRIPTION
-#    Функции определения или задания режима работы рабочего сценария,
-#    автоматического создания журнала для сохранения потоков вывода сообщений,
-#    управление уровнем вывода сообщений.
+#    The library contains a set of functions for controlling the output of the
+#    script messages
 #  USES
 #    libstd libmsg
 #  AUTHOR
