@@ -1,9 +1,11 @@
 #
-# $Id: libtst.sh 651 2016-12-31 15:05:29+04:00 toor $
+# $Id: libtst.sh 654 2017-01-09 16:09:13+04:00 toor $
 #
 #****h* BASHLYK/libtst
 #  DESCRIPTION
 #    template for testing
+#  USES
+#    libstd
 #  AUTHOR
 #    Damir Sh. Yakupov <yds@bk.ru>
 #******

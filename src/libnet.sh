@@ -1,9 +1,11 @@
 #
-# $Id: libnet.sh 651 2016-12-31 15:05:27+04:00 toor $
+# $Id: libnet.sh 654 2017-01-09 16:09:13+04:00 toor $
 #
 #****h* BASHLYK/libnet
 #  DESCRIPTION
 #    network tools
+#  USES
+#    libstd
 #  AUTHOR
 #    Damir Sh. Yakupov <yds@bk.ru>
 #******
@@ -25,7 +27,6 @@
 # SOURCE
 : ${_bashlyk_pathLib:=/usr/share/bashlyk}
 [[ -s ${_bashlyk_pathLib}/libstd.sh ]] && . "${_bashlyk_pathLib}/libstd.sh"
-[[ -s ${_bashlyk_pathLib}/liberr.sh ]] && . "${_bashlyk_pathLib}/liberr.sh"
 #******
 #****G* libnet/Global variables
 #  DESCRIPTION
