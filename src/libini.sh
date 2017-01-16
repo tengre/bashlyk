@@ -1,5 +1,5 @@
 #
-# $Id: libini.sh 653 2017-01-05 00:10:33+04:00 toor $
+# $Id: libini.sh 656 2017-01-16 06:49:37+04:00 toor $
 #
 #****h* BASHLYK/libini
 #  DESCRIPTION
@@ -287,8 +287,13 @@ INI::__section.select() {
 
   fi
 
-  eval "id=\${_h${o^^}[$s]}"
-  eval "${o}.__section.set() { [[ \$1 ]] && $id[\$1]=\"\$2\"; }; ${o}.__section.get() { [[ \$1 ]] && echo \"\${$id[\$1]}\"; };"
+  eval "                                                                       \
+                                                                               \
+    id=\${_h${o^^}[$s]};                                                       \
+    ${o}.__section.set() { [[ \$1 ]] && $id[\$1]=\"\$2\"; };                   \
+    ${o}.__section.get() { [[ \$1 ]] && echo \"\${$id[\$1]}\"; };              \
+                                                                               \
+  "
 
 }
 #******
@@ -334,7 +339,15 @@ INI::__section.show() {
 
   if [[ $sU == "=" ]]; then
 
-    eval "for k in "\${!$id[@]}"; do [[ \$k =~ ^_bashlyk_raw_uniq= ]] && printf -- '%s\n' \"\${$id[\$k]}\"; done;"
+    eval "                                                                     \
+                                                                               \
+      for k in "\${!$id[@]}"; do                                               \
+                                                                               \
+        [[ \$k =~ ^_bashlyk_raw_uniq= ]] && printf -- '%s\n' \"\${$id[\$k]}\"; \
+                                                                               \
+      done;                                                                    \
+                                                                               \
+    "
 
   else
 
@@ -370,6 +383,7 @@ INI::__section.show() {
       fi
 
       eval "                                                                   \
+                                                                               \
         for k in "\${!$id[@]}"; do                                             \
           if [[ ! \$k =~ ^_bashlyk_ ]]; then                                   \
             v=\${$id[\$k]};                                                    \
@@ -1087,6 +1101,7 @@ INI::load() {
 
   for s in "$@"; do
 
+    ## TODO parse [section]{key,..} or {[section]key,..} ( key,.. - unnamed )
     [[ $s =~ ^(.*)?:(([=+\-]?)|([^=+\-].*))$ ]] || udfOn InvalidArgument throw $s
 
     sSection=${BASH_REMATCH[1]}
