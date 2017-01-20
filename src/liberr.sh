@@ -1,5 +1,5 @@
 #
-# $Id: liberr.sh 658 2017-01-20 16:16:05+04:00 toor $
+# $Id: liberr.sh 659 2017-01-21 01:20:28+04:00 toor $
 #
 #****h* BASHLYK/liberr
 #  DESCRIPTION
@@ -26,6 +26,7 @@
 #   Loading external libraries
 # SOURCE
 : ${_bashlyk_pathLib:=/usr/share/bashlyk}
+[[ -s ${_bashlyk_pathLib}/libstd.sh ]] && . "${_bashlyk_pathLib}/libstd.sh"
 [[ -s ${_bashlyk_pathLib}/libmsg.sh ]] && . "${_bashlyk_pathLib}/libmsg.sh"
 #******
 #****G* liberr/Global Variables

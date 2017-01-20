@@ -1,5 +1,5 @@
 #
-# $Id: liblog.sh 658 2017-01-20 16:16:05+04:00 toor $
+# $Id: liblog.sh 659 2017-01-21 01:20:29+04:00 toor $
 #
 #****h* BASHLYK/liblog
 #  DESCRIPTION
@@ -193,7 +193,7 @@ udfLog() {
     shift
     [[ $* ]] && sPrefix="$* " || sPrefix=
 
-    while read -t 60 s; do [[ $s ]] && udfLogger "${sPrefix}${s}"; done
+    while read s; do [[ $s ]] && udfLogger "${sPrefix}${s}"; done
 
   else
 

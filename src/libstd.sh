@@ -1,5 +1,5 @@
 #
-# $Id: libstd.sh 658 2017-01-20 16:16:06+04:00 toor $
+# $Id: libstd.sh 659 2017-01-21 01:20:29+04:00 toor $
 #
 #****h* BASHLYK/libstd
 #  DESCRIPTION
@@ -70,8 +70,8 @@ declare -rg _bashlyk_aRequiredCmd_std="                                        \
     which xargs                                                                \
                                                                                \
 "
-declare -rg _bashlyk_aExport_std="
-
+declare -rg _bashlyk_aExport_std="                                             \
+                                                                               \
     _ _ARGUMENTS _gete _getv _pathDat _s0 _set udfAddFile2Clean udfAddFD2Clean \
     udfAddFO2Clean udfAddFObj2Clean udfAddJob2Clean udfAddPath2Clean udfBaseId \
     udfAddPid2Clean udfAlias2WSpace udfBashlykUnquote udfCheckCsv udfGetMd5    \
@@ -79,7 +79,7 @@ declare -rg _bashlyk_aExport_std="
     udfIsValidVariable udfLocalVarFromCSV udfMakeTemp udfMakeTempV udfOnTrap   \
     udfPrepareByType udfQuoteIfNeeded udfShellExec udfShowVariable udfXml      \
     udfTimeStamp udfWSpace2Alias udfPrepare2Exec                               \
-
+                                                                               \
 "
 #******
 #****f* libstd/udfIsNumber
