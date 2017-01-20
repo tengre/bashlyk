@@ -1,5 +1,5 @@
 #
-# $Id: libnet.sh 654 2017-01-09 16:09:13+04:00 toor $
+# $Id: libnet.sh 657 2017-01-20 15:00:51+04:00 toor $
 #
 #****h* BASHLYK/libnet
 #  DESCRIPTION
@@ -72,8 +72,7 @@ udfGetValidIPsOnly() {
 
     sipcalc -d4 "$s" | grep '^-\[ERR :' && continue
 
-    sDig=$( dig +short $s | xargs )
-    [[ $sDig ]] && s="$sDig"
+    sDig=$( dig +short $s ) && s="$sDig"
 
     h[$s]=$s
 

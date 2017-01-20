@@ -1,5 +1,5 @@
 #
-# $Id: liberr.sh 655 2017-01-09 17:26:26+04:00 toor $
+# $Id: liberr.sh 657 2017-01-20 15:00:51+04:00 toor $
 #
 #****h* BASHLYK/liberr
 #  DESCRIPTION
@@ -62,6 +62,7 @@ _bashlyk_iErrorUserXsessionNotFound=171
 _bashlyk_iErrorXsessionNotFound=170
 _bashlyk_iErrorIncompatibleVersion=169
 _bashlyk_iErrorTryBoxException=168
+_bashlyk_iErrorNotAvailable=166
 _bashlyk_Success=0
 
 _bashlyk_hError[$_bashlyk_iErrorUnknown]="unknown (unexpected) error"
@@ -88,6 +89,7 @@ _bashlyk_hError[$_bashlyk_iErrorUserXsessionNotFound]="user X-Session not found"
 _bashlyk_hError[$_bashlyk_iErrorXsessionNotFound]="X-Session not found"
 _bashlyk_hError[$_bashlyk_iErrorIncompatibleVersion]="incompatible version"
 _bashlyk_hError[$_bashlyk_iErrorTryBoxException]="try box exception"
+_bashlyk_hError[$_bashlyk_iErrorNotAvailable]="target is not available"
 #
 : ${_bashlyk_onError:=throw}
 : ${_bashlyk_sArg:="$@"}
@@ -304,6 +306,7 @@ udfOnError() {
 
   rs=${rs//\(/\\\(}
   rs=${rs//\)/\\\)}
+  rs=${rs//\;/\\\;}
 
   if [[ "${FUNCNAME[1]}" == "main" || -z "${FUNCNAME[1]}" ]]; then
 
