@@ -1,5 +1,5 @@
 #
-# $Id: libopt.sh 654 2017-01-09 16:09:13+04:00 toor $
+# $Id: libopt.sh 658 2017-01-20 16:16:05+04:00 toor $
 #
 #****h* BASHLYK/libopt
 #  DESCRIPTION
@@ -28,6 +28,7 @@
 #   Loading external libraries
 # SOURCE
 : ${_bashlyk_pathLib:=/usr/share/bashlyk}
+[[ -s ${_bashlyk_pathLib}/liberr.sh ]] && . "${_bashlyk_pathLib}/liberr.sh"
 [[ -s ${_bashlyk_pathLib}/libstd.sh ]] && . "${_bashlyk_pathLib}/libstd.sh"
 [[ -s ${_bashlyk_pathLib}/libcnf.sh ]] && . "${_bashlyk_pathLib}/libcnf.sh"
 #******
@@ -37,8 +38,8 @@
 #  SOURCE
 : ${_bashlyk_sArg:="$@"}
 
-declare -r _bashlyk_aRequiredCmd_opt="getopt rm"
-declare -r _bashlyk_aExport_opt="                                              \
+declare -rg _bashlyk_aRequiredCmd_opt="getopt rm"
+declare -rg _bashlyk_aExport_opt="                                             \
                                                                                \
     udfExcludePairFromHash udfGetOpt udfGetOptHash udfSetOptHash               \
                                                                                \

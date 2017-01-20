@@ -1,5 +1,5 @@
 #
-# $Id: libcnf.sh 655 2017-01-09 17:10:07+04:00 toor $
+# $Id: libcnf.sh 658 2017-01-20 16:16:04+04:00 toor $
 #
 #****h* BASHLYK/libcnf
 #  DESCRIPTION
@@ -27,6 +27,7 @@
 #   Loading external libraries
 # SOURCE
 : ${_bashlyk_pathLib:=/usr/share/bashlyk}
+[[ -s ${_bashlyk_pathLib}/liberr.sh ]] && . "${_bashlyk_pathLib}/liberr.sh"
 [[ -s ${_bashlyk_pathLib}/libstd.sh ]] && . "${_bashlyk_pathLib}/libstd.sh"
 [[ -s ${_bashlyk_pathLib}/libini.sh ]] && . "${_bashlyk_pathLib}/libini.sh"
 #******
@@ -38,8 +39,8 @@
 : ${_bashlyk_pathCnf:=$(pwd)}
 : ${_bashlyk_sUnnamedKeyword:=_bashlyk_unnamed_key_}
 
-declare -r _bashlyk_externals_cnf="mkdir pwd"
-declare -r _bashlyk_exports_cnf="udfGetConfig udfSetConfig"
+declare -rg _bashlyk_externals_cnf="mkdir pwd"
+declare -rg _bashlyk_exports_cnf="udfGetConfig udfSetConfig"
 #******
 #****p* libcnf/__getconfig
 #  SYNOPSIS

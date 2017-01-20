@@ -1,5 +1,5 @@
 #
-# $Id: libold.sh 652 2017-01-02 01:25:42+04:00 toor $
+# $Id: libold.sh 658 2017-01-20 16:16:05+04:00 toor $
 #
 #****h* BASHLYK/libold
 #  DESCRIPTION
@@ -25,8 +25,8 @@
 #   Loading external libraries
 # SOURCE
 : ${_bashlyk_pathLib:=/usr/share/bashlyk}
-[[ -s ${_bashlyk_pathLib}/libstd.sh ]] && . "${_bashlyk_pathLib}/libstd.sh"
 [[ -s ${_bashlyk_pathLib}/liberr.sh ]] && . "${_bashlyk_pathLib}/liberr.sh"
+[[ -s ${_bashlyk_pathLib}/libstd.sh ]] && . "${_bashlyk_pathLib}/libstd.sh"
 [[ -s ${_bashlyk_pathLib}/libopt.sh ]] && . "${_bashlyk_pathLib}/libopt.sh"
 [[ -s ${_bashlyk_pathLib}/libcsv.sh ]] && . "${_bashlyk_pathLib}/libcsv.sh"
 #******
@@ -41,13 +41,13 @@
 : ${_bashlyk_pathIni:=$(pwd)}
 : ${_bashlyk_sUnnamedKeyword:=_bashlyk_ini_void_autoKey_}
 
-declare -r _bashlyk_externals_old="                                            \
+declare -rg _bashlyk_externals_old="                                           \
                                                                                \
     awk cat cut dirname false grep mawk mkdir                                  \
     mv pwd rm sed sort touch tr true uniq xargs                                \
                                                                                \
 "
-declare -r _bashlyk_exports_old="                                              \
+declare -rg _bashlyk_exports_old="                                             \
                                                                                \
     udfCsvKeys2Var udfCsvOrder2Var udfGetCsvSection2Var udfGetIni2Var          \
     udfGetIniSection2Var udfIniGroupSection2CsvVar udfIniGroup2CsvVar          \

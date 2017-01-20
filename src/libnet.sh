@@ -1,5 +1,5 @@
 #
-# $Id: libnet.sh 657 2017-01-20 15:00:51+04:00 toor $
+# $Id: libnet.sh 658 2017-01-20 16:16:05+04:00 toor $
 #
 #****h* BASHLYK/libnet
 #  DESCRIPTION
@@ -26,6 +26,7 @@
 #   Loading external libraries
 # SOURCE
 : ${_bashlyk_pathLib:=/usr/share/bashlyk}
+[[ -s ${_bashlyk_pathLib}/liberr.sh ]] && . "${_bashlyk_pathLib}/liberr.sh"
 [[ -s ${_bashlyk_pathLib}/libstd.sh ]] && . "${_bashlyk_pathLib}/libstd.sh"
 #******
 #****G* libnet/Global variables
@@ -35,10 +36,10 @@
 : ${_bashlyk_sArg:="$@"}
 : ${_bashlyk_pathCnf:=$(pwd)}
 
-declare -r _reIPv4='[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+'
-declare -r _peIPv4='\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}'
-declare -r _bashlyk_externals_net="dig echo grep ipcalc sipcalc xargs"
-declare -r _bashlyk_exports_net="udfGetValidIPsOnly udfGetValidCIDR"
+declare -rg _reIPv4='[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+'
+declare -rg _peIPv4='\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}'
+declare -rg _bashlyk_externals_net="dig echo grep ipcalc sipcalc xargs"
+declare -rg _bashlyk_exports_net="udfGetValidIPsOnly udfGetValidCIDR"
 #******
 #****f* libnet/udfGetValidIPsOnly
 #  SYNOPSIS

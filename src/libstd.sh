@@ -1,5 +1,5 @@
 #
-# $Id: libstd.sh 654 2017-01-09 16:09:13+04:00 toor $
+# $Id: libstd.sh 658 2017-01-20 16:16:06+04:00 toor $
 #
 #****h* BASHLYK/libstd
 #  DESCRIPTION
@@ -62,15 +62,15 @@
 : ${_bashlyk_reMetaRules:='34=":40=(:41=):59=;:91=[:92=\\:93=]:61=='}
 : ${_bashlyk_emailSubj:="${_bashlyk_sUser}@${HOSTNAME}::${_bashlyk_s0}"}
 
-declare -r _bashlyk_iMaxOutputLines=1000
-declare -r _bashlyk_aRequiredCmd_std="                                         \
+declare -rg _bashlyk_iMaxOutputLines=1000
+declare -rg _bashlyk_aRequiredCmd_std="                                        \
                                                                                \
     cat chgrp chmod chown cut date echo grep hostname kill logname md5sum      \
     mkdir mkfifo mktemp pgrep ps pwd rm rmdir sed sleep tempfile touch tr      \
     which xargs                                                                \
                                                                                \
 "
-declare -r _bashlyk_aExport_std="
+declare -rg _bashlyk_aExport_std="
 
     _ _ARGUMENTS _gete _getv _pathDat _s0 _set udfAddFile2Clean udfAddFD2Clean \
     udfAddFO2Clean udfAddFObj2Clean udfAddJob2Clean udfAddPath2Clean udfBaseId \

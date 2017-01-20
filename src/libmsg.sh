@@ -1,5 +1,5 @@
 #
-# $Id: libmsg.sh 654 2017-01-09 16:09:13+04:00 toor $
+# $Id: libmsg.sh 658 2017-01-20 16:16:05+04:00 toor $
 #
 #****h* BASHLYK/libmsg
 #  DESCRIPTION
@@ -26,6 +26,7 @@
 #   Loading external libraries
 # SOURCE
 : ${_bashlyk_pathLib:=/usr/share/bashlyk}
+[[ -s ${_bashlyk_pathLib}/liberr.sh ]] && . "${_bashlyk_pathLib}/liberr.sh"
 [[ -s ${_bashlyk_pathLib}/libstd.sh ]] && . "${_bashlyk_pathLib}/libstd.sh"
 #******
 #****G* libmsg/Global variables
@@ -40,13 +41,13 @@
 : ${_bashlyk_emailSubj:="${_bashlyk_sUser}@${HOSTNAME}::${_bashlyk_s0}"}
 : ${_bashlyk_envXSession:=}
 
-declare -r _bashlyk_externals_msg="                                            \
+declare -rg _bashlyk_externals_msg="                                           \
                                                                                \
     cat cut echo grep head hostname logname mail printf ps rm sort             \
     stat tee uniq which write notify-send|kdialog|zenity|xmessage              \
                                                                                \
 "
-declare -r _bashlyk_exports_msg="                                              \
+declare -rg _bashlyk_exports_msg="                                             \
                                                                                \
     udfEcho udfGetXSessionProperties udfMail udfMessage udfNotify2X            \
     udfNotifyCommand udfWarn                                                   \

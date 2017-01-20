@@ -1,5 +1,5 @@
 #
-# $Id: liberr.sh 657 2017-01-20 15:00:51+04:00 toor $
+# $Id: liberr.sh 658 2017-01-20 16:16:05+04:00 toor $
 #
 #****h* BASHLYK/liberr
 #  DESCRIPTION
@@ -94,8 +94,8 @@ _bashlyk_hError[$_bashlyk_iErrorNotAvailable]="target is not available"
 : ${_bashlyk_onError:=throw}
 : ${_bashlyk_sArg:="$@"}
 
-declare -r _bashlyk_aRequiredCmd_err="sed which"
-declare -r _bashlyk_aExport_err="                                              \
+declare -rg _bashlyk_aRequiredCmd_err="sed which"
+declare -rg _bashlyk_aExport_err="                                             \
                                                                                \
     udfCommandNotFound udfEmptyArgument udfEmptyOrMissingArgument              \
     udfEmptyResult udfEmptyVariable udfInvalidVariable udfMissingArgument      \

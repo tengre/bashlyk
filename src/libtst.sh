@@ -1,5 +1,5 @@
 #
-# $Id: libtst.sh 654 2017-01-09 16:09:13+04:00 toor $
+# $Id: libtst.sh 658 2017-01-20 16:16:06+04:00 toor $
 #
 #****h* BASHLYK/libtst
 #  DESCRIPTION
@@ -26,6 +26,7 @@
 #   Loading external libraries
 # SOURCE
 : ${_bashlyk_pathLib:=/usr/share/bashlyk}
+[[ -s ${_bashlyk_pathLib}/liberr.sh ]] && . "${_bashlyk_pathLib}/liberr.sh"
 [[ -s ${_bashlyk_pathLib}/libstd.sh ]] && . "${_bashlyk_pathLib}/libstd.sh"
 #******
 #****v* libtst/Global Variables
@@ -39,8 +40,8 @@
 : ${_bashlyk_sLogin:=$(logname 2>/dev/null)}
 : ${_bashlyk_emailSubj:="${_bashlyk_sUser}@${HOSTNAME}::${_bashlyk_s0}"}
 
-declare -r _bashlyk_externals_tst=""
-declare -r _bashlyk_exports_tst="udfTest"
+declare -rg _bashlyk_externals_tst=""
+declare -rg _bashlyk_exports_tst="udfTest"
 #******
 #****f* libtst/udfTest
 #  SYNOPSIS

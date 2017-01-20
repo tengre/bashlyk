@@ -1,5 +1,5 @@
 #
-# $Id: liblog.sh 655 2017-01-09 17:26:26+04:00 toor $
+# $Id: liblog.sh 658 2017-01-20 16:16:05+04:00 toor $
 #
 #****h* BASHLYK/liblog
 #  DESCRIPTION
@@ -26,6 +26,7 @@
 #    Loading external libraries
 #  SOURCE
 : ${_bashlyk_pathLib:=/usr/share/bashlyk}
+[[ -s ${_bashlyk_pathLib}/liberr.sh ]] && . "${_bashlyk_pathLib}/liberr.sh"
 [[ -s ${_bashlyk_pathLib}/libstd.sh ]] && . "${_bashlyk_pathLib}/libstd.sh"
 [[ -s ${_bashlyk_pathLib}/libmsg.sh ]] && . "${_bashlyk_pathLib}/libmsg.sh"
 #******
@@ -51,12 +52,12 @@
 : ${_bashlyk_bNotUseLog:=1}
 : ${_bashlyk_sCond4Log:=redirect}
 
-declare -r _bashlyk_aRequiredCmd_log="                                         \
+declare -rg _bashlyk_aRequiredCmd_log="                                        \
                                                                                \
     date dirname hostname logger mkdir mkfifo rm touch tty                     \
                                                                                \
 "
-declare -r _bashlyk_aExport_log="                                              \
+declare -rg _bashlyk_aExport_log="                                             \
                                                                                \
     udfCheck4LogUse udfDebug udfFinally udfUptime udfLog udfLogger             \
     udfSetLog udfSetLogSocket udfIsTerminal udfIsInteract _fnLog               \

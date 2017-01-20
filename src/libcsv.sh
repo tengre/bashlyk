@@ -1,5 +1,5 @@
 #
-# $Id: libcsv.sh 655 2017-01-09 17:10:07+04:00 toor $
+# $Id: libcsv.sh 658 2017-01-20 16:16:05+04:00 toor $
 #
 #****h* BASHLYK/libcsv
 #  DESCRIPTION
@@ -26,6 +26,7 @@
 #   Loading external libraries
 # SOURCE
 : ${_bashlyk_pathLib:=/usr/share/bashlyk}
+[[ -s ${_bashlyk_pathLib}/liberr.sh ]] && . "${_bashlyk_pathLib}/liberr.sh"
 [[ -s ${_bashlyk_pathLib}/libstd.sh ]] && . "${_bashlyk_pathLib}/libstd.sh"
 [[ -s ${_bashlyk_pathLib}/libopt.sh ]] && . "${_bashlyk_pathLib}/libopt.sh"
 #******
@@ -40,13 +41,13 @@
 : ${_bashlyk_pathIni:=$(pwd)}
 : ${_bashlyk_sUnnamedKeyword:=_bashlyk_ini_void_autoKey_}
 
-declare -r _bashlyk_externals_csv="                                            \
+declare -rg _bashlyk_externals_csv="                                           \
                                                                                \
     awk cat cut dirname false grep mawk mkdir                                  \
     mv pwd rm sed sort touch tr true uniq xargs                                \
                                                                                \
 "
-declare -r _bashlyk_exports_csv="                                              \
+declare -rg _bashlyk_exports_csv="                                             \
                                                                                \
     udfAssembly udfCsvHash2Raw udfCsvKeys udfCsvOrder udfGetCsvSection         \
     udfGetIni udfGetIniSection udfIni udfIni2Csv udfIniChange udfIniGroup2Csv  \

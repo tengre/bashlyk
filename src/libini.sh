@@ -1,5 +1,5 @@
 #
-# $Id: libini.sh 656 2017-01-16 06:49:37+04:00 toor $
+# $Id: libini.sh 658 2017-01-20 16:16:05+04:00 toor $
 #
 #****h* BASHLYK/libini
 #  DESCRIPTION
@@ -65,8 +65,8 @@
 #   Loading external libraries
 # SOURCE
 : ${_bashlyk_pathLib:=/usr/share/bashlyk}
-[[ -s ${_bashlyk_pathLib}/libstd.sh ]] && . "${_bashlyk_pathLib}/libstd.sh"
 [[ -s ${_bashlyk_pathLib}/liberr.sh ]] && . "${_bashlyk_pathLib}/liberr.sh"
+[[ -s ${_bashlyk_pathLib}/libstd.sh ]] && . "${_bashlyk_pathLib}/libstd.sh"
 #******
 #****G* libini/Global Variables
 #  DESCRIPTION
@@ -75,19 +75,19 @@
 : ${_bashlyk_sArg:="$@"}
 : ${_bashlyk_pathIni:=$(pwd)}
 
-declare -r _bashlyk_methods_ini="                                              \
+declare -rg _bashlyk_methods_ini="                                             \
                                                                                \
     __section.id __section.byindex __section.select __section.show             \
     __section.setRawData __section.getArray get set show save read             \
     load bind.cli getopt free                                                  \
                                                                                \
 "
-declare -r _bashlyk_externals_ini="                                            \
+declare -rg _bashlyk_externals_ini="                                           \
                                                                                \
     date echo getopt sha1sum mkdir mv pwd rm stat touch                        \
                                                                                \
 "
-declare -r _bashlyk_exports_ini="                                              \
+declare -rg _bashlyk_exports_ini="                                             \
                                                                                \
     INI get set show save read load bind.cli getopt free                       \
                                                                                \

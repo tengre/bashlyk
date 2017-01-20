@@ -1,5 +1,5 @@
 #
-# $Id: libpid.sh 654 2017-01-09 16:09:13+04:00 toor $
+# $Id: libpid.sh 658 2017-01-20 16:16:05+04:00 toor $
 #
 #****h* BASHLYK/libpid
 #  DESCRIPTION
@@ -27,6 +27,7 @@
 #   Loading external libraries
 # SOURCE
 : ${_bashlyk_pathLib:=/usr/share/bashlyk}
+[[ -s ${_bashlyk_pathLib}/liberr.sh ]] && . "${_bashlyk_pathLib}/liberr.sh"
 [[ -s ${_bashlyk_pathLib}/libstd.sh ]] && . "${_bashlyk_pathLib}/libstd.sh"
 #******
 #****G* libpid/Global Variables
@@ -42,12 +43,12 @@
 : ${_bashlyk_pathRun:=/tmp}
 : ${_bashlyk_sArg:="$@"}
 
-declare -r _bashlyk_externals_pid="                                            \
+declare -rg _bashlyk_externals_pid="                                           \
                                                                                \
     head kill mkdir printf pgrep ps rm rmdir sleep xargs                       \
                                                                                \
 "
-declare -r _bashlyk_exports_pid="                                              \
+declare -rg _bashlyk_exports_pid="                                             \
                                                                                \
     udfCheckStarted udfExitIfAlreadyStarted udfSetPid udfStopProcess           \
                                                                                \
