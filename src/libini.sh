@@ -1,5 +1,5 @@
 #
-# $Id: libini.sh 658 2017-01-20 16:16:05+04:00 toor $
+# $Id: libini.sh 660 2017-01-21 22:12:29+04:00 toor $
 #
 #****h* BASHLYK/libini
 #  DESCRIPTION
@@ -599,7 +599,7 @@ INI::get() {
       ;;
 
     *)
-      eval $( udfOnError throw InvalidArgument "$*" )
+      eval $( udfOnError retwarn InvalidArgument "$*" )
       ;;
 
   esac

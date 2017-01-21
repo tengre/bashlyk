@@ -1,5 +1,5 @@
 #
-# $Id: libnet.sh 658 2017-01-20 16:16:05+04:00 toor $
+# $Id: libnet.sh 660 2017-01-21 22:12:29+04:00 toor $
 #
 #****h* BASHLYK/libnet
 #  DESCRIPTION
@@ -108,8 +108,8 @@ udfGetValidIPsOnly() {
 #  SOURCE
 udfGetValidCIDR() {
 
-  udfThrowOnEmptyVariable _reIPv4
-  udfOn MissingArgument "$*" || return $?
+  udfOn EmptyVariable   _reIPv4 || return $?
+  udfOn MissingArgument "$*"    || return $?
 
   local s i
   local -A h

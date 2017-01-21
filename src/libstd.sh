@@ -1,5 +1,5 @@
 #
-# $Id: libstd.sh 659 2017-01-21 01:20:29+04:00 toor $
+# $Id: libstd.sh 660 2017-01-21 22:12:29+04:00 toor $
 #
 #****h* BASHLYK/libstd
 #  DESCRIPTION
@@ -1437,21 +1437,40 @@ udfBashlykUnquote() {
 #  SOURCE
 udfLocalVarFromCSV() {
 
-  udfOn MissingArgument throw "$@"
+  if [[ ! $@ ]]; then
+  
+    udfOnError1 throw MissingArgument 
+    return $( _ iErrorMissingArgument )
+  
+  fi
 
   local s
   local -A h
 
   for s in ${*//[;,]/ }; do
 
-    udfIsValidVariable $s || eval $( udfOnError2 throw iErrorNonValidVariable "$s" )
+    if ! udfIsValidVariable $s; then
+    
+      udfOnError1 throw NotValidVariable "$s"
+      return $( _ iErrorNotValidVariable )
+    
+    fi
+    
     h[$s]="$s"
 
   done
 
-  udfOn EmptyResult throw "${h[@]}"
-  echo "local ${h[@]}"
+  if [[ ${h[@]} ]]; then
+  
+    echo "local ${h[@]}"
+    
+  else
 
+    udfOnError1 throw EmptyResult
+    return $( _ iErrorEmptyResult )
+    
+  fi
+  
 }
 #******
 #****f* libstd/udfGetTimeInSec
