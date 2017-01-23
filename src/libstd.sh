@@ -1,5 +1,5 @@
 #
-# $Id: libstd.sh 662 2017-01-23 10:04:44+04:00 toor $
+# $Id: libstd.sh 663 2017-01-23 16:42:46+04:00 toor $
 #
 #****h* BASHLYK/libstd
 #  DESCRIPTION
@@ -65,7 +65,7 @@
 declare -rg _bashlyk_iMaxOutputLines=1000
 declare -rg _bashlyk_aRequiredCmd_std="                                        \
                                                                                \
-    cat chgrp chmod chown cut date echo grep hostname kill logname md5sum      \
+    cat chgrp chmod chown cut date echo expr grep hostname kill logname md5sum \
     mkdir mkfifo mktemp pgrep ps pwd rm rmdir sed sleep tempfile touch tr      \
     which xargs                                                                \
                                                                                \
@@ -1595,6 +1595,28 @@ udfIsHash() {
 
   [[ $( declare -pA $1 2>/dev/null ) =~ ^declare.*-A ]] \
     && return 0 || return $( _ iErrorInvalidHash )
+
+}
+#******
+#****f* libstd/udfTrim
+#  SYNOPSIS
+#    udfTrim <arg>
+#  DESCRIPTION
+#    remove leading and trailing spaces
+#  ARGUMENTS
+#    <arg> - input data
+#  OUTPUT
+#    show input without leading and trailing spaces
+#  EXAMPLE
+#    local s=" a  b c  "
+#    udfTrim "$s" >| grep "^a  b c$"                                            #? true
+#    udfTrim  $s  >| grep "^a b c$"                                             #? true
+#    udfTrim      >| grep ^$                                                    #? true
+#    udfTrim '  ' >| grep ^$                                                    #? true
+#  SOURCE
+udfTrim() {
+
+  echo "$( expr "$*" : "^\ *\(.*[^ ]\)\ *$" )"
 
 }
 #******

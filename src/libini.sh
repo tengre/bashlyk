@@ -1,5 +1,5 @@
 #
-# $Id: libini.sh 660 2017-01-21 22:12:29+04:00 toor $
+# $Id: libini.sh 663 2017-01-23 16:42:46+04:00 toor $
 #
 #****h* BASHLYK/libini
 #  DESCRIPTION
@@ -960,7 +960,8 @@ INI::read() {
 #******
 #****e* libini/INI::load
 #  SYNOPSIS
-#    INI::load <file> <section>:(<options>)|<raw mode>) ...
+#    INI::load <file> <section>:(<options>|<raw mode>) ...
+#    INI::load <file> {[\[<section>\]](<options>|<raw mode>)} ...
 #  DESCRIPTION
 #    load the specified configuration data from a group of related INI files
 #  ARGUMENTS
@@ -982,8 +983,7 @@ INI::read() {
 #    NoSuchFileOrDir - input file not exist
 #    MissingArgument - parameters and sections are not selected
 #  EXAMPLE
-#   local iniMain iniLoad iniSave s S sRules                                    #-
-#   sRules=':file,main,child exec:- main:hint,msg,cnt replace:- unify:= acc:+'  #-
+#   local iniMain iniLoad iniSave                                               #-
 #   udfMakeTemp -v iniMain suffix=.ini                                          #-
 #   GLOBIGNORE="*:?"
 #    cat <<-'EOFini' > $iniMain                                                 #-
@@ -1059,7 +1059,7 @@ INI::read() {
 #    *.lit                                                                      #-
 #    EOFiniChild                                                                #-
 #   INI tLoad
-#   tLoad.load $iniLoad $sRules                                                 #? true
+#   tLoad.load $iniLoad []file,main,child: [exec]-: [main]hint,msg,cnt: [replace]-: [unify]=: [acc]+    #? true
 #   tLoad.save $iniSave                                                         #? true
 #   tLoad.show >| md5sum - | grep ^ecc291818557339352e35fe80fb0de57.*-$         #? true
 ##    tLoad.free
@@ -1070,7 +1070,7 @@ INI::load() {
 
   local -a a
   local -A h hKeyValue hRawMode
-  local csv i ini fmtKeyValue fmtSections o path reSection reValidSections s sSection
+  local csv i IFS ini fmtKeyValue fmtSections o path reSection reValidSections s sSection
 
   o=${FUNCNAME[0]%%.*}
   fmtSections='^[[:space:]]*(:?)\[[[:space:]]*(%SECTION%)[[:space:]]*\](:?)[[:space:]]*$'
@@ -1090,35 +1090,53 @@ INI::load() {
 
   fi
 
-  if [[ $path ]]; then
-
-    s=${1##*/}
-    a=( ${s//./ } )
-
-  fi
+  [[ $path ]] && ini=${1##*/}
 
   shift
 
-  for s in "$@"; do
+  s="$*" && IFS=':' a=( $s )
 
-    ## TODO parse [section]{key,..} or {[section]key,..} ( key,.. - unnamed )
-    [[ $s =~ ^(.*)?:(([=+\-]?)|([^=+\-].*))$ ]] || udfOn InvalidArgument throw $s
+  for s in ${a[@]}; do
 
-    sSection=${BASH_REMATCH[1]}
-    : ${sSection:=__global__}
+    s=$( udfTrim $s )
 
-    [[ ${BASH_REMATCH[3]} ]] && hRawMode[$sSection]="${BASH_REMATCH[3]}"
-    [[ ${BASH_REMATCH[4]} ]] && s="${BASH_REMATCH[4]}" || s=
-    [[ $s ]] && s="${s//,/\|}" && hKeyValue[$sSection]=${fmtKeyValue/\%KEY\%/$s}
+    if [[ $s =~ ^(\[(.*)\])?(([=+\-]?)|([^=+\-].*))$ ]]; then
 
-    ${o}.__section.select $sSection
-    csv+="${sSection}|"
+      [[ ${BASH_REMATCH[1]} ]] || continue
+
+      [[ ${BASH_REMATCH[2]} ]] && sSection="${BASH_REMATCH[2]}" || sSection=__global__
+
+      if   [[ ${BASH_REMATCH[3]} == ${BASH_REMATCH[5]} ]]; then
+
+        s="${BASH_REMATCH[3]}"
+        s="${s//,/\|}"
+        hKeyValue[$sSection]=${fmtKeyValue/\%KEY\%/$s}
+
+      elif [[ ${BASH_REMATCH[3]} == ${BASH_REMATCH[4]} ]]; then
+
+        hRawMode[$sSection]="${BASH_REMATCH[3]}"
+
+      else
+
+        continue
+
+      fi
+
+      ${o}.__section.select $sSection
+
+      csv+="${sSection}|"
+
+    fi
 
   done
 
   csv=${csv%*|}
 
   [[ $csv ]] && reValidSections=${fmtSections/\%SECTION\%/$csv}
+
+  IFS=$' \t\n' a=( ${ini//./ } )
+
+  unset ini s
 
   for (( i = ${#a[@]}-1; i >= 0; i-- )); do
 
@@ -1166,16 +1184,14 @@ INI::load() {
 #    MissingArgument - arguments is not specified
 #    InvalidArgument - invalid format of the arguments
 #  EXAMPLE
-#    local rINI rCLI ini
-#    rINI=':file,main,child exec:- main:hint,msg,cnt replace:- unify:= acc:+'   #-
-#    rCLI='file{F}: exec{E}:- main-hint{H}: main-msg{M}: unify{U}:= acc:+'      #-
+#    local ini
 #    _ sArg "-F CLI -E clear -H 'Hi!' -M test -U a.2 -U a.2 --acc=a --acc=b"    #-
 #    udfMakeTemp ini
 #    tLoad.save $ini                                                            #? true
 #    tLoad.free
 #    INI tBindCli
-#    tBindCli.bind.cli $rCLI                                                    #? true
-#    tBindCli.load $ini $rINI                                                   #? true
+#    tBindCli.bind.cli file{F}: exec{E}:- main-hint{H}: main-msg{M}: unify{U}:= acc:+                      #? true
+#    tBindCli.load $ini []file,main,child : [exec]- : [main]hint,msg,cnt : [replace]- : [unify]= : [acc]+  #? true
 #    tBindCli.show >| md5sum - | grep ^5f07ee81d3d7cab5bff836f1acb99a20.*-$     #? true
 #    tBindCli.free
 #  SOURCE
