@@ -1,5 +1,5 @@
 #
-# $Id: libstd.sh 660 2017-01-21 22:12:29+04:00 toor $
+# $Id: libstd.sh 662 2017-01-23 10:04:44+04:00 toor $
 #
 #****h* BASHLYK/libstd
 #  DESCRIPTION
@@ -818,10 +818,10 @@ udfAddFD2Clean() {
 #    udfAddPath2Clean $path
 #    udfAddFile2Clean $pipe
 #    udfOnTrap
+#    ls /proc/$$/fd >| grep -w $fd                                              #? false
+#    ps -p $pid -o pid= >| grep -w $pid                                         #? false
 #    test -f $fn1                                                               #? false
 #    test -d $path                                                              #? false
-#    ps -p $pid -o pid= >| grep -w $pid                                         #? false
-#    ls /proc/$$/fd >| grep -w $fd                                              #? false
 #  SOURCE
 udfOnTrap() {
 
@@ -1438,10 +1438,10 @@ udfBashlykUnquote() {
 udfLocalVarFromCSV() {
 
   if [[ ! $@ ]]; then
-  
-    udfOnError1 throw MissingArgument 
+
+    udfOnError1 throw MissingArgument
     return $( _ iErrorMissingArgument )
-  
+
   fi
 
   local s
@@ -1450,27 +1450,27 @@ udfLocalVarFromCSV() {
   for s in ${*//[;,]/ }; do
 
     if ! udfIsValidVariable $s; then
-    
+
       udfOnError1 throw NotValidVariable "$s"
       return $( _ iErrorNotValidVariable )
-    
+
     fi
-    
+
     h[$s]="$s"
 
   done
 
   if [[ ${h[@]} ]]; then
-  
+
     echo "local ${h[@]}"
-    
+
   else
 
     udfOnError1 throw EmptyResult
     return $( _ iErrorEmptyResult )
-    
+
   fi
-  
+
 }
 #******
 #****f* libstd/udfGetTimeInSec
