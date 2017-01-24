@@ -1,5 +1,5 @@
 #
-# $Id: liberr.sh 659 2017-01-21 01:20:28+04:00 toor $
+# $Id: liberr.sh 665 2017-01-25 00:37:34+04:00 toor $
 #
 #****h* BASHLYK/liberr
 #  DESCRIPTION
@@ -41,6 +41,7 @@ _bashlyk_iErrorEmptyArgument=253
 _bashlyk_iErrorNonValidArgument=252
 _bashlyk_iErrorNotValidArgument=252
 _bashlyk_iErrorInvalidArgument=252
+_bashlyk_iErrorNotNumber=252
 _bashlyk_iErrorEmptyResult=251
 _bashlyk_iErrorNotSupported=241
 _bashlyk_iErrorNotPermitted=240
@@ -78,6 +79,7 @@ _bashlyk_hError[$_bashlyk_iErrorAbortedBySignal]="aborted by signal"
 _bashlyk_hError[$_bashlyk_iErrorInvalidVariable]="invalid variable"
 _bashlyk_hError[$_bashlyk_iErrorInvalidFunction]="invalid function"
 _bashlyk_hError[$_bashlyk_iErrorInvalidHash]="invalid hash"
+_bashlyk_hError[$_bashlyk_iErrorNotNumber]="not number"
 _bashlyk_hError[$_bashlyk_iErrorNotExistNotCreated]="not exist and not created"
 _bashlyk_hError[$_bashlyk_iErrorNoSuchFileOrDir]="no such file or directory"
 _bashlyk_hError[$_bashlyk_iErrorNoSuchProcess]="no such process"
@@ -385,7 +387,7 @@ udfThrow() {
 
   rc=${_bashlyk_iLastError[$BASHPID]}
 
-  udfIsNumber $rc || rc=$i
+  [[ $rc =~ ^[0-9]+$ ]] || rc=$i
 
   eval $( udfOnError exitwarn $rc $* )
 

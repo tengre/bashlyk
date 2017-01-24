@@ -1,5 +1,5 @@
 #
-# $Id: libstd.sh 664 2017-01-24 17:21:54+04:00 toor $
+# $Id: libstd.sh 665 2017-01-25 00:37:35+04:00 toor $
 #
 #****h* BASHLYK/libstd
 #  DESCRIPTION
@@ -103,21 +103,22 @@ declare -rg _bashlyk_aExport_std="                                             \
 #    udfIsNumber 34k k                                                          #? true
 #    udfIsNumber 67M kMGT                                                       #? true
 #    udfIsNumber 89G G                                                          #? true
-#    udfIsNumber 12,34                                                          #? $_bashlyk_iErrorNonValidArgument
-#    udfIsNumber 12T                                                            #? $_bashlyk_iErrorNonValidArgument
-#    udfIsNumber 1O2                                                            #? $_bashlyk_iErrorNonValidArgument
+#    udfIsNumber 12,34                                                          #? $_bashlyk_iErrorInvalidArgument
+#    udfIsNumber 12T                                                            #? $_bashlyk_iErrorInvalidArgument
+#    udfIsNumber 1O2                                                            #? $_bashlyk_iErrorInvalidArgument
 #    udfIsNumber                                                                #? $_bashlyk_iErrorMissingArgument
 #  SOURCE
 udfIsNumber() {
-
-  [[ $1 ]] || return $_bashlyk_iErrorMissingArgument
 
   local s
 
   [[ $2 ]] && s="[$2]?"
 
-  [[ "$1" =~ ^[0-9]+${s}$ ]] \
-    && return 0 || return $_bashlyk_iErrorInvalidArgument
+  [[ $1 =~ ^[0-9]+${s}$ ]] && return 0
+
+  udfOn MissingArgument $1 || return $?
+
+  return $_bashlyk_iErrorNotNumber
 
 }
 #******
@@ -235,20 +236,23 @@ udfShowVariable() {
 #    0                - аргумент валидный идентификатор
 #    NotValidVariable - аргумент невалидный идентификатор (или не задан)
 #  EXAMPLE
-#    udfIsValidVariable                                                         #? $_bashlyk_iErrorNonValidVariable
-#    udfIsValidVariable "12w"                                                   #? $_bashlyk_iErrorNonValidVariable
+#    udfIsValidVariable                                                         #? $_bashlyk_iErrorMissingArgument
+#    udfIsValidVariable "12w"                                                   #? $_bashlyk_iErrorInvalidVariable
 #    udfIsValidVariable "a"                                                     #? true
 #    udfIsValidVariable "k1"                                                    #? true
-#    udfIsValidVariable "&w1"                                                   #? $_bashlyk_iErrorNonValidVariable
-#    udfIsValidVariable "#k12s"                                                 #? $_bashlyk_iErrorNonValidVariable
-#    udfIsValidVariable ":v1"                                                   #? $_bashlyk_iErrorNonValidVariable
-#    udfIsValidVariable ";q1"                                                   #? $_bashlyk_iErrorNonValidVariable
-#    udfIsValidVariable ",g99"                                                  #? $_bashlyk_iErrorNonValidVariable
+#    udfIsValidVariable "&w1"                                                   #? $_bashlyk_iErrorInvalidVariable
+#    udfIsValidVariable "#k12s"                                                 #? $_bashlyk_iErrorInvalidVariable
+#    udfIsValidVariable ":v1"                                                   #? $_bashlyk_iErrorInvalidVariable
+#    udfIsValidVariable ";q1"                                                   #? $_bashlyk_iErrorInvalidVariable
+#    udfIsValidVariable ",g99"                                                  #? $_bashlyk_iErrorInvalidVariable
 #  SOURCE
 udfIsValidVariable() {
 
-  [[ "$1" =~ ^[_a-zA-Z][_a-zA-Z0-9]*$ ]] \
-    && return 0 || eval $(udfOnError return InvalidVariable '${1}')
+  [[ "$1" =~ ^[_a-zA-Z][_a-zA-Z0-9]*$ ]] && return 0
+
+  udfOn MissingArgument $1 || return $?
+
+  return $_bashlyk_iErrorInvalidVariable
 
 }
 #******
@@ -276,6 +280,7 @@ udfQuoteIfNeeded() {
     echo "$*"
 
   fi
+
 }
 #******
 #****f* libstd/udfWSpace2Alias
@@ -968,9 +973,9 @@ _pathDat() {
 #  EXAMPLE
 #    _bashlyk_onError=return
 #    udfPrepareByType                                                           #? $_bashlyk_iErrorMissingArgument
-#    udfPrepareByType 12a                                                       #? $_bashlyk_iErrorNonValidVariable
-#    udfPrepareByType 12a[te]                                                   #? $_bashlyk_iErrorNonValidVariable
-## TODO - do not worked    udfPrepareByType a12[]                               #? $_bashlyk_iErrorNonValidVariable
+#    udfPrepareByType 12a                                                       #? $_bashlyk_iErrorInvalidVariable
+#    udfPrepareByType 12a[te]                                                   #? $_bashlyk_iErrorInvalidVariable
+## TODO - do not worked    udfPrepareByType a12[]                               #? $_bashlyk_iErrorInvalidVariable
 #    udfPrepareByType _a >| grep '^_a$'                                         #? true
 #    udfPrepareByType _a[1234] >| grep '^\{_a\[1234\]\}$'                       #? true
 #  SOURCE
