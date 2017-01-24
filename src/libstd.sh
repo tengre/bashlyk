@@ -1,5 +1,5 @@
 #
-# $Id: libstd.sh 663 2017-01-23 16:42:46+04:00 toor $
+# $Id: libstd.sh 664 2017-01-24 17:21:54+04:00 toor $
 #
 #****h* BASHLYK/libstd
 #  DESCRIPTION
@@ -1300,32 +1300,36 @@ udfGetMd5() {
 #    NotPermitted    - нет прав
 #  EXAMPLE
 #    local path=$(udfMakeTemp type=dir)
-#    touch ${path}/testfile
-#    udfAddFile2Clean ${path}/testfile
+#    echo "digest test 1" > ${path}/testfile1                                   #-
+#    echo "digest test 2" > ${path}/testfile2                                   #-
+#    echo "digest test 3" > ${path}/testfile3                                   #-
+#    udfAddFile2Clean ${path}/testfile1
+#    udfAddFile2Clean ${path}/testfile2
+#    udfAddFile2Clean ${path}/testfile3
 #    udfAddPath2Clean ${path}
-#    udfGetPathMd5 $path >| grep '^d41.*27e.*testfile'                   #? true
-#    udfGetPathMd5                                                       #? ${_bashlyk_iErrorNoSuchFileOrDir}
-#    ## TODO udfGetPathMd5 /root                                          #? ${_bashlyk_iErrorNotPermitted}
+#    udfGetPathMd5 $path >| awk '{print $1}' | md5sum - | grep ^b4d36bc6546.*-$ #? true
+#    udfGetPathMd5                                                              #? ${_bashlyk_iErrorMissingArgument}
+#    udfGetPathMd5 /notexist/path                                               #? ${_bashlyk_iErrorNoSuchFileOrDir}
 #  SOURCE
 udfGetPathMd5() {
 
   local pathSrc="$(pwd)" pathDst s IFS=$' \t\n'
 
-  [[ $1 && -d "$1" ]] || eval $( udfOnError return NoSuchFileOrDir )
+  udfOn NoSuchFileOrDir "$@" || return $?
 
-  cd "$1" 2>/dev/null || eval $( udfOnError return NotPermitted '$1' )
+  cd "$@" 2>/dev/null || eval $( udfOnError retwarn NotPermitted '$@' )
 
   pathDst="$(pwd)"
 
-  for s in *; do
+  while read s; do
 
-    [[ -d "$s" ]] && udfGetPathMd5 $s
+    [[ -d $s ]] && udfGetPathMd5 $s
 
-  done
+    md5sum "${pathDst}/${s}" 2>/dev/null
 
-  md5sum $pathDst/* 2>/dev/null
+  done< <(eval "ls -1drt * 2>/dev/null")
 
-  cd $pathSrc
+  cd "$pathSrc" || eval $( udfOnError retwarn NotPermitted '$@' )
 
   return 0
 
