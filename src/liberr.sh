@@ -1,5 +1,5 @@
 #
-# $Id: liberr.sh 665 2017-01-25 00:37:34+04:00 toor $
+# $Id: liberr.sh 666 2017-01-25 15:32:01+04:00 toor $
 #
 #****h* BASHLYK/liberr
 #  DESCRIPTION
@@ -41,17 +41,18 @@ _bashlyk_iErrorEmptyArgument=253
 _bashlyk_iErrorNonValidArgument=252
 _bashlyk_iErrorNotValidArgument=252
 _bashlyk_iErrorInvalidArgument=252
-_bashlyk_iErrorNotNumber=252
 _bashlyk_iErrorEmptyResult=251
 _bashlyk_iErrorNotSupported=241
 _bashlyk_iErrorNotPermitted=240
 _bashlyk_iErrorBrokenIntegrity=230
 _bashlyk_iErrorAbortedBySignal=220
+_bashlyk_iErrorInvalidOption=201
 _bashlyk_iErrorNonValidVariable=200
 _bashlyk_iErrorInvalidVariable=200
 _bashlyk_iErrorInvalidFunction=199
 _bashlyk_iErrorInvalidHash=198
 _bashlyk_iErrorEmptyVariable=197
+_bashlyk_iErrorNotNumber=196
 _bashlyk_iErrorNotExistNotCreated=190
 _bashlyk_iErrorNoSuchFileOrDir=185
 _bashlyk_iErrorNoSuchProcess=184
@@ -71,11 +72,12 @@ _bashlyk_hError[$_bashlyk_iErrorUnknown]="unknown (unexpected) error"
 _bashlyk_hError[$_bashlyk_iErrorMissingArgument]="empty or missing argument"
 _bashlyk_hError[$_bashlyk_iErrorInvalidArgument]="invalid argument"
 _bashlyk_hError[$_bashlyk_iErrorEmptyVariable]="empty variable"
-_bashlyk_hError[$_bashlyk_iErrorEmptyResult]="empty Result"
+_bashlyk_hError[$_bashlyk_iErrorEmptyResult]="empty result"
 _bashlyk_hError[$_bashlyk_iErrorNotSupported]="not supported"
 _bashlyk_hError[$_bashlyk_iErrorNotPermitted]="not permitted"
 _bashlyk_hError[$_bashlyk_iErrorBrokenIntegrity]="broken integrity"
 _bashlyk_hError[$_bashlyk_iErrorAbortedBySignal]="aborted by signal"
+_bashlyk_hError[$_bashlyk_iErrorInvalidOption]="parsing CLI is failed - invalid option(s)"
 _bashlyk_hError[$_bashlyk_iErrorInvalidVariable]="invalid variable"
 _bashlyk_hError[$_bashlyk_iErrorInvalidFunction]="invalid function"
 _bashlyk_hError[$_bashlyk_iErrorInvalidHash]="invalid hash"
@@ -129,9 +131,9 @@ declare -rg _bashlyk_aExport_err="                                             \
 #    udfSetLastError non valid argument                                         #? $_bashlyk_iErrorUnknown
 #    udfSetLastError 555                                                        #? $_bashlyk_iErrorUnexpected
 #    udfSetLastError AlreadyStarted "$$"                                        #? $_bashlyk_iErrorAlreadyStarted
-#    udfSetLastError iErrorNonValidVariable "12NonValid Variable"               #? $_bashlyk_iErrorNonValidVariable
-#    _ iLastError[$pid] >| grep -w "$_bashlyk_iErrorNonValidVariable"           #? true
-#    _ sLastError[$pid] >| grep "^12NonValid Variable$"                         #? true
+#    udfSetLastError iErrorInvalidVariable "12Invalid Variable"                 #? $_bashlyk_iErrorInvalidVariable
+#    _ iLastError[$pid] >| grep -w "$_bashlyk_iErrorInvalidVariable"            #? true
+#    _ sLastError[$pid] >| grep "^12Invalid Variable$"                          #? true
 #  SOURCE
 udfSetLastError() {
 
@@ -236,7 +238,7 @@ udfStackTrace() {
 #  EXAMPLE
 #    local cmd=udfOnError e=InvalidArgument s="$RANDOM $RANDOM"
 #    eval $($cmd echo $e "$s a")                                                #? $_bashlyk_iErrorInvalidArgument
-#    udfIsNumber 020h || eval $($cmd echo $? "020h")                            #? $_bashlyk_iErrorInvalidArgument
+#    udfIsNumber 020h || eval $($cmd echo $? "020h")                            #? $_bashlyk_iErrorNotNumber
 #    udfIsValidVariable 1Invalid || eval $($cmd warn $? "1Invalid")             #? $_bashlyk_iErrorInvalidVariable
 #    udfIsValidVariable 2Invalid || eval $($cmd warn "2Invalid")                #? $_bashlyk_iErrorInvalidVariable
 #    $cmd exit    $e "$s b" >| grep " exit \$?"                                 #? true
@@ -539,6 +541,7 @@ udfOn() {
       'warn')  cmd='retwarn'; shift;;
      'throw')  cmd='throw';   shift;;
     'return')  cmd='return';  shift;;
+   'retwarn')  cmd='retwarn'; shift;;
           '')
 
                [[ $e =~ ^(Empty|Missing) && ! $e =~ EmptyVariable ]] \

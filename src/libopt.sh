@@ -1,5 +1,5 @@
 #
-# $Id: libopt.sh 658 2017-01-20 16:16:05+04:00 toor $
+# $Id: libopt.sh 666 2017-01-25 15:32:01+04:00 toor $
 #
 #****h* BASHLYK/libopt
 #  DESCRIPTION
@@ -58,13 +58,13 @@ declare -rg _bashlyk_aExport_opt="                                             \
 #  OUTPUT
 #   Ассоциативный массив в виде CSV строки
 #  ERRORS
-#    MissingArgument  - аргумент не задан
-#    NonValidArgument - неправильная опция
-#    EmptyResult      - пустой результат
+#    MissingArgument - аргумент не задан
+#    InvalidArgument - неправильная опция
+#    EmptyResult     - пустой результат
 #  EXAMPLE
 #   udfGetOptHash 'job:,force' --job main --force >| grep "^job=main;force=1;$" #? true
-#   udfGetOptHash                                                               #? ${_bashlyk_iErrorEmptyOrMissingArgument}
-#   udfGetOptHash 'bar:,foo' --job main --force                                 #? ${_bashlyk_iErrorNonValidArgument}
+#   udfGetOptHash                                                               #? $_bashlyk_iErrorMissingArgument
+#   udfGetOptHash 'bar:,foo' --job main --force                                 #? $_bashlyk_iErrorInvalidArgument
 #  SOURCE
 udfGetOptHash() {
 
@@ -76,7 +76,7 @@ udfGetOptHash() {
   shift
 
   sOpt="$( getopt -l $csvKeys -n $0 -- $0 $@ 2>/dev/null )" \
-    || eval $( udfOnError return NotValidArgument $@ )
+    || eval $( udfOnError return InvalidArgument $@ )
 
   eval set -- "$sOpt"
 

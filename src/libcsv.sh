@@ -1,5 +1,5 @@
 #
-# $Id: libcsv.sh 658 2017-01-20 16:16:05+04:00 toor $
+# $Id: libcsv.sh 666 2017-01-25 15:32:01+04:00 toor $
 #
 #****h* BASHLYK/libcsv
 #  DESCRIPTION
@@ -564,9 +564,9 @@ udfIniChange() {
 #     !       - замена данных (активная секция)
 #
 #  ERRORS
-#    NotValidVariable - невалидный идентификатор переменной
-#    NoSuchFileOrDir  - файл конфигурации не найден
-#    MissingArgument  - аргументы отсутствуют
+#    InvalidVariable - невалидный идентификатор переменной
+#    NoSuchFileOrDir - файл конфигурации не найден
+#    MissingArgument - аргументы отсутствуют
 #  EXAMPLE
 #    local sTxt="foo = bar" b=true iXo=1921 iYo=1080 ini iniChild
 #    local exec replace unify acc sVoid=void sMain='sTxt;b;iXo'
@@ -662,7 +662,7 @@ udfIni() {
 
       bashlyk_udfIni_cClass="${bashlyk_udfIni_s#*:}"
       udfIsValidVariable $bashlyk_udfIni_sSection \
-        || eval $(udfOnError return iErrorNonValidVariable '$bashlyk_udfIni_sSection')
+        || eval $(udfOnError return InvalidVariable '$bashlyk_udfIni_sSection')
 
       case "$bashlyk_udfIni_cClass" in
 

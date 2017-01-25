@@ -1,5 +1,5 @@
 #
-# $Id: libstd.sh 665 2017-01-25 00:37:35+04:00 toor $
+# $Id: libstd.sh 666 2017-01-25 15:32:02+04:00 toor $
 #
 #****h* BASHLYK/libstd
 #  DESCRIPTION
@@ -95,17 +95,17 @@ declare -rg _bashlyk_aExport_std="                                             \
 #             после цифр для указания признака числа, например,
 #             порядка. (регистр не имеет значения)
 #  RETURN VALUE
-#    0                - аргумент является натуральным числом
-#    NotValidArgument - аргумент не является натуральным числом
-#    MissingArgument  - аргумент не задан
+#    0               - аргумент является натуральным числом
+#    NotNumber - аргумент не является натуральным числом
+#    MissingArgument - аргумент не задан
 #  EXAMPLE
 #    udfIsNumber 12                                                             #? true
 #    udfIsNumber 34k k                                                          #? true
 #    udfIsNumber 67M kMGT                                                       #? true
 #    udfIsNumber 89G G                                                          #? true
-#    udfIsNumber 12,34                                                          #? $_bashlyk_iErrorInvalidArgument
-#    udfIsNumber 12T                                                            #? $_bashlyk_iErrorInvalidArgument
-#    udfIsNumber 1O2                                                            #? $_bashlyk_iErrorInvalidArgument
+#    udfIsNumber 12,34                                                          #? $_bashlyk_iErrorNotNumber
+#    udfIsNumber 12T                                                            #? $_bashlyk_iErrorNotNumber
+#    udfIsNumber 1O2                                                            #? $_bashlyk_iErrorNotNumber
 #    udfIsNumber                                                                #? $_bashlyk_iErrorMissingArgument
 #  SOURCE
 udfIsNumber() {
@@ -233,8 +233,8 @@ udfShowVariable() {
 #  INPUTS
 #    arg - проверяемое значение
 #  RETURN VALUE
-#    0                - аргумент валидный идентификатор
-#    NotValidVariable - аргумент невалидный идентификатор (или не задан)
+#    0               - аргумент валидный идентификатор
+#    InvalidVariable - аргумент невалидный идентификатор (или не задан)
 #  EXAMPLE
 #    udfIsValidVariable                                                         #? $_bashlyk_iErrorMissingArgument
 #    udfIsValidVariable "12w"                                                   #? $_bashlyk_iErrorInvalidVariable
@@ -572,7 +572,7 @@ udfMakeTempV() {
 
   local sKeep sType sPrefix IFS=$' \t\n'
 
-  udfIsValidVariable $1 || eval $(udfOnError throw iErrorNonValidVariable "$1")
+  udfIsValidVariable $1 || eval $( udfOnError throw InvalidVariable "$1" )
 
   [[ $3 ]] && sPrefix="prefix=$3"
 
@@ -968,8 +968,8 @@ _pathDat() {
 #  OUTPUT
 #    converted input string, if necessary
 #  ERRORS
-#    MissingArgument  - аргумент не задан
-#    NotValidVariable - не валидный идентификатор
+#    MissingArgument - аргумент не задан
+#    InvalidVariable - не валидный идентификатор
 #  EXAMPLE
 #    _bashlyk_onError=return
 #    udfPrepareByType                                                           #? $_bashlyk_iErrorMissingArgument
@@ -1010,8 +1010,8 @@ udfPrepareByType() {
 #    Вывод значения переменной $_bashlyk_<subname> в режиме get, если не указана
 #    приемная переменная и нет знака "="
 #  ERRORS
-#    MissingArgument  - аргумент не задан
-#    NotValidVariable - не валидный идентификатор
+#    MissingArgument - аргумент не задан
+#    InvalidVariable - не валидный идентификатор
 #  EXAMPLE
 #    local sS sWSpaceAlias pid=$BASHPID k=key1 v=val1
 #    _ k=sWSpaceAlias
@@ -1083,8 +1083,8 @@ _(){
 #                переменная <subname>
 #    <subname> - содержательная часть глобальной имени ${_bashlyk_<subname>}
 #  ERRORS
-#    MissingArgument  - аргумент не задан
-#    NotValidVariable - не валидный идентификатор
+#    MissingArgument - аргумент не задан
+#    InvalidVariable - не валидный идентификатор
 #  EXAMPLE
 #    local sS sWSpaceAlias
 #    _getv sWSpaceAlias sS
@@ -1280,7 +1280,7 @@ udfGetMd5() {
 
           "-") cat | md5sum -;;
      "--file") [[ -f "$2" ]] && md5sum "$2";;
-            *) [[ $1 ]] && echo "$*" | md5sum -;;
+            *) [[ $* ]] && echo "$*" | md5sum -;;
 
     esac
 
@@ -1460,8 +1460,8 @@ udfLocalVarFromCSV() {
 
     if ! udfIsValidVariable $s; then
 
-      udfOnError1 throw NotValidVariable "$s"
-      return $( _ iErrorNotValidVariable )
+      udfOnError1 throw InvalidVariable "$s"
+      return $( _ iErrorInvalidVariable )
 
     fi
 
