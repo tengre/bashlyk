@@ -1,5 +1,5 @@
 #
-# $Id: libini.sh 666 2017-01-25 15:32:01+04:00 toor $
+# $Id: libini.sh 667 2017-01-26 20:32:16+04:00 toor $
 #
 #****h* BASHLYK/libini
 #  DESCRIPTION
@@ -853,7 +853,8 @@ INI::read() {
   local bActiveSection bIgnore csv fn i iKeyWidth reComment reSection reValidSections s
 
   reSection='^[[:space:]]*(:?)\[[[:space:]]*([^[:punct:]]+?)[[:space:]]*\](:?)[[:space:]]*$'
-  reKey_Val='^[[:space:]]*([[:alnum:]]+)[[:space:]]*=[[:space:]]*(.*)[[:space:]]*$'
+  #reKey_Val='^[[:space:]]*([[:alnum:]]+)[[:space:]]*=[[:space:]]*(.*)[[:space:]]*$'
+  reKey_Val='^[[:space:]]*([[:graph:]]+)[[:space:]]*=[[:space:]]*(.*)[[:space:]]*$'
   reComment='^[[:space:]]*$|(^|[[:space:]]+)[\#\;].*$'
   o=${FUNCNAME[0]%%.*}
 
