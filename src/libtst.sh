@@ -1,5 +1,5 @@
 #
-# $Id: libtst.sh 668 2017-01-26 23:36:40+04:00 toor $
+# $Id: libtst.sh 669 2017-01-27 00:06:54+04:00 toor $
 #
 #****h* BASHLYK/libtst
 #  DESCRIPTION
@@ -41,7 +41,8 @@
 : ${_bashlyk_sLogin:=$(logname 2>/dev/null)}
 : ${_bashlyk_emailSubj:="${_bashlyk_sUser}@${HOSTNAME}::${_bashlyk_s0}"}
 
-__globals="cli.arguments cli.shortname error.action msg.email.subject"
+## TODO check __global.vars for exists
+#__global.vars cli.arguments cli.shortname error.action msg.email.subject
 
 declare -rg _bashlyk_externals_tst=""
 declare -rg _bashlyk_exports_tst="udfTest"
@@ -98,9 +99,9 @@ cnf::get() {
 
 }
 #******
-#****f* libtst/bashlyk.global.variable
+#****f* libtst/__interface
 #  SYNOPSIS
-#    bashlyk.global.variable [_+=] [args]
+#    __interface [_,+=] [args]
 #  DESCRIPTION
 #    ...
 #  INPUTS
@@ -110,14 +111,14 @@ cnf::get() {
 #  RETURN VALUE
 #    ...
 #  EXAMPLE
-#    bashlyk.global.variable = input                                            #? true
-#    bashlyk.global.variable + more input data                                  #? true
-#    bashlyk.global.variable , comma separate input data                        #? true
-#    bashlyk.global.variable                                                    #? true
-#    bashlyk.global.variable _                                                  #? true
-#    bashlyk.global.variable                                                    #? true
+#    __interface = input                                                        #? true
+#    __interface + more input data                                              #? true
+#    __interface , comma separate input data                                    #? true
+#    __interface                                                                #? true
+#    __interface _                                                              #? true
+#    __interface                                                                #? true
 #  SOURCE
-bashlyk.global.variable() {
+__interface() {
 
   local o=_${FUNCNAME[0]//./_}
 
@@ -133,9 +134,9 @@ bashlyk.global.variable() {
 
 }
 #******
-#****f* libtst/__
+#****f* libtst/__global.vars
 #  SYNOPSIS
-#    __
+#    __global.vars
 #  DESCRIPTION
 #    ...
 #  INPUTS
@@ -145,7 +146,7 @@ bashlyk.global.variable() {
 #  RETURN VALUE
 #    ...
 #  EXAMPLE
-#  __                                                                           #? true
+#  __global.vars cli.arguments cli.shortname error.action msg.email.subject     #? true
 #  bashlyk.cli.arguments = test                                                 #? true
 #  _bashlyk_cli_shortname=shortname                                             #? true
 #  bashlyk.cli.shortname                                                        #? true
@@ -155,13 +156,13 @@ bashlyk.global.variable() {
 #  bashlyk.error.action                                                         #? true
 #  bashlyk.msg.email.subject                                                    #? true
 #  SOURCE
-__() {
+__global.vars() {
 
-  local f=$(declare -pf bashlyk.global.variable) s
+  local f=$(declare -pf __interface) s
 
-  for s in $__globals; do
+  for s in $*; do
 
-    eval "${f/bashlyk.global.variable/bashlyk.$s}"
+    eval "${f/__interface/bashlyk.$s}"
 
   done
 
