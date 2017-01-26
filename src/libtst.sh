@@ -1,5 +1,5 @@
 #
-# $Id: libtst.sh 667 2017-01-26 17:28:16+04:00 toor $
+# $Id: libtst.sh 668 2017-01-26 23:36:40+04:00 toor $
 #
 #****h* BASHLYK/libtst
 #  DESCRIPTION
@@ -110,8 +110,9 @@ cnf::get() {
 #  RETURN VALUE
 #    ...
 #  EXAMPLE
-#    bashlyk.global.variable = test                                             #? true
-#    bashlyk.global.variable + more test                                        #? true
+#    bashlyk.global.variable = input                                            #? true
+#    bashlyk.global.variable + more input data                                  #? true
+#    bashlyk.global.variable , comma separate input data                        #? true
 #    bashlyk.global.variable                                                    #? true
 #    bashlyk.global.variable _                                                  #? true
 #    bashlyk.global.variable                                                    #? true
@@ -120,12 +121,13 @@ bashlyk.global.variable() {
 
   local o=_${FUNCNAME[0]//./_}
 
-  case $* in
+  case $1 in
 
-    '= '*) eval 'shift; declare -g $o="${*/=/}"';;
-    '+ '*) eval 'shift; declare -g $o+=" ${*/+/}"';;
-    '_ '*) eval 'shift; declare -g $o=""';;
-       '') echo "${!o}";;
+     =) eval 'shift; declare -g $o="${*/=/}"';;
+     +) eval 'shift; declare -g $o+=" ${*/+/}"';;
+     ,) eval 'shift; declare -g $o+=",${*/+/}"';;
+     _) eval 'shift; declare -g $o=""';;
+    '') echo "${!o}";;
 
   esac
 
