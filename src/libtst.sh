@@ -1,5 +1,5 @@
 #
-# $Id: libtst.sh 669 2017-01-27 00:06:54+04:00 toor $
+# $Id: libtst.sh 670 2017-01-27 16:14:23+04:00 toor $
 #
 #****h* BASHLYK/libtst
 #  DESCRIPTION
@@ -134,7 +134,7 @@ __interface() {
 
 }
 #******
-#****f* libtst/__global.vars
+#****f* libtst/__lib.vars
 #  SYNOPSIS
 #    __global.vars
 #  DESCRIPTION
@@ -146,7 +146,7 @@ __interface() {
 #  RETURN VALUE
 #    ...
 #  EXAMPLE
-#  __global.vars cli.arguments cli.shortname error.action msg.email.subject     #? true
+#  __lib.vars cli.arguments cli.shortname error.action msg.email.subject        #? true
 #  bashlyk.cli.arguments = test                                                 #? true
 #  _bashlyk_cli_shortname=shortname                                             #? true
 #  bashlyk.cli.shortname                                                        #? true
@@ -156,13 +156,32 @@ __interface() {
 #  bashlyk.error.action                                                         #? true
 #  bashlyk.msg.email.subject                                                    #? true
 #  SOURCE
-__global.vars() {
+__lib.vars() {
 
-  local f=$(declare -pf __interface) s
+  __() {
+
+  local o=_${FUNCNAME[0]//./_}
+
+  declare -p FUNCNAME >> /tmp/f.log
+  declare -p BASH_SOURCE >> /tmp/f.log
+
+  case $1 in
+
+     =) eval 'shift; declare -g $o="${*/=/}"';;
+     +) eval 'shift; declare -g $o+=" ${*/+/}"';;
+     ,) eval 'shift; declare -g $o+=",${*/+/}"';;
+     _) eval 'shift; declare -g $o=""';;
+    '') echo "${!o}";;
+
+  esac
+
+ }
+
+  local f=$(declare -pf __) s
 
   for s in $*; do
 
-    eval "${f/__interface/bashlyk.$s}"
+    eval "${f/__/bashlyk.$s}"
 
   done
 
