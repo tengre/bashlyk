@@ -1,5 +1,5 @@
 #
-# $Id: libini.sh 667 2017-01-26 20:32:16+04:00 toor $
+# $Id: libini.sh 671 2017-01-29 22:26:13+04:00 toor $
 #
 #****h* BASHLYK/libini
 #  DESCRIPTION
@@ -79,7 +79,7 @@ declare -rg _bashlyk_methods_ini="                                             \
                                                                                \
     __section.id __section.byindex __section.select __section.show             \
     __section.setRawData __section.getArray get set show save read             \
-    load bind.cli getopt free                                                  \
+    keys load bind.cli getopt free                                             \
                                                                                \
 "
 declare -rg _bashlyk_externals_ini="                                           \
@@ -89,7 +89,7 @@ declare -rg _bashlyk_externals_ini="                                           \
 "
 declare -rg _bashlyk_exports_ini="                                             \
                                                                                \
-    INI get set show save read load bind.cli getopt free                       \
+    INI get set keys show save read load bind.cli getopt free                  \
                                                                                \
 "
 #******
@@ -455,6 +455,7 @@ INI::__section.setRawData() {
        ${o}.__section.set "_bashlyk_raw_incr=${i}" "$2"
        : $(( i++ ))
        ${o}.__section.set '_bashlyk_raw_num' $i
+       ${o}.__section.set '_bashlyk_raw_mode' "$1"
 
     ;;
 
@@ -575,9 +576,9 @@ INI::get() {
   udfOn MissingArgument $* || return $?
 
   local -a a
-  local IFS o k s v
+  local IFS o k s="$*" v
 
-  o="$*" && s="$IFS" && IFS='[]' && a=( $o ) && IFS="$s"
+  IFS='[]' a=( $s ) && IFS=$' \t\n'
 
   o=${FUNCNAME[0]%%.*}
 
@@ -612,6 +613,89 @@ INI::get() {
 
     ${o}.__section.select $s
     ${o}.__section.get "$k"
+
+  fi
+
+}
+#******
+#****e* libini/INI::keys
+#  SYNOPSIS
+#    INI::keys [\[<section>\]]
+#  DESCRIPTION
+#    get all keys of the section or single key - raw mode - for section of the
+#    "raw" records
+#  NOTES
+#    public method
+#  ARGUMENTS
+#    <section> - specified section, default - unnamed global
+#  ERRORS
+#    InvalidArgument - expected like a '[section]key', '[]key' or 'key'
+#  EXAMPLE
+#    INI tKeys
+#    tKeys.set  [section1] key1 = is value 1
+#    tKeys.set  [section1] key2 = is value 2
+#    tKeys.set  [section1] key with spaces = is value 3
+#    tKeys.keys [section1] >| md5sum - | grep ^22e3ec00d3439034aea5476664d52.*$ #? true
+#    tKeys.set  keyA = is value A
+#    tKeys.set  []keyB = is value B
+#    tKeys.set  key with spaces = is value C
+#    tKeys.keys >| md5sum - | grep ^bcfcd2f2d13115c731e46c1bebfd21bf.*$         #? true
+#    tKeys.set  [section2]+ = save value
+#    tKeys.set  [section2]+ = save value
+#    tKeys.keys [section2] >| grep ^+$                                          #? true
+#    tKeys.set  [section3]- = save value No.2
+#    tKeys.set  [section3]- = save value No.1
+#    tKeys.keys [section3] >| grep ^-$                                          #? true
+#    tKeys.set  [section4] = save unique value No.2
+#    tKeys.set  [section4] = save unique value No.1
+#    tKeys.keys [section4] >| grep ^=$                                          #? true
+#    tKeys.free
+#  SOURCE
+INI::keys() {
+
+  local -a a
+  local csv IFS o k s="$*"
+
+  IFS='[]' a=( $s ) && IFS=$' \t\n'
+
+  o=${FUNCNAME[0]%%.*}
+
+  case "${#a[@]}" in
+
+    2)
+      s=${a[1]:-__global__}
+    ;;
+
+    0)
+      s=__global__
+    ;;
+
+    *)
+      eval $( udfOnError retwarn InvalidArgument "$*" )
+    ;;
+
+  esac
+
+  ${o}.__section.select $s
+  id=$( ${o}.__section.id $s )
+  sU=$( ${o}.__section.get _bashlyk_raw_mode )
+
+  if [[ $sU ]]; then
+
+    echo $sU
+
+  else
+
+    eval "                                                                     \
+                                                                               \
+      for k in \"\${!$id[@]}\"; do                                             \
+        if [[ ! \$k =~ ^_bashlyk_ ]]; then                                     \
+          csv+=\"\$k,\";                                                       \
+        fi                                                                     \
+      done;                                                                    \
+                                                                               \
+    "
+    echo "$csv"
 
   fi
 
@@ -661,9 +745,10 @@ INI::set() {
   udfOn MissingArgument $* || return $?
 
   local -a a
-  local iKeyWidth ISF o k s v
+  local iKeyWidth ISF o k s="$*" v
 
-  o="$*" && s="$IFS" && IFS='[]' && a=( $o ) && IFS="$s"
+  IFS='[]' && a=( $s ) && IFS=$' \t\n'
+
   o=${FUNCNAME[0]%%.*}
 
   case "${#a[@]}" in

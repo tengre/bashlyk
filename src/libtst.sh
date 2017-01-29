@@ -1,5 +1,5 @@
 #
-# $Id: libtst.sh 670 2017-01-27 16:14:23+04:00 toor $
+# $Id: libtst.sh 671 2017-01-29 22:26:13+04:00 toor $
 #
 #****h* BASHLYK/libtst
 #  DESCRIPTION
@@ -113,30 +113,30 @@ cnf::get() {
 #  EXAMPLE
 #    __interface = input                                                        #? true
 #    __interface + more input data                                              #? true
-#    __interface , comma separate input data                                    #? true
+#    __interface ,  comma separate input data                                    #? true
 #    __interface                                                                #? true
 #    __interface _                                                              #? true
 #    __interface                                                                #? true
 #  SOURCE
 __interface() {
 
-  local o=_${FUNCNAME[0]//./_}
+  local o s
 
   case $1 in
-
-     =) eval 'shift; declare -g $o="${*/=/}"';;
-     +) eval 'shift; declare -g $o+=" ${*/+/}"';;
-     ,) eval 'shift; declare -g $o+=",${*/+/}"';;
-     _) eval 'shift; declare -g $o=""';;
-    '') echo "${!o}";;
-
+    =) s='="${*/=/}"';;
+    +) s='+=" ${*/+/}"';;
+    ,) s='+=",${*/+/}"';;
+    _) s='=""';;
   esac
+
+  o="_${FUNCNAME[0]//./_}${s}"
+  [[ $s ]] && eval "shift; declare -g ${o}" || echo "${!o}"
 
 }
 #******
-#****f* libtst/__lib.vars
+#****f* libtst/__private
 #  SYNOPSIS
-#    __global.vars
+#    __private
 #  DESCRIPTION
 #    ...
 #  INPUTS
@@ -146,7 +146,7 @@ __interface() {
 #  RETURN VALUE
 #    ...
 #  EXAMPLE
-#  __lib.vars cli.arguments cli.shortname error.action msg.email.subject        #? true
+#  __private cli.arguments cli.shortname error.action msg.email.subject         #? true
 #  bashlyk.cli.arguments = test                                                 #? true
 #  _bashlyk_cli_shortname=shortname                                             #? true
 #  bashlyk.cli.shortname                                                        #? true
@@ -156,26 +156,23 @@ __interface() {
 #  bashlyk.error.action                                                         #? true
 #  bashlyk.msg.email.subject                                                    #? true
 #  SOURCE
-__lib.vars() {
+__private() {
 
   __() {
 
-  local o=_${FUNCNAME[0]//./_}
+    local o=_${FUNCNAME[0]//./_}
 
-  declare -p FUNCNAME >> /tmp/f.log
-  declare -p BASH_SOURCE >> /tmp/f.log
+    case $1 in
 
-  case $1 in
+      =) eval 'shift; declare -g $o="${*/=/}"';;
+      +) eval 'shift; declare -g $o+=" ${*/+/}"';;
+      ,) eval 'shift; declare -g $o+=",${*/+/}"';;
+      _) eval 'shift; declare -g $o=""';;
+     '') echo "${!o}";;
 
-     =) eval 'shift; declare -g $o="${*/=/}"';;
-     +) eval 'shift; declare -g $o+=" ${*/+/}"';;
-     ,) eval 'shift; declare -g $o+=",${*/+/}"';;
-     _) eval 'shift; declare -g $o=""';;
-    '') echo "${!o}";;
+    esac
 
-  esac
-
- }
+  }
 
   local f=$(declare -pf __) s
 
