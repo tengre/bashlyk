@@ -1,5 +1,5 @@
 #
-# $Id: libpid.sh 658 2017-01-20 16:16:05+04:00 toor $
+# $Id: libpid.sh 672 2017-01-30 12:08:13+04:00 toor $
 #
 #****h* BASHLYK/libpid
 #  DESCRIPTION
@@ -64,12 +64,12 @@ declare -rg _bashlyk_exports_pid="                                             \
 #    <PID>  - process id
 #    <args> - command line pattern with process name
 #  RETURN VALUE
-#    0                - Process PID exists for the specified command line
-#    NoSuchProcess    - Process for the specified command line is not detected.
-#    CurrentProcess   - The process for this command line is identical to the
-#                       PID of the current process
-#    NotValidArgument - PID is not number
-#    MissingArgument  - no arguments
+#    0               - Process PID exists for the specified command line
+#    NoSuchProcess   - Process for the specified command line is not detected.
+#    CurrentProcess  - The process for this command line is identical to the
+#                      PID of the current process
+#    InvalidArgument - PID is not number
+#    MissingArgument - no arguments
 #  EXAMPLE
 #    (sleep 8)&                                                                 #-
 #    local pid=$!                                                               #-
@@ -87,7 +87,7 @@ udfCheckStarted() {
 
   local re="\\b${1}\\b"
 
-  udfIsNumber $1 || return $( _ iErrorNotValidArgument )
+  udfIsNumber $1 || return $( _ iErrorInvalidArgument )
 
   [[ "$$" == "$1" ]] && return $( _ iErrorCurrentProcess )
 
@@ -138,12 +138,13 @@ udfCheckStarted() {
 #    $cmd2
 #    ($cmd1 400)&                                                               #-
 #    pid=$!
+#    ## TODO wait for cmd1 starting
 #    udfStopProcess                                                             #? $_bashlyk_iErrorEmptyOrMissingArgument
-#    udfStopProcess childs pid=$pid $cmd1 400                                   #? true
 #    udfStopProcess pid=$pid $cmd1 88                                           #? $_bashlyk_iErrorNoSuchProcess
 #    udfStopProcess $cmd1 88                                                    #? $_bashlyk_iErrorNoSuchProcess
 #    udfStopProcess pid=$$ $0                                                   #? $_bashlyk_iErrorCurrentProcess
 #    udfStopProcess pid=invalid $0                                              #? $_bashlyk_iErrorInvalidArgument
+#    udfStopProcess childs pid=$pid $cmd1 400                                   #? true
 #    udfStopProcess childs pid=$a $cmd1 800                                     #? true
 #    udfStopProcess childs pid=$a $cmd1 600                                     #? $_bashlyk_iErrorNotChildProcess
 #    udfStopProcess $cmd1                                                       #? true

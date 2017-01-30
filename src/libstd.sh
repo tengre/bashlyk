@@ -1,5 +1,5 @@
 #
-# $Id: libstd.sh 662 2017-01-23 10:04:44+04:00 toor $
+# $Id: libstd.sh 666 2017-01-25 15:32:02+04:00 toor $
 #
 #****h* BASHLYK/libstd
 #  DESCRIPTION
@@ -65,7 +65,7 @@
 declare -rg _bashlyk_iMaxOutputLines=1000
 declare -rg _bashlyk_aRequiredCmd_std="                                        \
                                                                                \
-    cat chgrp chmod chown cut date echo grep hostname kill logname md5sum      \
+    cat chgrp chmod chown cut date echo expr grep hostname kill logname md5sum \
     mkdir mkfifo mktemp pgrep ps pwd rm rmdir sed sleep tempfile touch tr      \
     which xargs                                                                \
                                                                                \
@@ -95,29 +95,30 @@ declare -rg _bashlyk_aExport_std="                                             \
 #             после цифр для указания признака числа, например,
 #             порядка. (регистр не имеет значения)
 #  RETURN VALUE
-#    0                - аргумент является натуральным числом
-#    NotValidArgument - аргумент не является натуральным числом
-#    MissingArgument  - аргумент не задан
+#    0               - аргумент является натуральным числом
+#    NotNumber - аргумент не является натуральным числом
+#    MissingArgument - аргумент не задан
 #  EXAMPLE
 #    udfIsNumber 12                                                             #? true
 #    udfIsNumber 34k k                                                          #? true
 #    udfIsNumber 67M kMGT                                                       #? true
 #    udfIsNumber 89G G                                                          #? true
-#    udfIsNumber 12,34                                                          #? $_bashlyk_iErrorNonValidArgument
-#    udfIsNumber 12T                                                            #? $_bashlyk_iErrorNonValidArgument
-#    udfIsNumber 1O2                                                            #? $_bashlyk_iErrorNonValidArgument
+#    udfIsNumber 12,34                                                          #? $_bashlyk_iErrorNotNumber
+#    udfIsNumber 12T                                                            #? $_bashlyk_iErrorNotNumber
+#    udfIsNumber 1O2                                                            #? $_bashlyk_iErrorNotNumber
 #    udfIsNumber                                                                #? $_bashlyk_iErrorMissingArgument
 #  SOURCE
 udfIsNumber() {
-
-  [[ $1 ]] || return $_bashlyk_iErrorMissingArgument
 
   local s
 
   [[ $2 ]] && s="[$2]?"
 
-  [[ "$1" =~ ^[0-9]+${s}$ ]] \
-    && return 0 || return $_bashlyk_iErrorInvalidArgument
+  [[ $1 =~ ^[0-9]+${s}$ ]] && return 0
+
+  udfOn MissingArgument $1 || return $?
+
+  return $_bashlyk_iErrorNotNumber
 
 }
 #******
@@ -232,23 +233,26 @@ udfShowVariable() {
 #  INPUTS
 #    arg - проверяемое значение
 #  RETURN VALUE
-#    0                - аргумент валидный идентификатор
-#    NotValidVariable - аргумент невалидный идентификатор (или не задан)
+#    0               - аргумент валидный идентификатор
+#    InvalidVariable - аргумент невалидный идентификатор (или не задан)
 #  EXAMPLE
-#    udfIsValidVariable                                                         #? $_bashlyk_iErrorNonValidVariable
-#    udfIsValidVariable "12w"                                                   #? $_bashlyk_iErrorNonValidVariable
+#    udfIsValidVariable                                                         #? $_bashlyk_iErrorMissingArgument
+#    udfIsValidVariable "12w"                                                   #? $_bashlyk_iErrorInvalidVariable
 #    udfIsValidVariable "a"                                                     #? true
 #    udfIsValidVariable "k1"                                                    #? true
-#    udfIsValidVariable "&w1"                                                   #? $_bashlyk_iErrorNonValidVariable
-#    udfIsValidVariable "#k12s"                                                 #? $_bashlyk_iErrorNonValidVariable
-#    udfIsValidVariable ":v1"                                                   #? $_bashlyk_iErrorNonValidVariable
-#    udfIsValidVariable ";q1"                                                   #? $_bashlyk_iErrorNonValidVariable
-#    udfIsValidVariable ",g99"                                                  #? $_bashlyk_iErrorNonValidVariable
+#    udfIsValidVariable "&w1"                                                   #? $_bashlyk_iErrorInvalidVariable
+#    udfIsValidVariable "#k12s"                                                 #? $_bashlyk_iErrorInvalidVariable
+#    udfIsValidVariable ":v1"                                                   #? $_bashlyk_iErrorInvalidVariable
+#    udfIsValidVariable ";q1"                                                   #? $_bashlyk_iErrorInvalidVariable
+#    udfIsValidVariable ",g99"                                                  #? $_bashlyk_iErrorInvalidVariable
 #  SOURCE
 udfIsValidVariable() {
 
-  [[ "$1" =~ ^[_a-zA-Z][_a-zA-Z0-9]*$ ]] \
-    && return 0 || eval $(udfOnError return InvalidVariable '${1}')
+  [[ "$1" =~ ^[_a-zA-Z][_a-zA-Z0-9]*$ ]] && return 0
+
+  udfOn MissingArgument $1 || return $?
+
+  return $_bashlyk_iErrorInvalidVariable
 
 }
 #******
@@ -276,6 +280,7 @@ udfQuoteIfNeeded() {
     echo "$*"
 
   fi
+
 }
 #******
 #****f* libstd/udfWSpace2Alias
@@ -567,7 +572,7 @@ udfMakeTempV() {
 
   local sKeep sType sPrefix IFS=$' \t\n'
 
-  udfIsValidVariable $1 || eval $(udfOnError throw iErrorNonValidVariable "$1")
+  udfIsValidVariable $1 || eval $( udfOnError throw InvalidVariable "$1" )
 
   [[ $3 ]] && sPrefix="prefix=$3"
 
@@ -963,14 +968,14 @@ _pathDat() {
 #  OUTPUT
 #    converted input string, if necessary
 #  ERRORS
-#    MissingArgument  - аргумент не задан
-#    NotValidVariable - не валидный идентификатор
+#    MissingArgument - аргумент не задан
+#    InvalidVariable - не валидный идентификатор
 #  EXAMPLE
 #    _bashlyk_onError=return
 #    udfPrepareByType                                                           #? $_bashlyk_iErrorMissingArgument
-#    udfPrepareByType 12a                                                       #? $_bashlyk_iErrorNonValidVariable
-#    udfPrepareByType 12a[te]                                                   #? $_bashlyk_iErrorNonValidVariable
-## TODO - do not worked    udfPrepareByType a12[]                               #? $_bashlyk_iErrorNonValidVariable
+#    udfPrepareByType 12a                                                       #? $_bashlyk_iErrorInvalidVariable
+#    udfPrepareByType 12a[te]                                                   #? $_bashlyk_iErrorInvalidVariable
+## TODO - do not worked    udfPrepareByType a12[]                               #? $_bashlyk_iErrorInvalidVariable
 #    udfPrepareByType _a >| grep '^_a$'                                         #? true
 #    udfPrepareByType _a[1234] >| grep '^\{_a\[1234\]\}$'                       #? true
 #  SOURCE
@@ -1005,8 +1010,8 @@ udfPrepareByType() {
 #    Вывод значения переменной $_bashlyk_<subname> в режиме get, если не указана
 #    приемная переменная и нет знака "="
 #  ERRORS
-#    MissingArgument  - аргумент не задан
-#    NotValidVariable - не валидный идентификатор
+#    MissingArgument - аргумент не задан
+#    InvalidVariable - не валидный идентификатор
 #  EXAMPLE
 #    local sS sWSpaceAlias pid=$BASHPID k=key1 v=val1
 #    _ k=sWSpaceAlias
@@ -1078,8 +1083,8 @@ _(){
 #                переменная <subname>
 #    <subname> - содержательная часть глобальной имени ${_bashlyk_<subname>}
 #  ERRORS
-#    MissingArgument  - аргумент не задан
-#    NotValidVariable - не валидный идентификатор
+#    MissingArgument - аргумент не задан
+#    InvalidVariable - не валидный идентификатор
 #  EXAMPLE
 #    local sS sWSpaceAlias
 #    _getv sWSpaceAlias sS
@@ -1275,7 +1280,7 @@ udfGetMd5() {
 
           "-") cat | md5sum -;;
      "--file") [[ -f "$2" ]] && md5sum "$2";;
-            *) [[ $1 ]] && echo "$*" | md5sum -;;
+            *) [[ $* ]] && echo "$*" | md5sum -;;
 
     esac
 
@@ -1300,32 +1305,36 @@ udfGetMd5() {
 #    NotPermitted    - нет прав
 #  EXAMPLE
 #    local path=$(udfMakeTemp type=dir)
-#    touch ${path}/testfile
-#    udfAddFile2Clean ${path}/testfile
+#    echo "digest test 1" > ${path}/testfile1                                   #-
+#    echo "digest test 2" > ${path}/testfile2                                   #-
+#    echo "digest test 3" > ${path}/testfile3                                   #-
+#    udfAddFile2Clean ${path}/testfile1
+#    udfAddFile2Clean ${path}/testfile2
+#    udfAddFile2Clean ${path}/testfile3
 #    udfAddPath2Clean ${path}
-#    udfGetPathMd5 $path >| grep '^d41.*27e.*testfile'                   #? true
-#    udfGetPathMd5                                                       #? ${_bashlyk_iErrorNoSuchFileOrDir}
-#    ## TODO udfGetPathMd5 /root                                          #? ${_bashlyk_iErrorNotPermitted}
+#    udfGetPathMd5 $path >| awk '{print $1}' | md5sum - | grep ^b4d36bc6546.*-$ #? true
+#    udfGetPathMd5                                                              #? ${_bashlyk_iErrorMissingArgument}
+#    udfGetPathMd5 /notexist/path                                               #? ${_bashlyk_iErrorNoSuchFileOrDir}
 #  SOURCE
 udfGetPathMd5() {
 
   local pathSrc="$(pwd)" pathDst s IFS=$' \t\n'
 
-  [[ $1 && -d "$1" ]] || eval $( udfOnError return NoSuchFileOrDir )
+  udfOn NoSuchFileOrDir "$@" || return $?
 
-  cd "$1" 2>/dev/null || eval $( udfOnError return NotPermitted '$1' )
+  cd "$@" 2>/dev/null || eval $( udfOnError retwarn NotPermitted '$@' )
 
   pathDst="$(pwd)"
 
-  for s in *; do
+  while read s; do
 
-    [[ -d "$s" ]] && udfGetPathMd5 $s
+    [[ -d $s ]] && udfGetPathMd5 $s
 
-  done
+    md5sum "${pathDst}/${s}" 2>/dev/null
 
-  md5sum $pathDst/* 2>/dev/null
+  done< <(eval "ls -1drt * 2>/dev/null")
 
-  cd $pathSrc
+  cd "$pathSrc" || eval $( udfOnError retwarn NotPermitted '$@' )
 
   return 0
 
@@ -1451,8 +1460,8 @@ udfLocalVarFromCSV() {
 
     if ! udfIsValidVariable $s; then
 
-      udfOnError1 throw NotValidVariable "$s"
-      return $( _ iErrorNotValidVariable )
+      udfOnError1 throw InvalidVariable "$s"
+      return $( _ iErrorInvalidVariable )
 
     fi
 
@@ -1595,6 +1604,28 @@ udfIsHash() {
 
   [[ $( declare -pA $1 2>/dev/null ) =~ ^declare.*-A ]] \
     && return 0 || return $( _ iErrorInvalidHash )
+
+}
+#******
+#****f* libstd/udfTrim
+#  SYNOPSIS
+#    udfTrim <arg>
+#  DESCRIPTION
+#    remove leading and trailing spaces
+#  ARGUMENTS
+#    <arg> - input data
+#  OUTPUT
+#    show input without leading and trailing spaces
+#  EXAMPLE
+#    local s=" a  b c  "
+#    udfTrim "$s" >| grep "^a  b c$"                                            #? true
+#    udfTrim  $s  >| grep "^a b c$"                                             #? true
+#    udfTrim      >| grep ^$                                                    #? true
+#    udfTrim '  ' >| grep ^$                                                    #? true
+#  SOURCE
+udfTrim() {
+
+  echo "$( expr "$*" : "^\ *\(.*[^ ]\)\ *$" )"
 
 }
 #******

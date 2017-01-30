@@ -1,5 +1,5 @@
 #
-# $Id: libini.sh 660 2017-01-21 22:12:29+04:00 toor $
+# $Id: libini.sh 672 2017-01-30 12:08:13+04:00 toor $
 #
 #****h* BASHLYK/libini
 #  DESCRIPTION
@@ -79,7 +79,7 @@ declare -rg _bashlyk_methods_ini="                                             \
                                                                                \
     __section.id __section.byindex __section.select __section.show             \
     __section.setRawData __section.getArray get set show save read             \
-    load bind.cli getopt free                                                  \
+    keys load bind.cli getopt free                                             \
                                                                                \
 "
 declare -rg _bashlyk_externals_ini="                                           \
@@ -89,7 +89,7 @@ declare -rg _bashlyk_externals_ini="                                           \
 "
 declare -rg _bashlyk_exports_ini="                                             \
                                                                                \
-    INI get set show save read load bind.cli getopt free                       \
+    INI get set keys show save read load bind.cli getopt free                  \
                                                                                \
 "
 #******
@@ -455,6 +455,7 @@ INI::__section.setRawData() {
        ${o}.__section.set "_bashlyk_raw_incr=${i}" "$2"
        : $(( i++ ))
        ${o}.__section.set '_bashlyk_raw_num' $i
+       ${o}.__section.set '_bashlyk_raw_mode' "$1"
 
     ;;
 
@@ -524,7 +525,7 @@ INI::__section.getArray() {
 
   fi
 
-  (( ${#a[@]} > 0 )) && declare -p a
+  (( ${#a[@]} > 0 )) && declare -p a || return $( _ iErrorEmptyResult )
 
 }
 #******
@@ -575,9 +576,9 @@ INI::get() {
   udfOn MissingArgument $* || return $?
 
   local -a a
-  local IFS o k s v
+  local IFS o k s="$*" v
 
-  o="$*" && s="$IFS" && IFS='[]' && a=( $o ) && IFS="$s"
+  IFS='[]' a=( $s ) && IFS=$' \t\n'
 
   o=${FUNCNAME[0]%%.*}
 
@@ -612,6 +613,90 @@ INI::get() {
 
     ${o}.__section.select $s
     ${o}.__section.get "$k"
+
+  fi
+
+}
+#******
+#****e* libini/INI::keys
+#  SYNOPSIS
+#    INI::keys [\[<section>\]]
+#  DESCRIPTION
+#    Show all the keys of the selected section in a row, separated by commas.
+#    For the section of the "raw data" (without keys) will be shown the storage
+#    mode.
+#  NOTES
+#    public method
+#  ARGUMENTS
+#    <section> - specified section, default - unnamed global
+#  ERRORS
+#    InvalidArgument - expected like a '[section]key', '[]key' or 'key'
+#  EXAMPLE
+#    INI tKeys
+#    tKeys.set  [section1] key1 = is value 1
+#    tKeys.set  [section1] key2 = is value 2
+#    tKeys.set  [section1] key with spaces = is value 3
+#    tKeys.set  keyA = is value A
+#    tKeys.set  []keyB = is value B
+#    tKeys.set  key with spaces = is value C
+#    tKeys.set  [section2] += save value
+#    tKeys.set  [section2] += save value
+#    tKeys.set  [section3] -= save value No.2
+#    tKeys.set  [section3] -= save value No.1
+#    tKeys.set  [section4] = save unique value No.2
+#    tKeys.set  [section4] = save unique value No.1
+#    tKeys.keys >| md5sum - | grep ^bcfcd2f2d13115c731e46c1bebfd21bf.*$         #? true
+#    tKeys.keys [section1] >| md5sum - | grep ^22e3ec00d3439034aea5476664d52.*$ #? true
+#    tKeys.keys [section2] >| grep ^+$                                          #? true
+#    tKeys.keys [section3] >| grep ^-$                                          #? true
+#    tKeys.keys [section4] >| grep ^=$                                          #? true
+#    tKeys.free
+#  SOURCE
+INI::keys() {
+
+  local -a a
+  local csv IFS o k s="$*"
+
+  IFS='[]' a=( $s ) && IFS=$' \t\n'
+
+  o=${FUNCNAME[0]%%.*}
+
+  case "${#a[@]}" in
+
+    2)
+      s=${a[1]:-__global__}
+    ;;
+
+    0)
+      s=__global__
+    ;;
+
+    *)
+      eval $( udfOnError retwarn InvalidArgument "$*" )
+    ;;
+
+  esac
+
+  ${o}.__section.select $s
+  id=$( ${o}.__section.id $s )
+  sU=$( ${o}.__section.get _bashlyk_raw_mode )
+
+  if [[ $sU ]]; then
+
+    echo $sU
+
+  else
+
+    eval "                                                                     \
+                                                                               \
+      for k in \"\${!$id[@]}\"; do                                             \
+        if [[ ! \$k =~ ^_bashlyk_ ]]; then                                     \
+          csv+=\"\$k,\";                                                       \
+        fi                                                                     \
+      done;                                                                    \
+                                                                               \
+    "
+    echo "$csv"
 
   fi
 
@@ -661,9 +746,10 @@ INI::set() {
   udfOn MissingArgument $* || return $?
 
   local -a a
-  local iKeyWidth ISF o k s v
+  local iKeyWidth ISF o k s="$*" v
 
-  o="$*" && s="$IFS" && IFS='[]' && a=( $o ) && IFS="$s"
+  IFS='[]' && a=( $s ) && IFS=$' \t\n'
+
   o=${FUNCNAME[0]%%.*}
 
   case "${#a[@]}" in
@@ -838,19 +924,23 @@ INI::save() {
 #    *.tmp                                                                      #-
 #    ass = to ass                                                               #-
 #    EOFini                                                                     #-
+#   _ onError retwarn
 #   INI tRead
+#   tRead.read                                                                  #? $_bashlyk_iErrorMissingArgument
+#   tRead.read /not/exist/file.$$.ini                                           #? $_bashlyk_iErrorNoSuchFileOrDir
 #   tRead.read $ini                                                             #? true
 #   tRead.show >| md5sum - | grep ^a394a7bbdada0694a90967c9bc7d88d5.*-$         #? true
 #   tRead.free
 #  SOURCE
 INI::read() {
 
-  udfOn NoSuchFileOrDir throw $1
+  udfOn NoSuchFileOrDir $1 || return
 
   local bActiveSection bIgnore csv fn i iKeyWidth reComment reSection reValidSections s
 
   reSection='^[[:space:]]*(:?)\[[[:space:]]*([^[:punct:]]+?)[[:space:]]*\](:?)[[:space:]]*$'
-  reKey_Val='^[[:space:]]*([[:alnum:]]+)[[:space:]]*=[[:space:]]*(.*)[[:space:]]*$'
+  #reKey_Val='^[[:space:]]*([[:alnum:]]+)[[:space:]]*=[[:space:]]*(.*)[[:space:]]*$'
+  reKey_Val='^[[:space:]]*([[:graph:]]+)[[:space:]]*=[[:space:]]*(.*)[[:space:]]*$'
   reComment='^[[:space:]]*$|(^|[[:space:]]+)[\#\;].*$'
   o=${FUNCNAME[0]%%.*}
 
@@ -864,7 +954,7 @@ INI::read() {
   ## TODO permit hi uid ?
   if [[ ! $( stat -c %u $fn ) =~ ^($UID|0)$ ]]; then
 
-    eval $( udfOnError NotPermitted throw "$1 owned by $( stat -c %U $fn )" )
+    eval $( udfOnError NotPermitted "$1 owned by $( stat -c %U $fn )" )
 
   fi
 
@@ -960,7 +1050,8 @@ INI::read() {
 #******
 #****e* libini/INI::load
 #  SYNOPSIS
-#    INI::load <file> <section>:(<options>)|<raw mode>) ...
+#    INI::load <file> <section>:(<options>|<raw mode>) ...
+#    INI::load <file> {[\[<section>\]](<options>|<raw mode>)} ...
 #  DESCRIPTION
 #    load the specified configuration data from a group of related INI files
 #  ARGUMENTS
@@ -982,8 +1073,7 @@ INI::read() {
 #    NoSuchFileOrDir - input file not exist
 #    MissingArgument - parameters and sections are not selected
 #  EXAMPLE
-#   local iniMain iniLoad iniSave s S sRules                                    #-
-#   sRules=':file,main,child exec:- main:hint,msg,cnt replace:- unify:= acc:+'  #-
+#   local iniMain iniLoad iniSave                                               #-
 #   udfMakeTemp -v iniMain suffix=.ini                                          #-
 #   GLOBIGNORE="*:?"
 #    cat <<-'EOFini' > $iniMain                                                 #-
@@ -1059,18 +1149,18 @@ INI::read() {
 #    *.lit                                                                      #-
 #    EOFiniChild                                                                #-
 #   INI tLoad
-#   tLoad.load $iniLoad $sRules                                                 #? true
+#   tLoad.load $iniLoad []file,main,child: [exec]-: [main]hint,msg,cnt: [replace]-: [unify]=: [acc]+    #? true
 #   tLoad.save $iniSave                                                         #? true
 #   tLoad.show >| md5sum - | grep ^ecc291818557339352e35fe80fb0de57.*-$         #? true
 ##    tLoad.free
 #  SOURCE
 INI::load() {
 
-  [[ $1 =~ ^\.|\.$ ]] && eval $( udfOnError throw InvalidArgument "$1" )
+  [[ ${1##*/} =~ ^\.|\.$ ]] && eval $( udfOnError InvalidArgument "$1" )
 
   local -a a
   local -A h hKeyValue hRawMode
-  local csv i ini fmtKeyValue fmtSections o path reSection reValidSections s sSection
+  local csv i IFS ini fmtKeyValue fmtSections o path reSection reValidSections s sSection
 
   o=${FUNCNAME[0]%%.*}
   fmtSections='^[[:space:]]*(:?)\[[[:space:]]*(%SECTION%)[[:space:]]*\](:?)[[:space:]]*$'
@@ -1090,35 +1180,53 @@ INI::load() {
 
   fi
 
-  if [[ $path ]]; then
-
-    s=${1##*/}
-    a=( ${s//./ } )
-
-  fi
+  [[ $path ]] && ini=${1##*/}
 
   shift
 
-  for s in "$@"; do
+  s="$*" && IFS=':' a=( $s )
 
-    ## TODO parse [section]{key,..} or {[section]key,..} ( key,.. - unnamed )
-    [[ $s =~ ^(.*)?:(([=+\-]?)|([^=+\-].*))$ ]] || udfOn InvalidArgument throw $s
+  for s in ${a[@]}; do
 
-    sSection=${BASH_REMATCH[1]}
-    : ${sSection:=__global__}
+    s=$( udfTrim $s )
 
-    [[ ${BASH_REMATCH[3]} ]] && hRawMode[$sSection]="${BASH_REMATCH[3]}"
-    [[ ${BASH_REMATCH[4]} ]] && s="${BASH_REMATCH[4]}" || s=
-    [[ $s ]] && s="${s//,/\|}" && hKeyValue[$sSection]=${fmtKeyValue/\%KEY\%/$s}
+    if [[ $s =~ ^(\[(.*)\])?(([=+\-]?)|([^=+\-].*))$ ]]; then
 
-    ${o}.__section.select $sSection
-    csv+="${sSection}|"
+      [[ ${BASH_REMATCH[1]} ]] || continue
+
+      [[ ${BASH_REMATCH[2]} ]] && sSection="${BASH_REMATCH[2]}" || sSection=__global__
+
+      if   [[ ${BASH_REMATCH[3]} == ${BASH_REMATCH[5]} ]]; then
+
+        s="${BASH_REMATCH[3]}"
+        s="${s//,/\|}"
+        hKeyValue[$sSection]=${fmtKeyValue/\%KEY\%/$s}
+
+      elif [[ ${BASH_REMATCH[3]} == ${BASH_REMATCH[4]} ]]; then
+
+        hRawMode[$sSection]="${BASH_REMATCH[3]}"
+
+      else
+
+        continue
+
+      fi
+
+      ${o}.__section.select $sSection
+
+      csv+="${sSection}|"
+
+    fi
 
   done
 
   csv=${csv%*|}
 
   [[ $csv ]] && reValidSections=${fmtSections/\%SECTION\%/$csv}
+
+  IFS=$' \t\n' a=( ${ini//./ } )
+
+  unset ini s
 
   for (( i = ${#a[@]}-1; i >= 0; i-- )); do
 
@@ -1166,25 +1274,24 @@ INI::load() {
 #    MissingArgument - arguments is not specified
 #    InvalidArgument - invalid format of the arguments
 #  EXAMPLE
-#    local rINI rCLI ini
-#    rINI=':file,main,child exec:- main:hint,msg,cnt replace:- unify:= acc:+'   #-
-#    rCLI='file{F}: exec{E}:- main-hint{H}: main-msg{M}: unify{U}:= acc:+'      #-
-#    _ sArg "-F CLI -E clear -H 'Hi!' -M test -U a.2 -U a.2 --acc=a --acc=b"    #-
+#    local ini
+#    _ sArg "-F CLI -E clear -H 'Hi!' -M test -U a.2 -U a.2 --acc a --acc b "   #-
 #    udfMakeTemp ini
 #    tLoad.save $ini                                                            #? true
 #    tLoad.free
-#    INI tBindCli
-#    tBindCli.bind.cli $rCLI                                                    #? true
-#    tBindCli.load $ini $rINI                                                   #? true
-#    tBindCli.show >| md5sum - | grep ^5f07ee81d3d7cab5bff836f1acb99a20.*-$     #? true
-#    tBindCli.free
+#    _ onError retwarn
+#    INI tCLI
+#    tCLI.bind.cli                                                              #? $_bashlyk_iErrorInvalidOption
+#    tCLI.bind.cli file{F}: exec{E}:- main-hint{H}: main-msg{M}: unify{U}:=     #? $_bashlyk_iErrorInvalidOption
+#    tCLI.bind.cli file{F}: exec{E}:- main-hint{H}: main-msg{M}: unify{U}:= acc:+                      #? true
+#    tCLI.load $ini []file,main,child : [exec]- : [main]hint,msg,cnt : [replace]- : [unify]= : [acc]+  #? true
+#    tCLI.show >| md5sum - | grep ^5f07ee81d3d7cab5bff836f1acb99a20.*-$         #? true
+#    tCLI.free
 #  SOURCE
 INI::bind.cli() {
 
-  udfOn MissingArgument "$@" || return $?
-
   local -a a
-  local c fmtCase fmtHandler k o sSection sShort sLong sArg s S evalGetopts sCases v
+  local c fnErr fmtCase fmtHandler k o sSection sShort sLong s S evalGetopts sCases v
 
   o=${FUNCNAME[0]%%.*}
   c=cli${RANDOM}
@@ -1204,7 +1311,7 @@ INI::bind.cli() {
 
     else
 
-      eval $( udfOnError throw InvalidArgument "$s - format error" )
+      eval $( udfOnError InvalidArgument "$s - format error" )
 
     fi
 
@@ -1219,14 +1326,41 @@ INI::bind.cli() {
 
   done
 
-  s="$( getopt -u -o $sShort --long ${sLong%*,} -n $0 -- $(_ sArg) )"
-  (( $? > 0 )) && udfOn InvalidArgument throw "$s - CLI parsing error..."
+  udfMakeTemp fnErr
+  s="$( LC_ALL=C getopt -u -o $sShort --long ${sLong%*,} -n $0 -- $(_ sArg) 2>$fnErr )"
 
-  evalGetopts="$( printf -- "$fmtHandler" "$sCases" )"
+  case $? in
 
-  eval "$evalGetopts" && ${c}.getopts $s
+    0)
+      evalGetopts="$( printf -- "$fmtHandler" "$sCases" )"
+      eval "$evalGetopts" && ${c}.getopts $s
+      unset -f evalGetopts
+    ;;
 
-  unset -f evalGetopts
+    1)
+      local -A h
+      while read -t 4 s; do
+
+        s=${s//$0: /}
+        s=${s// option/}
+        s=${s// --/}
+        h[${s% *}]+="${s##* },"
+
+      done < $fnErr
+
+      [[ ${h[invalid]}      ]] && s+="${h[invalid]%*,},"
+      [[ ${h[unrecognized]} ]] && s+="${h[unrecognized]%*,}"
+
+      unset h
+      eval $( udfOnError InvalidOption "${s%*,} (command line:  $(_ sArg))" )
+
+    ;;
+
+    *)
+      eval $( udfOnError InvalidOption "internal fail - $(< $fnErr)" )
+    ;;
+
+  esac
 
 }
 #******
@@ -1242,53 +1376,58 @@ INI::bind.cli() {
 #          -- - expected list of the values - serialized array
 #  ERRORS
 #    MissingArgument - arguments is not specified
-#    InvalidArgument - invalid format of the argument
+#    InvalidArgument - invalid format of the arguments
+#    EmptyResult     - option not found
+#    NotAvailable    - CLI object not exist ( <o>.bind.cli not runned )
 #  OUTPUT
 #    option value
 #  EXAMPLE
-#    local rCLI
-#    rCLI='file{F}: exec{E}:- main-hint{H}: main-msg{M}: unify{U}:= acc:+'      #-
-#    _ sArg "-F CLI -E clear -H 'Hi!' -M test -U a.2 -U a.2 --acc=a --acc=b"    #-
-#    INI tGetopt
-#    tGetopt.bind.cli $rCLI                                                     #? true
-#    tGetopt.getopt file                                                        #? true
-#    tGetopt.getopt exec--                                                      #? true
-#    tGetopt.getopt main-hint                                                   #? true
-#    tGetopt.getopt main-msg                                                    #? true
-#    tGetopt.getopt unify--                                                     #? true
-#    tGetopt.getopt acc--                                                       #? true
-#    tGetopt.free
+#    _ sArg "-F CLI -E clear -H 'Hi!' -M test -U a.2 -U a.2"                    #-
+#    INI tOpt
+#    tOpt.getopt                                                                #? $_bashlyk_iErrorMissingArgument
+#    tOpt.getopt not-exist                                                      #? $_bashlyk_iErrorNotAvailable
+#    tOpt.getopt invalid - argument - list                                      #? $_bashlyk_iErrorInvalidArgument
+#    tOpt.bind.cli file{F}: exec{E}:- main-hint{H}: main-msg{M}: unify{U}:=     #? true
+#    tOpt.getopt file                                                           #? true
+#    tOpt.getopt exec--                                                         #? true
+#    tOpt.getopt main-hint                                                      #? true
+#    tOpt.getopt main-msg                                                       #? true
+#    tOpt.getopt unify--                                                        #? true
+#    tOpt.getopt acc--                                                          #? $_bashlyk_iErrorEmptyResult
+#    tOpt.free
 #  SOURCE
 INI::getopt() {
 
-  udfOn MissingArgument "$@" || return $?
-
   local -a a
-  local c o s IFS
+  local IFS o s="$*"
 
-  s="$*" && c="$IFS" && IFS='-' && a=( $s ) && IFS="$c"
-
-  o=${FUNCNAME[0]%%.*}
-  eval "c=\${_h${o^^}[__cli__]}"
+  IFS='-' a=( $s )
 
   case "${#a[@]}" in
 
     2)
       s=${a[0]:-__global__}
       k=${a[1]}
-      ;;
+    ;;
 
     1)
       s=__global__
       k=${a[0]}
-      ;;
+    ;;
 
     *)
-      eval $( udfOnError throw InvalidArgument "$*" )
+      udfOn MissingArgument "$*" || return $?
+      return $( _ iErrorInvalidArgument )
+    ;;
 
   esac
 
-  ${c}.get [${s}]${k}
+  o=${FUNCNAME[0]%%.*}
+  eval "o=\${_h${o^^}[__cli__]}"
+
+  udfOn EmptyVariable o || return $( _ iErrorNotAvailable )
+
+  ${o}.get [${s}]${k}
 
 }
 #******
