@@ -1,3 +1,105 @@
+Mon, 30 Jan 2017 16:45:40 +0400
+	New upstream release
+	Version 1.89
+
+- CNF library moved to a safer way of handling the active configuration files
+  (*.conf). Instead of executing external files (by using the "source" command)
+  are used INI library functions.
+
+- INI library improvements and changes:
+  - allowed to read configurations owned by the current user or root
+  - added internal array for settings
+  - added bConfMode for active configuration support
+  - used SHA1 for internal arrays generation
+  - INI "class" - used "::" for the method declaration
+  - INI::load uses a more intuitive arguments format
+  - key of the section can contain symbols of class ":graph:"
+  - improved error handling and code style, fixed bugs
+  - added public method - INI::keys - show all keys in the comma separated line
+
+- updated ROBODOC configuaration, added new header types and set their order:
+  - F  "Files"              robodoc.header.types 64
+    V  "Versions"           robodoc.header.types 32
+    L  "External libraries" robodoc.header.types 31
+    G  "Global variables"   robodoc.header.types 30
+    e  "external function"  robodoc.header.types 16
+    p  "internal function"  robodoc.header.types 08
+  - change label 'RETURN VALUE' to 'ERRORS' where it makes sense
+  - added and updated USES section of the lib headers
+
+- STD library improvements:
+  - fixed udfGetPathMd5 for path with spaces
+  - udfIs{Number,ValidVariable} - checking for errors made less intrusive
+  - changed test for udfOnTrap
+
+- used 'declare -rg' for all readonly global variables of the bashlyk
+- ERR library preloaded for all other default libs
+- code style - used the "two spaces" indentation
+- error states {Non,Not}Valid.. renamed to Invalid..
+- updated tests
+
+Detailed:
+
+libini.sh:
+- INI constructor - removed excess assignment
+- _bashlyk_iniMethods renamed to _bashlyk_methods_ini
+- improved error handling and arguments parsing for INI::{get,set}
+- INI::load:
+  - return state "NoSuchFileOrDir" if source INI-file not found
+  - removed checking second argument
+  - used new format of the arguments, example:
+    []key1,key2,key3 : [section1]key1,key2,key3 [rawsection]=
+  - check basename of source for illegal lead and trail dots
+- INI::__section.show:
+  - get padding value from service array (if exist)
+  - show content of section with padding around equal between key and
+    value
+  - doublequoting for active configuration mode supported, applied only if
+    needed ([__settings]bConfMOde=true)
+- INI::__section.getArray:
+  - return EmptyResult state on empty result
+- INI::read:
+  - added tests for MissingArgument and NoSuchFileOrDir states
+- INI::bind.cli:
+  - use OnError for reaction
+  - detailed checking getopt result
+- INI::getopt:
+  - improved code and error handling
+  - added tests for 'MissingArgument', 'NotAvailable', 'InvalidArgument' and
+    'EmptyResult'
+- INI::keys:
+  - show comma separated key list of the selected section
+
+libstd.sh:
+- improved udfQuoteIfNedded - no duplicate quotes
+- udfLocalVarFromCSV - 'throw' on errors deffered for eval
+- added function udfTrim for remove leading and trailing spaces,
+  used recept from http://stackoverflow.com/a/22236641
+- udfGetPathMd5:
+  - used 'while read .. done< <(ls -1rdt *)' instead 'for .. in * ..'
+
+liberr.sh:
+- added error states 'NotAvailable', 'NotNumber', 'InvalidOption'
+- removed using STD::udfIsNumber
+- udfOn - added command retwarn (experimental)
+- 'onError' command change to lower case
+
+libnet.sh:
+- fixed error of the DNS name resolving
+- udfGetValidCIDR - 'throw' action replaced to 'return' on empty _reIPv4
+
+libpid.sh:
+- udfStopProcess - background process sometimes starts later than will
+  be checked, implement temporary fixes
+
+testunit.awk:
+- added new labels - 'e' 'p' 'm'
+
+robodoc.css:
+- disabled underline for main list
+- added style class 'ul li a'
+
+
 Mon, 19 Dec 2016 15:22:59 +0400
 	New upstream release
 	Version 1.88
