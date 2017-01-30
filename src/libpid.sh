@@ -1,5 +1,5 @@
 #
-# $Id: libpid.sh 666 2017-01-25 15:32:02+04:00 toor $
+# $Id: libpid.sh 672 2017-01-30 12:08:13+04:00 toor $
 #
 #****h* BASHLYK/libpid
 #  DESCRIPTION
@@ -138,12 +138,13 @@ udfCheckStarted() {
 #    $cmd2
 #    ($cmd1 400)&                                                               #-
 #    pid=$!
+#    ## TODO wait for cmd1 starting
 #    udfStopProcess                                                             #? $_bashlyk_iErrorEmptyOrMissingArgument
-#    udfStopProcess childs pid=$pid $cmd1 400                                   #? true
 #    udfStopProcess pid=$pid $cmd1 88                                           #? $_bashlyk_iErrorNoSuchProcess
 #    udfStopProcess $cmd1 88                                                    #? $_bashlyk_iErrorNoSuchProcess
 #    udfStopProcess pid=$$ $0                                                   #? $_bashlyk_iErrorCurrentProcess
 #    udfStopProcess pid=invalid $0                                              #? $_bashlyk_iErrorInvalidArgument
+#    udfStopProcess childs pid=$pid $cmd1 400                                   #? true
 #    udfStopProcess childs pid=$a $cmd1 800                                     #? true
 #    udfStopProcess childs pid=$a $cmd1 600                                     #? $_bashlyk_iErrorNotChildProcess
 #    udfStopProcess $cmd1                                                       #? true

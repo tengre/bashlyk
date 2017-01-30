@@ -1,5 +1,5 @@
 #
-# $Id: libini.sh 671 2017-01-29 22:26:13+04:00 toor $
+# $Id: libini.sh 672 2017-01-30 12:08:13+04:00 toor $
 #
 #****h* BASHLYK/libini
 #  DESCRIPTION
@@ -622,8 +622,9 @@ INI::get() {
 #  SYNOPSIS
 #    INI::keys [\[<section>\]]
 #  DESCRIPTION
-#    get all keys of the section or single key - raw mode - for section of the
-#    "raw" records
+#    Show all the keys of the selected section in a row, separated by commas.
+#    For the section of the "raw data" (without keys) will be shown the storage
+#    mode.
 #  NOTES
 #    public method
 #  ARGUMENTS
@@ -635,19 +636,19 @@ INI::get() {
 #    tKeys.set  [section1] key1 = is value 1
 #    tKeys.set  [section1] key2 = is value 2
 #    tKeys.set  [section1] key with spaces = is value 3
-#    tKeys.keys [section1] >| md5sum - | grep ^22e3ec00d3439034aea5476664d52.*$ #? true
 #    tKeys.set  keyA = is value A
 #    tKeys.set  []keyB = is value B
 #    tKeys.set  key with spaces = is value C
-#    tKeys.keys >| md5sum - | grep ^bcfcd2f2d13115c731e46c1bebfd21bf.*$         #? true
-#    tKeys.set  [section2]+ = save value
-#    tKeys.set  [section2]+ = save value
-#    tKeys.keys [section2] >| grep ^+$                                          #? true
-#    tKeys.set  [section3]- = save value No.2
-#    tKeys.set  [section3]- = save value No.1
-#    tKeys.keys [section3] >| grep ^-$                                          #? true
+#    tKeys.set  [section2] += save value
+#    tKeys.set  [section2] += save value
+#    tKeys.set  [section3] -= save value No.2
+#    tKeys.set  [section3] -= save value No.1
 #    tKeys.set  [section4] = save unique value No.2
 #    tKeys.set  [section4] = save unique value No.1
+#    tKeys.keys >| md5sum - | grep ^bcfcd2f2d13115c731e46c1bebfd21bf.*$         #? true
+#    tKeys.keys [section1] >| md5sum - | grep ^22e3ec00d3439034aea5476664d52.*$ #? true
+#    tKeys.keys [section2] >| grep ^+$                                          #? true
+#    tKeys.keys [section3] >| grep ^-$                                          #? true
 #    tKeys.keys [section4] >| grep ^=$                                          #? true
 #    tKeys.free
 #  SOURCE
