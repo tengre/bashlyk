@@ -1,5 +1,5 @@
 #
-# $Id: libini.sh 672 2017-01-30 12:08:13+04:00 toor $
+# $Id: libini.sh 675 2017-02-01 10:41:19+04:00 toor $
 #
 #****h* BASHLYK/libini
 #  DESCRIPTION
@@ -1149,7 +1149,7 @@ INI::read() {
 #    *.lit                                                                      #-
 #    EOFiniChild                                                                #-
 #   INI tLoad
-#   tLoad.load $iniLoad []file,main,child: [exec]-: [main]hint,msg,cnt: [replace]-: [unify]=: [acc]+    #? true
+#   tLoad.load $iniLoad ::[]file,main,child :: [exec]- :: [main]hint, msg , cnt :: [replace]- :: [unify]= :: [acc]+ :: #? true
 #   tLoad.save $iniSave                                                         #? true
 #   tLoad.show >| md5sum - | grep ^ecc291818557339352e35fe80fb0de57.*-$         #? true
 ##    tLoad.free
@@ -1184,11 +1184,12 @@ INI::load() {
 
   shift
 
-  s="$*" && IFS=':' a=( $s )
+  s="$*" && IFS=':' && a=( $s )
 
   for s in ${a[@]}; do
 
-    s=$( udfTrim $s )
+    s="${s//, /,}"
+    s="$( udfTrim "${s//,,/,}" )"
 
     if [[ $s =~ ^(\[(.*)\])?(([=+\-]?)|([^=+\-].*))$ ]]; then
 
@@ -1220,11 +1221,11 @@ INI::load() {
 
   done
 
+  IFS=$' \t\n' && a=( ${ini//./ } )
+
   csv=${csv%*|}
 
   [[ $csv ]] && reValidSections=${fmtSections/\%SECTION\%/$csv}
-
-  IFS=$' \t\n' a=( ${ini//./ } )
 
   unset ini s
 
