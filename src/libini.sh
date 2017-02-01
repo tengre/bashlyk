@@ -1,5 +1,5 @@
 #
-# $Id: libini.sh 675 2017-02-01 10:41:19+04:00 toor $
+# $Id: libini.sh 676 2017-02-01 14:40:27+04:00 toor $
 #
 #****h* BASHLYK/libini
 #  DESCRIPTION
@@ -893,8 +893,7 @@ INI::save() {
 #    NoSuchFileOrDir - input file not exist
 #    NotPermitted    - owner of the input file differ than owner of the process
 #  EXAMPLE
-#   local c ini s S                                                             #-
-#   c=':void,main exec:- main:sTxt,b,iYo replace:- unify:= asstoass:+'          #-
+#   local ini s S                                                               #-
 #   udfMakeTemp ini suffix=".ini"                                               #-
 #    cat <<'EOFini' > ${ini}                                                    #-
 #    section  =  global                                                         #-
@@ -939,6 +938,7 @@ INI::read() {
   local bActiveSection bIgnore csv fn i iKeyWidth reComment reSection reValidSections s
 
   reSection='^[[:space:]]*(:?)\[[[:space:]]*([^[:punct:]]+?)[[:space:]]*\](:?)[[:space:]]*$'
+  #reSection='^[[:space:]]*(:?)\[[[:space:]]*([[:graph:]]+?)[[:space:]]*\](:?)[[:space:]]*$'
   #reKey_Val='^[[:space:]]*([[:alnum:]]+)[[:space:]]*=[[:space:]]*(.*)[[:space:]]*$'
   reKey_Val='^[[:space:]]*([[:graph:]]+)[[:space:]]*=[[:space:]]*(.*)[[:space:]]*$'
   reComment='^[[:space:]]*$|(^|[[:space:]]+)[\#\;].*$'
@@ -970,6 +970,7 @@ INI::read() {
 
     if [[ $REPLY =~ $reSection ]]; then
 
+      ## TODO section =~ ([[:graph:]] && ![\[\]])
       bIgnore=1
       [[ $REPLY =~ $reValidSections ]] || continue
       bIgnore=
