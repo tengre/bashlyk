@@ -1,5 +1,5 @@
 #
-# $Id: libini.sh 676 2017-02-01 14:40:27+04:00 toor $
+# $Id: libini.sh 677 2017-02-05 01:40:03+04:00 toor $
 #
 #****h* BASHLYK/libini
 #  DESCRIPTION
@@ -163,7 +163,7 @@ INI::__section.id() {
 
   local o=${FUNCNAME[0]%%.*}
 
-  eval "echo \${_h${o^^}[${1:-__global__}]}"
+  eval "echo \${_h${o^^}[${*:-__global__}]}"
 
 }
 #******
@@ -261,17 +261,20 @@ INI::free() {
 #    local s
 #    INI tSel
 #    tSel.__section.select                                                      #? true
-#    tSel.__section.set key "is unnamed section"
-#    tSel.__section.get key >| grep '^is unnamed section$'                      #? true
+#    tSel.__section.set key "is value from unnamed section"
+#    tSel.__section.get key >| grep '^is value from unnamed section$'           #? true
 #    tSel.__section.select tSect                                                #? true
 #    tSel.__section.set key "is value"
 #    tSel.__section.get key >| grep '^is value$'                                #? true
+#    tSel.__section.select section with spaces                                  #? true
+#    tSel.__section.set "key with spaces" "is value"
+#    tSel.__section.get "key with spaces" >| grep '^is value$'                  #? true
 #    tSel.__section.id @ >| grep -P "^_hTSEL.*(settings|[[:xdigit:]]*)$"        #? true
 #    tSel.free
 #  SOURCE
 INI::__section.select() {
 
-  local id o s=${1:-__global__}
+  local id o s=${*:-__global__}
 
   o=${FUNCNAME[0]%%.*}
   eval "id=\${_h${o^^}[$s]}"
@@ -329,8 +332,8 @@ INI::__section.show() {
 
   o=${FUNCNAME[0]%%.*}
 
-  ${o}.__section.select $1
-  id=$( ${o}.__section.id $1 )
+  ${o}.__section.select $*
+  id=$( ${o}.__section.id $* )
 
   sU=$( ${o}.__section.get _bashlyk_raw_mode )
 
@@ -341,7 +344,7 @@ INI::__section.show() {
 
     eval "                                                                     \
                                                                                \
-      for k in "\${!$id[@]}"; do                                               \
+      for k in \"\${!$id[@]}\"; do                                             \
                                                                                \
         [[ \$k =~ ^_bashlyk_raw_uniq= ]] && printf -- '%s\n' \"\${$id[\$k]}\"; \
                                                                                \
@@ -384,7 +387,7 @@ INI::__section.show() {
 
       eval "                                                                   \
                                                                                \
-        for k in "\${!$id[@]}"; do                                             \
+        for k in \"\${!$id[@]}\"; do                                           \
           if [[ ! \$k =~ ^_bashlyk_ ]]; then                                   \
             v=\${$id[\$k]};                                                    \
             [[ \$bQuote ]] && v=\$( udfQuoteIfNeeded \$v );                    \
@@ -433,18 +436,17 @@ INI::__section.show() {
 #  SOURCE
 INI::__section.setRawData() {
 
-  local i o s
+  local c=$1 i o s
 
   o=${FUNCNAME[0]%%.*}
 
-  case "$1" in
+  shift && s="$( udfTrim "$*" )"
+
+  case "$c" in
 
     =)
 
-       s="${2##*( )}"
-       s="${s%%*( )}"
        ${o}.__section.set "_bashlyk_raw_uniq=${s//[\'\"\\ ]/}" "$s"
-       ${o}.__section.set '_bashlyk_raw_mode' "="
 
     ;;
 
@@ -452,10 +454,9 @@ INI::__section.setRawData() {
 
        i=$( ${o}.__section.get _bashlyk_raw_num )
        udfIsNumber $i || i=0
-       ${o}.__section.set "_bashlyk_raw_incr=${i}" "$2"
+       ${o}.__section.set "_bashlyk_raw_incr=${i}" "$s"
        : $(( i++ ))
        ${o}.__section.set '_bashlyk_raw_num' $i
-       ${o}.__section.set '_bashlyk_raw_mode' "$1"
 
     ;;
 
@@ -464,6 +465,8 @@ INI::__section.setRawData() {
       return $( _ iErrorInvalidArgument )
 
   esac
+
+  ${o}.__section.set '_bashlyk_raw_mode' "$c"
 
   return 0
 
@@ -504,8 +507,8 @@ INI::__section.getArray() {
   local i id iC o s sU
 
   o=${FUNCNAME[0]%%.*}
-  ${o}.__section.select $1
-  id=$( ${o}.__section.id $1 )
+  ${o}.__section.select $*
+  id=$( ${o}.__section.id $* )
   udfIsHash $id || eval $( udfOnError InvalidHash '$id' )
 
   sU=$( ${o}.__section.get _bashlyk_raw_mode )
@@ -722,10 +725,12 @@ INI::keys() {
 #    INI tSet
 #    tSet.set [section]key = is value
 #    tSet.set key = is unnamed section
-#    tSet.get [section]key
+#    tSet.set key with spaces = is unnamed section
+#    tSet.show
 #    tSet.get [section]key >| grep '^is value$'                                 #? true
 #    tSet.get   key >| grep '^is unnamed section$'                              #? true
 #    tSet.get []key >| grep '^is unnamed section$'                              #? true
+#    tSet.get key with spaces >| grep '^is unnamed section$'                    #? true
 #    tSet.set [section1]+= is raw value No.1
 #    tSet.set [section1]+ = is raw value No.2
 #    tSet.set [section1]+  =   is raw value No.3
@@ -746,7 +751,7 @@ INI::set() {
   udfOn MissingArgument $* || return $?
 
   local -a a
-  local iKeyWidth ISF o k s="$*" v
+  local iKeyWidth IFS o k s="$*" v
 
   IFS='[]' && a=( $s ) && IFS=$' \t\n'
 
@@ -813,7 +818,8 @@ INI::set() {
 #    tShow.__section.set key "is value"
 #    tShow.__section.select
 #    tShow.__section.set key "unnamed section"
-#    tShow.show >| md5sum - | grep ^d8822ed5c794ad0f13c2e07e4f929219.*-$        #? true
+#    tShow.set [section with spaces] key with spaces = value with spaces
+#    tShow.show >| md5sum - | grep ^b6ebbda48d1710b2c253669365786a25.*-$        #? true
 #    tShow.free
 #  SOURCE
 INI::show() {
@@ -937,9 +943,8 @@ INI::read() {
 
   local bActiveSection bIgnore csv fn i iKeyWidth reComment reSection reValidSections s
 
-  reSection='^[[:space:]]*(:?)\[[[:space:]]*([^[:punct:]]+?)[[:space:]]*\](:?)[[:space:]]*$'
-  #reSection='^[[:space:]]*(:?)\[[[:space:]]*([[:graph:]]+?)[[:space:]]*\](:?)[[:space:]]*$'
-  #reKey_Val='^[[:space:]]*([[:alnum:]]+)[[:space:]]*=[[:space:]]*(.*)[[:space:]]*$'
+  reSection='^[[:space:]]*(:?)\[[[:space:]]*([[:print:]]+?)[[:space:]]*\](:?)[[:space:]]*$'
+  ## TODO support for keys with spaces required
   reKey_Val='^[[:space:]]*([[:graph:]]+)[[:space:]]*=[[:space:]]*(.*)[[:space:]]*$'
   reComment='^[[:space:]]*$|(^|[[:space:]]+)[\#\;].*$'
   o=${FUNCNAME[0]%%.*}
@@ -970,7 +975,7 @@ INI::read() {
 
     if [[ $REPLY =~ $reSection ]]; then
 
-      ## TODO section =~ ([[:graph:]] && ![\[\]])
+      ## TODO section =~ ([[:print:]] && ![\[\]])
       bIgnore=1
       [[ $REPLY =~ $reValidSections ]] || continue
       bIgnore=

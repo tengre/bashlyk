@@ -1,5 +1,5 @@
 #
-# $Id: libstd.sh 666 2017-01-25 15:32:02+04:00 toor $
+# $Id: libstd.sh 677 2017-02-05 00:56:51+04:00 toor $
 #
 #****h* BASHLYK/libstd
 #  DESCRIPTION
@@ -1312,7 +1312,7 @@ udfGetMd5() {
 #    udfAddFile2Clean ${path}/testfile2
 #    udfAddFile2Clean ${path}/testfile3
 #    udfAddPath2Clean ${path}
-#    udfGetPathMd5 $path >| awk '{print $1}' | md5sum - | grep ^b4d36bc6546.*-$ #? true
+#    udfGetPathMd5 $path >| grep ^[[:xdigit:]]*.*testfile.$                     #? true
 #    udfGetPathMd5                                                              #? ${_bashlyk_iErrorMissingArgument}
 #    udfGetPathMd5 /notexist/path                                               #? ${_bashlyk_iErrorNoSuchFileOrDir}
 #  SOURCE
