@@ -1,5 +1,5 @@
 #
-# $Id: libini.sh 677 2017-02-05 01:40:03+04:00 toor $
+# $Id: libini.sh 678 2017-02-06 14:47:38+04:00 toor $
 #
 #****h* BASHLYK/libini
 #  DESCRIPTION
@@ -934,7 +934,7 @@ INI::save() {
 #   tRead.read                                                                  #? $_bashlyk_iErrorMissingArgument
 #   tRead.read /not/exist/file.$$.ini                                           #? $_bashlyk_iErrorNoSuchFileOrDir
 #   tRead.read $ini                                                             #? true
-#   tRead.show >| md5sum - | grep ^a394a7bbdada0694a90967c9bc7d88d5.*-$         #? true
+#   tRead.show >| md5sum - | grep ^65d9ae6b9e7ac8ec24cb069c89fdebd4.*-$         #? true
 #   tRead.free
 #  SOURCE
 INI::read() {
@@ -944,8 +944,7 @@ INI::read() {
   local bActiveSection bIgnore csv fn i iKeyWidth reComment reSection reValidSections s
 
   reSection='^[[:space:]]*(:?)\[[[:space:]]*([[:print:]]+?)[[:space:]]*\](:?)[[:space:]]*$'
-  ## TODO support for keys with spaces required
-  reKey_Val='^[[:space:]]*([[:graph:]]+)[[:space:]]*=[[:space:]]*(.*)[[:space:]]*$'
+  reKey_Val='^[[:space:]]*\b([^=]+)\b[[:space:]]*=[[:space:]]*(.*)[[:space:]]*$'
   reComment='^[[:space:]]*$|(^|[[:space:]]+)[\#\;].*$'
   o=${FUNCNAME[0]%%.*}
 
@@ -1024,6 +1023,8 @@ INI::read() {
 
       if [[ $REPLY =~ ${hKeyValue[$s]} ]]; then
 
+        ## TODO __settings__ options for key mode - with{out} spaces & etc
+        ## TODO check key for current mode
         ${o}.__section.set "${BASH_REMATCH[1]}" "${BASH_REMATCH[2]}"
         (( ${#BASH_REMATCH[1]} > $iKeyWidth )) && iKeyWidth=${#BASH_REMATCH[1]}
 
@@ -1157,7 +1158,7 @@ INI::read() {
 #   INI tLoad
 #   tLoad.load $iniLoad ::[]file,main,child :: [exec]- :: [main]hint, msg , cnt :: [replace]- :: [unify]= :: [acc]+ :: #? true
 #   tLoad.save $iniSave                                                         #? true
-#   tLoad.show >| md5sum - | grep ^ecc291818557339352e35fe80fb0de57.*-$         #? true
+#   tLoad.show >| md5sum - | grep ^a37cbb57c7bb753968ae93db79260b44.*-$         #? true
 ##    tLoad.free
 #  SOURCE
 INI::load() {
@@ -1292,7 +1293,7 @@ INI::load() {
 #    tCLI.bind.cli file{F}: exec{E}:- main-hint{H}: main-msg{M}: unify{U}:=     #? $_bashlyk_iErrorInvalidOption
 #    tCLI.bind.cli file{F}: exec{E}:- main-hint{H}: main-msg{M}: unify{U}:= acc:+                      #? true
 #    tCLI.load $ini []file,main,child : [exec]- : [main]hint,msg,cnt : [replace]- : [unify]= : [acc]+  #? true
-#    tCLI.show >| md5sum - | grep ^5f07ee81d3d7cab5bff836f1acb99a20.*-$         #? true
+#    tCLI.show >| md5sum - | grep ^50878d828696bb09394b2b90ea10dd84.*-$         #? true
 #    tCLI.free
 #  SOURCE
 INI::bind.cli() {
