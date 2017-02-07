@@ -71,7 +71,7 @@ libini.sh:
   - show comma separated key list of the selected section
 
 libstd.sh:
-- improved udfQuoteIfNedded - no duplicate quotes
+- improved udfQuoteIfNeeded - no duplicate quotes
 - udfLocalVarFromCSV - 'throw' on errors deffered for eval
 - added function udfTrim for remove leading and trailing spaces,
   used recept from http://stackoverflow.com/a/22236641
@@ -895,7 +895,7 @@ Mon, 06 May 2013 16:07:21 +0400
    udfIsValidVariable - не учитывался случай, когда переменная состоит из одного
    символа,
    udfMakeTemp - восстановлено использование суффиксов (mktemp), при этом
-   наблюдалось формирование короткого имени временного объекта, исправлено
+   наблюдалось формирование короткого имени временного объекта, исправлена
    udfGetPathMd5 - нелокальная внутренняя переменная
    udfCheckStarted - устранена плавающая ошибка, упрощен код
  - в функциях udfSetConfig, udfGetConfig - локальные переменные рандомизированы,
