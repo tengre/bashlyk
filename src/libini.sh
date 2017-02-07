@@ -1,5 +1,5 @@
 #
-# $Id: libini.sh 678 2017-02-06 14:47:38+04:00 toor $
+# $Id: libini.sh 679 2017-02-07 17:15:21+04:00 toor $
 #
 #****h* BASHLYK/libini
 #  DESCRIPTION
@@ -185,10 +185,12 @@ INI::__section.id() {
 #    tSectionIndex.__section.select
 #    tSectionIndex.__section.select sItem1
 #    tSectionIndex.__section.select sItem2
-#    tSectionIndex.__section.byindex   >| grep ^3$                              #? true
+#    tSectionIndex.__section.select test "with double" quotes
+#    tSectionIndex.__section.byindex   >| grep ^4$                              #? true
 #    tSectionIndex.__section.byindex 0 >| grep ^__global__$                     #? true
 #    tSectionIndex.__section.byindex 1 >| grep ^sItem1$                         #? true
 #    tSectionIndex.__section.byindex 2 >| grep ^sItem2$                         #? true
+#    tSectionIndex.__section.byindex 3
 #    tSectionIndex.free
 #  SOURCE
 INI::__section.byindex() {
@@ -274,7 +276,9 @@ INI::free() {
 #  SOURCE
 INI::__section.select() {
 
-  local id o s=${*:-__global__}
+  local id o s="${@:-__global__}"
+
+  s="${s//\"/\'\'}"
 
   o=${FUNCNAME[0]%%.*}
   eval "id=\${_h${o^^}[$s]}"
@@ -338,7 +342,7 @@ INI::__section.show() {
   sU=$( ${o}.__section.get _bashlyk_raw_mode )
 
   [[ $sU == '!' ]] && sA=':' || sA=
-  [[ $1 ]] && printf "\n\n[ %s ]%s\n\n" "$1" "$sA" || echo ""
+  [[ $1 ]] && printf "\n\n[ %s ]%s\n\n" "${@//\'\'/\"}" "$sA" || echo ""
 
   if [[ $sU == "=" ]]; then
 
@@ -402,7 +406,7 @@ INI::__section.show() {
 
   fi
 
-  [[ $sA ]] && printf "\n%s[ %s ]\n" "$sA" "$1"
+  [[ $sA ]] && printf "\n%s[ %s ]\n" "$sA" "${@//\'\'/\"}"
 
 }
 #******
@@ -902,13 +906,19 @@ INI::save() {
 #   local ini s S                                                               #-
 #   udfMakeTemp ini suffix=".ini"                                               #-
 #    cat <<'EOFini' > ${ini}                                                    #-
-#    section  =  global                                                         #-
-#[main]                                                                         #-
-#    sTxt   =  $(date -R)                                                       #-
-#    b      =  false                                                            #-
-#    iXo Xo =  19                                                               #-
-#    iYo    =  80                                                               #-
-#    `simple line`                                                              #-
+#    key              = on the global unnamed section                           #-
+#    key.with.dot     = with dot                                                #-
+#    key::with::colon = with colon                                              #-
+#[section with  punct (!#%^&*+=|?$) and spaces: "Foo Bar" <user@host.domain>]   #-
+#                key = $(date -R)                                               #-
+#                   b=false                                                     #-
+#    key with spaces =  value with spaces                                       #-
+#                 iX =80                                                        #-
+#                  iY= 25                                                       #-
+#                  iZ=                                                          #-
+#        multi equal = value with equal ( = ), more = stop.                     #-
+#    simple line without "key value" pairs                                      #-
+#
 #[exec]:                                                                        #-
 #    TZ=UTC date -R --date='@12345678'                                          #-
 #    sUname="$(uname -a)"                                                       #-
@@ -918,23 +928,26 @@ INI::save() {
 #:[exec]                                                                        #-
 #[replace]                                                                      #-
 #    this is a line of the raw data                                             #-
-#    replace = true                                                             #-
+#    key = in the base mode                                                     #-
+#    key in = the base mode                                                     #-
+#    key in the = base mode                                                     #-
+#[ section with raw data ]                                                      #-
+#    *.bak                                                                      #-
+#    *.tmp                                                                      #-
 #[unify]                                                                        #-
 #    # this is a comment                                                        #-
 #    *.bak                                                                      #-
 #    *.tmp                                                                      #-
-#    unify = false                                                              #-
-#[asstoass]                                                                     #-
-#    *.bak                                                                      #-
-#    *.tmp                                                                      #-
-#    ass = to ass                                                               #-
+#    key = in the base mode                                                     #-
+#    key in = the base mode                                                     #-
+#    key in the = base mode                                                     #-
 #    EOFini                                                                     #-
 #   _ onError retwarn
 #   INI tRead
 #   tRead.read                                                                  #? $_bashlyk_iErrorMissingArgument
 #   tRead.read /not/exist/file.$$.ini                                           #? $_bashlyk_iErrorNoSuchFileOrDir
 #   tRead.read $ini                                                             #? true
-#   tRead.show >| md5sum - | grep ^65d9ae6b9e7ac8ec24cb069c89fdebd4.*-$         #? true
+#   tRead.show >| md5sum - | grep ^6b95a8f7fec7b284f1b464d0c654f298.*-$         #? true
 #   tRead.free
 #  SOURCE
 INI::read() {
