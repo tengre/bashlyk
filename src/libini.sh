@@ -1,5 +1,5 @@
 #
-# $Id: libini.sh 679 2017-02-07 17:15:21+04:00 toor $
+# $Id: libini.sh 681 2017-02-08 15:07:04+04:00 toor $
 #
 #****h* BASHLYK/libini
 #  DESCRIPTION
@@ -27,21 +27,43 @@
 #  USES
 #    libstd liberr
 #  EXAMPLE
+#    # create ini object from INI class
 #    INI ini
+#
+#    # bind to ini object CLI options
 #    ini.bind.cli config{c}: source{s}:-- help{h} mode{m}: dry-run
+#
+#    # get value of the --config (-c) option
 #    conf=$( ini.getopt config )
-#    ini.load $conf :mode,help dry:run source:=
-#    if [[ $( ini.get [dry]run ) ]]; then
+#
+#    # load selected only options from ini configuration file and combine with
+#    # CLI options.
+#    # [!] CLI options with the same name have higher priority
+#    ini.load $conf                                                            \
+#                  []mode,help                                                :\
+#               [dry]run                                                      :\
+#            [source]=
+#
+#    # check value of the option 'run' from section 'dry'
+#    if [[ $( ini.get [dry]run ) =~ ^(true|yes|1)$ ]]; then
 #      echo "dry run, view current config:"
+#
+#      # show configuration in the ini format
 #      ini.show
 #      exit 0
 #    fi
 #
+#    # set new value for 'mode' options from global section
 #    ini.set mode = demo
+#
+#    # add new items to list of unique values
 #    ini.set [source] = $HOME
 #    ini.set [source] = /var/mail/$USER
 #
+#    # save updated configuration to file
 #    ini.save $conf
+#
+#    # destroy ini object, free resources
 #    ini.free
 #
 #  AUTHOR
@@ -92,6 +114,9 @@ declare -rg _bashlyk_exports_ini="                                             \
     INI get set keys show save read load bind.cli getopt free                  \
                                                                                \
 "
+_bashlyk_iErrorIniMissingMethod=100
+_bashlyk_hError[$_bashlyk_iErrorIniMissingMethod]="instance failed - missing method"
+_bashlyk_hError[$_bashlyk_iErrorIniBadMethod]="instance failed - bad method"
 #******
 #****e* libini/INI
 #  SYNOPSIS
@@ -104,10 +129,12 @@ declare -rg _bashlyk_exports_ini="                                             \
 #    valid variable name for created instance, default - used class name INI as
 #    instance
 #  ERRORS
-#    InvalidArgument - method not found
-#    InvalidVariable - invalid variable name for instance
+#    InvalidVariable  - invalid variable name for instance
+#    IniMissingMethod - method not found
+#    IniBadMethod     - bad method
 #  EXAMPLE
 #    INI tnew                                                                   #? true
+#    ## TODO check errors 
 #    declare -pf tnew.show >/dev/null 2>&1                                      #= true
 #    declare -pf tnew.save >/dev/null 2>&1                                      #= true
 #    declare -pf tnew.load >/dev/null 2>&1                                      #= true
@@ -116,24 +143,29 @@ declare -rg _bashlyk_exports_ini="                                             \
 #  SOURCE
 INI() {
 
-  local f s=${1:-INI}
+  local f s o=${1:-INI}
 
-  udfOn InvalidVariable throw $s
+  udfOn InvalidVariable throw $o
 
-  declare -ag -- _a${s^^}="()"
-  declare -Ag -- _h${s^^}_settings="()"
-  declare -Ag -- _h${s^^}="([__settings__]=_h${s^^}_settings)"
+  declare -ag -- _a${o^^}="()"
+  declare -Ag -- _h${o^^}_settings="()"
+  declare -Ag -- _h${o^^}="([__settings__]=_h${o^^}_settings)"
 
   for s in $_bashlyk_methods_ini; do
 
-    f=$( declare -pf INI::${s} )
+    f=$( declare -pf INI::${s} 2>/dev/null ) || eval $(                        \
+                                                                               \
+      udfOnError throw IniMissingMethod "INI::${s} for $o"                     \
+                                                                               \
+    )
 
-    [[ $f =~ ^(INI::${s}).\(\) ]] || eval $( udfOnError throw InvalidArgument "not instance $s method for $o object" )
-
-    eval "${f/${BASH_REMATCH[1]}/${1}.$s}"
+    eval "${f/INI::$s/${o}.$s}" || eval $(                                     \
+                                                                               \
+      udfOnError throw IniBadMethod "INI::$s for $o"                           \
+                                                                               \
+    )
 
   done
-
 
   return 0
 
@@ -253,8 +285,8 @@ INI::free() {
 #  SYNOPSIS
 #    INI::__section.select [<section>]
 #  DESCRIPTION
-#    select current section of the instance, prepare INI private getter and setter
-#    for the storage of the selected section
+#    select current section of the instance, prepare INI getter/setter for the
+#    private storage of the selected section
 #  NOTES
 #    INI private method
 #  ARGUMENTS
@@ -419,10 +451,10 @@ INI::__section.show() {
 #  NOTES
 #    INI private method
 #  ARGUMENTS
-#    '-', '+' - add "raw" record with incremented key like "_bashlyk_raw_incr=<No>"
-#    '='      - add or update "raw" unique record with key like
-#               "_bashlyk_raw_uniq=<input data without spaces and quotes>"
-#    <data>   - input data, interpreted as "raw" record
+#    -+   - add "raw" record with incremented key like "_bashlyk_raw_incr=<No>"
+#    =    - add or update "raw" unique record with key like
+#           "_bashlyk_raw_uniq=<input data without spaces and quotes>"
+#    data - input data, interpreted as "raw" record
 #  ERRORS
 #    InvalidArgument - unexpected "raw" mode
 #  EXAMPLE
@@ -481,8 +513,8 @@ INI::__section.setRawData() {
 #    INI::__section.getArray [<section>]
 #  DESCRIPTION
 #    get unnamed records from specified section as serialized array. Try to get
-#    a unique "raw" records (with the prefix "_bashlyk_raw_uniq=...") or incremented
-#    records (with prefix "_bashlyk_raw_incr=...")
+#    a unique "raw" records (with the prefix "_bashlyk_raw_uniq=...") or
+#    incremented records (with prefix "_bashlyk_raw_incr=...")
 #  NOTES
 #    INI private method
 #  ARGUMENTS
@@ -519,14 +551,30 @@ INI::__section.getArray() {
 
   if [[ $sU == "=" ]]; then
 
-    eval "for i in "\${!$id[@]}"; do [[ \$i =~ ^_bashlyk_raw_uniq= ]] && a[\${#a[@]}]=\"\${$id[\$i]}\"; done;"
+    eval "                                                                     \
+                                                                               \
+      for i in \"\${!$id[@]}\"; do                                             \
+                                                                               \
+        [[ \$i =~ ^_bashlyk_raw_uniq= ]] && a[\${#a[@]}]=\"\${$id[\$i]}\";     \
+                                                                               \
+      done;                                                                    \
+                                                                               \
+    "
 
   else
 
     iC=$( ${o}.__section.get _bashlyk_raw_num )
     if udfIsNumber $iC && (( iC )); then
 
-      eval "for (( i=0; i < $iC; i++ )); do a[\${#a[@]}]=\"\${$id[_bashlyk_raw_incr=\$i]}\"; done;"
+      eval "                                                                   \
+                                                                               \
+        for (( i=0; i < $iC; i++ )); do                                        \
+                                                                               \
+          a[\${#a[@]}]=\"\${$id[_bashlyk_raw_incr=\$i]}\";                     \
+                                                                               \
+        done;                                                                  \
+                                                                               \
+      "
 
     fi
 
@@ -879,12 +927,17 @@ INI::save() {
   fn="$1"
   o=${FUNCNAME[0]%%.*}
 
-  [[ -s $fn ]] && mv $fn ${fn}.bak
-  mkdir -p ${fn%/*} && touch $fn || eval $( udfOnError throw NotExistNotCreated "${fn%/*}" )
+  [[ -s $fn ]] && mv -f $fn ${fn}.bak
+
+  mkdir -p ${fn%/*} && touch $fn || eval $(                                    \
+                                                                               \
+    udfOnError throw NotExistNotCreated "${fn%/*}"                             \
+                                                                               \
+  )
 
   {
 
-    printf ';\n; created %s by %s\n;\n' "$(date -R)" "$( _ sUser )"
+    printf -- ';\n; created %s by %s\n;\n' "$(date -R)" "$( _ sUser )"
     ${o}.show
 
   } > $fn
@@ -918,7 +971,7 @@ INI::save() {
 #                  iZ=                                                          #-
 #        multi equal = value with equal ( = ), more = stop.                     #-
 #    simple line without "key value" pairs                                      #-
-#
+#                                                                               #-
 #[exec]:                                                                        #-
 #    TZ=UTC date -R --date='@12345678'                                          #-
 #    sUname="$(uname -a)"                                                       #-
@@ -954,7 +1007,8 @@ INI::read() {
 
   udfOn NoSuchFileOrDir $1 || return
 
-  local bActiveSection bIgnore csv fn i iKeyWidth reComment reSection reValidSections s
+  local bActiveSection bIgnore csv fn i iKeyWidth reComment reSection
+  local reValidSections s
 
   reSection='^[[:space:]]*(:?)\[[[:space:]]*([[:print:]]+?)[[:space:]]*\](:?)[[:space:]]*$'
   reKey_Val='^[[:space:]]*\b([^=]+)\b[[:space:]]*=[[:space:]]*(.*)[[:space:]]*$'
@@ -1002,7 +1056,13 @@ INI::read() {
       [[ ${BASH_REMATCH[3]} == ":" ]] && hRawMode[$s]="-"
 
       bIgnore=1
-      [[ $bActiveSection == "close" ]] && bActiveSection= && ${o}.__section.set _bashlyk_raw_mode "!" && continue
+      if [[ $bActiveSection == "close" ]]; then
+
+        bActiveSection=
+        ${o}.__section.set _bashlyk_raw_mode "!"
+        continue
+
+      fi
       bIgnore=
 
       ${o}.__section.select $s
@@ -1095,7 +1155,7 @@ INI::read() {
 #  EXAMPLE
 #   local iniMain iniLoad iniSave                                               #-
 #   udfMakeTemp -v iniMain suffix=.ini                                          #-
-#   GLOBIGNORE="*:?"
+#   GLOBIGNORE="*:?"                                                            #-
 #    cat <<-'EOFini' > $iniMain                                                 #-
 #    section  =  global                                                         #-
 #    file     =  main                                                           #-
@@ -1180,7 +1240,8 @@ INI::load() {
 
   local -a a
   local -A h hKeyValue hRawMode
-  local csv i IFS ini fmtKeyValue fmtSections o path reSection reValidSections s sSection
+  local csv i IFS ini fmtKeyValue fmtSections o path reSection reValidSections s
+  local sSection
 
   o=${FUNCNAME[0]%%.*}
   fmtSections='^[[:space:]]*(:?)\[[[:space:]]*(%SECTION%)[[:space:]]*\](:?)[[:space:]]*$'
@@ -1215,7 +1276,7 @@ INI::load() {
 
       [[ ${BASH_REMATCH[1]} ]] || continue
 
-      [[ ${BASH_REMATCH[2]} ]] && sSection="${BASH_REMATCH[2]}" || sSection=__global__
+      sSection="${BASH_REMATCH[2]:-__global__}"
 
       if   [[ ${BASH_REMATCH[3]} == ${BASH_REMATCH[5]} ]]; then
 
@@ -1320,7 +1381,17 @@ INI::bind.cli() {
   INI $c
   eval "_h${o^^}[__cli__]=$c"
 
-  fmtHandler="${c}.getopts() { while true; do case \$1 in %s --) shift; break;; esac; done }"
+  fmtHandler="                                                                 \
+                                                                               \
+    ${c}.getopts() {                                                           \
+      while true; do                                                           \
+        case \$1 in                                                            \
+          %s --) shift; break;;                                                \
+        esac;                                                                  \
+      done                                                                     \
+    }                                                                          \
+  "
+
   fmtCase="--%s%s) ${c}.set [%s]%s = %s; shift %s;;"
 
   for s in $@; do
@@ -1343,12 +1414,21 @@ INI::bind.cli() {
     [[ ${a[7]} ]] && S="2" && v='$2'
     [[ ${a[8]} =~ ^(=|\-|\+)$ ]] && k="${a[8]}" && sSection="${a[4]}"
 
-    sCases+="$( printf -- "$fmtCase" "${a[4]}" "$s" "${sSection}" "${k/=/}" "$v" "$S" ) "
+    sCases+="$(                                                                \
+                                                                               \
+      printf -- "$fmtCase" "${a[4]}" "$s" "${sSection}" "${k/=/}" "$v" "$S"    \
+                                                                               \
+    ) "
 
   done
 
   udfMakeTemp fnErr
-  s="$( LC_ALL=C getopt -u -o $sShort --long ${sLong%*,} -n $0 -- $(_ sArg) 2>$fnErr )"
+  s="$(                                                                        \
+                                                                               \
+    LC_ALL=C getopt -u -o $sShort --long ${sLong%*,} -n $0 -- $(_ sArg)        \
+    2>$fnErr                                                                   \
+                                                                               \
+  )"
 
   case $? in
 
@@ -1373,12 +1453,12 @@ INI::bind.cli() {
       [[ ${h[unrecognized]} ]] && s+="${h[unrecognized]%*,}"
 
       unset h
-      eval $( udfOnError InvalidOption "${s%*,} (command line:  $(_ sArg))" )
+      eval $( udfOnError InvalidOption "${s%*,} (command line:  $( _ sArg ))" )
 
     ;;
 
     *)
-      eval $( udfOnError InvalidOption "internal fail - $(< $fnErr)" )
+      eval $( udfOnError InvalidOption "internal fail - $( < $fnErr )" )
     ;;
 
   esac
@@ -1389,8 +1469,8 @@ INI::bind.cli() {
 #  SYNOPSIS
 #    INI::getopt <option>[--]
 #  DESCRIPTION
-#    get option value after binding command line arguments to the INI instance
-#    ( after <o>.bind.cli call )
+#    get option value after binding command line options to the INI instance
+#    ( it makes sense only after the execution of the method "INI::bind.cli" )
 #  ARGUMENTS
 #    <option> - option name that used as long option of the CLI and key for
 #               array of the INI data
