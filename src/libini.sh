@@ -1,5 +1,5 @@
 #
-# $Id: libini.sh 681 2017-02-08 15:07:04+04:00 toor $
+# $Id: libini.sh 682 2017-02-08 23:12:28+04:00 toor $
 #
 #****h* BASHLYK/libini
 #  DESCRIPTION
@@ -580,7 +580,7 @@ INI::__section.getArray() {
 
   fi
 
-  (( ${#a[@]} > 0 )) && declare -p a || return $( _ iErrorEmptyResult )
+  declare -pa a 2>/dev/null || return $( _ iErrorEmptyResult )
 
 }
 #******
