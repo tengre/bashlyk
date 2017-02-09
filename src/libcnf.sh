@@ -1,5 +1,5 @@
 #
-# $Id: libcnf.sh 658 2017-01-20 16:16:04+04:00 toor $
+# $Id: libcnf.sh 683 2017-02-09 17:08:37+04:00 toor $
 #
 #****h* BASHLYK/libcnf
 #  DESCRIPTION
@@ -74,11 +74,15 @@ declare -rg _bashlyk_exports_cnf="udfGetConfig udfSetConfig"
 #    b=true                                                                     #-
 #    pid=$$                                                                     #-
 #    s="$(uname -a)"                                                            #-
+#    invalid line                                                               #-
+#    invalid key=true                                                           #-
+#    invalid.key=$$                                                             #-
+#    1nvalid_key = "$(uname -a)"                                                #-
 #                                                                               #-
 #    EOFconf                                                                    #-
 #    cat $confMain
 #    __getconfig $confMain >| grep 'pid=$$\|b=true\|s="$(uname -a)"\|s0=$0\|;$' #? true
-#    unset b pid s s0
+#    unset b pid s s0                                                           #-
 #    cat <<'EOFchild' > $confChild                                              #-
 #                                                                               #-
 #    s0=bash                                                                    #-
@@ -90,8 +94,8 @@ declare -rg _bashlyk_exports_cnf="udfGetConfig udfSetConfig"
 #    EOFchild                                                                   #-
 #    cat $confChild
 #    __getconfig $confChild b,pid >| grep 'pid=$$\|b=false\|;$'                 #? true
-#    rm -f $confChild
-#    _ onError return
+#    rm -f $confChild                                                           #-
+#    _ onError return                                                           #-
 #    eval "$( __getconfig $confChild )"                                         #? $_bashlyk_iErrorNoSuchFileOrDir
 #    eval "$( __getconfig )"                                                    #? $_bashlyk_iErrorEmptyOrMissingArgument
 #  SOURCE
@@ -108,15 +112,12 @@ __getconfig() {
 
   fi
 
-  fn=$1
-  shift
-  k="$@"
-
   INI $o
+  ${o}.set [ __settings__ ] bConfMode = true
 
-  if ! ${o}.load $fn ":${k// /,}"; then
+  if ! ${o}.load "$@"; then
 
-    udfOnError return ${_bashlyk_iLastError[$BASHPID]} "$fn"
+    udfOnError return ${_bashlyk_iLastError[$BASHPID]} "$1"
     return ${_bashlyk_iLastError[$BASHPID]}
 
   fi
@@ -225,7 +226,7 @@ udfGetConfig() {
 #                         the name
 #  EXAMPLE
 #    udfMakeTemp conf suffix=.conf
-#    udfSetConfig $conf "s0=$0;b=true;pid=$$;s=$(uname -a);$(date -R -r $0);"   #? true
+#    udfSetConfig $conf "s0=$0;b=true;pid=$$;s=$(uname -a);1nvalid.key=invalid" #? true
 #    cat $conf >| grep "s0=$0\|b=true\|pid=$$\|s=\"$(uname -a)\""               #? true
 #    rm -f $conf
 #  SOURCE
@@ -238,7 +239,11 @@ udfSetConfig() {
   [[ "$1" != "${1##*/}" ]] && path="${1%/*}" || path="$( _ pathCnf )"
   conf="${path}/${1##*/}"
 
-  mkdir -p $path && touch $conf || eval $( udfOnError throw NotExistNotCreated "$conf" )
+  mkdir -p $path && touch $conf || eval $(
+
+    udfOnError throw NotExistNotCreated "$conf"
+
+  )
 
   o="${FUNCNAME[0]%%.*}_${RANDOM}${RANDOM}"
   INI $o

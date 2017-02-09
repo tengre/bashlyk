@@ -1,4 +1,4 @@
-Mon, 30 Jan 2017 16:45:40 +0400
+Thu, 09 Feb 2017 11:16:40 +0400
 	New upstream release
 	Version 1.89
 
@@ -7,23 +7,23 @@ Mon, 30 Jan 2017 16:45:40 +0400
   are used INI library functions.
 
 - INI library improvements and changes:
+  - section name can be a character class :print:
+  - key name can be any character other than '='
+  - added  whitespaces and some :punct: chars support in the sections and keys
+  - added workaround for doublequotes support in the section name
   - allowed to read configurations owned by the current user or root
-  - added internal array for settings
+  - added internal private array for INI instance settings
   - added bConfMode for active configuration support
   - used SHA1 for internal arrays generation
   - INI "class" - used "::" for the method declaration
   - INI::load uses a more intuitive arguments format
-  - key of the section can contain symbols of class ":graph:"
-  - improved error handling and code style, fixed bugs
   - added public method - INI::keys - show all keys in the comma separated line
+  - improved documentation and tests
+  - improved error handling and code style, fixed bugs
 
 - updated ROBODOC configuaration, added new header types and set their order:
-  - F  "Files"              robodoc.header.types 64
-    V  "Versions"           robodoc.header.types 32
-    L  "External libraries" robodoc.header.types 31
-    G  "Global variables"   robodoc.header.types 30
-    e  "external function"  robodoc.header.types 16
-    p  "internal function"  robodoc.header.types 08
+   F(Files), V(Versions), L(External libraries), G(Global variables),
+   e(external function), p(internal function)
   - change label 'RETURN VALUE' to 'ERRORS' where it makes sense
   - added and updated USES section of the lib headers
 
@@ -36,7 +36,7 @@ Mon, 30 Jan 2017 16:45:40 +0400
 - ERR library preloaded for all other default libs
 - code style - used the "two spaces" indentation
 - error states {Non,Not}Valid.. renamed to Invalid..
-- updated tests
+- updated and improved tests
 
 Detailed:
 
@@ -45,21 +45,26 @@ libini.sh:
 - _bashlyk_iniMethods renamed to _bashlyk_methods_ini
 - improved error handling and arguments parsing for INI::{get,set}
 - INI::load:
+  - used colon (:) for split section options in the argument list
   - return state "NoSuchFileOrDir" if source INI-file not found
   - removed checking second argument
   - used new format of the arguments, example:
     []key1,key2,key3 : [section1]key1,key2,key3 [rawsection]=
   - check basename of source for illegal lead and trail dots
+- INI::__section.{id,select,setRawData,getArray} - used $* or $@ instead $1
+- INI::__section.{select,show} - applied workaround for doublequotes support in
+  the section names
 - INI::__section.show:
+  - support keys with spaces
   - get padding value from service array (if exist)
-  - show content of section with padding around equal between key and
-    value
-  - doublequoting for active configuration mode supported, applied only if
-    needed ([__settings]bConfMOde=true)
+  - show content of section with padding around equal between key and value
+  - doublequoting for values of the active configuration mode supported, applied
+    only if needed ([__settings]bConfMOde=true)
 - INI::__section.getArray:
   - return EmptyResult state on empty result
 - INI::read:
   - added tests for MissingArgument and NoSuchFileOrDir states
+  - used '\b([^=]+)\b' instead '([[:graph:]]+)' for key=value parsing
 - INI::bind.cli:
   - use OnError for reaction
   - detailed checking getopt result
@@ -69,6 +74,10 @@ libini.sh:
     'EmptyResult'
 - INI::keys:
   - show comma separated key list of the selected section
+- INI::set - fixed typo in the local var
+- constructor INI - improved error handling
+- added new error states Ini{Bad,Missing}Method
+- split long lines (more 80 char) of the code
 
 libstd.sh:
 - improved udfQuoteIfNeeded - no duplicate quotes
@@ -77,6 +86,7 @@ libstd.sh:
   used recept from http://stackoverflow.com/a/22236641
 - udfGetPathMd5:
   - used 'while read .. done< <(ls -1rdt *)' instead 'for .. in * ..'
+  - fixed test
 
 liberr.sh:
 - added error states 'NotAvailable', 'NotNumber', 'InvalidOption'
@@ -98,6 +108,8 @@ testunit.awk:
 robodoc.css:
 - disabled underline for main list
 - added style class 'ul li a'
+
+- added debian/docs
 
 
 Mon, 19 Dec 2016 15:22:59 +0400

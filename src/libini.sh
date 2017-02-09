@@ -1,5 +1,5 @@
 #
-# $Id: libini.sh 682 2017-02-08 23:12:28+04:00 toor $
+# $Id: libini.sh 683 2017-02-09 17:08:38+04:00 toor $
 #
 #****h* BASHLYK/libini
 #  DESCRIPTION
@@ -97,6 +97,9 @@
 : ${_bashlyk_sArg:="$@"}
 : ${_bashlyk_pathIni:=$(pwd)}
 
+declare -rg _bashlyk_ini_reKey_am='^\b([_a-zA-Z][_a-zA-Z0-9]*)\b$'
+declare -rg _bashlyk_ini_reKey_im='^\b([^=]+)\b$'
+
 declare -rg _bashlyk_methods_ini="                                             \
                                                                                \
     __section.id __section.byindex __section.select __section.show             \
@@ -104,6 +107,7 @@ declare -rg _bashlyk_methods_ini="                                             \
     keys load bind.cli getopt free                                             \
                                                                                \
 "
+
 declare -rg _bashlyk_externals_ini="                                           \
                                                                                \
     date echo getopt sha1sum mkdir mv pwd rm stat touch                        \
@@ -114,9 +118,12 @@ declare -rg _bashlyk_exports_ini="                                             \
     INI get set keys show save read load bind.cli getopt free                  \
                                                                                \
 "
-_bashlyk_iErrorIniMissingMethod=100
+_bashlyk_iErrorIniMissingMethod=111
+_bashlyk_iErrorIniMissingMethod=110
+_bashlyk_iErrorIniExtraCharInKey=109
 _bashlyk_hError[$_bashlyk_iErrorIniMissingMethod]="instance failed - missing method"
 _bashlyk_hError[$_bashlyk_iErrorIniBadMethod]="instance failed - bad method"
+_bashlyk_hError[$_bashlyk_iErrorIniExtraCharInKey]="extra character(s) in the key"
 #******
 #****e* libini/INI
 #  SYNOPSIS
@@ -134,7 +141,7 @@ _bashlyk_hError[$_bashlyk_iErrorIniBadMethod]="instance failed - bad method"
 #    IniBadMethod     - bad method
 #  EXAMPLE
 #    INI tnew                                                                   #? true
-#    ## TODO check errors 
+#    ## TODO check errors
 #    declare -pf tnew.show >/dev/null 2>&1                                      #= true
 #    declare -pf tnew.save >/dev/null 2>&1                                      #= true
 #    declare -pf tnew.load >/dev/null 2>&1                                      #= true
@@ -799,11 +806,11 @@ INI::keys() {
 #    InvalidInput.free
 #  SOURCE
 INI::set() {
-  ## TODO ignore bad arguments or raw mode ?
+
   udfOn MissingArgument $* || return $?
 
   local -a a
-  local iKeyWidth IFS o k s="$*" v
+  local iKeyWidth IFS o k re s="$*" v
 
   IFS='[]' && a=( $s ) && IFS=$' \t\n'
 
@@ -844,6 +851,18 @@ INI::set() {
     ${o}.__section.setRawData "$k" "$v"
 
   else
+
+    if [[ $( ${o}.get [__settings__]bConfMode ) =~ ^(true|yes|1)$ ]]; then
+
+      re=$_bashlyk_ini_reKey_am
+
+    else
+
+      re=$_bashlyk_ini_reKey_im
+
+    fi
+
+    [[ $k =~ $re ]] || eval $( udfOnError IniExtraCharInKey "$k" )
 
     iKeyWidth=$( ${o}.__section.get _bashlyk_key_width )
     udfIsNumber $iKeyWidth || iKeyWidth=0
@@ -1010,10 +1029,20 @@ INI::read() {
   local bActiveSection bIgnore csv fn i iKeyWidth reComment reSection
   local reValidSections s
 
-  reSection='^[[:space:]]*(:?)\[[[:space:]]*([[:print:]]+?)[[:space:]]*\](:?)[[:space:]]*$'
-  reKey_Val='^[[:space:]]*\b([^=]+)\b[[:space:]]*=[[:space:]]*(.*)[[:space:]]*$'
-  reComment='^[[:space:]]*$|(^|[[:space:]]+)[\#\;].*$'
   o=${FUNCNAME[0]%%.*}
+
+  reSection='^[[:space:]]*(:?)\[[[:space:]]*([[:print:]]+?)[[:space:]]*\](:?)[[:space:]]*$'
+  reComment='^[[:space:]]*$|(^|[[:space:]]+)[\#\;].*$'
+
+  if [[ $( ${o}.get [ __settings__ ]bConfMode ) =~ ^(true|yes|1)$ ]]; then
+
+    reKey_Val='^[[:space:]]*\b([_a-zA-Z][_a-zA-Z0-9]*)\b=(.*)[[:space:]]*$'
+
+  else
+
+    reKey_Val='^[[:space:]]*\b([^=]+)\b[[:space:]]*=[[:space:]]*(.*)[[:space:]]*$'
+
+  fi
 
   s="__global__"
   fn="$1"
@@ -1096,8 +1125,6 @@ INI::read() {
 
       if [[ $REPLY =~ ${hKeyValue[$s]} ]]; then
 
-        ## TODO __settings__ options for key mode - with{out} spaces & etc
-        ## TODO check key for current mode
         ${o}.__section.set "${BASH_REMATCH[1]}" "${BASH_REMATCH[2]}"
         (( ${#BASH_REMATCH[1]} > $iKeyWidth )) && iKeyWidth=${#BASH_REMATCH[1]}
 
