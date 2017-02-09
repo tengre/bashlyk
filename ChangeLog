@@ -1,4 +1,4 @@
-Thu, 09 Feb 2017 11:16:40 +0400
+Thu, 09 Feb 2017 17:16:30 +0400
 	New upstream release
 	Version 1.89
 
@@ -7,13 +7,12 @@ Thu, 09 Feb 2017 11:16:40 +0400
   are used INI library functions.
 
 - INI library improvements and changes:
-  - section name can be a character class :print:
-  - key name can be any character other than '='
-  - added  whitespaces and some :punct: chars support in the sections and keys
-  - added workaround for doublequotes support in the section name
   - allowed to read configurations owned by the current user or root
   - added internal private array for INI instance settings
-  - added bConfMode for active configuration support
+  - added bConfMode setting for active configuration support
+  - key name can be any char other than '=' in the INI mode (bConfMode = false)
+  - section name can be a char class :print:
+  - added workaround for doublequotes support in the section name
   - used SHA1 for internal arrays generation
   - INI "class" - used "::" for the method declaration
   - INI::load uses a more intuitive arguments format
@@ -64,7 +63,7 @@ libini.sh:
   - return EmptyResult state on empty result
 - INI::read:
   - added tests for MissingArgument and NoSuchFileOrDir states
-  - used '\b([^=]+)\b' instead '([[:graph:]]+)' for key=value parsing
+  - added key=value pairs check, depending on the settings bConfMOde
 - INI::bind.cli:
   - use OnError for reaction
   - detailed checking getopt result
@@ -74,7 +73,9 @@ libini.sh:
     'EmptyResult'
 - INI::keys:
   - show comma separated key list of the selected section
-- INI::set - fixed typo in the local var
+- INI::set:
+  - fixed typo in the local var
+  - added key check, depending on the settings bConfMOde
 - constructor INI - improved error handling
 - added new error states Ini{Bad,Missing}Method
 - split long lines (more 80 char) of the code
