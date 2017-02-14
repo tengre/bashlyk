@@ -1,5 +1,5 @@
 #
-# $Id: libtst.sh 671 2017-01-29 22:26:13+04:00 toor $
+# $Id: libtst.sh 685 2017-02-14 17:21:19+04:00 toor $
 #
 #****h* BASHLYK/libtst
 #  DESCRIPTION
@@ -181,6 +181,104 @@ __private() {
     eval "${f/__/bashlyk.$s}"
 
   done
+
+}
+#******
+shopt -s expand_aliases
+alias try="try() "
+alias catch='; eval "$( declare -pf try | err.x $( udfMakeTemp ) )" ||'
+err.foreach.addlog() {
+
+  local s
+
+   s='echo -e "command: $( udfTrim '${2/;/}' )\n output: {" > '"$1"
+  s+='; '${2/;/}' >> '$1' 2>&1 && echo -n . || return $?;'
+  echo $s
+
+}
+#****f* libtst/err.x
+#  SYNOPSIS
+#    err.x
+#  DESCRIPTION
+#    ...
+#  INPUTS
+#    ...
+#  OUTPUT
+#    ...
+#  RETURN VALUE
+#    ...
+#  EXAMPLE
+#    #err.x
+#  SOURCE
+err.x() {
+
+  udfOn NoSuchFileOrDir $1 || return
+
+  local s
+  udfMakeTemp -v s
+
+  while read -t 60; do
+
+    if [[ ! $REPLY =~ ^[[:space:]]*(try \(\)|\{|\})[[:space:]]*$ ]]; then
+
+      err.foreach.addlog $1 "$REPLY"
+
+    else
+
+      echo "${REPLY/try/$s}"
+
+    fi
+
+  done
+  echo "$s"' && echo " ok." || { udfSetLastError $? '$1'; echo " fail..($?)"; false; }'
+  rm -f $s
+}
+#******
+#****f* libtst/err.exception.message
+#  SYNOPSIS
+#    err.exception.message
+#  DESCRIPTION
+#    ...
+#  INPUTS
+#    ...
+#  OUTPUT
+#    ...
+#  RETURN VALUE
+#    ...
+#  EXAMPLE
+#   local s fn                                                                  #-
+#   error4test() { echo "$0: special error for testing"; return 210; };         #-
+#   udfMakeTemp fn                                                              #-
+#   cat <<-'EOFtry' > $fn                                                       #-
+#   try {                                                                       #-
+#     uname -a                                                                  #-
+#     uname -a                                                                  #-
+#     uname -a                                                                  #-
+#     error4test                                                                #-
+#     uname                                                                     #-
+#   } catch {                                                                   #-
+#                                                                               #-
+#     err.exception.message                                                     #-
+#                                                                               #-
+#   }                                                                           #-
+#   EOFtry                                                                      #-
+#  . $fn
+##>| md5sum - | grep ^015d8fd97d8fecef29d5c7f068881e47.*-$ #? true
+#  SOURCE
+err.exception.message() {
+
+  local log=${_bashlyk_sLastError[$BASHPID]}
+
+  echo -e "try box exception:\n~~~~~~~~~~~~~~~~~~"
+  echo " status: ${_bashlyk_iLastError[$BASHPID]}"
+  if [[ -s $log ]]; then
+
+    udfAddFO2Clean $log
+    cat $log
+    echo "} ( $log )"
+    #rm -f $log
+
+  fi
 
 }
 #******

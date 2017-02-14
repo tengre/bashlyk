@@ -1,5 +1,5 @@
 #
-# $Id: libstd.sh 677 2017-02-05 00:56:51+04:00 toor $
+# $Id: libstd.sh 685 2017-02-14 17:21:19+04:00 toor $
 #
 #****h* BASHLYK/libstd
 #  DESCRIPTION
@@ -392,8 +392,8 @@ udfAlias2WSpace() {
 #    ls -1l $foTemp 2>/dev/null                                                 #? true
 #    test -f $foTemp                                                            #? true
 #    rm -f $foTemp
-#    udfMakeTemp foTemp type=pipe						#? true
-#    test -p $foTemp								#? true
+#    udfMakeTemp foTemp type=pipe                                               #? true
+#    test -p $foTemp                                                            #? true
 #    rm -f $foTemp
 #    udfMakeTemp invalid+variable                                               #? ${_bashlyk_iErrorInvalidVariable}
 #    udfMakeTemp path=/proc                                                     #? ${_bashlyk_iErrorNotExistNotCreated}

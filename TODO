@@ -1,4 +1,4 @@
-# $Id: TODO 683 2017-02-09 17:08:37+04:00 toor $
+# $Id: TODO 685 2017-02-14 17:21:19+04:00 toor $
 + liblog.sh: не проходит тест udfWarn без терминала (в не интерактивном режиме)
 + libini.sh: при тесте с другими модулями в ini файлах оказывается вывод других
   тестовых блоков (решено в версии 1.57)
@@ -113,5 +113,7 @@ Fri, 06 Mar 2015 12:44:00 +0400
 - #170207 - ini - settings for key and sections charset
 ! #170208 - check keys validity for active configuration! (+INI::set +INI::read)
 - #170209 - no hard throw state (for testing)
+- #170214 - std - for 'udfMakeTemp -v var' in the eval block are autoclean not worked
+
 
 
