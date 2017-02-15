@@ -1,5 +1,5 @@
 #
-# $Id: libtst.sh 686 2017-02-15 15:14:23+04:00 toor $
+# $Id: libtst.sh 687 2017-02-15 16:47:23+04:00 toor $
 #
 #****h* BASHLYK/libtst
 #  DESCRIPTION
@@ -186,31 +186,29 @@ __private() {
 #******
 shopt -s expand_aliases
 alias try="try()"
-alias catch='; eval "$( ERR::__convert_try_to_func $( udfMakeTemp ) )" ||'
+alias catch='; eval "$( ERR::__convert_try_to_func )" ||'
 
 #****f* libtst/ERR::__add_throw_to_command
 #  SYNOPSIS
-#    ERR::__add_throw_to_command <file> <command line>
+#    ERR::__add_throw_to_command <command line>
 #  DESCRIPTION
 #    add controlled trap for errors of the <commandline>
 #  INPUTS
-#    <file>        - filename for temporary saving details of the command line
-#                    processing
 #    <commandline> - source command line
 #  OUTPUT
 #    changed command line
 #  NOTES
 #    private method, used for 'try ..catch' emulation
 #  EXAMPLE
-#    local cmd='command --with -a -- arguments'
-#    ERR::__add_throw_to_command log "$cmd" >| md5sum | grep ^87f9cca97f84a.*-$ #? true
+#    local s='command --with -a -- arguments' cmd='ERR::__add_throw_to_command'
+#    $cmd $s             >| md5sum | grep ^856f03be5778a30bb61dcd1e2e3fdcde.*-$ #? true
 #  SOURCE
 ERR::__add_throw_to_command() {
 
   local s
 
-   s='echo -e "command: $( udfTrim '${2/;/}' )\n output: {" > '"$1"
-  s+='; '${2/;/}' >> '$1' 2>&1 && echo -n . || return $?;'
+   s='_bashlyk_sLastError[$BASHPID]="command: $( udfTrim '${*/;/}' )\n output: '
+  s+='{\n$('${*/;/}' 2>&1)\n}" && echo -n . || return $?;'
 
   echo $s
 
@@ -220,9 +218,6 @@ ERR::__add_throw_to_command() {
 #    ERR::__convert_try_to_func
 #  DESCRIPTION
 #    convert "try" block to the function with controlled traps of the errors
-#  INPUTS
-#    <file>  - filename for saving command states
-#    <stdin> -
 #  OUTPUT
 #    function definition for evaluate
 #  NOTES
@@ -241,7 +236,7 @@ ERR::__convert_try_to_func() {
 
     if [[ ! $REPLY =~ ^[[:space:]]*(try \(\)|\{|\})[[:space:]]*$ ]]; then
 
-      ERR::__add_throw_to_command $1 "$REPLY"
+      ERR::__add_throw_to_command $REPLY
 
     else
 
@@ -252,7 +247,7 @@ ERR::__convert_try_to_func() {
 
   done< <( declare -pf try 2>/dev/null)
 
-  echo "$s"' && echo " ok." || { udfSetLastError $? '$1'; echo " fail..($?)"; false; }'
+  echo $s' && echo " ok." || { udfSetLastError $?; echo " fail..($?)"; false; }'
   rm -f $s
 
 }
@@ -294,18 +289,15 @@ ERR::__convert_try_to_func() {
 #  SOURCE
 ERR::exception.message() {
 
-  local log=${_bashlyk_sLastError[$BASHPID]} rc=${_bashlyk_iLastError[$BASHPID]}
+  local msg=${_bashlyk_sLastError[$BASHPID]} rc=${_bashlyk_iLastError[$BASHPID]}
   udfIsNumber $rc || return $?
 
   echo -e "try box exception:\n~~~~~~~~~~~~~~~~~~"
   echo " status: $rc"
 
-  if [[ $log && -s $log ]]; then
+  if [[ $msg ]]; then
 
-    udfAddFO2Clean $log
-    cat $log
-    echo "}"
-    rm -f $log
+    echo -e $msg
 
   fi
 

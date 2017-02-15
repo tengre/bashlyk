@@ -1,5 +1,5 @@
 #
-# $Id: liberr.sh 666 2017-01-25 15:32:01+04:00 toor $
+# $Id: liberr.sh 687 2017-02-15 16:47:23+04:00 toor $
 #
 #****h* BASHLYK/liberr
 #  DESCRIPTION
@@ -155,7 +155,7 @@ udfSetLastError() {
   [[ "$i" =~ ^[0-9]+$ && $i -le 255 ]] && shift || i=$_bashlyk_iErrorUnknown
 
   _bashlyk_iLastError[$BASHPID]=$i
-  _bashlyk_sLastError[$BASHPID]="$*"
+  [[ $* ]] && _bashlyk_sLastError[$BASHPID]="$*"
 
   return $i
 
