@@ -1,5 +1,5 @@
 #
-# $Id: liberr.sh 688 2017-02-15 17:05:39+04:00 toor $
+# $Id: liberr.sh 689 2017-02-15 17:17:22+04:00 toor $
 #
 #****h* BASHLYK/liberr
 #  DESCRIPTION
@@ -1004,7 +1004,7 @@ ERR::__convert_try_to_func() {
 #   _bashlyk_iLastError[$BASHPID]='not number'
 #   ERR::exception.message                                                      #? $_bashlyk_iErrorNotNumber
 #   local s fn                                                                  #-
-#   error4test() { echo "$0: special error for testing"; return 210; };         #-
+#   error4test() { echo "${0##*/}: special error for testing"; return 210; };   #-
 #   udfMakeTemp fn                                                              #-
 #   cat <<-'EOFtry' > $fn                                                       #-
 #   try {                                                                       #-
@@ -1019,7 +1019,7 @@ ERR::__convert_try_to_func() {
 #                                                                               #-
 #   }                                                                           #-
 #   EOFtry                                                                      #-
-#  . $fn               >| md5sum - | grep ^015d8fd97d8fecef29d5c7f068881e47.*-$ #? true
+#  . $fn               >| md5sum - | grep ^907e5939aef9c0e0f1e7875ada7a5c80.*-$ #? true
 #  SOURCE
 ERR::exception.message() {
 
