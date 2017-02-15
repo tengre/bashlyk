@@ -1,5 +1,5 @@
 #
-# $Id: libtst.sh 685 2017-02-14 17:21:19+04:00 toor $
+# $Id: libtst.sh 686 2017-02-15 15:14:23+04:00 toor $
 #
 #****h* BASHLYK/libtst
 #  DESCRIPTION
@@ -185,100 +185,131 @@ __private() {
 }
 #******
 shopt -s expand_aliases
-alias try="try() "
-alias catch='; eval "$( declare -pf try | err.x $( udfMakeTemp ) )" ||'
-err.foreach.addlog() {
+alias try="try()"
+alias catch='; eval "$( ERR::__convert_try_to_func $( udfMakeTemp ) )" ||'
+
+#****f* libtst/ERR::__add_throw_to_command
+#  SYNOPSIS
+#    ERR::__add_throw_to_command <file> <command line>
+#  DESCRIPTION
+#    add controlled trap for errors of the <commandline>
+#  INPUTS
+#    <file>        - filename for temporary saving details of the command line
+#                    processing
+#    <commandline> - source command line
+#  OUTPUT
+#    changed command line
+#  NOTES
+#    private method, used for 'try ..catch' emulation
+#  EXAMPLE
+#    local cmd='command --with -a -- arguments'
+#    ERR::__add_throw_to_command log "$cmd" >| md5sum | grep ^87f9cca97f84a.*-$ #? true
+#  SOURCE
+ERR::__add_throw_to_command() {
 
   local s
 
    s='echo -e "command: $( udfTrim '${2/;/}' )\n output: {" > '"$1"
   s+='; '${2/;/}' >> '$1' 2>&1 && echo -n . || return $?;'
+
   echo $s
 
 }
-#****f* libtst/err.x
+#****f* libtst/ERR::__convert_try_to_func
 #  SYNOPSIS
-#    err.x
+#    ERR::__convert_try_to_func
 #  DESCRIPTION
-#    ...
+#    convert "try" block to the function with controlled traps of the errors
 #  INPUTS
-#    ...
+#    <file>  - filename for saving command states
+#    <stdin> -
 #  OUTPUT
-#    ...
-#  RETURN VALUE
-#    ...
+#    function definition for evaluate
+#  NOTES
+#    private method, used for 'try ..catch' emulation
+#  TODO
+#    error handling for input 'try' function checking not worked
 #  EXAMPLE
-#    #err.x
+#    ERR::__convert_try_to_func >| grep '^/tmp/.*ok.*fail.*; false; }$'         #? true
 #  SOURCE
-err.x() {
-
-  udfOn NoSuchFileOrDir $1 || return
+ERR::__convert_try_to_func() {
 
   local s
   udfMakeTemp -v s
 
-  while read -t 60; do
+  while read -t 4; do
 
     if [[ ! $REPLY =~ ^[[:space:]]*(try \(\)|\{|\})[[:space:]]*$ ]]; then
 
-      err.foreach.addlog $1 "$REPLY"
+      ERR::__add_throw_to_command $1 "$REPLY"
 
     else
 
+      #echo "${REPLY/try/try${s//\//.}}"
       echo "${REPLY/try/$s}"
 
     fi
 
-  done
+  done< <( declare -pf try 2>/dev/null)
+
   echo "$s"' && echo " ok." || { udfSetLastError $? '$1'; echo " fail..($?)"; false; }'
   rm -f $s
+
 }
 #******
-#****f* libtst/err.exception.message
+#****f* libtst/ERR::exception.message
 #  SYNOPSIS
-#    err.exception.message
+#    ERR::exception.message
 #  DESCRIPTION
-#    ...
+#    show last error status
 #  INPUTS
-#    ...
+#    used global variables $_bashlyk_{i,s}LastError
 #  OUTPUT
-#    ...
-#  RETURN VALUE
-#    ...
+#    try show commandline, status(error code) and output
+#  ERRORS
+#    MissingArgument - _bashlyk_iLastError[$BASHPID] empty
+#    NotNumber       - _bashlyk_iLastError[$BASHPID] is not number
 #  EXAMPLE
+#   _bashlyk_iLastError[$BASHPID]=''
+#   ERR::exception.message                                                      #? $_bashlyk_iErrorMissingArgument
+#   _bashlyk_iLastError[$BASHPID]='not number'
+#   ERR::exception.message                                                      #? $_bashlyk_iErrorNotNumber
 #   local s fn                                                                  #-
 #   error4test() { echo "$0: special error for testing"; return 210; };         #-
 #   udfMakeTemp fn                                                              #-
 #   cat <<-'EOFtry' > $fn                                                       #-
 #   try {                                                                       #-
 #     uname -a                                                                  #-
-#     uname -a                                                                  #-
-#     uname -a                                                                  #-
-#     error4test                                                                #-
+#     date -R                                                                   #-
 #     uname                                                                     #-
+#     error4test                                                                #-
+#     true                                                                      #-
 #   } catch {                                                                   #-
 #                                                                               #-
-#     err.exception.message                                                     #-
+#     ERR::exception.message                                                    #-
 #                                                                               #-
 #   }                                                                           #-
 #   EOFtry                                                                      #-
-#  . $fn
-##>| md5sum - | grep ^015d8fd97d8fecef29d5c7f068881e47.*-$ #? true
+#  . $fn               >| md5sum - | grep ^015d8fd97d8fecef29d5c7f068881e47.*-$ #? true
 #  SOURCE
-err.exception.message() {
+ERR::exception.message() {
 
-  local log=${_bashlyk_sLastError[$BASHPID]}
+  local log=${_bashlyk_sLastError[$BASHPID]} rc=${_bashlyk_iLastError[$BASHPID]}
+  udfIsNumber $rc || return $?
 
   echo -e "try box exception:\n~~~~~~~~~~~~~~~~~~"
-  echo " status: ${_bashlyk_iLastError[$BASHPID]}"
-  if [[ -s $log ]]; then
+  echo " status: $rc"
+
+  if [[ $log && -s $log ]]; then
 
     udfAddFO2Clean $log
     cat $log
-    echo "} ( $log )"
-    #rm -f $log
+    echo "}"
+    rm -f $log
 
   fi
+
+  return $rc
 
 }
 #******
