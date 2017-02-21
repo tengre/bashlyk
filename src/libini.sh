@@ -1,5 +1,5 @@
 #
-# $Id: libini.sh 683 2017-02-09 17:08:38+04:00 toor $
+# $Id: libini.sh 690 2017-02-21 17:28:49+04:00 toor $
 #
 #****h* BASHLYK/libini
 #  DESCRIPTION
@@ -368,12 +368,24 @@ INI::__section.select() {
 #    tSShow2.set [ tSect2 ] keyOneWord = is_one_world_value
 #    tSShow2.__section.show tSect2 >| md5sum - | grep ^f4bea0366a1f110343bf.*-$ #? true
 #    tSShow2.free
+#    INI tCheckSpaces
+#    tCheckSpaces.set [ section ] key = value
+#    tCheckSpaces.set [ __settings__ ] bNoSpaceAroundSection = true
+#    tCheckSpaces.show
+#    tCheckSpaces.set [ __settings__ ] bNoSpaceAroundSection = false
+#    tCheckSpaces.show
+#    tCheckSpaces.free
 #  SOURCE
 INI::__section.show() {
 
-  local iC id k o sA sU
+  local iC id k o sA sU s
 
   o=${FUNCNAME[0]%%.*}
+
+  ${o}.__section.select __settings__
+  s=$( ${o}.__section.get bNoSpaceAroundSection )
+
+  [[ ${s,,} =~ ^(true|yes|1)$ ]] && s='' || s=' '
 
   ${o}.__section.select $*
   id=$( ${o}.__section.id $* )
@@ -381,7 +393,16 @@ INI::__section.show() {
   sU=$( ${o}.__section.get _bashlyk_raw_mode )
 
   [[ $sU == '!' ]] && sA=':' || sA=
-  [[ $1 ]] && printf "\n\n[ %s ]%s\n\n" "${@//\'\'/\"}" "$sA" || echo ""
+
+  if [[ $1 ]]; then
+
+    printf "\n\n[%s%s%s]%s\n\n" "$s" "${@//\'\'/\"}" "$s" "$sA"
+
+  else
+
+    echo ""
+
+  fi
 
   if [[ $sU == "=" ]]; then
 
@@ -445,7 +466,7 @@ INI::__section.show() {
 
   fi
 
-  [[ $sA ]] && printf "\n%s[ %s ]\n" "$sA" "${@//\'\'/\"}"
+  [[ $sA ]] && printf "\n%s[%s%s%s]\n" "$sA" "$s" "${@//\'\'/\"}" "$s"
 
 }
 #******
@@ -936,15 +957,29 @@ INI::show() {
 #    tSave.save $fn
 #    tSave.free
 #    tail -n +4 $fn >| md5sum - | grep ^014d76fac8f057af36d119aaddeb30ee.*-$    #? true
+#    INI tComments
+#    ## TODO globs
+#    tComments.set [ __settings__ ] chComment2Save = \# this is comment';'
+#    tComments.save $fn
+#    cat $fn             >| grep -Po "^# this is comment; created .* by $USER"  #? true
+#    tComments.set [ __settings__ ] chComment2Save =
+#    tComments.save $fn
+#    cat $fn             >| grep -Po "^# created .* by $USER"                   #? true
+#    tComments.free
 #  SOURCE
 INI::save() {
 
   udfOn MissingArgument throw "$1"
 
-  local fn o
+  local c fmtComment fn o
 
+  fmtComment='%COMMENT%\n%COMMENT% created %s by %s\n%COMMENT%\n'
   fn="$1"
   o=${FUNCNAME[0]%%.*}
+
+  ${o}.__section.select __settings__
+  c=$( ${o}.__section.get chComment2Save )
+  : ${c:=#}
 
   [[ -s $fn ]] && mv -f $fn ${fn}.bak
 
@@ -956,7 +991,7 @@ INI::save() {
 
   {
 
-    printf -- ';\n; created %s by %s\n;\n' "$(date -R)" "$( _ sUser )"
+    printf -- "${fmtComment//%COMMENT%/$c}" "$(date -R)" "$( _ sUser )"
     ${o}.show
 
   } > $fn
