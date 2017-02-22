@@ -1,5 +1,5 @@
 #
-# $Id: libini.sh 690 2017-02-21 17:28:49+04:00 toor $
+# $Id: libini.sh 691 2017-02-22 15:58:33+04:00 toor $
 #
 #****h* BASHLYK/libini
 #  DESCRIPTION
@@ -104,7 +104,7 @@ declare -rg _bashlyk_methods_ini="                                             \
                                                                                \
     __section.id __section.byindex __section.select __section.show             \
     __section.setRawData __section.getArray get set show save read             \
-    keys load bind.cli getopt free                                             \
+    keys load bind.cli getopt settings free                                    \
                                                                                \
 "
 
@@ -115,7 +115,7 @@ declare -rg _bashlyk_externals_ini="                                           \
 "
 declare -rg _bashlyk_exports_ini="                                             \
                                                                                \
-    INI get set keys show save read load bind.cli getopt free                  \
+    INI get set keys show save read load bind.cli getopt settings free         \
                                                                                \
 "
 _bashlyk_iErrorIniMissingMethod=111
@@ -155,7 +155,7 @@ INI() {
   udfOn InvalidVariable throw $o
 
   declare -ag -- _a${o^^}="()"
-  declare -Ag -- _h${o^^}_settings="()"
+  declare -Ag -- _h${o^^}_settings='( [chComment]="#" [bSectionNoBorder]="false" [bConfMode]="false" )'
   declare -Ag -- _h${o^^}="([__settings__]=_h${o^^}_settings)"
 
   for s in $_bashlyk_methods_ini; do
@@ -362,7 +362,7 @@ INI::__section.select() {
 #    tSShow.__section.show >| md5sum | grep ^67d9d58badfb9e5e568e72adcc5c95.*-$ #? true
 #    tSShow.free
 #    INI tSShow2
-#    tSShow2.set [ __settings__ ] bConfMode = true
+#    tSShow2.settings bConfMode = true
 #    tSShow2.set [ tSect2 ] keyFirst   = is first value
 #    tSShow2.set [ tSect2 ] keySecond  = is second value
 #    tSShow2.set [ tSect2 ] keyOneWord = is_one_world_value
@@ -370,9 +370,9 @@ INI::__section.select() {
 #    tSShow2.free
 #    INI tCheckSpaces
 #    tCheckSpaces.set [ section ] key = value
-#    tCheckSpaces.set [ __settings__ ] bNoSpaceAroundSection = true
+#    tCheckSpaces.settings bSectionNoBorder = true
 #    tCheckSpaces.show
-#    tCheckSpaces.set [ __settings__ ] bNoSpaceAroundSection = false
+#    tCheckSpaces.settings bSectionNoBorder = false
 #    tCheckSpaces.show
 #    tCheckSpaces.free
 #  SOURCE
@@ -382,8 +382,7 @@ INI::__section.show() {
 
   o=${FUNCNAME[0]%%.*}
 
-  ${o}.__section.select __settings__
-  s=$( ${o}.__section.get bNoSpaceAroundSection )
+  s=$( ${o}.settings bSectionNoBorder )
 
   [[ ${s,,} =~ ^(true|yes|1)$ ]] && s='' || s=' '
 
@@ -435,10 +434,11 @@ INI::__section.show() {
       iKeyWidth=$( ${o}.__section.get _bashlyk_key_width )
       udfIsNumber $iKeyWidth || iKeyWidth=''
 
-      iPadding=$( ${o}.get [__settings__]iPadding )
+      iPadding=$( ${o}.settings iPadding )
+
       udfIsNumber $iPadding || iPadding=4
 
-      if [[ $( ${o}.get [__settings__]bConfMode ) =~ ^(true|yes|1)$ ]]; then
+      if [[ $( ${o}.settings bConfMode ) =~ ^(true|yes|1)$ ]]; then
 
         bQuote=true
         iPadding=0
@@ -467,6 +467,8 @@ INI::__section.show() {
   fi
 
   [[ $sA ]] && printf "\n%s[%s%s%s]\n" "$sA" "$s" "${@//\'\'/\"}" "$s"
+
+  return 0
 
 }
 #******
@@ -636,8 +638,7 @@ INI::__section.getArray() {
 #    tGet.__section.set key "is unnamed section"
 #    tGet.__section.select section
 #    tGet.__section.set key "is value"
-#    tGet.get [section]key
-#    tGet.get [section]key >| grep '^is value$'                                 #? true
+#    tGet.get [section] key >| grep '^is value$'                                #? true
 #    tGet.get   key >| grep '^is unnamed section$'                              #? true
 #    tGet.get []key >| grep '^is unnamed section$'                              #? true
 #    tGet.__section.select accumu
@@ -661,7 +662,7 @@ INI::get() {
   local -a a
   local IFS o k s="$*" v
 
-  IFS='[]' a=( $s ) && IFS=$' \t\n'
+  IFS='[]' && a=( $s ) && IFS=$' \t\n'
 
   o=${FUNCNAME[0]%%.*}
 
@@ -695,7 +696,7 @@ INI::get() {
   else
 
     ${o}.__section.select $s
-    ${o}.__section.get "$k"
+    ${o}.__section.get $( udfTrim "$k" )
 
   fi
 
@@ -873,7 +874,7 @@ INI::set() {
 
   else
 
-    if [[ $( ${o}.get [__settings__]bConfMode ) =~ ^(true|yes|1)$ ]]; then
+    if [[ $( ${o}.settings bConfMode ) =~ ^(true|yes|1)$ ]]; then
 
       re=$_bashlyk_ini_reKey_am
 
@@ -959,10 +960,10 @@ INI::show() {
 #    tail -n +4 $fn >| md5sum - | grep ^014d76fac8f057af36d119aaddeb30ee.*-$    #? true
 #    INI tComments
 #    ## TODO globs
-#    tComments.set [ __settings__ ] chComment2Save = \# this is comment';'
+#    tComments.settings chComment = \# this is comment';'
 #    tComments.save $fn
 #    cat $fn             >| grep -Po "^# this is comment; created .* by $USER"  #? true
-#    tComments.set [ __settings__ ] chComment2Save =
+#    tComments.settings chComment =
 #    tComments.save $fn
 #    cat $fn             >| grep -Po "^# created .* by $USER"                   #? true
 #    tComments.free
@@ -977,8 +978,7 @@ INI::save() {
   fn="$1"
   o=${FUNCNAME[0]%%.*}
 
-  ${o}.__section.select __settings__
-  c=$( ${o}.__section.get chComment2Save )
+  c=$( ${o}.settings chComment )
   : ${c:=#}
 
   [[ -s $fn ]] && mv -f $fn ${fn}.bak
@@ -1069,7 +1069,7 @@ INI::read() {
   reSection='^[[:space:]]*(:?)\[[[:space:]]*([[:print:]]+?)[[:space:]]*\](:?)[[:space:]]*$'
   reComment='^[[:space:]]*$|(^|[[:space:]]+)[\#\;].*$'
 
-  if [[ $( ${o}.get [ __settings__ ]bConfMode ) =~ ^(true|yes|1)$ ]]; then
+  if [[ $( ${o}.settings bConfMode ) =~ ^(true|yes|1)$ ]]; then
 
     reKey_Val='^[[:space:]]*\b([_a-zA-Z][_a-zA-Z0-9]*)\b=(.*)[[:space:]]*$'
 
@@ -1591,6 +1591,56 @@ INI::getopt() {
   udfOn EmptyVariable o || return $( _ iErrorNotAvailable )
 
   ${o}.get [${s}]${k}
+
+}
+#******
+#****p* libini/INI::settings
+#  SYNOPSIS
+#    INI::settings [ <key> [ = <value> ] ]
+#  DESCRIPTION
+#    set or get propertie(s) of the INI instance
+#  ARGUMENTS
+#    <key>   - select propertie for action - get (show) or set
+#    <value> - set new value for selected properties
+#              default, show all properties with section header
+#  NOTES
+#    public method
+#  ERRORS
+#    iErrorInvalidArgument - invalid key name ( char class :alnum: expected )
+#  EXAMPLE
+#    INI tSettings
+#    tSettings.set key = value
+#    tSettings.settings bSectionWithSpaces = true
+#    tSettings.settings sComment           = "##::##"
+#    tSettings.settings sComment                             >| grep '^##::##$' #? true
+#    tSettings.settings bSectionWithSpaces                   >| grep ^true$     #? true
+#    tSettings.settings >| wc -w | grep ^18$                                    #? true
+#    tSettings.settings bSection WithSpaces                                     #? $_bashlyk_iErrorInvalidArgument
+#    tSettings.free
+#  SOURCE
+INI::settings() {
+
+  local o=${FUNCNAME[0]%%.*} k s v
+
+  if   [[ "$*" =~ ^[[:space:]]*([[:alnum:]]+)[[:space:]]*=(.*)$ ]]; then
+
+    ${o}.set [ __settings__ ] $*
+
+  elif [[ "$*" =~ ^[[:space:]]*([[:alnum:]]+)[[:space:]]*$ ]]; then
+
+    ${o}.get [ __settings__ ] $*
+
+  elif [[ "$*" =~ ^[[:space:]]*$ ]]; then
+
+    ${o}.__section.show '__settings__'
+
+  else
+
+    return $( _ iErrorInvalidArgument )
+
+  fi
+
+  return $?
 
 }
 #******
