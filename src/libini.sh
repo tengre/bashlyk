@@ -1,5 +1,5 @@
 #
-# $Id: libini.sh 691 2017-02-22 15:58:33+04:00 toor $
+# $Id: libini.sh 692 2017-02-25 02:05:31+04:00 toor $
 #
 #****h* BASHLYK/libini
 #  DESCRIPTION
@@ -97,8 +97,12 @@
 : ${_bashlyk_sArg:="$@"}
 : ${_bashlyk_pathIni:=$(pwd)}
 
-declare -rg _bashlyk_ini_reKey_am='^\b([_a-zA-Z][_a-zA-Z0-9]*)\b$'
-declare -rg _bashlyk_ini_reKey_im='^\b([^=]+)\b$'
+declare -rg _bashlyk_cnf_reKey='^\b([_a-zA-Z][_a-zA-Z0-9]*)\b$'
+declare -rg _bashlyk_ini_reKey='^\b([^=]+)\b$'
+declare -rg _bashlyk_cnf_reKeyVal='^[[:space:]]*\b([_a-zA-Z][_a-zA-Z0-9]*)\b=(.*)[[:space:]]*$'
+declare -rg _bashlyk_ini_reKeyVal='^[[:space:]]*\b([^=]+)\b[[:space:]]*=[[:space:]]*(.*)[[:space:]]*$'
+declare -rg _bashlyk_cnf_fmtKeyVal='^[[:space:]]*\b(%KEY%)\b=(.*)[[:space:]]*$'
+declare -rg _bashlyk_ini_fmtKeyVal='^[[:space:]]*\b(%KEY%)\b[[:space:]]*=[[:space:]]*(.*)[[:space:]]*$'
 
 declare -rg _bashlyk_methods_ini="                                             \
                                                                                \
@@ -154,9 +158,16 @@ INI() {
 
   udfOn InvalidVariable throw $o
 
-  declare -ag -- _a${o^^}="()"
-  declare -Ag -- _h${o^^}_settings='( [chComment]="#" [bSectionNoBorder]="false" [bConfMode]="false" )'
+  declare -Ag -- _h${o^^}_settings='(                                          \
+                                                                               \
+    [chComment]="#"                                                            \
+    [bConfMode]="false"                                                        \
+    [bSectionNoBorder]="false"                                                 \
+                                                                               \
+  )'
+
   declare -Ag -- _h${o^^}="([__settings__]=_h${o^^}_settings)"
+  declare -ag -- _a${o^^}="()"
 
   for s in $_bashlyk_methods_ini; do
 
@@ -813,7 +824,7 @@ INI::keys() {
 #    tSet.get []key >| grep '^is unnamed section$'                              #? true
 #    tSet.get key with spaces >| grep '^is unnamed section$'                    #? true
 #    tSet.set [section1]+= is raw value No.1
-#    tSet.set [section1]+ = is raw value No.2
+#    tSet.set [section1] += is raw value No.2
 #    tSet.set [section1]+  =   is raw value No.3
 #    tSet.set [section2]=save unique value No.1
 #    tSet.set [section2] =  save unique value No.2
@@ -862,8 +873,8 @@ INI::set() {
 
   esac
 
-  k="$( echo $k )"
-  v="$( echo $v )"
+  k="$( udfTrim "$k" )"
+  v="$( udfTrim "$v" )"
   : ${k:==}
 
   ${o}.__section.select $s
@@ -876,11 +887,11 @@ INI::set() {
 
     if [[ $( ${o}.settings bConfMode ) =~ ^(true|yes|1)$ ]]; then
 
-      re=$_bashlyk_ini_reKey_am
+      re=$_bashlyk_cnf_reKey
 
     else
 
-      re=$_bashlyk_ini_reKey_im
+      re=$_bashlyk_ini_reKey
 
     fi
 
@@ -1071,11 +1082,11 @@ INI::read() {
 
   if [[ $( ${o}.settings bConfMode ) =~ ^(true|yes|1)$ ]]; then
 
-    reKey_Val='^[[:space:]]*\b([_a-zA-Z][_a-zA-Z0-9]*)\b=(.*)[[:space:]]*$'
+    reKey_Val=$_bashlyk_cnf_reKeyVal
 
   else
 
-    reKey_Val='^[[:space:]]*\b([^=]+)\b[[:space:]]*=[[:space:]]*(.*)[[:space:]]*$'
+    reKey_Val=$_bashlyk_ini_reKeyVal
 
   fi
 
@@ -1307,12 +1318,21 @@ INI::load() {
 
   o=${FUNCNAME[0]%%.*}
   fmtSections='^[[:space:]]*(:?)\[[[:space:]]*(%SECTION%)[[:space:]]*\](:?)[[:space:]]*$'
-  fmtKeyValue='^[[:space:]]*(%KEY%)[[:space:]]*=[[:space:]]*(.*)[[:space:]]*$'
+
+  if [[ $( ${o}.settings bConfMode ) =~ ^(true|yes|1)$ ]]; then
+
+    fmtKeyValue=$_bashlyk_cnf_fmtKeyVal
+
+  else
+
+    fmtKeyValue=$_bashlyk_ini_fmtKeyVal
+
+  fi
 
   [[ "$1" == "${1##*/}" && -f "$(_ pathIni)/$1" ]] && path=$(_ pathIni)
   [[ "$1" == "${1##*/}" && -f "$1"              ]] && path=$(pwd)
   [[ "$1" != "${1##*/}" && -f "$1"              ]] && path=${1%/*}
-  #
+
   if [[ ! $path && -f "/etc/$(_ pathPrefix)/$1" ]]; then
 
     path="/etc/$( _ pathPrefix )"
@@ -1343,6 +1363,7 @@ INI::load() {
       if   [[ ${BASH_REMATCH[3]} == ${BASH_REMATCH[5]} ]]; then
 
         s="${BASH_REMATCH[3]}"
+        ## TODO check by bConfMode
         s="${s//,/\|}"
         hKeyValue[$sSection]=${fmtKeyValue/\%KEY\%/$s}
 
@@ -1623,6 +1644,24 @@ INI::settings() {
   local o=${FUNCNAME[0]%%.*} k s v
 
   if   [[ "$*" =~ ^[[:space:]]*([[:alnum:]]+)[[:space:]]*=(.*)$ ]]; then
+
+#    if [[ ${BASH_REMATCH[1]} == bConfMode ]]; then
+
+#      if [[ ${BASH_REMATCH[2],,} =~ ^(true|yes|1)$ ]]; then
+
+#        ${o}.set [ __settings__ ] reKey     = $_bashlyk_cnf_reKey
+#        ${o}.set [ __settings__ ] reKeyVal  = $_bashlyk_cnf_reKeyVal
+#        ${o}.set [ __settings__ ] fmtKeyVal = $_bashlyk_cnf_fmtKeyVal
+
+#      else
+
+#        ${o}.set [ __settings__ ] reKey     = $_bashlyk_ini_reKey
+#        ${o}.set [ __settings__ ] reKeyVal  = $_bashlyk_ini_reKeyVal
+#        ${o}.set [ __settings__ ] fmtKeyVal = $_bashlyk_ini_fmtKeyVal
+
+#      fi
+
+#    fi
 
     ${o}.set [ __settings__ ] $*
 

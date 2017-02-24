@@ -1,5 +1,5 @@
 #
-# $Id: libstd.sh 685 2017-02-14 17:21:19+04:00 toor $
+# $Id: libstd.sh 692 2017-02-25 02:05:31+04:00 toor $
 #
 #****h* BASHLYK/libstd
 #  DESCRIPTION
@@ -1625,7 +1625,11 @@ udfIsHash() {
 #  SOURCE
 udfTrim() {
 
-  echo "$( expr "$*" : "^\ *\(.*[^ ]\)\ *$" )"
+  local s="$*"
+
+  [[ $s =~ ^\+$ ]] && s+=" "
+
+  echo "$( expr "$s" : "^\ *\(.*[^ ]\)\ *$" )"
 
 }
 #******
