@@ -1,5 +1,5 @@
 #
-# $Id: libcnf.sh 691 2017-02-22 15:53:37+04:00 toor $
+# $Id: libcnf.sh 693 2017-02-26 00:41:32+04:00 toor $
 #
 #****h* BASHLYK/libcnf
 #  DESCRIPTION
@@ -113,7 +113,7 @@ __getconfig() {
   fi
 
   INI $o
-  ${o}.settings bConfMode = true
+  ${o}.settings.shellmode true
 
   if ! ${o}.load "$@"; then
 
@@ -247,7 +247,7 @@ udfSetConfig() {
 
   o="${FUNCNAME[0]%%.*}_${RANDOM}${RANDOM}"
   INI $o
-  ${o}.settings bConfMode = true
+  ${o}.settings.shellmode true
 
   while read -t 4; do
 

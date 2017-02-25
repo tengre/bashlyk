@@ -1,5 +1,5 @@
 #
-# $Id: libini.sh 692 2017-02-25 02:05:31+04:00 toor $
+# $Id: libini.sh 693 2017-02-26 00:41:33+04:00 toor $
 #
 #****h* BASHLYK/libini
 #  DESCRIPTION
@@ -101,14 +101,14 @@ declare -rg _bashlyk_cnf_reKey='^\b([_a-zA-Z][_a-zA-Z0-9]*)\b$'
 declare -rg _bashlyk_ini_reKey='^\b([^=]+)\b$'
 declare -rg _bashlyk_cnf_reKeyVal='^[[:space:]]*\b([_a-zA-Z][_a-zA-Z0-9]*)\b=(.*)[[:space:]]*$'
 declare -rg _bashlyk_ini_reKeyVal='^[[:space:]]*\b([^=]+)\b[[:space:]]*=[[:space:]]*(.*)[[:space:]]*$'
-declare -rg _bashlyk_cnf_fmtKeyVal='^[[:space:]]*\b(%KEY%)\b=(.*)[[:space:]]*$'
-declare -rg _bashlyk_ini_fmtKeyVal='^[[:space:]]*\b(%KEY%)\b[[:space:]]*=[[:space:]]*(.*)[[:space:]]*$'
+declare -rg _bashlyk_cnf_fmtPairs='^[[:space:]]*\b(%KEY%)\b=(.*)[[:space:]]*$'
+declare -rg _bashlyk_ini_fmtPairs='^[[:space:]]*\b(%KEY%)\b[[:space:]]*=[[:space:]]*(.*)[[:space:]]*$'
 
 declare -rg _bashlyk_methods_ini="                                             \
                                                                                \
     __section.id __section.byindex __section.select __section.show             \
     __section.setRawData __section.getArray get set show save read             \
-    keys load bind.cli getopt settings free                                    \
+    keys load bind.cli getopt settings settings.shellmode free                 \
                                                                                \
 "
 
@@ -161,8 +161,11 @@ INI() {
   declare -Ag -- _h${o^^}_settings='(                                          \
                                                                                \
     [chComment]="#"                                                            \
-    [bConfMode]="false"                                                        \
     [bSectionNoBorder]="false"                                                 \
+    [shellmode]="false"                                                        \
+    [reKey]="$_bashlyk_ini_reKey"                                              \
+    [reKeyVal]="$_bashlyk_ini_reKeyVal"                                        \
+    [fmtPairs]="$_bashlyk_ini_fmtPairs"                                      \
                                                                                \
   )'
 
@@ -373,7 +376,7 @@ INI::__section.select() {
 #    tSShow.__section.show >| md5sum | grep ^67d9d58badfb9e5e568e72adcc5c95.*-$ #? true
 #    tSShow.free
 #    INI tSShow2
-#    tSShow2.settings bConfMode = true
+#    tSShow2.settings.shellmode true
 #    tSShow2.set [ tSect2 ] keyFirst   = is first value
 #    tSShow2.set [ tSect2 ] keySecond  = is second value
 #    tSShow2.set [ tSect2 ] keyOneWord = is_one_world_value
@@ -449,7 +452,7 @@ INI::__section.show() {
 
       udfIsNumber $iPadding || iPadding=4
 
-      if [[ $( ${o}.settings bConfMode ) =~ ^(true|yes|1)$ ]]; then
+      if [[ $( ${o}.settings.shellmode ) =~ ^(true|yes|1)$ ]]; then
 
         bQuote=true
         iPadding=0
@@ -842,39 +845,28 @@ INI::set() {
 
   udfOn MissingArgument $* || return $?
 
-  local -a a
-  local iKeyWidth IFS o k re s="$*" v
+  local iKeyWidth o k s v
 
-  IFS='[]' && a=( $s ) && IFS=$' \t\n'
+  if [[ $* =~ [[:space:]]*([^=]*)[[:space:]]*=[[:space:]]*(.*)[[:space:]]* ]];
+  then
+
+    s=${BASH_REMATCH[1]}
+    v=${BASH_REMATCH[2]}
+
+  else
+
+    eval $( udfOnError InvalidArgument "$*" )
+
+  fi
+
+  k="$( udfTrim "${s##*]}" )"
+  s="$( udfTrim "${s%]*}"  )"
+
+  [[ $s == $k ]] && s=__global__
+  [[ ${s/[/}  ]] && s=$( udfTrim "${s/[/}" ) || s=__global__
 
   o=${FUNCNAME[0]%%.*}
 
-  case "${#a[@]}" in
-
-    3)
-      s=${a[1]:-__global__}
-      k=${a[2]%%=*}
-      v=${a[2]#*=}
-      [[ $k == ${a[2]} && $v == ${a[2]} ]] \
-        && eval $( udfOnError InvalidArgument "${a[2]}" )
-      ;;
-
-    1)
-      s=__global__
-      k=${a[0]%%=*}
-      v=${a[0]#*=}
-      [[ $k == ${a[0]} && $v == ${a[0]} ]] \
-        && eval $( udfOnError InvalidArgument "${a[0]}" )
-      ;;
-
-    *)
-      eval $( udfOnError InvalidArgument "$* - $(declare -p a)" )
-      ;;
-
-  esac
-
-  k="$( udfTrim "$k" )"
-  v="$( udfTrim "$v" )"
   : ${k:==}
 
   ${o}.__section.select $s
@@ -885,17 +877,7 @@ INI::set() {
 
   else
 
-    if [[ $( ${o}.settings bConfMode ) =~ ^(true|yes|1)$ ]]; then
-
-      re=$_bashlyk_cnf_reKey
-
-    else
-
-      re=$_bashlyk_ini_reKey
-
-    fi
-
-    [[ $k =~ $re ]] || eval $( udfOnError IniExtraCharInKey "$k" )
+    [[ $k =~ $( ${o}.settings reKey ) ]] || eval $( udfOnError IniExtraCharInKey "$k" )
 
     iKeyWidth=$( ${o}.__section.get _bashlyk_key_width )
     udfIsNumber $iKeyWidth || iKeyWidth=0
@@ -1072,7 +1054,7 @@ INI::read() {
 
   udfOn NoSuchFileOrDir $1 || return
 
-  local bActiveSection bIgnore csv fn i iKeyWidth reComment reSection
+  local bActiveSection bIgnore csv fn i iKeyWidth reComment reKeyVal reSection
   local reValidSections s
 
   o=${FUNCNAME[0]%%.*}
@@ -1080,15 +1062,7 @@ INI::read() {
   reSection='^[[:space:]]*(:?)\[[[:space:]]*([[:print:]]+?)[[:space:]]*\](:?)[[:space:]]*$'
   reComment='^[[:space:]]*$|(^|[[:space:]]+)[\#\;].*$'
 
-  if [[ $( ${o}.settings bConfMode ) =~ ^(true|yes|1)$ ]]; then
-
-    reKey_Val=$_bashlyk_cnf_reKeyVal
-
-  else
-
-    reKey_Val=$_bashlyk_ini_reKeyVal
-
-  fi
+  reKeyVal=$( ${o}.settings reKeyVal )
 
   s="__global__"
   fn="$1"
@@ -1106,7 +1080,7 @@ INI::read() {
 
   bIgnore=
 
-  [[ ${hKeyValue[$s]} ]] || hKeyValue[$s]="$reKey_Val"
+  [[ ${hKeyValue[$s]} ]] || hKeyValue[$s]="$reKeyVal"
 
   ${o}.__section.select
   iKeyWidth=$( ${o}.__section.get _bashlyk_key_width )
@@ -1155,7 +1129,7 @@ INI::read() {
 
         =) ${o}.__section.set _bashlyk_raw_mode "=";;
 
-        *) hKeyValue[$s]="$reKey_Val";;
+        *) hKeyValue[$s]="$reKeyVal";;
 
       esac
 
@@ -1313,21 +1287,13 @@ INI::load() {
 
   local -a a
   local -A h hKeyValue hRawMode
-  local csv i IFS ini fmtKeyValue fmtSections o path reSection reValidSections s
+  local csv i IFS ini fmtPairs fmtSections o path reSection reValidSections s
   local sSection
 
   o=${FUNCNAME[0]%%.*}
   fmtSections='^[[:space:]]*(:?)\[[[:space:]]*(%SECTION%)[[:space:]]*\](:?)[[:space:]]*$'
 
-  if [[ $( ${o}.settings bConfMode ) =~ ^(true|yes|1)$ ]]; then
-
-    fmtKeyValue=$_bashlyk_cnf_fmtKeyVal
-
-  else
-
-    fmtKeyValue=$_bashlyk_ini_fmtKeyVal
-
-  fi
+  fmtPairs=$( ${o}.settings fmtPairs )
 
   [[ "$1" == "${1##*/}" && -f "$(_ pathIni)/$1" ]] && path=$(_ pathIni)
   [[ "$1" == "${1##*/}" && -f "$1"              ]] && path=$(pwd)
@@ -1363,9 +1329,9 @@ INI::load() {
       if   [[ ${BASH_REMATCH[3]} == ${BASH_REMATCH[5]} ]]; then
 
         s="${BASH_REMATCH[3]}"
-        ## TODO check by bConfMode
+        ## TODO check by shellmode
         s="${s//,/\|}"
-        hKeyValue[$sSection]=${fmtKeyValue/\%KEY\%/$s}
+        hKeyValue[$sSection]=${fmtPairs/\%KEY\%/$s}
 
       elif [[ ${BASH_REMATCH[3]} == ${BASH_REMATCH[4]} ]]; then
 
@@ -1635,7 +1601,7 @@ INI::getopt() {
 #    tSettings.settings sComment           = "##::##"
 #    tSettings.settings sComment                             >| grep '^##::##$' #? true
 #    tSettings.settings bSectionWithSpaces                   >| grep ^true$     #? true
-#    tSettings.settings >| wc -w | grep ^18$                                    #? true
+#    tSettings.settings >| wc -w | grep ^27$                                    #? true
 #    tSettings.settings bSection WithSpaces                                     #? $_bashlyk_iErrorInvalidArgument
 #    tSettings.free
 #  SOURCE
@@ -1643,33 +1609,15 @@ INI::settings() {
 
   local o=${FUNCNAME[0]%%.*} k s v
 
-  if   [[ "$*" =~ ^[[:space:]]*([[:alnum:]]+)[[:space:]]*=(.*)$ ]]; then
-
-#    if [[ ${BASH_REMATCH[1]} == bConfMode ]]; then
-
-#      if [[ ${BASH_REMATCH[2],,} =~ ^(true|yes|1)$ ]]; then
-
-#        ${o}.set [ __settings__ ] reKey     = $_bashlyk_cnf_reKey
-#        ${o}.set [ __settings__ ] reKeyVal  = $_bashlyk_cnf_reKeyVal
-#        ${o}.set [ __settings__ ] fmtKeyVal = $_bashlyk_cnf_fmtKeyVal
-
-#      else
-
-#        ${o}.set [ __settings__ ] reKey     = $_bashlyk_ini_reKey
-#        ${o}.set [ __settings__ ] reKeyVal  = $_bashlyk_ini_reKeyVal
-#        ${o}.set [ __settings__ ] fmtKeyVal = $_bashlyk_ini_fmtKeyVal
-
-#      fi
-
-#    fi
+  if [[ $* =~ ^[[:space:]]*([[:alnum:]]+)[[:space:]]*=[[:space:]]*(.*)[[:space:]]*$ ]]; then
 
     ${o}.set [ __settings__ ] $*
 
-  elif [[ "$*" =~ ^[[:space:]]*([[:alnum:]]+)[[:space:]]*$ ]]; then
+  elif [[ $* =~ ^[[:space:]]*([[:alnum:]]+)[[:space:]]*$ ]]; then
 
     ${o}.get [ __settings__ ] $*
 
-  elif [[ "$*" =~ ^[[:space:]]*$ ]]; then
+  elif [[ $* =~ ^[[:space:]]*$ ]]; then
 
     ${o}.__section.show '__settings__'
 
@@ -1680,6 +1628,67 @@ INI::settings() {
   fi
 
   return $?
+
+}
+#******
+#****p* libini/INI::settings.shellmode
+#  SYNOPSIS
+#    INI::settings.shellmode [ true|false ]
+#  DESCRIPTION
+#    enable/disable restricted shell mode for INI instance
+#  ARGUMENTS
+#    true  - enable  restricted shell mode (active configuration)
+#    false - disable restricted shell mode (default)
+#    without argument show current mode
+#  NOTES
+#    public method
+#  ERRORS
+#    InvalidArgument - expected true or false
+#  EXAMPLE
+#    INI tShellmode
+#    tShellmode.settings.shellmode                              >| grep ^false$ #? true
+#    tShellmode.settings.shellmode true                                         #? true
+#    tShellmode.settings.shellmode                              >| grep ^true$  #? true
+#    tShellmode.free
+#  SOURCE
+INI::settings.shellmode() {
+
+  local o=${FUNCNAME[0]%%.*}
+
+  case ${*,,} in
+
+    true|yes|1)
+
+      ${o}.set [ __settings__ ] reKey     = $_bashlyk_cnf_reKey
+      ${o}.set [ __settings__ ] reKeyVal  = $_bashlyk_cnf_reKeyVal
+      ${o}.set [ __settings__ ] fmtPairs  = $_bashlyk_cnf_fmtPairs
+      ${o}.set [ __settings__ ] shellmode = true
+
+    ;;
+
+    false|no|0)
+
+
+      ${o}.set [ __settings__ ] reKey     = $_bashlyk_ini_reKey
+      ${o}.set [ __settings__ ] reKeyVal  = $_bashlyk_ini_reKeyVal
+      ${o}.set [ __settings__ ] fmtPairs  = $_bashlyk_ini_fmtPairs
+      ${o}.set [ __settings__ ] shellmode = false
+
+    ;;
+
+            '')
+
+      ${o}.get [ __settings__ ] shellmode
+
+    ;;
+
+             *)
+
+      return $( _ iErrorInvalidArgument )
+
+    ;;
+
+  esac
 
 }
 #******
