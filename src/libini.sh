@@ -1,5 +1,5 @@
 #
-# $Id: libini.sh 693 2017-02-26 00:41:33+04:00 toor $
+# $Id: libini.sh 694 2017-02-26 22:54:41+04:00 toor $
 #
 #****h* BASHLYK/libini
 #  DESCRIPTION
@@ -1655,30 +1655,31 @@ INI::settings.shellmode() {
 
   local o=${FUNCNAME[0]%%.*}
 
+  ${o}.__section.select __settings__
+
   case ${*,,} in
 
     true|yes|1)
 
-      ${o}.set [ __settings__ ] reKey     = $_bashlyk_cnf_reKey
-      ${o}.set [ __settings__ ] reKeyVal  = $_bashlyk_cnf_reKeyVal
-      ${o}.set [ __settings__ ] fmtPairs  = $_bashlyk_cnf_fmtPairs
-      ${o}.set [ __settings__ ] shellmode = true
+      ${o}.__section.set reKey $_bashlyk_cnf_reKey
+      ${o}.__section.set reKeyVal $_bashlyk_cnf_reKeyVal
+      ${o}.__section.set fmtPairs $_bashlyk_cnf_fmtPairs
+      ${o}.__section.set shellmode true
 
     ;;
 
     false|no|0)
 
-
-      ${o}.set [ __settings__ ] reKey     = $_bashlyk_ini_reKey
-      ${o}.set [ __settings__ ] reKeyVal  = $_bashlyk_ini_reKeyVal
-      ${o}.set [ __settings__ ] fmtPairs  = $_bashlyk_ini_fmtPairs
-      ${o}.set [ __settings__ ] shellmode = false
+      ${o}.__section.set reKey $_bashlyk_ini_reKey
+      ${o}.__section.set reKeyVal $_bashlyk_ini_reKeyVal
+      ${o}.__section.set fmtPairs $_bashlyk_ini_fmtPairs
+      ${o}.__section.set shellmode false
 
     ;;
 
             '')
 
-      ${o}.get [ __settings__ ] shellmode
+      ${o}.__section.get shellmode
 
     ;;
 
