@@ -1,4 +1,4 @@
-Thu, 09 Feb 2017 17:16:30 +0400
+Mon, 27 Feb 2017 16:48:08 +0400
 	New upstream release
 	Version 1.89
 
@@ -7,35 +7,42 @@ Thu, 09 Feb 2017 17:16:30 +0400
   are used INI library functions.
 
 - INI library improvements and changes:
-  - allowed to read configurations owned by the current user or root
-  - added internal private array for INI instance settings
-  - added bConfMode setting for active configuration support
-  - key name can be any char other than '=' in the INI mode (bConfMode = false)
-  - section name can be a char class :print:
+  - INI "class" - used "::" for the method declaration
+  - added internal private array for the settings and public methods for their
+    management:
+    - active configuration   ( INI::settings.shellmode [[=] false|true ] )
+    - padding around section ( INI::settings.section.padding [[=] true|false ] )
+    - sign of the comment    ( INI::settings chComment [ = <value> ] )
+  - key name can be any char other than '=' in the INI mode (bShellMode = false)
+  - section name can be a char class :print: (exclude '[]')
   - added workaround for doublequotes support in the section name
   - used SHA1 for internal arrays generation
-  - INI "class" - used "::" for the method declaration
   - INI::load uses a more intuitive arguments format
   - added public method - INI::keys - show all keys in the comma separated line
-  - improved documentation and tests
-  - improved error handling and code style, fixed bugs
-
-- updated ROBODOC configuaration, added new header types and set their order:
-   F(Files), V(Versions), L(External libraries), G(Global variables),
-   e(external function), p(internal function)
-  - change label 'RETURN VALUE' to 'ERRORS' where it makes sense
-  - added and updated USES section of the lib headers
+  - allowed to read configurations owned by the current user or root
 
 - STD library improvements:
   - fixed udfGetPathMd5 for path with spaces
   - udfIs{Number,ValidVariable} - checking for errors made less intrusive
   - changed test for udfOnTrap
 
+- ERR library improvements:
+  - changed behavior of the udfSetLastError, added more safe 'try .. catch'
+    construction than 'try-every-line .. catch-every-line'
+
 - used 'declare -rg' for all readonly global variables of the bashlyk
 - ERR library preloaded for all other default libs
 - code style - used the "two spaces" indentation
 - error states {Non,Not}Valid.. renamed to Invalid..
-- updated and improved tests
+- updated documentation and improved tests
+- improved error handling and code style, fixed bugs
+- used 'id -n{g,u}' instead 'ps -p $$ ..' for getting user and group
+
+- updated ROBODOC configuration, added new header types and set their order:
+  - F(Files), V(Versions), L(External libraries), G(Global variables),
+    e(external function), p(internal function)
+  - change label 'RETURN VALUE' to 'ERRORS' where it makes sense
+  - added and updated USES section of the lib headers
 
 Detailed:
 
@@ -58,12 +65,24 @@ libini.sh:
   - get padding value from service array (if exist)
   - show content of section with padding around equal between key and value
   - doublequoting for values of the active configuration mode supported, applied
-    only if needed ([__settings]bConfMOde=true)
+    only if needed ( $(INI::settings.shellmode) == true )
+  - used INI::settings.section.padding for section header form when saving
+- added properties:
+  - bSectionPadding - enable/disable padding with one whitespace around section
+    name
+  - chComment - control character(s) for use as directive of the comments
+  - reKey, reKeyVal, fmtPairs - properties of the configuration mode
+- added new public methods:
+  - INI::settings for access to properties of the instance
+  - INI::settings.shellmode for control the configuration mode
+  - INI::settings.section.padding for control padding around section name
+- added global constants $_bashlyk_{cnf,inf}_{fmt,re}KeyVal for regexes
+- constants $_bashlyk_ini_reKey_{a,i}m renamed to $bashlyk_{cnf,ini}_reKey
 - INI::__section.getArray:
   - return EmptyResult state on empty result
 - INI::read:
   - added tests for MissingArgument and NoSuchFileOrDir states
-  - added key=value pairs check, depending on the settings bConfMOde
+  - added key=value pairs check, depending on the $(INI::settings.shellmode)
 - INI::bind.cli:
   - use OnError for reaction
   - detailed checking getopt result
@@ -75,7 +94,9 @@ libini.sh:
   - show comma separated key list of the selected section
 - INI::set:
   - fixed typo in the local var
-  - added key check, depending on the settings bConfMOde
+  - key checked, depending on the $( INI.settings.shellmode )
+  - used udfTrim for key and value trimming
+  - fixed values with '[]', improved code
 - constructor INI - improved error handling
 - added new error states Ini{Bad,Missing}Method
 - split long lines (more 80 char) of the code
@@ -94,6 +115,8 @@ liberr.sh:
 - removed using STD::udfIsNumber
 - udfOn - added command retwarn (experimental)
 - 'onError' command change to lower case
+- changed behavior of the udfSetLastError - empty input text for message of
+  error are ignored
 
 libnet.sh:
 - fixed error of the DNS name resolving
@@ -109,6 +132,9 @@ testunit.awk:
 robodoc.css:
 - disabled underline for main list
 - added style class 'ul li a'
+
+src/Makefile.am:
+- added file ../VERSION to syslib_DATA
 
 - added debian/docs
 
