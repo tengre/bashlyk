@@ -1,5 +1,5 @@
 #
-# $Id: libini.sh 683 2017-02-09 17:08:38+04:00 toor $
+# $Id: libini.sh 695 2017-02-27 15:19:49+04:00 toor $
 #
 #****h* BASHLYK/libini
 #  DESCRIPTION
@@ -97,15 +97,19 @@
 : ${_bashlyk_sArg:="$@"}
 : ${_bashlyk_pathIni:=$(pwd)}
 
-declare -rg _bashlyk_ini_reKey_am='^\b([_a-zA-Z][_a-zA-Z0-9]*)\b$'
-declare -rg _bashlyk_ini_reKey_im='^\b([^=]+)\b$'
+declare -rg _bashlyk_cnf_reKey='^\b([_a-zA-Z][_a-zA-Z0-9]*)\b$'
+declare -rg _bashlyk_ini_reKey='^\b([^=]+)\b$'
+declare -rg _bashlyk_cnf_reKeyVal='^[[:space:]]*\b([_a-zA-Z][_a-zA-Z0-9]*)\b=(.*)[[:space:]]*$'
+declare -rg _bashlyk_ini_reKeyVal='^[[:space:]]*\b([^=]+)\b[[:space:]]*=[[:space:]]*(.*)[[:space:]]*$'
+declare -rg _bashlyk_cnf_fmtPairs='^[[:space:]]*\b(%KEY%)\b=(.*)[[:space:]]*$'
+declare -rg _bashlyk_ini_fmtPairs='^[[:space:]]*\b(%KEY%)\b[[:space:]]*=[[:space:]]*(.*)[[:space:]]*$'
 
 declare -rg _bashlyk_methods_ini="                                             \
                                                                                \
     __section.id __section.byindex __section.select __section.show             \
     __section.setRawData __section.getArray get set show save read             \
+    settings settings.section.padding settings.shellmode                       \
     keys load bind.cli getopt free                                             \
-                                                                               \
 "
 
 declare -rg _bashlyk_externals_ini="                                           \
@@ -115,7 +119,8 @@ declare -rg _bashlyk_externals_ini="                                           \
 "
 declare -rg _bashlyk_exports_ini="                                             \
                                                                                \
-    INI get set keys show save read load bind.cli getopt free                  \
+    INI get set keys show save read load bind.cli getopt                       \
+    settings settings.section.padding settings.shellmode free                  \
                                                                                \
 "
 _bashlyk_iErrorIniMissingMethod=111
@@ -154,9 +159,21 @@ INI() {
 
   udfOn InvalidVariable throw $o
 
-  declare -ag -- _a${o^^}="()"
-  declare -Ag -- _h${o^^}_settings="()"
+  declare -Ag -- _h${o^^}_settings='(                                          \
+                                                                               \
+    [chComment]="#"                                                            \
+    [bSectionPadding]="true"                                                   \
+    [bShellMode]="false"                                                       \
+    [reKey]="$_bashlyk_ini_reKey"                                              \
+    [reKeyVal]="$_bashlyk_ini_reKeyVal"                                        \
+    [fmtPairs]="$_bashlyk_ini_fmtPairs"                                        \
+    [fmtSection0]="\n\n[ %s ]%s\n\n"                                           \
+    [fmtSection1]="\n%s[ %s ]\n"                                               \
+                                                                               \
+  )'
+
   declare -Ag -- _h${o^^}="([__settings__]=_h${o^^}_settings)"
+  declare -ag -- _a${o^^}="()"
 
   for s in $_bashlyk_methods_ini; do
 
@@ -362,16 +379,24 @@ INI::__section.select() {
 #    tSShow.__section.show >| md5sum | grep ^67d9d58badfb9e5e568e72adcc5c95.*-$ #? true
 #    tSShow.free
 #    INI tSShow2
-#    tSShow2.set [ __settings__ ] bConfMode = true
+#    tSShow2.settings.shellmode true
 #    tSShow2.set [ tSect2 ] keyFirst   = is first value
 #    tSShow2.set [ tSect2 ] keySecond  = is second value
 #    tSShow2.set [ tSect2 ] keyOneWord = is_one_world_value
 #    tSShow2.__section.show tSect2 >| md5sum - | grep ^f4bea0366a1f110343bf.*-$ #? true
 #    tSShow2.free
+#    INI tCheckSpaces
+#    ## TODO tests checking
+#    tCheckSpaces.set [ section ] key = value
+#    tCheckSpaces.settings.section.padding = false
+#    tCheckSpaces.show                                >| grep '^\[section\]$'   #? true
+#    tCheckSpaces.settings.section.padding = true
+#    tCheckSpaces.show                                >| grep '^\[ section \]$' #? true
+#    tCheckSpaces.free
 #  SOURCE
 INI::__section.show() {
 
-  local iC id k o sA sU
+  local iC id k o sA sU s
 
   o=${FUNCNAME[0]%%.*}
 
@@ -381,7 +406,16 @@ INI::__section.show() {
   sU=$( ${o}.__section.get _bashlyk_raw_mode )
 
   [[ $sU == '!' ]] && sA=':' || sA=
-  [[ $1 ]] && printf "\n\n[ %s ]%s\n\n" "${@//\'\'/\"}" "$sA" || echo ""
+
+  if [[ $1 ]]; then
+
+    printf -- "$( ${o}.settings fmtSection0 )" "${@//\'\'/\"}" "$sA"
+
+  else
+
+    echo ""
+
+  fi
 
   if [[ $sU == "=" ]]; then
 
@@ -414,10 +448,11 @@ INI::__section.show() {
       iKeyWidth=$( ${o}.__section.get _bashlyk_key_width )
       udfIsNumber $iKeyWidth || iKeyWidth=''
 
-      iPadding=$( ${o}.get [__settings__]iPadding )
+      iPadding=$( ${o}.settings iPadding )
+
       udfIsNumber $iPadding || iPadding=4
 
-      if [[ $( ${o}.get [__settings__]bConfMode ) =~ ^(true|yes|1)$ ]]; then
+      if [[ $( ${o}.settings.shellmode ) =~ ^(true|yes|1)$ ]]; then
 
         bQuote=true
         iPadding=0
@@ -445,7 +480,10 @@ INI::__section.show() {
 
   fi
 
-  [[ $sA ]] && printf "\n%s[ %s ]\n" "$sA" "${@//\'\'/\"}"
+  ## TODO unnamed section behavior ?
+  [[ $sA ]] && printf "$( ${o}.settings fmtSection1 )" "$sA" "${@//\'\'/\"}"
+
+  return 0
 
 }
 #******
@@ -615,8 +653,7 @@ INI::__section.getArray() {
 #    tGet.__section.set key "is unnamed section"
 #    tGet.__section.select section
 #    tGet.__section.set key "is value"
-#    tGet.get [section]key
-#    tGet.get [section]key >| grep '^is value$'                                 #? true
+#    tGet.get [section] key >| grep '^is value$'                                #? true
 #    tGet.get   key >| grep '^is unnamed section$'                              #? true
 #    tGet.get []key >| grep '^is unnamed section$'                              #? true
 #    tGet.__section.select accumu
@@ -640,7 +677,7 @@ INI::get() {
   local -a a
   local IFS o k s="$*" v
 
-  IFS='[]' a=( $s ) && IFS=$' \t\n'
+  IFS='[]' && a=( $s ) && IFS=$' \t\n'
 
   o=${FUNCNAME[0]%%.*}
 
@@ -674,7 +711,7 @@ INI::get() {
   else
 
     ${o}.__section.select $s
-    ${o}.__section.get "$k"
+    ${o}.__section.get $( udfTrim "$k" )
 
   fi
 
@@ -791,7 +828,7 @@ INI::keys() {
 #    tSet.get []key >| grep '^is unnamed section$'                              #? true
 #    tSet.get key with spaces >| grep '^is unnamed section$'                    #? true
 #    tSet.set [section1]+= is raw value No.1
-#    tSet.set [section1]+ = is raw value No.2
+#    tSet.set [section1] += is raw value No.2
 #    tSet.set [section1]+  =   is raw value No.3
 #    tSet.set [section2]=save unique value No.1
 #    tSet.set [section2] =  save unique value No.2
@@ -809,39 +846,28 @@ INI::set() {
 
   udfOn MissingArgument $* || return $?
 
-  local -a a
-  local iKeyWidth IFS o k re s="$*" v
+  local iKeyWidth o k s v
 
-  IFS='[]' && a=( $s ) && IFS=$' \t\n'
+  if [[ $* =~ [[:space:]]*([^=]*)[[:space:]]*=[[:space:]]*(.*)[[:space:]]* ]];
+  then
+
+    s=${BASH_REMATCH[1]}
+    v=${BASH_REMATCH[2]}
+
+  else
+
+    eval $( udfOnError InvalidArgument "$*" )
+
+  fi
+
+  k="$( udfTrim "${s##*]}" )"
+  s="$( udfTrim "${s%]*}"  )"
+
+  [[ $s == $k ]] && s=__global__
+  [[ ${s/[/}  ]] && s=$( udfTrim "${s/[/}" ) || s=__global__
 
   o=${FUNCNAME[0]%%.*}
 
-  case "${#a[@]}" in
-
-    3)
-      s=${a[1]:-__global__}
-      k=${a[2]%%=*}
-      v=${a[2]#*=}
-      [[ $k == ${a[2]} && $v == ${a[2]} ]] \
-        && eval $( udfOnError InvalidArgument "${a[2]}" )
-      ;;
-
-    1)
-      s=__global__
-      k=${a[0]%%=*}
-      v=${a[0]#*=}
-      [[ $k == ${a[0]} && $v == ${a[0]} ]] \
-        && eval $( udfOnError InvalidArgument "${a[0]}" )
-      ;;
-
-    *)
-      eval $( udfOnError InvalidArgument "$* - $(declare -p a)" )
-      ;;
-
-  esac
-
-  k="$( echo $k )"
-  v="$( echo $v )"
   : ${k:==}
 
   ${o}.__section.select $s
@@ -852,17 +878,7 @@ INI::set() {
 
   else
 
-    if [[ $( ${o}.get [__settings__]bConfMode ) =~ ^(true|yes|1)$ ]]; then
-
-      re=$_bashlyk_ini_reKey_am
-
-    else
-
-      re=$_bashlyk_ini_reKey_im
-
-    fi
-
-    [[ $k =~ $re ]] || eval $( udfOnError IniExtraCharInKey "$k" )
+    [[ $k =~ $( ${o}.settings reKey ) ]] || eval $( udfOnError IniExtraCharInKey "$k" )
 
     iKeyWidth=$( ${o}.__section.get _bashlyk_key_width )
     udfIsNumber $iKeyWidth || iKeyWidth=0
@@ -936,15 +952,28 @@ INI::show() {
 #    tSave.save $fn
 #    tSave.free
 #    tail -n +4 $fn >| md5sum - | grep ^014d76fac8f057af36d119aaddeb30ee.*-$    #? true
+#    INI tComments
+#    ## TODO globs
+#    tComments.settings chComment = \# this is comment';'
+#    tComments.save $fn
+#    cat $fn             >| grep -Po "^# this is comment; created .* by $USER"  #? true
+#    tComments.settings chComment =
+#    tComments.save $fn
+#    cat $fn             >| grep -Po "^# created .* by $USER"                   #? true
+#    tComments.free
 #  SOURCE
 INI::save() {
 
   udfOn MissingArgument throw "$1"
 
-  local fn o
+  local c fmtComment fn o
 
+  fmtComment='%COMMENT%\n%COMMENT% created %s by %s\n%COMMENT%\n'
   fn="$1"
   o=${FUNCNAME[0]%%.*}
+
+  c=$( ${o}.settings chComment )
+  : ${c:=#}
 
   [[ -s $fn ]] && mv -f $fn ${fn}.bak
 
@@ -956,7 +985,7 @@ INI::save() {
 
   {
 
-    printf -- ';\n; created %s by %s\n;\n' "$(date -R)" "$( _ sUser )"
+    printf -- "${fmtComment//%COMMENT%/$c}" "$(date -R)" "$( _ sUser )"
     ${o}.show
 
   } > $fn
@@ -1026,7 +1055,7 @@ INI::read() {
 
   udfOn NoSuchFileOrDir $1 || return
 
-  local bActiveSection bIgnore csv fn i iKeyWidth reComment reSection
+  local bActiveSection bIgnore csv fn i iKeyWidth reComment reKeyVal reSection
   local reValidSections s
 
   o=${FUNCNAME[0]%%.*}
@@ -1034,15 +1063,7 @@ INI::read() {
   reSection='^[[:space:]]*(:?)\[[[:space:]]*([[:print:]]+?)[[:space:]]*\](:?)[[:space:]]*$'
   reComment='^[[:space:]]*$|(^|[[:space:]]+)[\#\;].*$'
 
-  if [[ $( ${o}.get [ __settings__ ]bConfMode ) =~ ^(true|yes|1)$ ]]; then
-
-    reKey_Val='^[[:space:]]*\b([_a-zA-Z][_a-zA-Z0-9]*)\b=(.*)[[:space:]]*$'
-
-  else
-
-    reKey_Val='^[[:space:]]*\b([^=]+)\b[[:space:]]*=[[:space:]]*(.*)[[:space:]]*$'
-
-  fi
+  reKeyVal=$( ${o}.settings reKeyVal )
 
   s="__global__"
   fn="$1"
@@ -1060,7 +1081,7 @@ INI::read() {
 
   bIgnore=
 
-  [[ ${hKeyValue[$s]} ]] || hKeyValue[$s]="$reKey_Val"
+  [[ ${hKeyValue[$s]} ]] || hKeyValue[$s]="$reKeyVal"
 
   ${o}.__section.select
   iKeyWidth=$( ${o}.__section.get _bashlyk_key_width )
@@ -1109,7 +1130,7 @@ INI::read() {
 
         =) ${o}.__section.set _bashlyk_raw_mode "=";;
 
-        *) hKeyValue[$s]="$reKey_Val";;
+        *) hKeyValue[$s]="$reKeyVal";;
 
       esac
 
@@ -1267,17 +1288,18 @@ INI::load() {
 
   local -a a
   local -A h hKeyValue hRawMode
-  local csv i IFS ini fmtKeyValue fmtSections o path reSection reValidSections s
+  local csv i IFS ini fmtPairs fmtSections o path reSection reValidSections s
   local sSection
 
   o=${FUNCNAME[0]%%.*}
   fmtSections='^[[:space:]]*(:?)\[[[:space:]]*(%SECTION%)[[:space:]]*\](:?)[[:space:]]*$'
-  fmtKeyValue='^[[:space:]]*(%KEY%)[[:space:]]*=[[:space:]]*(.*)[[:space:]]*$'
+
+  fmtPairs=$( ${o}.settings fmtPairs )
 
   [[ "$1" == "${1##*/}" && -f "$(_ pathIni)/$1" ]] && path=$(_ pathIni)
   [[ "$1" == "${1##*/}" && -f "$1"              ]] && path=$(pwd)
   [[ "$1" != "${1##*/}" && -f "$1"              ]] && path=${1%/*}
-  #
+
   if [[ ! $path && -f "/etc/$(_ pathPrefix)/$1" ]]; then
 
     path="/etc/$( _ pathPrefix )"
@@ -1308,8 +1330,9 @@ INI::load() {
       if   [[ ${BASH_REMATCH[3]} == ${BASH_REMATCH[5]} ]]; then
 
         s="${BASH_REMATCH[3]}"
+        ## TODO check by shellmode
         s="${s//,/\|}"
-        hKeyValue[$sSection]=${fmtKeyValue/\%KEY\%/$s}
+        hKeyValue[$sSection]=${fmtPairs/\%KEY\%/$s}
 
       elif [[ ${BASH_REMATCH[3]} == ${BASH_REMATCH[4]} ]]; then
 
@@ -1556,6 +1579,190 @@ INI::getopt() {
   udfOn EmptyVariable o || return $( _ iErrorNotAvailable )
 
   ${o}.get [${s}]${k}
+
+}
+#******
+#****p* libini/INI::settings
+#  SYNOPSIS
+#    INI::settings [ <key> [ = <value> ] ]
+#  DESCRIPTION
+#    set or get propertie(s) of the INI instance
+#  ARGUMENTS
+#    <key>   - select propertie for action - get (show) or set
+#    <value> - set new value for selected properties
+#              default, show all properties with section header
+#  NOTES
+#    public method
+#  ERRORS
+#    iErrorInvalidArgument - invalid key name ( char class :alnum: expected )
+#  EXAMPLE
+#    INI tSettings
+#    tSettings.set key = value
+#    tSettings.settings bBooleanOption     =   true
+#    tSettings.settings sSimpleFakeOption  =   simple fake option
+#    tSettings.settings sSimpleFakeOption        >| grep '^simple fake option$' #? true
+#    tSettings.settings bBooleanOption           >| grep ^true$                 #? true
+#    tSettings.settings >| wc -w                  | grep ^39$                   #? true
+#    tSettings.settings bSection With Spaces                                    #? $_bashlyk_iErrorInvalidArgument
+#    tSettings.free
+#  SOURCE
+INI::settings() {
+
+  local o=${FUNCNAME[0]%%.*} k s v
+
+  if [[ $* =~ ^[[:space:]]*([[:alnum:]]+)[[:space:]]*=[[:space:]]*(.*)[[:space:]]*$ ]]; then
+
+    ${o}.set [ __settings__ ] $*
+
+  elif [[ $* =~ ^[[:space:]]*([[:alnum:]]+)[[:space:]]*$ ]]; then
+
+    ${o}.get [ __settings__ ] $*
+
+  elif [[ $* =~ ^[[:space:]]*$ ]]; then
+
+    ${o}.__section.show '__settings__'
+
+  else
+
+    return $( _ iErrorInvalidArgument )
+
+  fi
+
+  return $?
+
+}
+#******
+#****p* libini/INI::settings.shellmode
+#  SYNOPSIS
+#    INI::settings.shellmode [ [=] true|false ]
+#  DESCRIPTION
+#    enable/disable "active configuration" for instance INI. For example, save
+#    the configuration with "shellmode = true" looks like:
+#
+#          var="value with whitespaces doublequoted"
+#      varmore=example
+#
+#  ARGUMENTS
+#    true  - enable
+#    false - disable
+#    without argument show current state of the shellmode
+#  NOTES
+#    public method
+#  ERRORS
+#    InvalidArgument - expected true or false
+#  EXAMPLE
+#    INI tShellmode
+#    tShellmode.settings.shellmode                              >| grep ^false$ #? true
+#    tShellmode.settings.shellmode = YEs                                        #? true
+#    tShellmode.settings.shellmode                              >| grep ^true$  #? true
+#    tShellmode.settings.shellmode = error                                      #? $_bashlyk_iErrorInvalidArgument
+#    tShellmode.free
+#  SOURCE
+INI::settings.shellmode() {
+
+  local o=${FUNCNAME[0]%%.*}
+
+  [[ $1 =~ ^[[:space:]]*=[[:space:]]*$ ]] && shift
+
+  ${o}.__section.select __settings__
+
+  case ${*,,} in
+
+    true|yes|1)
+
+      ${o}.__section.set reKey $_bashlyk_cnf_reKey
+      ${o}.__section.set reKeyVal $_bashlyk_cnf_reKeyVal
+      ${o}.__section.set fmtPairs $_bashlyk_cnf_fmtPairs
+      ${o}.__section.set bShellMode true
+
+    ;;
+
+    false|no|0)
+
+      ${o}.__section.set reKey $_bashlyk_ini_reKey
+      ${o}.__section.set reKeyVal $_bashlyk_ini_reKeyVal
+      ${o}.__section.set fmtPairs $_bashlyk_ini_fmtPairs
+      ${o}.__section.set bShellMode false
+
+    ;;
+
+            '')
+
+      ${o}.__section.get bShellMode
+
+    ;;
+
+             *)
+
+      return $( _ iErrorInvalidArgument )
+
+    ;;
+
+  esac
+
+}
+#******
+#****p* libini/INI::settings.section.padding
+#  SYNOPSIS
+#    INI::settings.section.padding [ [=] true|false ]
+#  DESCRIPTION
+#    enable/disable padding with one whitespace around section name.
+#    default is enabled
+#  ARGUMENTS
+#    true  - enable
+#    false - disable
+#    without argument show current state of the section padding
+#  NOTES
+#    public method
+#  ERRORS
+#    InvalidArgument - expected true or false
+#  EXAMPLE
+#    INI tShellmode
+#    tShellmode.settings.section.padding                        >| grep ^true$  #? true
+#    tShellmode.settings.section.padding = FALSE                                #? true
+#    tShellmode.settings.section.padding                        >| grep ^false$ #? true
+#    tShellmode.settings.section.padding = error                                #? $_bashlyk_iErrorInvalidArgument
+#    tShellmode.free
+#  SOURCE
+INI::settings.section.padding() {
+
+  local o=${FUNCNAME[0]%%.*}
+
+  [[ $1 =~ ^[[:space:]]*=[[:space:]]*$ ]] && shift
+
+  ${o}.__section.select __settings__
+
+  case ${*,,} in
+
+    true|yes|1)
+
+      ${o}.__section.set fmtSection0 "\n\n[ %s ]%s\n\n"
+      ${o}.__section.set fmtSection1 "\n%s[ %s ]\n"
+      ${o}.__section.set bSectionPadding true
+
+    ;;
+
+    false|no|0)
+
+      ${o}.__section.set fmtSection0 "\n\n[%s]%s\n\n"
+      ${o}.__section.set fmtSection1 "\n%s[%s]\n"
+      ${o}.__section.set bSectionPadding false
+
+    ;;
+
+            '')
+
+      ${o}.__section.get bSectionPadding
+
+    ;;
+
+             *)
+
+      return $( _ iErrorInvalidArgument )
+
+    ;;
+
+  esac
 
 }
 #******

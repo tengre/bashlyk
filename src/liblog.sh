@@ -1,5 +1,5 @@
 #
-# $Id: liblog.sh 659 2017-01-21 01:20:29+04:00 toor $
+# $Id: liblog.sh 695 2017-02-27 15:17:24+04:00 toor $
 #
 #****h* BASHLYK/liblog
 #  DESCRIPTION
@@ -37,6 +37,8 @@
 : ${_bashlyk_pidLogSock:=}
 : ${_bashlyk_fnLogSock:=}
 
+: ${USER:=$(id -nu)}
+: ${_bashlyk_sUser:=$USER}
 : ${HOSTNAME:=$(hostname)}
 : ${DEBUGLEVEL:=0}
 : ${_bashlyk_pathLog:=/tmp}
@@ -44,7 +46,6 @@
 : ${_bashlyk_sId:=${_bashlyk_s0%.sh}}
 : ${_bashlyk_pathRun:=/tmp}
 : ${_bashlyk_iStartTimeStamp:=$(date "+%s")}
-: ${_bashlyk_sUser:=$USER}
 : ${_bashlyk_emailRcpt:=postmaster}
 : ${_bashlyk_emailSubj:="${_bashlyk_sUser}@${HOSTNAME}::${_bashlyk_s0}"}
 : ${_bashlyk_fnLog:="${_bashlyk_pathLog}/${_bashlyk_s0}.log"}

@@ -1,5 +1,5 @@
 #
-# $Id: libmsg.sh 658 2017-01-20 16:16:05+04:00 toor $
+# $Id: libmsg.sh 695 2017-02-27 15:17:24+04:00 toor $
 #
 #****h* BASHLYK/libmsg
 #  DESCRIPTION
@@ -33,12 +33,13 @@
 #  DESCRIPTION
 #    Global variables of the library
 #  SOURCE
+: ${USER:=$(id -nu)}
+: ${HOSTNAME:=$(hostname 2>/dev/null)}
 : ${_bashlyk_sUser:=$USER}
 : ${_bashlyk_sLogin:=$(logname 2>/dev/null)}
-: ${HOSTNAME:=$(hostname 2>/dev/null)}
 : ${_bashlyk_bNotUseLog:=1}
 : ${_bashlyk_emailRcpt:=postmaster}
-: ${_bashlyk_emailSubj:="${_bashlyk_sUser}@${HOSTNAME}::${_bashlyk_s0}"}
+: ${_bashlyk_emailSubj:="${_bashlyk_sUser}@${HOSTNAME}::${0##*/}"}
 : ${_bashlyk_envXSession:=}
 
 declare -rg _bashlyk_externals_msg="                                           \
