@@ -1,5 +1,5 @@
 #
-# $Id: libtst.sh 688 2017-02-15 17:05:39+04:00 toor $
+# $Id: libtst.sh 695 2017-02-27 15:17:24+04:00 toor $
 #
 #****h* BASHLYK/libtst
 #  DESCRIPTION
@@ -34,6 +34,7 @@
 #  DESCRIPTION
 #    Global variables of the library
 #  SOURCE
+: ${USER:=$(id -nu)}
 : ${_bashlyk_sUser:=$USER}
 : ${_bashlyk_bNotUseLog:=1}
 : ${_bashlyk_emailRcpt:=postmaster}

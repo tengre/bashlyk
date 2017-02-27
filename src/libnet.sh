@@ -1,5 +1,5 @@
 #
-# $Id: libnet.sh 660 2017-01-21 22:12:29+04:00 toor $
+# $Id: libnet.sh 695 2017-02-27 15:17:24+04:00 toor $
 #
 #****h* BASHLYK/libnet
 #  DESCRIPTION
@@ -34,7 +34,6 @@
 #    global variables of the library
 #  SOURCE
 : ${_bashlyk_sArg:="$@"}
-: ${_bashlyk_pathCnf:=$(pwd)}
 
 declare -rg _reIPv4='[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+'
 declare -rg _peIPv4='\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}'

@@ -1,5 +1,5 @@
 #
-# $Id: libini.sh 694 2017-02-26 22:54:41+04:00 toor $
+# $Id: libini.sh 695 2017-02-27 15:19:49+04:00 toor $
 #
 #****h* BASHLYK/libini
 #  DESCRIPTION
@@ -108,8 +108,8 @@ declare -rg _bashlyk_methods_ini="                                             \
                                                                                \
     __section.id __section.byindex __section.select __section.show             \
     __section.setRawData __section.getArray get set show save read             \
-    keys load bind.cli getopt settings settings.shellmode free                 \
-                                                                               \
+    settings settings.section.padding settings.shellmode                       \
+    keys load bind.cli getopt free                                             \
 "
 
 declare -rg _bashlyk_externals_ini="                                           \
@@ -119,7 +119,8 @@ declare -rg _bashlyk_externals_ini="                                           \
 "
 declare -rg _bashlyk_exports_ini="                                             \
                                                                                \
-    INI get set keys show save read load bind.cli getopt settings free         \
+    INI get set keys show save read load bind.cli getopt                       \
+    settings settings.section.padding settings.shellmode free                  \
                                                                                \
 "
 _bashlyk_iErrorIniMissingMethod=111
@@ -161,11 +162,13 @@ INI() {
   declare -Ag -- _h${o^^}_settings='(                                          \
                                                                                \
     [chComment]="#"                                                            \
-    [bSectionNoBorder]="false"                                                 \
-    [shellmode]="false"                                                        \
+    [bSectionPadding]="true"                                                   \
+    [bShellMode]="false"                                                       \
     [reKey]="$_bashlyk_ini_reKey"                                              \
     [reKeyVal]="$_bashlyk_ini_reKeyVal"                                        \
-    [fmtPairs]="$_bashlyk_ini_fmtPairs"                                      \
+    [fmtPairs]="$_bashlyk_ini_fmtPairs"                                        \
+    [fmtSection0]="\n\n[ %s ]%s\n\n"                                           \
+    [fmtSection1]="\n%s[ %s ]\n"                                               \
                                                                                \
   )'
 
@@ -383,11 +386,12 @@ INI::__section.select() {
 #    tSShow2.__section.show tSect2 >| md5sum - | grep ^f4bea0366a1f110343bf.*-$ #? true
 #    tSShow2.free
 #    INI tCheckSpaces
+#    ## TODO tests checking
 #    tCheckSpaces.set [ section ] key = value
-#    tCheckSpaces.settings bSectionNoBorder = true
-#    tCheckSpaces.show
-#    tCheckSpaces.settings bSectionNoBorder = false
-#    tCheckSpaces.show
+#    tCheckSpaces.settings.section.padding = false
+#    tCheckSpaces.show                                >| grep '^\[section\]$'   #? true
+#    tCheckSpaces.settings.section.padding = true
+#    tCheckSpaces.show                                >| grep '^\[ section \]$' #? true
 #    tCheckSpaces.free
 #  SOURCE
 INI::__section.show() {
@@ -395,10 +399,6 @@ INI::__section.show() {
   local iC id k o sA sU s
 
   o=${FUNCNAME[0]%%.*}
-
-  s=$( ${o}.settings bSectionNoBorder )
-
-  [[ ${s,,} =~ ^(true|yes|1)$ ]] && s='' || s=' '
 
   ${o}.__section.select $*
   id=$( ${o}.__section.id $* )
@@ -409,7 +409,7 @@ INI::__section.show() {
 
   if [[ $1 ]]; then
 
-    printf "\n\n[%s%s%s]%s\n\n" "$s" "${@//\'\'/\"}" "$s" "$sA"
+    printf -- "$( ${o}.settings fmtSection0 )" "${@//\'\'/\"}" "$sA"
 
   else
 
@@ -480,7 +480,8 @@ INI::__section.show() {
 
   fi
 
-  [[ $sA ]] && printf "\n%s[%s%s%s]\n" "$sA" "$s" "${@//\'\'/\"}" "$s"
+  ## TODO unnamed section behavior ?
+  [[ $sA ]] && printf "$( ${o}.settings fmtSection1 )" "$sA" "${@//\'\'/\"}"
 
   return 0
 
@@ -1597,12 +1598,12 @@ INI::getopt() {
 #  EXAMPLE
 #    INI tSettings
 #    tSettings.set key = value
-#    tSettings.settings bSectionWithSpaces = true
-#    tSettings.settings sComment           = "##::##"
-#    tSettings.settings sComment                             >| grep '^##::##$' #? true
-#    tSettings.settings bSectionWithSpaces                   >| grep ^true$     #? true
-#    tSettings.settings >| wc -w | grep ^27$                                    #? true
-#    tSettings.settings bSection WithSpaces                                     #? $_bashlyk_iErrorInvalidArgument
+#    tSettings.settings bBooleanOption     =   true
+#    tSettings.settings sSimpleFakeOption  =   simple fake option
+#    tSettings.settings sSimpleFakeOption        >| grep '^simple fake option$' #? true
+#    tSettings.settings bBooleanOption           >| grep ^true$                 #? true
+#    tSettings.settings >| wc -w                  | grep ^39$                   #? true
+#    tSettings.settings bSection With Spaces                                    #? $_bashlyk_iErrorInvalidArgument
 #    tSettings.free
 #  SOURCE
 INI::settings() {
@@ -1633,13 +1634,18 @@ INI::settings() {
 #******
 #****p* libini/INI::settings.shellmode
 #  SYNOPSIS
-#    INI::settings.shellmode [ true|false ]
+#    INI::settings.shellmode [ [=] true|false ]
 #  DESCRIPTION
-#    enable/disable restricted shell mode for INI instance
+#    enable/disable "active configuration" for instance INI. For example, save
+#    the configuration with "shellmode = true" looks like:
+#
+#          var="value with whitespaces doublequoted"
+#      varmore=example
+#
 #  ARGUMENTS
-#    true  - enable  restricted shell mode (active configuration)
-#    false - disable restricted shell mode (default)
-#    without argument show current mode
+#    true  - enable
+#    false - disable
+#    without argument show current state of the shellmode
 #  NOTES
 #    public method
 #  ERRORS
@@ -1647,13 +1653,16 @@ INI::settings() {
 #  EXAMPLE
 #    INI tShellmode
 #    tShellmode.settings.shellmode                              >| grep ^false$ #? true
-#    tShellmode.settings.shellmode true                                         #? true
+#    tShellmode.settings.shellmode = YEs                                        #? true
 #    tShellmode.settings.shellmode                              >| grep ^true$  #? true
+#    tShellmode.settings.shellmode = error                                      #? $_bashlyk_iErrorInvalidArgument
 #    tShellmode.free
 #  SOURCE
 INI::settings.shellmode() {
 
   local o=${FUNCNAME[0]%%.*}
+
+  [[ $1 =~ ^[[:space:]]*=[[:space:]]*$ ]] && shift
 
   ${o}.__section.select __settings__
 
@@ -1664,7 +1673,7 @@ INI::settings.shellmode() {
       ${o}.__section.set reKey $_bashlyk_cnf_reKey
       ${o}.__section.set reKeyVal $_bashlyk_cnf_reKeyVal
       ${o}.__section.set fmtPairs $_bashlyk_cnf_fmtPairs
-      ${o}.__section.set shellmode true
+      ${o}.__section.set bShellMode true
 
     ;;
 
@@ -1673,13 +1682,77 @@ INI::settings.shellmode() {
       ${o}.__section.set reKey $_bashlyk_ini_reKey
       ${o}.__section.set reKeyVal $_bashlyk_ini_reKeyVal
       ${o}.__section.set fmtPairs $_bashlyk_ini_fmtPairs
-      ${o}.__section.set shellmode false
+      ${o}.__section.set bShellMode false
 
     ;;
 
             '')
 
-      ${o}.__section.get shellmode
+      ${o}.__section.get bShellMode
+
+    ;;
+
+             *)
+
+      return $( _ iErrorInvalidArgument )
+
+    ;;
+
+  esac
+
+}
+#******
+#****p* libini/INI::settings.section.padding
+#  SYNOPSIS
+#    INI::settings.section.padding [ [=] true|false ]
+#  DESCRIPTION
+#    enable/disable padding with one whitespace around section name.
+#    default is enabled
+#  ARGUMENTS
+#    true  - enable
+#    false - disable
+#    without argument show current state of the section padding
+#  NOTES
+#    public method
+#  ERRORS
+#    InvalidArgument - expected true or false
+#  EXAMPLE
+#    INI tShellmode
+#    tShellmode.settings.section.padding                        >| grep ^true$  #? true
+#    tShellmode.settings.section.padding = FALSE                                #? true
+#    tShellmode.settings.section.padding                        >| grep ^false$ #? true
+#    tShellmode.settings.section.padding = error                                #? $_bashlyk_iErrorInvalidArgument
+#    tShellmode.free
+#  SOURCE
+INI::settings.section.padding() {
+
+  local o=${FUNCNAME[0]%%.*}
+
+  [[ $1 =~ ^[[:space:]]*=[[:space:]]*$ ]] && shift
+
+  ${o}.__section.select __settings__
+
+  case ${*,,} in
+
+    true|yes|1)
+
+      ${o}.__section.set fmtSection0 "\n\n[ %s ]%s\n\n"
+      ${o}.__section.set fmtSection1 "\n%s[ %s ]\n"
+      ${o}.__section.set bSectionPadding true
+
+    ;;
+
+    false|no|0)
+
+      ${o}.__section.set fmtSection0 "\n\n[%s]%s\n\n"
+      ${o}.__section.set fmtSection1 "\n%s[%s]\n"
+      ${o}.__section.set bSectionPadding false
+
+    ;;
+
+            '')
+
+      ${o}.__section.get bSectionPadding
 
     ;;
 

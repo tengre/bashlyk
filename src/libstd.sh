@@ -1,5 +1,5 @@
 #
-# $Id: libstd.sh 692 2017-02-25 02:05:31+04:00 toor $
+# $Id: libstd.sh 695 2017-02-27 15:17:24+04:00 toor $
 #
 #****h* BASHLYK/libstd
 #  DESCRIPTION
@@ -50,6 +50,7 @@
 #
 : ${_bashlyk_sArg:="$@"}
 : ${_bashlyk_s0:=${0##*/}}
+: ${USER:=$(id -nu)}
 : ${_bashlyk_sUser:=$USER}
 : ${_bashlyk_pathDat:=/tmp}
 : ${_bashlyk_bNotUseLog:=1}
