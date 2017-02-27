@@ -1,5 +1,5 @@
 #
-# $Id: libini.sh 695 2017-02-27 15:19:49+04:00 toor $
+# $Id: libini.sh 698 2017-02-27 22:08:12+04:00 toor $
 #
 #****h* BASHLYK/libini
 #  DESCRIPTION
@@ -354,7 +354,7 @@ INI::__section.select() {
                                                                                \
     id=\${_h${o^^}[$s]};                                                       \
     ${o}.__section.set() { [[ \$1 ]] && $id[\$1]=\"\$2\"; };                   \
-    ${o}.__section.get() { [[ \$1 ]] && echo \"\${$id[\$1]}\"; };              \
+    ${o}.__section.get() { [[ \$* ]] && echo \"\${$id[\$*]}\"; };              \
                                                                                \
   "
 
@@ -652,8 +652,8 @@ INI::__section.getArray() {
 #    tGet.__section.select
 #    tGet.__section.set key "is unnamed section"
 #    tGet.__section.select section
-#    tGet.__section.set key "is value"
-#    tGet.get [section] key >| grep '^is value$'                                #? true
+#    tGet.__section.set "key with spaces" "is value"
+#    tGet.get [section] key with spaces >| grep '^is value$'                    #? true
 #    tGet.get   key >| grep '^is unnamed section$'                              #? true
 #    tGet.get []key >| grep '^is unnamed section$'                              #? true
 #    tGet.__section.select accumu
