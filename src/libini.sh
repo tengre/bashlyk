@@ -1,5 +1,5 @@
 #
-# $Id: libini.sh 695 2017-02-27 15:19:49+04:00 toor $
+# $Id: libini.sh 698 2017-02-28 10:53:35+04:00 toor $
 #
 #****h* BASHLYK/libini
 #  DESCRIPTION
@@ -373,17 +373,17 @@ INI::__section.select() {
 #    INI tSShow
 #    tSShow.__section.select tSect
 #    tSShow.__section.set key "is value"
-#    tSShow.__section.show tSect >| md5sum | grep ^99c8669469e47642b9b540db.*-$ #? true
+#    tSShow.__section.show tSect >| md5sum | grep ^39277799012588d417f0ef8e.*-$ #? true
 #    tSShow.__section.select
 #    tSShow.__section.set key "unnamed section"
-#    tSShow.__section.show >| md5sum | grep ^67d9d58badfb9e5e568e72adcc5c95.*-$ #? true
+#    tSShow.__section.show >| md5sum | grep ^12790719e0b9d1f73db7a950368df8.*-$ #? true
 #    tSShow.free
 #    INI tSShow2
 #    tSShow2.settings.shellmode true
 #    tSShow2.set [ tSect2 ] keyFirst   = is first value
 #    tSShow2.set [ tSect2 ] keySecond  = is second value
 #    tSShow2.set [ tSect2 ] keyOneWord = is_one_world_value
-#    tSShow2.__section.show tSect2 >| md5sum - | grep ^f4bea0366a1f110343bf.*-$ #? true
+#    tSShow2.__section.show tSect2 >| md5sum | grep ^648e93c0ed92724db16782.*-$ #? true
 #    tSShow2.free
 #    INI tCheckSpaces
 #    ## TODO tests checking
@@ -443,19 +443,19 @@ INI::__section.show() {
 
     else
 
-      local bQuote iKeyWidth iPadding v
+      local bQuote iKeyWidth iPad v
 
       iKeyWidth=$( ${o}.__section.get _bashlyk_key_width )
       udfIsNumber $iKeyWidth || iKeyWidth=''
 
-      iPadding=$( ${o}.settings iPadding )
+      iPad=$( ${o}.settings iPadding )
 
-      udfIsNumber $iPadding || iPadding=4
+      udfIsNumber $iPad || iPad=4
 
       if [[ $( ${o}.settings.shellmode ) =~ ^(true|yes|1)$ ]]; then
 
         bQuote=true
-        iPadding=0
+        iPad=0
 
       else
 
@@ -469,8 +469,8 @@ INI::__section.show() {
           if [[ ! \$k =~ ^_bashlyk_ ]]; then                                   \
             v=\${$id[\$k]};                                                    \
             [[ \$bQuote ]] && v=\$( udfQuoteIfNeeded \$v );                    \
-            printf -- '\t%${iKeyWidth}s%${iPadding}s=%${iPadding}s%s\n'        \
-              \"\$k\" \"\" \"\"  \"\$v\";                                      \
+            printf -- '%${iPad}s%${iKeyWidth}s%${iPad}s=%${iPad}s%s\n'         \
+              \"\" \"\$k\" \"\" \"\"  \"\$v\";                                 \
           fi                                                                   \
         done;                                                                  \
                                                                                \
@@ -906,7 +906,7 @@ INI::set() {
 #    tShow.__section.select
 #    tShow.__section.set key "unnamed section"
 #    tShow.set [section with spaces] key with spaces = value with spaces
-#    tShow.show >| md5sum - | grep ^b6ebbda48d1710b2c253669365786a25.*-$        #? true
+#    tShow.show        >| md5sum - | grep ^ea41a8a4d178df401850fbc701fbba58.*-$ #? true
 #    tShow.free
 #  SOURCE
 INI::show() {
@@ -951,7 +951,7 @@ INI::show() {
 #    tSave.__section.set key "unnamed section"
 #    tSave.save $fn
 #    tSave.free
-#    tail -n +4 $fn >| md5sum - | grep ^014d76fac8f057af36d119aaddeb30ee.*-$    #? true
+#    tail -n +4 $fn    >| md5sum - | grep ^ec11a98eb5eff761999bb604cae70d70.*-$ #? true
 #    INI tComments
 #    ## TODO globs
 #    tComments.settings chComment = \# this is comment';'
@@ -1048,7 +1048,7 @@ INI::save() {
 #   tRead.read                                                                  #? $_bashlyk_iErrorMissingArgument
 #   tRead.read /not/exist/file.$$.ini                                           #? $_bashlyk_iErrorNoSuchFileOrDir
 #   tRead.read $ini                                                             #? true
-#   tRead.show >| md5sum - | grep ^6b95a8f7fec7b284f1b464d0c654f298.*-$         #? true
+#   tRead.show         >| md5sum - | grep ^f01c7775fb8969d7ee07ea39015356c4.*-$ #? true
 #   tRead.free
 #  SOURCE
 INI::read() {
@@ -1279,7 +1279,7 @@ INI::read() {
 #   INI tLoad
 #   tLoad.load $iniLoad ::[]file,main,child :: [exec]- :: [main]hint, msg , cnt :: [replace]- :: [unify]= :: [acc]+ :: #? true
 #   tLoad.save $iniSave                                                         #? true
-#   tLoad.show >| md5sum - | grep ^a37cbb57c7bb753968ae93db79260b44.*-$         #? true
+#   tLoad.show         >| md5sum -| grep ^9d20121502695508ff37c79f94b6ca16.*-$  #? true
 ##    tLoad.free
 #  SOURCE
 INI::load() {
@@ -1417,7 +1417,7 @@ INI::load() {
 #    tCLI.bind.cli file{F}: exec{E}:- main-hint{H}: main-msg{M}: unify{U}:=     #? $_bashlyk_iErrorInvalidOption
 #    tCLI.bind.cli file{F}: exec{E}:- main-hint{H}: main-msg{M}: unify{U}:= acc:+                      #? true
 #    tCLI.load $ini []file,main,child : [exec]- : [main]hint,msg,cnt : [replace]- : [unify]= : [acc]+  #? true
-#    tCLI.show >| md5sum - | grep ^50878d828696bb09394b2b90ea10dd84.*-$         #? true
+#    tCLI.show         >| md5sum - | grep ^264dd527123fc976df435cda9785dd3c.*-$ #? true
 #    tCLI.free
 #  SOURCE
 INI::bind.cli() {
