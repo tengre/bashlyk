@@ -1,5 +1,5 @@
 #
-# $Id: libpid.sh 672 2017-01-30 12:08:13+04:00 toor $
+# $Id: libpid.sh 701 2017-03-12 22:27:45+04:00 toor $
 #
 #****h* BASHLYK/libpid
 #  DESCRIPTION
@@ -63,8 +63,7 @@ declare -rg _bashlyk_exports_pid="                                             \
 #  ARGUMENTS
 #    <PID>  - process id
 #    <args> - command line pattern with process name
-#  RETURN VALUE
-#    0               - Process PID exists for the specified command line
+#  ERRORS
 #    NoSuchProcess   - Process for the specified command line is not detected.
 #    CurrentProcess  - The process for this command line is identical to the
 #                      PID of the current process
@@ -83,7 +82,7 @@ declare -rg _bashlyk_exports_pid="                                             \
 #  SOURCE
 udfCheckStarted() {
 
-  udfOn EmptyOrMissingArgument "$*" || return $?
+  udfOn MissingArgument "$*" || return $?
 
   local re="\\b${1}\\b"
 
@@ -112,15 +111,14 @@ udfCheckStarted() {
 #                     stopped if they are associated with the command line
 #    childs         - stop only child processes
 #    <command-line> - command line pattern with process name
-#  RETURN VALUE
-#    0                 - stopped all inctances of the specified command line
-#    NoSuchProcess     - processes for the specified command is not detected
-#    NoChildProcess    - child processes for the specified command line is not
-#                        detected.
-#    CurrentProcess    - process for this command line is identical to the PID
-#                        of the current process, do not stopped
-#    InvalidArgument   - PID is not number
-#    EmptyOrMissing... - no arguments
+#  ERRORS
+#    NoSuchProcess   - processes for the specified command is not detected
+#    NoChildProcess  - child processes for the specified command line is not
+#                      detected.
+#    CurrentProcess  - process for this command line is identical to the PID
+#                      of the current process, do not stopped
+#    InvalidArgument - PID is not number
+#    MissingArgument - no arguments
 #  EXAMPLE
 #    local a cmd1 cmd2 fmt1 fmt2 i pid                                          #-
 #    fmt1='#!/bin/bash\nread -t %s -N 0 </dev/zero\n'
@@ -139,7 +137,9 @@ udfCheckStarted() {
 #    ($cmd1 400)&                                                               #-
 #    pid=$!
 #    ## TODO wait for cmd1 starting
-#    udfStopProcess                                                             #? $_bashlyk_iErrorEmptyOrMissingArgument
+#    udfStopProcess                                                             #? $_bashlyk_iErrorMissingArgument
+#    udfStopProcess pid=$pid                                                    #? $_bashlyk_iErrorMissingArgument
+#    udfStopProcess childs                                                      #? $_bashlyk_iErrorMissingArgument
 #    udfStopProcess pid=$pid $cmd1 88                                           #? $_bashlyk_iErrorNoSuchProcess
 #    udfStopProcess $cmd1 88                                                    #? $_bashlyk_iErrorNoSuchProcess
 #    udfStopProcess pid=$$ $0                                                   #? $_bashlyk_iErrorCurrentProcess
@@ -150,8 +150,6 @@ udfCheckStarted() {
 #    udfStopProcess $cmd1                                                       #? true
 #  SOURCE
 udfStopProcess() {
-
-  udfOn EmptyOrMissingArgument "$@" || return $?
 
   local bChild i iStopped pid rc re s
   local -a a
@@ -175,10 +173,12 @@ udfStopProcess() {
 
   done
 
+  udfOn MissingArgument $* || return $?
+
   rc=$( _ iErrorNoSuchProcess )
 
-  udfOn EmptyOrMissingArgument "${a[*]}" || a=( $( pgrep -d' ' ${1##*/} ) )
-  udfOn EmptyOrMissingArgument "${a[*]}" || return $rc
+  udfOn MissingArgument "${a[*]}" || a=( $( pgrep -d' ' ${1##*/} ) )
+  udfOn MissingArgument "${a[*]}" || return $rc
 
   iStopped=0
   for (( i=0; i<${#a[*]}; i++ )) ; do
@@ -210,7 +210,8 @@ udfStopProcess() {
 
     for s in 15 9; do
 
-      if [[  "$( pgrep -d' ' ${1##*/} )" =~ $re && "$( pgrep -d' ' -f "$*" )" =~ $re ]]; then
+      if [[ $(pgrep -d' ' ${1##*/}) =~ $re && $(pgrep -d' ' -f "$*") =~ $re ]]
+      then
 
         if kill -${s} $pid; then
 
@@ -250,11 +251,10 @@ udfStopProcess() {
 #    created when this script is not already running. If the script has
 #    arguments, the PID file is created with the name of a MD5-hash this command
 #    line, or it is derived from the name of the script.
-#  RETURN VALUE
+#  ERRORS
 #    AlreadyStarted     - process of command line already started
 #    AlreadyLocked      - PID file locked by flock
 #    NotExistNotCreated - PID file don't created
-#    0                  - PID file for command line successfully created
 #  EXAMPLE
 #    local cmd fmt='#!/bin/bash\n%s . bashlyk\n%s || exit $?\n%s\n'             #-
 #    udfMakeTemp cmd                                                            #? true
@@ -338,11 +338,10 @@ udfSetPid() {
 #    If command line process already exist then
 #    this current process with identical command line stopped
 #    else created pid file and current process don`t stopped.
-#  RETURN VALUE
-#    0                        - PID file for command line successfully created
-#    iErrorAlreadyStarted     - PID file exist and command line process already
-#                               started, current process stopped
-#    iErrorNotExistNotCreated - PID file don't created, current process stopped
+#  ERRORS
+#    AlreadyStarted     - PID file exist and command line process already
+#                         started, current process stopped
+#    NotExistNotCreated - PID file don't created, current process stopped
 #  EXAMPLE
 #    udfExitIfAlreadyStarted                                                    #? true
 #    ## TODO проверка кодов возврата
