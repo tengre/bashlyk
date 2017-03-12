@@ -1,5 +1,5 @@
 #
-# $Id: liberr.sh 689 2017-02-15 17:17:22+04:00 toor $
+# $Id: liberr.sh 702 2017-03-12 22:38:05+04:00 toor $
 #
 #****h* BASHLYK/liberr
 #  DESCRIPTION
@@ -947,6 +947,7 @@ ERR::__add_throw_to_command() {
   echo $s
 
 }
+#******
 #****f* liberr/ERR::__convert_try_to_func
 #  SYNOPSIS
 #    ERR::__convert_try_to_func
