@@ -1,10 +1,12 @@
 #
-# $Id: libpid.sh 701 2017-03-12 22:27:45+04:00 toor $
+# $Id: libpid.sh 703 2017-03-13 16:54:41+04:00 toor $
 #
-#****h* BASHLYK/libpid
+#    ****h* BASHLYK/libpid    
 #  DESCRIPTION
-#    Контроль запуска рабочего сценария, возможность защиты от повторного
-#    запуска
+#    A set of functions for process control from shell scripts:
+#    * create a PID file
+#    * protection against restarting
+#    * stop some processes of the specified command
 #  USES
 #    libstd
 #  AUTHOR
@@ -92,11 +94,15 @@ udfCheckStarted() {
 
   shift
 
-  [[ "$( pgrep -d' ' -f "$*" )" =~ $re && "$( pgrep -d' ' ${1##*/} )" =~ $re ]] \
-    || return $(_ iErrorNoSuchProcess)
+  if [[ $(pgrep -d' ' -f "$*") =~ $re && $(pgrep -d' ' ${1##*/}) =~ $re ]]; then
 
-  return 0
+    return 0
+  
+  else
 
+    return $( _ iErrorNoSuchProcess )
+
+  fi
 }
 #******
 #****f* libpid/udfStopProcess
