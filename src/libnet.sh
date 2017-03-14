@@ -1,5 +1,5 @@
 #
-# $Id: libnet.sh 695 2017-02-27 15:17:24+04:00 toor $
+# $Id: libnet.sh 704 2017-03-14 14:48:02+04:00 toor $
 #
 #****h* BASHLYK/libnet
 #  DESCRIPTION
@@ -50,33 +50,24 @@ declare -rg _bashlyk_exports_net="udfGetValidIPsOnly udfGetValidCIDR"
 #  OUTPUT
 #    separated by white space list of valid IPv4 addresses
 #  ERRORS
-#    MissingArgument - no arguments
-#    EmptyResult     - no result
+#    EmptyResult     - no result (or arguments)
 #  EXAMPLE
-#    udfGetValidIPsOnly                                                         #? $_bashlyk_iErrorEmptyOrMissingArgument
+#    udfGetValidIPsOnly                                                         #? $_bashlyk_iErrorEmptyResult
 #    udfGetValidIPsOnly 999.8.7.6                                               #? $_bashlyk_iErrorEmptyResult
 #    udfGetValidIPsOnly 1.2.3.4                                                 #? true
 #    udfGetValidIPsOnly localhost                                               #? true
-#    udfGetValidIPsOnly localhost >| grep '127\.0\.0\.1'                        #? true
+#    udfGetValidIPsOnly localhost/32 >| grep '^127\.0\.0\.1$'                   #? true
 #  SOURCE
 udfGetValidIPsOnly() {
 
-  udfOn MissingArgument "$*" || return $?
-
-  local s sDig
+  local re='^Host[[:space:]]address[[:space:]]*-[[:space:]]([0-9.]+)$'
   local -A h
 
-  for s in $*; do
+  while read -t 32; do
 
-    [[ $s =~ ^[0-9.]+$ ]] && ipcalc "$s" | grep '^INVALID ADDRESS:' && continue
+    h[$REPLY]=$REPLY
 
-    sipcalc -d4 "$s" | grep '^-\[ERR :' && continue
-
-    sDig=$( dig +short $s ) && s="$sDig"
-
-    h[$s]=$s
-
-  done >/dev/null 2>&1
+  done< <( sipcalc -d4 $* | grep -E "$re" | sed -re "s/${re}/\1/" )
 
   echo "${h[@]}"
 
