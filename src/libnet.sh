@@ -1,5 +1,5 @@
 #
-# $Id: libnet.sh 705 2017-03-14 17:30:57+04:00 toor $
+# $Id: libnet.sh 706 2017-03-14 23:01:09+04:00 toor $
 #
 #****h* BASHLYK/libnet
 #  DESCRIPTION
@@ -65,9 +65,9 @@ udfGetValidIPsOnly() {
 
   while read -t 32; do
 
-    h[$REPLY]=$REPLY
+    [[ $REPLY =~ $re ]] && h[${BASH_REMATCH[1]}]=${BASH_REMATCH[1]}
 
-  done< <( sipcalc -d4 $* | grep -E "$re" | sed -re "s/${re}/\1/" )
+  done< <( sipcalc -d4 $* )
 
   echo "${h[@]}"
 
@@ -98,18 +98,21 @@ udfGetValidIPsOnly() {
 #  SOURCE
 udfGetValidCIDR() {
 
-  udfOn MissingArgument "$*"    || return $?
+  udfOn MissingArgument "$*" || return $?
 
-  local s
+  local s reHost reMask
   local -A h
+
+  reHost='^Host[[:space:]]address[[:space:]]+-[[:space:]]([0-9.]+)$'
+  reMask='^Network[[:space:]]mask[[:space:]]\(bits\)[[:space:]]+-.([0-9]+)$'
 
   while read -t 32; do
 
-    if [[ $REPLY =~ ^Host[[:space:]]address[[:space:]]+-[[:space:]]([0-9.]+)$ ]]; then
+    if   [[ $REPLY =~ $reHost ]]; then
 
       s=${BASH_REMATCH[1]}
 
-    elif [[ $REPLY =~ ^Network[[:space:]]+mask[[:space:]]\(bits\)[[:space:]]+-[[:space:]]([0-9]+)$ ]]; then
+    elif [[ $REPLY =~ $reMask ]]; then
 
       [[ $s ]] && h["${s}/${BASH_REMATCH[1]}"]="${s}/${fBASH_REMATCH[1]}"
       unset s
