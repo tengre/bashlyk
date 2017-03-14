@@ -1,5 +1,5 @@
 #
-# $Id: libnet.sh 704 2017-03-14 14:48:02+04:00 toor $
+# $Id: libnet.sh 705 2017-03-14 17:30:57+04:00 toor $
 #
 #****h* BASHLYK/libnet
 #  DESCRIPTION
@@ -98,34 +98,29 @@ udfGetValidIPsOnly() {
 #  SOURCE
 udfGetValidCIDR() {
 
-  udfOn EmptyVariable   _reIPv4 || return $?
   udfOn MissingArgument "$*"    || return $?
 
-  local s i
+  local s
   local -A h
 
-  for s in $*; do
+  while read -t 32; do
 
-  [[ $s =~ $_reIPv4 ]] || continue
+    if [[ $REPLY =~ ^Host[[:space:]]address[[:space:]]+-[[:space:]]([0-9.]+)$ ]]; then
 
-  i=${s##*/}
+      s=${BASH_REMATCH[1]}
 
-  if [[ $s == $i ]]; then
+    elif [[ $REPLY =~ ^Network[[:space:]]+mask[[:space:]]\(bits\)[[:space:]]+-[[:space:]]([0-9]+)$ ]]; then
 
-    s=$( udfGetValidIPsOnly $s ) || continue
+      [[ $s ]] && h["${s}/${BASH_REMATCH[1]}"]="${s}/${fBASH_REMATCH[1]}"
+      unset s
 
-  else
+    else
 
-    udfIsNumber $i && (( i <= 32 )) || continue
+      continue
 
-    s=$( udfGetValidIPsOnly ${s%/*} ) || continue
-    s="${s}/${i}"
+    fi
 
-  fi
-
-  [[ $s ]] && h[$s]="$s"
-
-  done
+  done< <( sipcalc -d4 $* )
 
   echo "${h[@]}"
 
