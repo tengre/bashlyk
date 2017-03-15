@@ -1,5 +1,5 @@
 #
-# $Id: libnet.sh 706 2017-03-14 23:01:09+04:00 toor $
+# $Id: libnet.sh 708 2017-03-15 12:47:19+04:00 toor $
 #
 #****h* BASHLYK/libnet
 #  DESCRIPTION
@@ -35,10 +35,11 @@
 #  SOURCE
 : ${_bashlyk_sArg:="$@"}
 
-declare -rg _reIPv4='[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+'
-declare -rg _peIPv4='\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}'
-declare -rg _bashlyk_externals_net="dig echo grep ipcalc sipcalc xargs"
-declare -rg _bashlyk_exports_net="udfGetValidIPsOnly udfGetValidCIDR"
+declare -rg _bashlyk_net_reHost='^Host[[:space:]]address[[:space:]]+-[[:space:]]([0-9.]+)$'
+declare -rg _bashlyk_net_reMask='^Network[[:space:]]mask[[:space:]]\(bits\)[[:space:]]+-[[:space:]]([0-9]+)$'
+
+declare -rg _bashlyk_externals_net='sipcalc'
+declare -rg _bashlyk_exports_net='udfGetValidIPsOnly udfGetValidCIDR'
 #******
 #****f* libnet/udfGetValidIPsOnly
 #  SYNOPSIS
@@ -60,18 +61,17 @@ declare -rg _bashlyk_exports_net="udfGetValidIPsOnly udfGetValidCIDR"
 #  SOURCE
 udfGetValidIPsOnly() {
 
-  local re='^Host[[:space:]]address[[:space:]]*-[[:space:]]([0-9.]+)$'
   local -A h
 
   while read -t 32; do
 
-    [[ $REPLY =~ $re ]] && h[${BASH_REMATCH[1]}]=${BASH_REMATCH[1]}
+    [[ $REPLY =~ $_bashlyk_net_reHost ]] && h[${BASH_REMATCH[1]}]='ok'
 
   done< <( sipcalc -d4 $* )
 
-  echo "${h[@]}"
+  echo "${!h[@]}"
 
-  udfOn EmptyResult return "${h[@]}"
+  udfOn EmptyResult return "${!h[@]}"
 
 }
 #******
@@ -88,33 +88,30 @@ udfGetValidIPsOnly() {
 #    MissingArgument - no arguments
 #    EmptyResult     - no result
 #  EXAMPLE
-#    udfGetValidCIDR                                                            #? $_bashlyk_iErrorEmptyOrMissingArgument
+#    udfGetValidCIDR                                                            #? $_bashlyk_iErrorMissingArgument
 #    udfGetValidCIDR 999.8.7.6                                                  #? $_bashlyk_iErrorEmptyResult
 #    udfGetValidCIDR 999.8.7.6/32                                               #? $_bashlyk_iErrorEmptyResult
 #    udfGetValidCIDR 999.8.7.6/33                                               #? $_bashlyk_iErrorEmptyResult
-#    udfGetValidCIDR 1.2.3.4                                                    #? true
-#    udfGetValidCIDR 1.2.3.4/23                                                 #? true
+#    udfGetValidCIDR 1.2.3.4                         >| grep '^1\.2\.3\.4/32$'  #? true
+#    udfGetValidCIDR 1.2.3.4/23                      >| grep '^1\.2\.3\.4/23$'  #? true
 #    udfGetValidCIDR 1.2.3.4/43                                                 #? $_bashlyk_iErrorEmptyResult
 #  SOURCE
 udfGetValidCIDR() {
 
-  udfOn MissingArgument "$*" || return $?
+  udfOn MissingArgument "$*" || return
 
-  local s reHost reMask
+  local s
   local -A h
-
-  reHost='^Host[[:space:]]address[[:space:]]+-[[:space:]]([0-9.]+)$'
-  reMask='^Network[[:space:]]mask[[:space:]]\(bits\)[[:space:]]+-.([0-9]+)$'
 
   while read -t 32; do
 
-    if   [[ $REPLY =~ $reHost ]]; then
+    if   [[ $REPLY =~ $_bashlyk_net_reHost ]]; then
 
       s=${BASH_REMATCH[1]}
 
-    elif [[ $REPLY =~ $reMask ]]; then
+    elif [[ $REPLY =~ $_bashlyk_net_reMask ]]; then
 
-      [[ $s ]] && h["${s}/${BASH_REMATCH[1]}"]="${s}/${fBASH_REMATCH[1]}"
+      [[ $s ]] && h["${s}/${BASH_REMATCH[1]}"]='ok'
       unset s
 
     else
@@ -125,9 +122,9 @@ udfGetValidCIDR() {
 
   done< <( sipcalc -d4 $* )
 
-  echo "${h[@]}"
+  echo "${!h[@]}"
 
-  udfOn EmptyResult return "${h[@]}"
+  udfOn EmptyResult return "${!h[@]}"
 
 }
 #******
