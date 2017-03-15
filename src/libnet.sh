@@ -1,5 +1,5 @@
 #
-# $Id: libnet.sh 708 2017-03-15 12:47:19+04:00 toor $
+# $Id: libnet.sh 709 2017-03-15 17:09:18+04:00 toor $
 #
 #****h* BASHLYK/libnet
 #  DESCRIPTION
@@ -37,13 +37,13 @@
 
 declare -rg _bashlyk_net_reHost='^Host[[:space:]]address[[:space:]]+-[[:space:]]([0-9.]+)$'
 declare -rg _bashlyk_net_reMask='^Network[[:space:]]mask[[:space:]]\(bits\)[[:space:]]+-[[:space:]]([0-9]+)$'
-
-declare -rg _bashlyk_externals_net='sipcalc'
-declare -rg _bashlyk_exports_net='udfGetValidIPsOnly udfGetValidCIDR'
+declare -rg _bashlyk_net_reRange='^Usable[[:space:]]range[[:space:]]+-[[:space:]]([0-9.]+)[[:space:]]-[[:space:]]([0-9.]+)$'
+declare -rg _bashlyk_net_exports='net::ipv4.validate net::ipv4.cidr net::ipv4.range'
+declare -rg _bashlyk_net_externals='sipcalc'
 #******
-#****f* libnet/udfGetValidIPsOnly
+#****f* libnet/net::ipv4.validate
 #  SYNOPSIS
-#    udfGetValidIPsOnly args ...
+#    net::ipv4.validate args ...
 #  DESCRIPTION
 #    resolve arguments as IPv4 address and return only valid values list
 #  INPUTS
@@ -53,13 +53,15 @@ declare -rg _bashlyk_exports_net='udfGetValidIPsOnly udfGetValidCIDR'
 #  ERRORS
 #    EmptyResult     - no result (or arguments)
 #  EXAMPLE
-#    udfGetValidIPsOnly                                                         #? $_bashlyk_iErrorEmptyResult
-#    udfGetValidIPsOnly 999.8.7.6                                               #? $_bashlyk_iErrorEmptyResult
-#    udfGetValidIPsOnly 1.2.3.4                                                 #? true
-#    udfGetValidIPsOnly localhost                                               #? true
-#    udfGetValidIPsOnly localhost/32 >| grep '^127\.0\.0\.1$'                   #? true
+#    net::ipv4.validate                                                         #? $_bashlyk_iErrorMissingArgument
+#    net::ipv4.validate 999.8.7.6                                               #? $_bashlyk_iErrorEmptyResult
+#    net::ipv4.validate 1.2.3.4                                                 #? true
+#    net::ipv4.validate localhost                                               #? true
+#    net::ipv4.validate localhost/32 >| grep '^127\.0\.0\.1$'                   #? true
 #  SOURCE
-udfGetValidIPsOnly() {
+net::ipv4.validate() {
+
+  udfOn MissingArgument $* || return
 
   local -A h
 
@@ -75,30 +77,29 @@ udfGetValidIPsOnly() {
 
 }
 #******
-#****f* libnet/udfGetValidCIDR
+#****f* libnet/net::ipv4.cidr
 #  SYNOPSIS
-#    udfGetValidCIDR args ...
+#    net::ipv4.cidr <arg> ...
 #  DESCRIPTION
 #    resolve arguments as IPv4 CIDR (address/mask) and return valid values list
 #  INPUTS
-#    args - IPv4 CIDR or addresses
+#    <arg> - IPv4 CIDR or addresses (default mask bits 32)
 #  OUTPUT
 #    separated by white space list of valid IPv4 CIDR
 #  ERRORS
 #    MissingArgument - no arguments
 #    EmptyResult     - no result
 #  EXAMPLE
-#    udfGetValidCIDR                                                            #? $_bashlyk_iErrorMissingArgument
-#    udfGetValidCIDR 999.8.7.6                                                  #? $_bashlyk_iErrorEmptyResult
-#    udfGetValidCIDR 999.8.7.6/32                                               #? $_bashlyk_iErrorEmptyResult
-#    udfGetValidCIDR 999.8.7.6/33                                               #? $_bashlyk_iErrorEmptyResult
-#    udfGetValidCIDR 1.2.3.4                         >| grep '^1\.2\.3\.4/32$'  #? true
-#    udfGetValidCIDR 1.2.3.4/23                      >| grep '^1\.2\.3\.4/23$'  #? true
-#    udfGetValidCIDR 1.2.3.4/43                                                 #? $_bashlyk_iErrorEmptyResult
+#    net::ipv4.cidr                                                             #? $_bashlyk_iErrorMissingArgument
+#    net::ipv4.cidr 999.8.7.6                                                   #? $_bashlyk_iErrorEmptyResult
+#    net::ipv4.cidr 999.8.7.6/23                                                #? $_bashlyk_iErrorEmptyResult
+#    net::ipv4.cidr 1.2.3.4                          >| grep '^1\.2\.3\.4/32$'  #? true
+#    net::ipv4.cidr 1.2.3.4/23                       >| grep '^1\.2\.3\.4/23$'  #? true
+#    net::ipv4.cidr 1.2.3.4/43                                                  #? $_bashlyk_iErrorEmptyResult
 #  SOURCE
-udfGetValidCIDR() {
+net::ipv4.cidr() {
 
-  udfOn MissingArgument "$*" || return
+  udfOn MissingArgument $* || return
 
   local s
   local -A h
@@ -128,3 +129,75 @@ udfGetValidCIDR() {
 
 }
 #******
+#****f* libnet/net::ipv4.range
+#  SYNOPSIS
+#    net::ipv4.range <CIDR>
+#  DESCRIPTION
+#    resolve first argument (only!) as IPv4 CIDR (address/mask) and return list 
+#    of the usable range of the IPv4 addresses from <CIDR>
+#  INPUTS
+#    <CIDR> - IPv4 CIDR or IPv4 address
+#  OUTPUT
+#    separated by white space list of the valid IPv4
+#  ERRORS
+#    MissingArgument - no arguments
+#    EmptyResult     - no result
+#  EXAMPLE
+#    net::ipv4.range                                                            #? $_bashlyk_iErrorMissingArgument
+#    net::ipv4.range 999.8.7.6                                                  #? $_bashlyk_iErrorEmptyResult
+#    net::ipv4.range 999.8.7.6/33                                               #? $_bashlyk_iErrorEmptyResult
+#    net::ipv4.range 1.2.3.4                                                    #? $_bashlyk_iErrorEmptyResult
+#    net::ipv4.range 1.2.3.4/29              >| grep '^1\.2\.3\.1.*1\.2\.3\.6$' #? true
+#    net::ipv4.range 1.2.3.4/43                                                 #? $_bashlyk_iErrorEmptyResult
+#  SOURCE
+net::ipv4.range() {
+
+  udfOn MissingArgument $* || return
+
+  local IFS i s 
+  local -a aA aB
+  local -A h
+
+  while read -t 32; do
+
+    if   [[ $REPLY =~ $_bashlyk_net_reRange ]]; then
+
+      IFS='.'
+      aA=( ${BASH_REMATCH[1]} )
+      aB=( ${BASH_REMATCH[2]} )
+      IFS=$' \t\n'
+
+      break
+      
+    else
+
+     continue
+
+    fi
+
+  done< <( sipcalc -d4 $* )
+
+  for (( i = 0; i < ${#aA[@]}; i++ )); do
+
+    if [[ ${aA[$i]} == ${aB[$i]} ]]; then
+    
+      s+="${aB[$i]} "
+      
+    else
+
+      s+="{${aA[$i]}..${aB[$i]}} "
+
+    fi
+
+  done
+
+  s="$( udfTrim "$s" )"
+  eval "echo ${s// /.}"
+
+  udfOn EmptyResult return "$s"
+
+}
+#******
+shopt -s expand_aliases
+alias udfGetValidIPsOnly="net::ipv4.validate"
+alias udfGetValidCIDR="net::ipv4.cidr"
