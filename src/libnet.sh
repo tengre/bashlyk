@@ -1,9 +1,9 @@
 #
-# $Id: libnet.sh 709 2017-03-15 17:09:18+04:00 toor $
+# $Id: libnet.sh 710 2017-03-20 16:58:58+04:00 toor $
 #
 #****h* BASHLYK/libnet
 #  DESCRIPTION
-#    network tools
+#    interface to sipcalc command
 #  USES
 #    libstd
 #  AUTHOR
@@ -35,31 +35,41 @@
 #  SOURCE
 : ${_bashlyk_sArg:="$@"}
 
-declare -rg _bashlyk_net_reHost='^Host[[:space:]]address[[:space:]]+-[[:space:]]([0-9.]+)$'
-declare -rg _bashlyk_net_reMask='^Network[[:space:]]mask[[:space:]]\(bits\)[[:space:]]+-[[:space:]]([0-9]+)$'
+declare -rg _bashlyk_net_reAddress='[[:space:]]address[[:space:]]+-[[:space:]]([0-9.]+)$'
+declare -rg _bashlyk_net_reHost="^Host${_bashlyk_net_reAddress}"
+declare -rg _bashlyk_net_reNetwork="^Network${_bashlyk_net_reAddress}"
+declare -rg _bashlyk_net_reBroadcast="^Broadcast${_bashlyk_net_reAddress}"
+declare -rg _bashlyk_net_reMask='^Network[[:space:]]mask[[:space:]]+-[[:space:]]([0-9.]+)$'
+declare -rg _bashlyk_net_reMaskBit='^Network[[:space:]]mask[[:space:]]\(bits\)[[:space:]]+-[[:space:]]([0-9]+)$'
 declare -rg _bashlyk_net_reRange='^Usable[[:space:]]range[[:space:]]+-[[:space:]]([0-9.]+)[[:space:]]-[[:space:]]([0-9.]+)$'
-declare -rg _bashlyk_net_exports='net::ipv4.validate net::ipv4.cidr net::ipv4.range'
+declare -rg _bashlyk_net_exports='net::ipv4.broadcast net::ipv4.cidr net::ipv4.host net::ipv4.mask net::ipv4.network net::ipv4.range'
 declare -rg _bashlyk_net_externals='sipcalc'
 #******
-#****f* libnet/net::ipv4.validate
+shopt -s expand_aliases
+alias udfGetValidIPsOnly="net::ipv4.host"
+alias udfGetValidCIDR="net::ipv4.cidr"
+#****f* libnet/net::ipv4.host
 #  SYNOPSIS
-#    net::ipv4.validate args ...
+#    net::ipv4.host <arg> ...
 #  DESCRIPTION
-#    resolve arguments as IPv4 address and return only valid values list
+#    validate arguments as IPv4 address and return only valid values list
 #  INPUTS
-#    args - IP addresses and domain names (if resolved)
+#    <arg> ... - every argument is a IP, DNS hostnames or CIDR -
+#                (<IPv4>|<hostname>)[/<network mask bits>] - default mask /32
 #  OUTPUT
-#    separated by white space list of valid IPv4 addresses
+#    separated by white space list of valid IPv4 host addresses
 #  ERRORS
-#    EmptyResult     - no result (or arguments)
+#    MissingArgument - no arguments
+#    EmptyResult     - no result
 #  EXAMPLE
-#    net::ipv4.validate                                                         #? $_bashlyk_iErrorMissingArgument
-#    net::ipv4.validate 999.8.7.6                                               #? $_bashlyk_iErrorEmptyResult
-#    net::ipv4.validate 1.2.3.4                                                 #? true
-#    net::ipv4.validate localhost                                               #? true
-#    net::ipv4.validate localhost/32 >| grep '^127\.0\.0\.1$'                   #? true
+#    net::ipv4.host                                                             #? $_bashlyk_iErrorMissingArgument
+#    net::ipv4.host 999.8.7.6                                                   #? $_bashlyk_iErrorEmptyResult
+#    net::ipv4.host 192.168.116.116             >| grep '^192\.168\.116\.116$'  #? true
+#    net::ipv4.host localhost                                                   #? true
+#    net::ipv4.host localhost/32                >| grep '^127\.0\.0\.1$'        #? true
+#    udfGetValidIPsOnly localhost/32            >| grep '^127\.0\.0\.1$'        #? true
 #  SOURCE
-net::ipv4.validate() {
+net::ipv4.host() {
 
   udfOn MissingArgument $* || return
 
@@ -77,13 +87,127 @@ net::ipv4.validate() {
 
 }
 #******
+#****f* libnet/net::ipv4.mask
+#  SYNOPSIS
+#    net::ipv4.mask <arg> ...
+#  DESCRIPTION
+#    get network mask for source arguments
+#  INPUTS
+#    <arg> ... - every arguments is a IP, DNS hostnames or CIDR -
+#                (<IPv4>|<hostname>)[/<network mask bits>] - default mask /32
+#  OUTPUT
+#    separated by white space list of the network mask
+#  ERRORS
+#    MissingArgument - no arguments
+#    EmptyResult     - no result
+#  EXAMPLE
+#    net::ipv4.mask                                                             #? $_bashlyk_iErrorMissingArgument
+#    net::ipv4.mask 999.8.7.6                                                   #? $_bashlyk_iErrorEmptyResult
+#    net::ipv4.mask 192.168.116.116/27          >| grep '^255\.255\.255\.224$'  #? true
+#    net::ipv4.mask localhost                                                   #? true
+#    net::ipv4.mask localhost/32                >| grep '^255\.255\.255\.255$'  #? true
+#  SOURCE
+net::ipv4.mask() {
+
+  udfOn MissingArgument $* || return
+
+  local -A h
+
+  while read -t 32; do
+
+    [[ $REPLY =~ $_bashlyk_net_reMask ]] && h[${BASH_REMATCH[1]}]='ok'
+
+  done< <( sipcalc -d4 $* )
+
+  echo "${!h[@]}"
+
+  udfOn EmptyResult return "${!h[@]}"
+
+}
+#******
+#****f* libnet/net::ipv4.network
+#  SYNOPSIS
+#    net::ipv4.network <arg> ...
+#  DESCRIPTION
+#    try get IPv4 network addresses
+#  INPUTS
+#    <arg> ... - every words is a IP, DNS hostnames or CIDR -
+#                (<IPv4>|<hostname>)[/<network mask bits>] - default mask /32
+#  OUTPUT
+#    separated by white space list of valid IPv4 network addresses
+#  ERRORS
+#    MissingArgument - no arguments
+#    EmptyResult     - no result
+#  EXAMPLE
+#    net::ipv4.network                                                          #? $_bashlyk_iErrorMissingArgument
+#    net::ipv4.network 999.8.7.6                                                #? $_bashlyk_iErrorEmptyResult
+#    net::ipv4.network 192.168.116.116/27         >| grep '^192\.168\.116\.96$' #? true
+#    net::ipv4.network localhost                                                #? true
+#    net::ipv4.network localhost/32               >| grep '^127\.0\.0\.1$'      #? true
+#  SOURCE
+net::ipv4.network() {
+
+  udfOn MissingArgument $* || return
+
+  local -A h
+
+  while read -t 32; do
+
+    [[ $REPLY =~ $_bashlyk_net_reNetwork ]] && h[${BASH_REMATCH[1]}]='ok'
+
+  done< <( sipcalc -d4 $* )
+
+  echo "${!h[@]}"
+
+  udfOn EmptyResult return "${!h[@]}"
+
+}
+#******
+#****f* libnet/net::ipv4.broadcast
+#  SYNOPSIS
+#    net::ipv4.broadcast <arg> ...
+#  DESCRIPTION
+#    try get IPv4 broadcast address
+#  INPUTS
+#    <arg> ... - every argument is a IP, DNS hostnames or CIDR -
+#                (<IPv4>|<hostname>)[/<network mask bits>] - default mask /32
+#  OUTPUT
+#    separated by white space list of valid IPv4 broadcast addresses
+#  ERRORS
+#    EmptyResult - no result (or arguments)
+#  EXAMPLE
+#    net::ipv4.broadcast                                                        #? $_bashlyk_iErrorMissingArgument
+#    net::ipv4.broadcast 999.8.7.6                                              #? $_bashlyk_iErrorEmptyResult
+#    net::ipv4.broadcast 192.168.116.116/27      >| grep '^192\.168\.116\.127$' #? true
+#    net::ipv4.broadcast localhost                                              #? true
+#    net::ipv4.broadcast localhost/32            >| grep '^127\.0\.0\.1$'       #? true
+#  SOURCE
+net::ipv4.broadcast() {
+
+  udfOn MissingArgument $* || return
+
+  local -A h
+
+  while read -t 32; do
+
+    [[ $REPLY =~ $_bashlyk_net_reBroadcast ]] && h[${BASH_REMATCH[1]}]='ok'
+
+  done< <( sipcalc -d4 $* )
+
+  echo "${!h[@]}"
+
+  udfOn EmptyResult return "${!h[@]}"
+
+}
+#******
 #****f* libnet/net::ipv4.cidr
 #  SYNOPSIS
 #    net::ipv4.cidr <arg> ...
 #  DESCRIPTION
 #    resolve arguments as IPv4 CIDR (address/mask) and return valid values list
 #  INPUTS
-#    <arg> - IPv4 CIDR or addresses (default mask bits 32)
+#    <arg> ... - every argument is a IP, DNS hostnames or CIDR -
+#                (<IPv4>|<hostname>)[/<network mask bits>] - default mask /32
 #  OUTPUT
 #    separated by white space list of valid IPv4 CIDR
 #  ERRORS
@@ -95,6 +219,7 @@ net::ipv4.validate() {
 #    net::ipv4.cidr 999.8.7.6/23                                                #? $_bashlyk_iErrorEmptyResult
 #    net::ipv4.cidr 1.2.3.4                          >| grep '^1\.2\.3\.4/32$'  #? true
 #    net::ipv4.cidr 1.2.3.4/23                       >| grep '^1\.2\.3\.4/23$'  #? true
+#    udfGetValidCIDR 1.2.3.4/23                      >| grep '^1\.2\.3\.4/23$'  #? true
 #    net::ipv4.cidr 1.2.3.4/43                                                  #? $_bashlyk_iErrorEmptyResult
 #  SOURCE
 net::ipv4.cidr() {
@@ -110,7 +235,7 @@ net::ipv4.cidr() {
 
       s=${BASH_REMATCH[1]}
 
-    elif [[ $REPLY =~ $_bashlyk_net_reMask ]]; then
+    elif [[ $REPLY =~ $_bashlyk_net_reMaskBit ]]; then
 
       [[ $s ]] && h["${s}/${BASH_REMATCH[1]}"]='ok'
       unset s
@@ -131,12 +256,14 @@ net::ipv4.cidr() {
 #******
 #****f* libnet/net::ipv4.range
 #  SYNOPSIS
-#    net::ipv4.range <CIDR>
+#    net::ipv4.range (<IPv4>|<hostname>)[/<network mask bits>]
 #  DESCRIPTION
-#    resolve first argument (only!) as IPv4 CIDR (address/mask) and return list 
-#    of the usable range of the IPv4 addresses from <CIDR>
+#    resolve first valid argument (only!) as IPv4 CIDR (address/mask) and return
+#    list of the usable range of the IPv4 addresses for network of source
+#    argument
 #  INPUTS
-#    <CIDR> - IPv4 CIDR or IPv4 address
+#    (<IPv4>|<hostname>)[/<network mask bits>] - IP, DNS hostnames or CIDR -
+#                                                (default mask /32)
 #  OUTPUT
 #    separated by white space list of the valid IPv4
 #  ERRORS
@@ -147,14 +274,14 @@ net::ipv4.cidr() {
 #    net::ipv4.range 999.8.7.6                                                  #? $_bashlyk_iErrorEmptyResult
 #    net::ipv4.range 999.8.7.6/33                                               #? $_bashlyk_iErrorEmptyResult
 #    net::ipv4.range 1.2.3.4                                                    #? $_bashlyk_iErrorEmptyResult
-#    net::ipv4.range 1.2.3.4/29              >| grep '^1\.2\.3\.1.*1\.2\.3\.6$' #? true
+#    net::ipv4.range 192.168.116.116/27    >| grep '^192\.168\.116\.97.*\.126$' #? true
 #    net::ipv4.range 1.2.3.4/43                                                 #? $_bashlyk_iErrorEmptyResult
 #  SOURCE
 net::ipv4.range() {
 
   udfOn MissingArgument $* || return
 
-  local IFS i s 
+  local IFS i s
   local -a aA aB
   local -A h
 
@@ -168,7 +295,7 @@ net::ipv4.range() {
       IFS=$' \t\n'
 
       break
-      
+
     else
 
      continue
@@ -180,9 +307,9 @@ net::ipv4.range() {
   for (( i = 0; i < ${#aA[@]}; i++ )); do
 
     if [[ ${aA[$i]} == ${aB[$i]} ]]; then
-    
+
       s+="${aB[$i]} "
-      
+
     else
 
       s+="{${aA[$i]}..${aB[$i]}} "
@@ -198,6 +325,3 @@ net::ipv4.range() {
 
 }
 #******
-shopt -s expand_aliases
-alias udfGetValidIPsOnly="net::ipv4.validate"
-alias udfGetValidCIDR="net::ipv4.cidr"
