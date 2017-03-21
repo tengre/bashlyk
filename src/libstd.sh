@@ -1,5 +1,5 @@
 #
-# $Id: libstd.sh 695 2017-02-27 15:17:24+04:00 toor $
+# $Id: libstd.sh 712 2017-03-21 17:21:34+04:00 toor $
 #
 #****h* BASHLYK/libstd
 #  DESCRIPTION
@@ -50,7 +50,7 @@
 #
 : ${_bashlyk_sArg:="$@"}
 : ${_bashlyk_s0:=${0##*/}}
-: ${USER:=$(id -nu)}
+: ${USER:=$( exec -c id -nu )}
 : ${_bashlyk_sUser:=$USER}
 : ${_bashlyk_pathDat:=/tmp}
 : ${_bashlyk_bNotUseLog:=1}
@@ -58,7 +58,7 @@
 : ${_bashlyk_sWSpaceAlias:=___}
 : ${_bashlyk_emailRcpt:=postmaster}
 : ${_bashlyk_sId:=${_bashlyk_s0%.sh}}
-: ${HOSTNAME:=$(hostname 2>/dev/null)}
+: ${HOSTNAME:=$( exec -c hostname 2>/dev/null )}
 : ${_bashlyk_sUnnamedKeyword:=_bashlyk_unnamed_key_}
 : ${_bashlyk_reMetaRules:='34=":40=(:41=):59=;:91=[:92=\\:93=]:61=='}
 : ${_bashlyk_emailSubj:="${_bashlyk_sUser}@${HOSTNAME}::${_bashlyk_s0}"}
@@ -461,11 +461,11 @@ udfMakeTemp() {
   sPrefix=${sPrefix//\//}
   sSuffix=${sSuffix//\//}
 
-  if   [[ -f "$(which mktemp)" ]]; then
+  if   [[ -f "$( exec -c which mktemp )" ]]; then
 
     cmd=mktemp
 
-  elif [[ -f "$(which tempfile)" ]]; then
+  elif [[ -f "$( exec -c which tempfile )" ]]; then
 
     [[ $optDir ]] && cmd=direct || cmd=tempfile
 
@@ -491,7 +491,7 @@ udfMakeTemp() {
 
     mktemp)
 
-      s=$(mktemp --tmpdir=${path} $optDir --suffix=${sSuffix} "${sPrefix:0:5}XXXXXXXX")
+      s=$( mktemp --tmpdir=${path} $optDir --suffix=${sSuffix} "${sPrefix:0:5}XXXXXXXX" )
 
     ;;
 
@@ -500,7 +500,7 @@ udfMakeTemp() {
       [[ $sPrefix ]] && sPrefix="-p ${sPrefix:0:5}"
       [[ $sSuffix ]] && sSuffix="-s $sSuffix"
 
-      s=$(tempfile -d $path $sPrefix $sSuffix)
+      s=$( tempfile -d $path $sPrefix $sSuffix )
 
     ;;
 
@@ -526,7 +526,7 @@ udfMakeTemp() {
 
   if ! [[ -f "$s" || -p "$s" || -d "$s" ]]; then
 
-    eval $(udfOnError NotExistNotCreated $s)
+    eval $( udfOnError NotExistNotCreated $s )
 
   fi
 
@@ -842,7 +842,7 @@ udfOnTrap() {
 
     for s in 15 9; do
 
-      if [[  "$(pgrep -d' ' -P $$)" =~ $re ]]; then
+      if [[  "$( pgrep -d' ' -P $$ )" =~ $re ]]; then
 
         if ! kill -${s} ${a[i]}; then
 
@@ -1247,7 +1247,7 @@ udfCheckCsv() {
 
     fi
 
-    IFS=' ' csv+="$k=$(udfQuoteIfNeeded $v);"
+    IFS=' ' csv+="$k=$( udfQuoteIfNeeded $v );"
 
   done
 
@@ -1319,13 +1319,13 @@ udfGetMd5() {
 #  SOURCE
 udfGetPathMd5() {
 
-  local pathSrc="$(pwd)" pathDst s IFS=$' \t\n'
+  local pathSrc="$( exec -c pwd )" pathDst s IFS=$' \t\n'
 
   udfOn NoSuchFileOrDir "$@" || return $?
 
   cd "$@" 2>/dev/null || eval $( udfOnError retwarn NotPermitted '$@' )
 
-  pathDst="$(pwd)"
+  pathDst="$( exec -c pwd )"
 
   while read s; do
 
@@ -1561,7 +1561,7 @@ udfGetTimeInSec() {
 #  SOURCE
 udfGetFreeFD() {
 
-  local i=0 iMax=$(ulimit -n)
+  local i=0 iMax=$( ulimit -n )
 
   : ${iMax:=255}
 

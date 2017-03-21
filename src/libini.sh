@@ -1,5 +1,5 @@
 #
-# $Id: libini.sh 698 2017-02-28 10:53:35+04:00 toor $
+# $Id: libini.sh 712 2017-03-21 17:21:33+04:00 toor $
 #
 #****h* BASHLYK/libini
 #  DESCRIPTION
@@ -95,7 +95,7 @@
 #    Global variables of the library
 #  SOURCE
 : ${_bashlyk_sArg:="$@"}
-: ${_bashlyk_pathIni:=$(pwd)}
+: ${_bashlyk_pathIni:=$( exec -c pwd )}
 
 declare -rg _bashlyk_cnf_reKey='^\b([_a-zA-Z][_a-zA-Z0-9]*)\b$'
 declare -rg _bashlyk_ini_reKey='^\b([^=]+)\b$'
@@ -341,7 +341,7 @@ INI::__section.select() {
 
   if [[ ! $id ]]; then
 
-    id=$(sha1sum <<< "$s")
+    id=$( exec -c sha1sum <<< "$s" )
     id="_h${o^^}_${id:0:40}"
 
     declare -Ag -- $id="()"
@@ -1073,7 +1073,7 @@ INI::read() {
   [[ ${hRawMode[@]}  ]] || local -A hRawMode
 
   ## TODO permit hi uid ?
-  if [[ ! $( stat -c %u $fn ) =~ ^($UID|0)$ ]]; then
+  if [[ ! $( exec -c stat -c %u $fn ) =~ ^($UID|0)$ ]]; then
 
     eval $( udfOnError NotPermitted "$1 owned by $( stat -c %U $fn )" )
 
@@ -1297,7 +1297,7 @@ INI::load() {
   fmtPairs=$( ${o}.settings fmtPairs )
 
   [[ "$1" == "${1##*/}" && -f "$(_ pathIni)/$1" ]] && path=$(_ pathIni)
-  [[ "$1" == "${1##*/}" && -f "$1"              ]] && path=$(pwd)
+  [[ "$1" == "${1##*/}" && -f "$1"              ]] && path=$( exec -c pwd )
   [[ "$1" != "${1##*/}" && -f "$1"              ]] && path=${1%/*}
 
   if [[ ! $path && -f "/etc/$(_ pathPrefix)/$1" ]]; then

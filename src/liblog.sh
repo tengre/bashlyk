@@ -1,5 +1,5 @@
 #
-# $Id: liblog.sh 695 2017-02-27 15:17:24+04:00 toor $
+# $Id: liblog.sh 712 2017-03-21 17:21:33+04:00 toor $
 #
 #****h* BASHLYK/liblog
 #  DESCRIPTION
@@ -37,15 +37,15 @@
 : ${_bashlyk_pidLogSock:=}
 : ${_bashlyk_fnLogSock:=}
 
-: ${USER:=$(id -nu)}
+: ${USER:=$( exec -c id -nu )}
 : ${_bashlyk_sUser:=$USER}
-: ${HOSTNAME:=$(hostname)}
+: ${HOSTNAME:=$( exec -c hostname )}
 : ${DEBUGLEVEL:=0}
 : ${_bashlyk_pathLog:=/tmp}
 : ${_bashlyk_s0:=${0##*/}}
 : ${_bashlyk_sId:=${_bashlyk_s0%.sh}}
 : ${_bashlyk_pathRun:=/tmp}
-: ${_bashlyk_iStartTimeStamp:=$(date "+%s")}
+: ${_bashlyk_iStartTimeStamp:=$( exec -c date "+%s" )}
 : ${_bashlyk_emailRcpt:=postmaster}
 : ${_bashlyk_emailSubj:="${_bashlyk_sUser}@${HOSTNAME}::${_bashlyk_s0}"}
 : ${_bashlyk_fnLog:="${_bashlyk_pathLog}/${_bashlyk_s0}.log"}
@@ -287,7 +287,7 @@ udfCheck4LogUse() {
 #  EXAMPLE
 #    udfUptime >| grep -w "^[[:digit:]]*$"                                      #? true
 #  SOURCE
-udfUptime() { echo $(($(date "+%s")-${_bashlyk_iStartTimeStamp})); }
+udfUptime() { echo $(( $( exec -c date "+%s" ) - _bashlyk_iStartTimeStamp )); }
 #******
 #****f* liblog/udfFinally
 #  SYNOPSIS

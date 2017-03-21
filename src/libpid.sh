@@ -1,7 +1,7 @@
 #
-# $Id: libpid.sh 703 2017-03-13 16:54:41+04:00 toor $
+# $Id: libpid.sh 712 2017-03-21 17:21:34+04:00 toor $
 #
-#    ****h* BASHLYK/libpid    
+#****h* BASHLYK/libpid
 #  DESCRIPTION
 #    A set of functions for process control from shell scripts:
 #    * create a PID file
@@ -97,7 +97,7 @@ udfCheckStarted() {
   if [[ $(pgrep -d' ' -f "$*") =~ $re && $(pgrep -d' ' ${1##*/}) =~ $re ]]; then
 
     return 0
-  
+
   else
 
     return $( _ iErrorNoSuchProcess )
@@ -296,7 +296,7 @@ udfSetPid() {
 
   eval "exec $fd>>${fnPid}"
 
-  [[ -s $fnPid ]] && pid=$( head -n 1 $fnPid )
+  [[ -s $fnPid ]] && pid=$( exec -c head -n 1 $fnPid )
 
   if eval "flock -n $fd"; then
 

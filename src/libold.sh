@@ -1,5 +1,5 @@
 #
-# $Id: libold.sh 666 2017-01-25 15:32:01+04:00 toor $
+# $Id: libold.sh 712 2017-03-21 17:21:33+04:00 toor $
 #
 #****h* BASHLYK/libold
 #  DESCRIPTION
@@ -38,7 +38,7 @@
 : ${_bashlyk_csvOptions2Ini:=}
 
 : ${_bashlyk_sArg:="$@"}
-: ${_bashlyk_pathIni:=$(pwd)}
+: ${_bashlyk_pathIni:=$( exec -c pwd )}
 : ${_bashlyk_sUnnamedKeyword:=_bashlyk_ini_void_autoKey_}
 
 declare -rg _bashlyk_externals_old="                                           \
@@ -80,7 +80,7 @@ udfGetIniSection2Var() {
   udfOn InvalidVariable $1 || return $?
   udfOn NoSuchFileOrDir $2 || return $?
 
-  eval 'export $1="$(udfGetIniSection "$2" $3)"'
+  eval 'export $1="$( udfGetIniSection "$2" $3 )"'
 
   return 0
 
@@ -111,7 +111,7 @@ udfReadIniSection2Var() {
   udfOn InvalidVariable $1 || return $?
   udfOn NoSuchFileOrDir $2 || return $?
 
-  eval 'export $1="$(udfReadIniSection "$2" $3)"'
+  eval 'export $1="$( udfReadIniSection "$2" $3 )"'
 
   return 0
 
@@ -141,7 +141,7 @@ udfCsvOrder2Var() {
   udfOn InvalidVariable $1 || return $?
   udfOn MissingArgument $2 || return $?
 
-  eval 'export $1="$(udfCsvOrder "$2")"'
+  eval 'export $1="$( udfCsvOrder "$2" )"'
 
   return 0
 

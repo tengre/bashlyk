@@ -1,5 +1,5 @@
 #
-# $Id: testunit.sh 651 2016-12-31 15:05:31+04:00 toor $
+# $Id: testunit.sh 712 2017-03-21 17:21:34+04:00 toor $
 #
 #****h* BASHLYK/testunit
 #  DESCRIPTION
@@ -15,8 +15,8 @@
 # SOURCE
 : ${_bashlyk_pathLib:=/usr/share/bashlyk}
 : ${_bashlyk_pathLog:=/tmp}
-: ${_bashlyk_TestUnit_iCount=0}
-: ${_bashlyk_TestUnit_fnTmp=$( mktemp 2>/dev/null || tempfile || echo "/tmp/${RANDOM}${RANDOM}" )}
+: ${_bashlyk_TestUnit_iCount:=0}
+: ${_bashlyk_TestUnit_fnTmp:=$( mktemp 2>/dev/null || tempfile || echo "/tmp/${RANDOM}${RANDOM}" )}
 #******
 #****f* testunit/udfTestUnitMsg
 #  SYNOPSIS

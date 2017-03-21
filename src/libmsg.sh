@@ -1,5 +1,5 @@
 #
-# $Id: libmsg.sh 695 2017-02-27 15:17:24+04:00 toor $
+# $Id: libmsg.sh 712 2017-03-21 17:21:33+04:00 toor $
 #
 #****h* BASHLYK/libmsg
 #  DESCRIPTION
@@ -33,10 +33,10 @@
 #  DESCRIPTION
 #    Global variables of the library
 #  SOURCE
-: ${USER:=$(id -nu)}
-: ${HOSTNAME:=$(hostname 2>/dev/null)}
+: ${USER:=$( exec -c id -nu )}
+: ${HOSTNAME:=$( exec -c hostname 2>/dev/null )}
 : ${_bashlyk_sUser:=$USER}
-: ${_bashlyk_sLogin:=$(logname 2>/dev/null)}
+: ${_bashlyk_sLogin:=$( exec -c logname 2>/dev/null )}
 : ${_bashlyk_bNotUseLog:=1}
 : ${_bashlyk_emailRcpt:=postmaster}
 : ${_bashlyk_emailSubj:="${_bashlyk_sUser}@${HOSTNAME}::${0##*/}"}
@@ -243,7 +243,7 @@ udfNotify2X() {
 
   local iTimeout=8 s IFS=$' \t\n'
 
-  [[ -s "$*" ]] && s="$(< "$*")" || s="$(echo -e "$*")"
+  [[ -s "$*" ]] && s="$(< "$*")" || s="$( echo -e -- "$*" )"
 
   for cmd in notify-send kdialog zenity xmessage; do
 
@@ -279,14 +279,14 @@ udfGetXSessionProperties() {
 
   [[ "$user" == "root" && $SUDO_USER ]] && user=$SUDO_USER
 
-  a+=" $(grep "Exec=.*" /usr/share/xsessions/*.desktop 2>/dev/null | cut -f 2 -d"=" | sort | uniq )"
+  a+=" $( exec -c grep "Exec=.*" /usr/share/xsessions/*.desktop 2>/dev/null | cut -f 2 -d"=" | sort | uniq )"
 
   for s in $a; do
 
-    for pid in $(pgrep -f "${s##*/}"); do
+    for pid in $( exec -c pgrep -f "${s##*/}" ); do
 
-      userX=$(stat -c %U /proc/$pid)
-      [[ -n "$userX" ]] || continue
+      userX=$( exec -c stat -c %U /proc/$pid )
+      [[ $userX ]] || continue
       [[ "$user" == "$userX" || "$user" == "root" ]] || continue
 
       ## TODO many X-Sessions ?
@@ -368,7 +368,7 @@ udfNotifyCommand() {
     [xmessage]="$X $1 -center -timeout $t \"$(printf -- "%s via %s\n\n%s\n" "$2" "$1" "$3")\" 2>/dev/null"         \
   )
 
-  if [[ -x "$(which "$1")" ]]; then
+  if [[ -x "$( which "$1" )" ]]; then
 
     eval "${h[$1]}"
     rc=$?

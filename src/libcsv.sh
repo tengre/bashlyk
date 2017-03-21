@@ -1,5 +1,5 @@
 #
-# $Id: libcsv.sh 666 2017-01-25 15:32:01+04:00 toor $
+# $Id: libcsv.sh 712 2017-03-21 17:21:33+04:00 toor $
 #
 #****h* BASHLYK/libcsv
 #  DESCRIPTION
@@ -38,7 +38,7 @@
 : ${_bashlyk_csvOptions2Ini:=}
 
 : ${_bashlyk_sArg:="$@"}
-: ${_bashlyk_pathIni:=$(pwd)}
+: ${_bashlyk_pathIni:=$( exec -c pwd )}
 : ${_bashlyk_sUnnamedKeyword:=_bashlyk_ini_void_autoKey_}
 
 declare -rg _bashlyk_externals_csv="                                           \
@@ -107,7 +107,7 @@ udfGetIniSection() {
   path="$_bashlyk_pathIni"
 
   [[ "$1" == "${1##*/}" && -f "${path}/$1" ]] || path=
-  [[ "$1" == "${1##*/}" && -f "$1" ]] && path=$(pwd)
+  [[ "$1" == "${1##*/}" && -f "$1" ]] && path=$( exec -c pwd )
   [[ "$1" != "${1##*/}" && -f "$1" ]] && path=${1%/*}
   [[ $2 ]] && sTag="$2"
 
@@ -516,7 +516,7 @@ udfIniChange() {
 
   [[ -f "$ini" ]] || touch "$ini"
 
-  aTag="$(grep -oE '\[.*\]' $ini | tr -d '[]' | sort -u | uniq -u | xargs)"
+  aTag="$( exec -c grep -oE '\[.*\]' $ini | tr -d '[]' | sort -u | uniq -u | xargs)"
 
   [[ $sTag ]] && echo "$aTag" | grep -w "$sTag" >/dev/null || aTag+=" $sTag"
 
@@ -917,7 +917,7 @@ udfIniGroupSection2Csv() {
   path="$_bashlyk_pathIni"
 
   [[ "$1" == "${1##*/}" && -f "${path}/$1" ]] || path=
-  [[ "$1" == "${1##*/}" && -f "$1" ]] && path=$(pwd)
+  [[ "$1" == "${1##*/}" && -f "$1" ]] && path=$( exec -c pwd )
   [[ "$1" != "${1##*/}" && -f "$1" ]] && path=${1%/*}
   [[ -n "$2" ]] && sTag="$2"
   #
@@ -1049,7 +1049,7 @@ udfIniGroup2Csv() {
   ## TODO встроить защиту от подстановки конфигурационного файла (по владельцу)
   #
   [[ "$1" == "${1##*/}" && -f "$(_ pathIni)/$1" ]] && pathIni=$(_ pathIni)
-  [[ "$1" == "${1##*/}" && -f "$1"              ]] && pathIni=$(pwd)
+  [[ "$1" == "${1##*/}" && -f "$1"              ]] && pathIni=$(exec -c pwd )
   [[ "$1" != "${1##*/}" && -f "$1"              ]] && pathIni=$(dirname $1)
   #
   if [[ -z "$pathIni" ]]; then

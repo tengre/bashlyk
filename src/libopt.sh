@@ -1,5 +1,5 @@
 #
-# $Id: libopt.sh 666 2017-01-25 15:32:01+04:00 toor $
+# $Id: libopt.sh 712 2017-03-21 17:21:34+04:00 toor $
 #
 #****h* BASHLYK/libopt
 #  DESCRIPTION
@@ -93,7 +93,7 @@ udfGetOptHash() {
 
       if [[ "$k" =~ :$ ]]; then
 
-       csvHash+="$v=$(udfAlias2WSpace $2);"
+       csvHash+="$v=$( udfAlias2WSpace $2 );"
        shift 2
 
       else
@@ -169,7 +169,7 @@ udfSetOptHash() {
 #  SOURCE
 udfGetOpt() {
 
-  udfSetOptHash $(udfGetOptHash $*)
+  udfSetOptHash $( udfGetOptHash $* )
   _bashlyk_bSetOptions=1
 
 }

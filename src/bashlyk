@@ -1,6 +1,6 @@
 #!/bin/bash
 #
-# $Id: bashlyk 695 2017-02-27 15:17:23+04:00 toor $
+# $Id: bashlyk 712 2017-03-21 17:21:33+04:00 toor $
 #
 #****h* BASHLYK/bashlyk
 #  DESCRIPTION
@@ -33,9 +33,9 @@
 : ${_bashlyk_bTerminal:=1}
 : ${_bashlyk_sCond4Log:=noterm}
 : ${_bashlyk_bNotUseLog:=0}
-: ${USER:=$(id -nu)}
+: ${USER:=$( exec -c id -nu )}
 : ${_bashlyk_sUser:=$USER}
-: ${_bashlyk_sGroup:=$( id -ng )}
+: ${_bashlyk_sGroup:=$( exec -c id -ng )}
 #******
 #****f* bashlyk/udfInit
 #  SYNOPSIS
