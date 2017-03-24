@@ -1,6 +1,6 @@
 #!/bin/bash
 #
-# $Id: bashlyk 712 2017-03-21 17:21:33+04:00 toor $
+# $Id: bashlyk 713 2017-03-24 16:05:08+04:00 toor $
 #
 #****h* BASHLYK/bashlyk
 #  DESCRIPTION
@@ -20,7 +20,7 @@
                                                                                \
 '
 #******
-[[ -n "$_BASHLYK" ]] && return 0 || _BASHLYK=1
+[[ $_BASHLYK ]] && return 0 || _BASHLYK=1
 #****G* bashlyk/Global variables
 #  DESCRIPTION
 #    global variables of the library
@@ -55,10 +55,7 @@ udfInit() {
   local pathCnf pathRoot pathRun pathLog pathDat sHome IFS=$' \t\n'
 
   _bashlyk_sId=${_bashlyk:-bashlyk}
-
-  [[ $_bashlyk ]] \
-    && _bashlyk_pathPrefix="${_bashlyk}" \
-    || _bashlyk_pathPrefix='bashlyk'
+  _bashlyk_pathPrefix="$_bashlyk_sId"
 
   case $_bashlyk_sUser in
 
@@ -122,7 +119,8 @@ udfInit() {
 
   fi
 
-  [[ $_bashlyk_aUnit ]] || _bashlyk_aUnit="$(echo $_bashlyk_aLib | tr ',' ' ')"
+  [[ $_bashlyk_aUnit ]] || _bashlyk_aUnit="${_bashlyk_aLib//,/ }"
+
 }
 #******
 #****f* bashlyk/udfMain
