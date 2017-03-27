@@ -1,5 +1,5 @@
 #
-# $Id: libold.sh 712 2017-03-21 17:21:33+04:00 toor $
+# $Id: libold.sh 714 2017-03-27 15:02:12+04:00 toor $
 #
 #****h* BASHLYK/libold
 #  DESCRIPTION
@@ -8,23 +8,22 @@
 #  AUTHOR
 #    Damir Sh. Yakupov <yds@bk.ru>
 #******
-#***iV* libold/BASH Compability
+#***iV* libold/BASH compatibility
 #  DESCRIPTION
-#    BASH version 4.xx or more required for this script
+#    Compatibility checked by bashlyk (BASH version 4.xx or more required)
+#    $_BASHLYK_LIBOLD provides protection against re-using of this module
 #  SOURCE
-[ -n "$BASH_VERSION" ] && (( ${BASH_VERSINFO[0]} >= 4 )) || eval '             \
+[ -n "$_BASHLYK_LIBOLD" ] && return 0 || _BASHLYK_LIBOLD=1
+[ -n "$_BASHLYK" ] || . bashlyk || eval '                                      \
                                                                                \
-    echo "[!] BASH shell version 4.xx required for ${0}, abort.."; exit 255    \
+    echo "[!] bashlyk loader required for ${0}, abort.."; exit 255             \
                                                                                \
 '
 #******
-#  $_BASHLYK_LIBOLD provides protection against re-using of this module
-[[ $_BASHLYK_LIBOLD ]] && return 0 || _BASHLYK_LIBOLD=1
 #****L* libold/Used libraries
 # DESCRIPTION
 #   Loading external libraries
 # SOURCE
-: ${_bashlyk_pathLib:=/usr/share/bashlyk}
 [[ -s ${_bashlyk_pathLib}/liberr.sh ]] && . "${_bashlyk_pathLib}/liberr.sh"
 [[ -s ${_bashlyk_pathLib}/libstd.sh ]] && . "${_bashlyk_pathLib}/libstd.sh"
 [[ -s ${_bashlyk_pathLib}/libopt.sh ]] && . "${_bashlyk_pathLib}/libopt.sh"
@@ -36,8 +35,6 @@
 #  SOURCE
 : ${_bashlyk_bSetOptions:=}
 : ${_bashlyk_csvOptions2Ini:=}
-
-: ${_bashlyk_sArg:="$@"}
 : ${_bashlyk_pathIni:=$( exec -c pwd )}
 : ${_bashlyk_sUnnamedKeyword:=_bashlyk_ini_void_autoKey_}
 

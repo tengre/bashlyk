@@ -1,6 +1,6 @@
 #!/bin/bash
 #
-# $Id: bashlyk 713 2017-03-24 16:05:08+04:00 toor $
+# $Id: bashlyk 714 2017-03-27 15:02:12+04:00 toor $
 #
 #****h* BASHLYK/bashlyk
 #  DESCRIPTION
@@ -10,17 +10,17 @@
 #  AUTHOR
 #    Damir Sh. Yakupov <yds@bk.ru>
 #******
-#***iV* bashlyk/BASH Compability
+#***iV* bashlyk/BASH Compatibility
 #  DESCRIPTION
 #    BASH version 4.xx or more required for this script
 #  SOURCE
+[ -n "$_BASHLYK" ] && return 0 || _BASHLYK=1
 [ -n "$BASH_VERSION" ] && (( ${BASH_VERSINFO[0]} >= 4 )) || eval '             \
                                                                                \
     echo "[!] BASH shell version 4.xx required for ${0}, abort.."; exit 255    \
                                                                                \
 '
 #******
-[[ $_BASHLYK ]] && return 0 || _BASHLYK=1
 #****G* bashlyk/Global variables
 #  DESCRIPTION
 #    global variables of the library
@@ -28,6 +28,7 @@
 [[ -s "/etc/bashlyk/bashlyk.conf" ]] && . /etc/bashlyk/bashlyk.conf
 : ${_bashlyk_aLib:="std,err,pid,cnf,ini,opt,log,net,csv,msg"}
 : ${_bashlyk_pathLib:="/usr/share/bashlyk"}
+: ${_bashlyk_s0:=${0##*/}}
 : ${_bashlyk_sArg:="$@"}
 : ${_bashlyk_bInteract:=1}
 : ${_bashlyk_bTerminal:=1}
@@ -54,8 +55,18 @@ udfInit() {
 
   local pathCnf pathRoot pathRun pathLog pathDat sHome IFS=$' \t\n'
 
-  _bashlyk_sId=${_bashlyk:-bashlyk}
-  _bashlyk_pathPrefix="$_bashlyk_sId"
+
+  if [[ $_bashlyk ]]; then
+
+    _bashlyk_sId="$_bashlyk"
+    _bashlyk_pathPrefix="$_bashlyk"
+
+  else
+
+    _bashlyk_sId=${_bashlyk_s0%.sh}
+    _bashlyk_pathPrefix='bashlyk'
+
+  fi
 
   case $_bashlyk_sUser in
 

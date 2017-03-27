@@ -1,5 +1,5 @@
 #
-# $Id: libini.sh 712 2017-03-21 17:21:33+04:00 toor $
+# $Id: libini.sh 714 2017-03-27 15:02:12+04:00 toor $
 #
 #****h* BASHLYK/libini
 #  DESCRIPTION
@@ -69,24 +69,22 @@
 #  AUTHOR
 #    Damir Sh. Yakupov <yds@bk.ru>
 #******
-#***iV* liberr/BASH Compability
+#***iV* libini/BASH compatibility
 #  DESCRIPTION
-#    BASH version 4.xx or more required for this script
+#    Compatibility checked by bashlyk (BASH version 4.xx or more required)
+#    $_BASHLYK_LIBINI provides protection against re-using of this module
 #  SOURCE
-[ -n "$BASH_VERSION" ] && (( ${BASH_VERSINFO[0]} >= 4 )) || eval '             \
+[ -n "$_BASHLYK_LIBINI" ] && return 0 || _BASHLYK_LIBINI=1
+[ -n "$_BASHLYK" ] || . bashlyk || eval '                                      \
                                                                                \
-    echo "[!] BASH shell version 4.xx required for ${0}, abort.."; exit 255    \
+    echo "[!] bashlyk loader required for ${0}, abort.."; exit 255             \
                                                                                \
 '
-#******
-#  $_BASHLYK_LIBINI provides protection against re-using of this module
-[[ $_BASHLYK_LIBINI ]] && return 0 || _BASHLYK_LIBINI=1
 #******
 #****L* libini/Used libraries
 # DESCRIPTION
 #   Loading external libraries
 # SOURCE
-: ${_bashlyk_pathLib:=/usr/share/bashlyk}
 [[ -s ${_bashlyk_pathLib}/liberr.sh ]] && . "${_bashlyk_pathLib}/liberr.sh"
 [[ -s ${_bashlyk_pathLib}/libstd.sh ]] && . "${_bashlyk_pathLib}/libstd.sh"
 #******
@@ -94,7 +92,6 @@
 #  DESCRIPTION
 #    Global variables of the library
 #  SOURCE
-: ${_bashlyk_sArg:="$@"}
 : ${_bashlyk_pathIni:=$( exec -c pwd )}
 
 declare -rg _bashlyk_cnf_reKey='^\b([_a-zA-Z][_a-zA-Z0-9]*)\b$'

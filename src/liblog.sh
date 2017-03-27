@@ -1,5 +1,5 @@
 #
-# $Id: liblog.sh 712 2017-03-21 17:21:33+04:00 toor $
+# $Id: liblog.sh 714 2017-03-27 15:02:12+04:00 toor $
 #
 #****h* BASHLYK/liblog
 #  DESCRIPTION
@@ -10,22 +10,22 @@
 #  AUTHOR
 #    Damir Sh. Yakupov <yds@bk.ru>
 #******
-#***iV* liberr/BASH Compability
+#***iV* liblog/BASH compatibility
 #  DESCRIPTION
-#    BASH version 4.xx or more required for this script
+#    Compatibility checked by bashlyk (BASH version 4.xx or more required)
+#    $_BASHLYK_LIBLOG provides protection against re-using of this module
 #  SOURCE
-[ -n "$BASH_VERSION" ] && (( ${BASH_VERSINFO[0]} >= 4 )) || eval '             \
+[ -n "$_BASHLYK_LIBLOG" ] && return 0 || _BASHLYK_LIBLOG=1
+[ -n "$_BASHLYK" ] || . bashlyk || eval '                                      \
                                                                                \
-    echo "[!] BASH shell version 4.xx required for ${0}, abort.."; exit 255    \
+    echo "[!] bashlyk loader required for ${0}, abort.."; exit 255             \
                                                                                \
 '
 #******
-[[ $_BASHLYK_LIBLOG ]] && return 0 || _BASHLYK_LIBLOG=1
 #****L* liblog/Used libraries
 #  DESCRIPTION
 #    Loading external libraries
 #  SOURCE
-: ${_bashlyk_pathLib:=/usr/share/bashlyk}
 [[ -s ${_bashlyk_pathLib}/liberr.sh ]] && . "${_bashlyk_pathLib}/liberr.sh"
 [[ -s ${_bashlyk_pathLib}/libstd.sh ]] && . "${_bashlyk_pathLib}/libstd.sh"
 [[ -s ${_bashlyk_pathLib}/libmsg.sh ]] && . "${_bashlyk_pathLib}/libmsg.sh"
@@ -36,14 +36,9 @@
 #  SOURCE
 : ${_bashlyk_pidLogSock:=}
 : ${_bashlyk_fnLogSock:=}
-
-: ${USER:=$( exec -c id -nu )}
-: ${_bashlyk_sUser:=$USER}
 : ${HOSTNAME:=$( exec -c hostname )}
 : ${DEBUGLEVEL:=0}
 : ${_bashlyk_pathLog:=/tmp}
-: ${_bashlyk_s0:=${0##*/}}
-: ${_bashlyk_sId:=${_bashlyk_s0%.sh}}
 : ${_bashlyk_pathRun:=/tmp}
 : ${_bashlyk_iStartTimeStamp:=$( exec -c date "+%s" )}
 : ${_bashlyk_emailRcpt:=postmaster}
@@ -255,6 +250,7 @@ udfIsTerminal() {
 #    0 - вести запись лог-файла
 #    1 - не требуется
 #  EXAMPLE
+#    _bashlyk_sCond4Log='redirect'
 #    udfCheck4LogUse                                                            #? true
 #    udfCheck4LogUse                                                            #= false
 #  SOURCE

@@ -1,5 +1,5 @@
 #
-# $Id: libstd.sh 712 2017-03-21 17:21:34+04:00 toor $
+# $Id: libstd.sh 714 2017-03-27 15:02:12+04:00 toor $
 #
 #****h* BASHLYK/libstd
 #  DESCRIPTION
@@ -12,23 +12,22 @@
 #  AUTHOR
 #    Damir Sh. Yakupov <yds@bk.ru>
 #******
-#***iV* liberr/BASH Compability
+#***iV* libstd/BASH compatibility
 #  DESCRIPTION
-#    BASH version 4.xx or more required for this script
+#    Compatibility checked by bashlyk (BASH version 4.xx or more required)
+#    $_BASHLYK_LIBSTD provides protection against re-using of this module
 #  SOURCE
-[ -n "$BASH_VERSION" ] && (( ${BASH_VERSINFO[0]} >= 4 )) || eval '             \
+[ -n "$_BASHLYK_LIBSTD" ] && return 0 || _BASHLYK_LIBSTD=1
+[ -n "$_BASHLYK" ] || . bashlyk || eval '                                      \
                                                                                \
-    echo "[!] BASH shell version 4.xx required for ${0}, abort.."; exit 255    \
+    echo "[!] bashlyk loader required for ${0}, abort.."; exit 255             \
                                                                                \
 '
 #******
-#  $_BASHLYK_LIBSTD provides protection against re-using of this module
-[[ $_BASHLYK_LIBSTD ]] && return 0 || _BASHLYK_LIBSTD=1
 #****L* libstd/Used libraries
 # DESCRIPTION
 #   Loading external libraries
 # SOURCE
-: ${_bashlyk_pathLib:=/usr/share/bashlyk}
 [[ -s ${_bashlyk_pathLib}/liberr.sh ]] && . "${_bashlyk_pathLib}/liberr.sh"
 [[ -s ${_bashlyk_pathLib}/libmsg.sh ]] && . "${_bashlyk_pathLib}/libmsg.sh"
 #******
@@ -47,17 +46,10 @@
 : ${_bashlyk_apidClean:=}
 : ${_bashlyk_pidLogSock:=}
 : ${_bashlyk_envXSession:=}
-#
-: ${_bashlyk_sArg:="$@"}
-: ${_bashlyk_s0:=${0##*/}}
-: ${USER:=$( exec -c id -nu )}
-: ${_bashlyk_sUser:=$USER}
 : ${_bashlyk_pathDat:=/tmp}
-: ${_bashlyk_bNotUseLog:=1}
 : ${_bashlyk_onError:=throw}
 : ${_bashlyk_sWSpaceAlias:=___}
 : ${_bashlyk_emailRcpt:=postmaster}
-: ${_bashlyk_sId:=${_bashlyk_s0%.sh}}
 : ${HOSTNAME:=$( exec -c hostname 2>/dev/null )}
 : ${_bashlyk_sUnnamedKeyword:=_bashlyk_unnamed_key_}
 : ${_bashlyk_reMetaRules:='34=":40=(:41=):59=;:91=[:92=\\:93=]:61=='}
@@ -74,9 +66,9 @@ declare -rg _bashlyk_aRequiredCmd_std="                                        \
 declare -rg _bashlyk_aExport_std="                                             \
                                                                                \
     _ _ARGUMENTS _gete _getv _pathDat _s0 _set udfAddFile2Clean udfAddFD2Clean \
-    udfAddFO2Clean udfAddFObj2Clean udfAddJob2Clean udfAddPath2Clean udfBaseId \
+    udfAddFO2Clean udfAddFObj2Clean udfAddJob2Clean udfAddPath2Clean           \
     udfAddPid2Clean udfAlias2WSpace udfBashlykUnquote udfCheckCsv udfGetMd5    \
-    udfCleanQueue udfDate udfGetFreeFD  udfGetPathMd5 udfIsNumber udfSerialize \
+    udfCleanQueue udfGetFreeFD udfGetPathMd5 udfIsNumber udfSerialize          \
     udfIsValidVariable udfLocalVarFromCSV udfMakeTemp udfMakeTempV udfOnTrap   \
     udfPrepareByType udfQuoteIfNeeded udfShellExec udfShowVariable udfXml      \
     udfTimeStamp udfWSpace2Alias udfPrepare2Exec                               \
@@ -123,23 +115,6 @@ udfIsNumber() {
 
 }
 #******
-#****f* libstd/udfBaseId
-#  SYNOPSIS
-#    udfBaseId
-#  DESCRIPTION
-#    получить имя сценария без расширения .sh
-#    устаревшая - заменяется "_ sId"
-#  OUTPUT
-#    Короткое имя запущенного сценария без расширения ".sh"
-#  EXAMPLE
-#    udfBaseId >| grep -w "^$(basename $0 .sh)$"                                #? true
-#  SOURCE
-udfBaseId() {
-
-  _ sId
-
-}
-#******
 #****f* libstd/udfTimeStamp
 #  SYNOPSIS
 #    udfTimeStamp <args>
@@ -157,25 +132,6 @@ udfBaseId() {
 udfTimeStamp() {
 
   LANG=C LC_TIME=C LC_ALL=C date "+%b %d %H:%M:%S $*"
-
-}
-#******
-#****f* libstd/udfDate
-#  SYNOPSIS
-#    udfDate <args>
-#  DESCRIPTION
-#    сформировать строку c заголовком в виде текущего времени
-#  INPUTS
-#    <args> - суффикс к заголовку
-#  OUTPUT
-#    строка с заголовком в виде "штампа времени"
-#  EXAMPLE
-#    local re="[[:graph:]]+ [0-9]+ [0-9]+:[0-9]+:[[:digit:]]+ foo bar"
-#    udfDate foo bar >| grep -E "$re"                                           #? true
-#  SOURCE
-udfDate() {
-
-  date "+%b %d %H:%M:%S $*"
 
 }
 #******

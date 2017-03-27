@@ -1,32 +1,31 @@
 #
-# $Id: libcnf.sh 712 2017-03-21 17:21:33+04:00 toor $
+# $Id: libcnf.sh 714 2017-03-27 15:02:12+04:00 toor $
 #
 #****h* BASHLYK/libcnf
 #  DESCRIPTION
 #    Safe management of the active configuration files by using INI library
-#    Deprecated, for backward compability
+#    Deprecated, for backward compatibility
 #  USES
 #    libstd libini
 #  AUTHOR
 #    Damir Sh. Yakupov <yds@bk.ru>
 #******
-#***iV* liberr/BASH Compability
+#***iV* libcnf/BASH compatibility
 #  DESCRIPTION
-#    BASH version 4.xx or more required for this script
+#    Compatibility checked by bashlyk (BASH version 4.xx or more required)
+#    $_BASHLYK_LIBCNF provides protection against re-using of this module
 #  SOURCE
-[ -n "$BASH_VERSION" ] && (( ${BASH_VERSINFO[0]} >= 4 )) || eval '             \
+[ -n "$_BASHLYK_LIBCNF" ] && return 0 || _BASHLYK_LIBCNF=1
+[ -n "$_BASHLYK" ] || . bashlyk || eval '                                      \
                                                                                \
-    echo "[!] BASH shell version 4.xx required for ${0}, abort.."; exit 255    \
+    echo "[!] bashlyk loader required for ${0}, abort.."; exit 255             \
                                                                                \
 '
 #******
-#  $_BASHLYK_LIBCNF provides protection against re-using of this module
-[[ $_BASHLYK_LIBCNF ]] && return 0 || _BASHLYK_LIBCNF=1
 #****L* libcnf/Used libraries
 # DESCRIPTION
 #   Loading external libraries
 # SOURCE
-: ${_bashlyk_pathLib:=/usr/share/bashlyk}
 [[ -s ${_bashlyk_pathLib}/liberr.sh ]] && . "${_bashlyk_pathLib}/liberr.sh"
 [[ -s ${_bashlyk_pathLib}/libstd.sh ]] && . "${_bashlyk_pathLib}/libstd.sh"
 [[ -s ${_bashlyk_pathLib}/libini.sh ]] && . "${_bashlyk_pathLib}/libini.sh"
@@ -35,7 +34,6 @@
 #  DESCRIPTION
 #    Global variables of the library
 #  SOURCE
-: ${_bashlyk_sArg:="$@"}
 : ${_bashlyk_pathCnf:=$( exec -c pwd )}
 : ${_bashlyk_sUnnamedKeyword:=_bashlyk_unnamed_key_}
 

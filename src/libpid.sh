@@ -1,5 +1,5 @@
 #
-# $Id: libpid.sh 712 2017-03-21 17:21:34+04:00 toor $
+# $Id: libpid.sh 714 2017-03-27 15:02:12+04:00 toor $
 #
 #****h* BASHLYK/libpid
 #  DESCRIPTION
@@ -12,23 +12,22 @@
 #  AUTHOR
 #    Damir Sh. Yakupov <yds@bk.ru>
 #******
-#***iV* liberr/BASH Compability
+#***iV* libpid/BASH compatibility
 #  DESCRIPTION
-#    BASH version 4.xx or more required for this script
+#    Compatibility checked by bashlyk (BASH version 4.xx or more required)
+#    $_BASHLYK_LIBPID provides protection against re-using of this module
 #  SOURCE
-[ -n "$BASH_VERSION" ] && (( ${BASH_VERSINFO[0]} >= 4 )) || eval '             \
+[ -n "$_BASHLYK_LIBPID" ] && return 0 || _BASHLYK_LIBPID=1
+[ -n "$_BASHLYK" ] || . bashlyk || eval '                                      \
                                                                                \
-    echo "[!] BASH shell version 4.xx required for ${0}, abort.."; exit 255    \
+    echo "[!] bashlyk loader required for ${0}, abort.."; exit 255             \
                                                                                \
 '
 #******
-#  $_BASHLYK_LIBPID provides protection against re-using of this module
-[[ $_BASHLYK_LIBPID ]] && return 0 || _BASHLYK_LIBPID=1
 #****L* libpid/Used libraries
 # DESCRIPTION
 #   Loading external libraries
 # SOURCE
-: ${_bashlyk_pathLib:=/usr/share/bashlyk}
 [[ -s ${_bashlyk_pathLib}/liberr.sh ]] && . "${_bashlyk_pathLib}/liberr.sh"
 [[ -s ${_bashlyk_pathLib}/libstd.sh ]] && . "${_bashlyk_pathLib}/libstd.sh"
 #******
@@ -40,10 +39,8 @@
 : ${_bashlyk_afdClean:=}
 : ${_bashlyk_fnPid:=}
 : ${_bashlyk_fnSock:=}
-
 : ${_bashlyk_s0:=${0##*/}}
 : ${_bashlyk_pathRun:=/tmp}
-: ${_bashlyk_sArg:="$@"}
 
 declare -rg _bashlyk_externals_pid="                                           \
                                                                                \

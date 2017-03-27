@@ -1,5 +1,5 @@
 #
-# $Id: liberr.sh 702 2017-03-12 22:38:05+04:00 toor $
+# $Id: liberr.sh 714 2017-03-27 15:02:12+04:00 toor $
 #
 #****h* BASHLYK/liberr
 #  DESCRIPTION
@@ -9,23 +9,22 @@
 #  AUTHOR
 #    Damir Sh. Yakupov <yds@bk.ru>
 #******
-#***iV* liberr/BASH Compability
+#***iV* liberr/BASH compatibility
 #  DESCRIPTION
-#    BASH version 4.xx or more required for this script
+#    Compatibility checked by bashlyk (BASH version 4.xx or more required)
+#    $_BASHLYK_LIBERR provides protection against re-using of this module
 #  SOURCE
-[ -n "$BASH_VERSION" ] && (( ${BASH_VERSINFO[0]} >= 4 )) || eval '             \
+[ -n "$_BASHLYK_LIBERR" ] && return 0 || _BASHLYK_LIBERR=1
+[ -n "$_BASHLYK" ] || . bashlyk || eval '                                      \
                                                                                \
-    echo "[!] BASH shell version 4.xx required for ${0}, abort.."; exit 255    \
+    echo "[!] bashlyk loader required for ${0}, abort.."; exit 255             \
                                                                                \
 '
 #******
-#  $_BASHLYK_LIBERR provides protection against re-using of this module
-[[ $_BASHLYK_LIBERR ]] && return 0 || _BASHLYK_LIBERR=1
 #****L* liberr/Used libraries
 # DESCRIPTION
 #   Loading external libraries
 # SOURCE
-: ${_bashlyk_pathLib:=/usr/share/bashlyk}
 [[ -s ${_bashlyk_pathLib}/libstd.sh ]] && . "${_bashlyk_pathLib}/libstd.sh"
 [[ -s ${_bashlyk_pathLib}/libmsg.sh ]] && . "${_bashlyk_pathLib}/libmsg.sh"
 #******
@@ -97,7 +96,6 @@ _bashlyk_hError[$_bashlyk_iErrorTryBoxException]="try box exception"
 _bashlyk_hError[$_bashlyk_iErrorNotAvailable]="target is not available"
 #
 : ${_bashlyk_onError:=throw}
-: ${_bashlyk_sArg:="$@"}
 
 declare -rg _bashlyk_aRequiredCmd_err="sed which"
 declare -rg _bashlyk_aExport_err="                                             \
