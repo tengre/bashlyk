@@ -1,6 +1,6 @@
 #!/bin/bash
 #
-# $Id: bashlyk 714 2017-03-27 15:02:12+04:00 toor $
+# $Id: bashlyk 715 2017-03-27 17:10:24+04:00 toor $
 #
 #****h* BASHLYK/bashlyk
 #  DESCRIPTION
@@ -37,6 +37,13 @@
 : ${USER:=$( exec -c id -nu )}
 : ${_bashlyk_sUser:=$USER}
 : ${_bashlyk_sGroup:=$( exec -c id -ng )}
+: ${_bashlyk_ShellVersion:=$(                                                  \
+    printf '%d%03d%03d'                                                        \
+           "${BASH_VERSINFO[0]}"                                               \
+           "${BASH_VERSINFO[1]}"                                               \
+           "${BASH_VERSINFO[2]}"                                               \
+    )                                                                          \
+}
 #******
 #****f* bashlyk/udfInit
 #  SYNOPSIS
@@ -121,8 +128,9 @@ udfInit() {
 
     _bashlyk_sMode='test'
 
-    export _bashlyk_pathIni _bashlyk_pathRun _bashlyk_pathDat _bashlyk_pathLog
-    export _bashlyk_sLogin _bashlyk_bUseMail _bashlyk_sUser _bashlyk_sGroup
+    export _bashlyk_pathIni _bashlyk_pathRun _bashlyk_pathDat _bashlyk_pathLog \
+           _bashlyk_sLogin _bashlyk_bUseMail _bashlyk_sUser _bashlyk_sGroup    \
+           _bashlyk_ShellVersion
 
   else
 

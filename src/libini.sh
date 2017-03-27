@@ -1,5 +1,5 @@
 #
-# $Id: libini.sh 714 2017-03-27 15:02:12+04:00 toor $
+# $Id: libini.sh 715 2017-03-27 17:10:24+04:00 toor $
 #
 #****h* BASHLYK/libini
 #  DESCRIPTION
@@ -982,7 +982,7 @@ INI::save() {
 
   {
 
-    printf -- "${fmtComment//%COMMENT%/$c}" "$(date -R)" "$( _ sUser )"
+    printf -- "${fmtComment//%COMMENT%/$c}" "$( udfDateR )" "$( _ sUser )"
     ${o}.show
 
   } > $fn

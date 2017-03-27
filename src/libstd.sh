@@ -1,5 +1,5 @@
 #
-# $Id: libstd.sh 714 2017-03-27 15:02:12+04:00 toor $
+# $Id: libstd.sh 715 2017-03-27 17:24:33+04:00 toor $
 #
 #****h* BASHLYK/libstd
 #  DESCRIPTION
@@ -68,10 +68,10 @@ declare -rg _bashlyk_aExport_std="                                             \
     _ _ARGUMENTS _gete _getv _pathDat _s0 _set udfAddFile2Clean udfAddFD2Clean \
     udfAddFO2Clean udfAddFObj2Clean udfAddJob2Clean udfAddPath2Clean           \
     udfAddPid2Clean udfAlias2WSpace udfBashlykUnquote udfCheckCsv udfGetMd5    \
-    udfCleanQueue udfGetFreeFD udfGetPathMd5 udfIsNumber udfSerialize          \
+    udfCleanQueue udfDateR udfGetFreeFD udfGetPathMd5 udfIsNumber udfSerialize \
     udfIsValidVariable udfLocalVarFromCSV udfMakeTemp udfMakeTempV udfOnTrap   \
     udfPrepareByType udfQuoteIfNeeded udfShellExec udfShowVariable udfXml      \
-    udfTimeStamp udfWSpace2Alias udfPrepare2Exec                               \
+    udfTimeStamp udfUptime udfWSpace2Alias udfPrepare2Exec                     \
                                                                                \
 "
 #******
@@ -129,11 +129,47 @@ udfIsNumber() {
 #    local re="[a-zA-Z]+ [0-9]+ [0-9]+:[0-9]+:[[:digit:]]+ foo bar"
 #    udfTimeStamp foo bar >| grep -E "$re"                                      #? true
 #  SOURCE
-udfTimeStamp() {
 
-  LANG=C LC_TIME=C LC_ALL=C date "+%b %d %H:%M:%S $*"
+if (( _bashlyk_ShellVersion > 4002000 )); then
 
-}
+  udfTimeStamp() { LC_ALL=C printf -- '%(%b %d %H:%M:%S)T %s\n' '-1' "$*"; }
+
+  udfDateR() { LC_ALL=C printf -- '%(%a, %d %b %Y %T %z)T\n' '-1'; }
+
+  udfUptime() { echo $(( $(printf '%(%s)T' '-1') - $(printf '%(%s)T' '-2') )); }
+
+else
+
+  readonly _bashlyk_iStartTimeStamp=$( exec -c date "+%s" )
+
+  udfTimeStamp() { LANG=C LC_TIME=C LC_ALL=C date "+%b %d %H:%M:%S $*"; }
+
+  udfDateR() { exec -c date -R; }
+
+  udfUptime() { echo $(( $(exec -c date "+%s") - _bashlyk_iStartTimeStamp )); }
+
+fi
+
+#******
+#****f* liblog/udfDateR
+#  SYNOPSIS
+#    udfDateR
+#  DESCRIPTION
+#    show 'date -R' like output
+#  EXAMPLE
+#    udfDateR >| grep -P "^\S{3}, \d{2} \S{3} \d{4} \d{2}:\d{2}:\d{2} .\d{4}$"  #? true
+#  SOURCE
+#******
+#****f* liblog/udfUptime
+#  SYNOPSIS
+#    udfUptime args
+#  DESCRIPTION
+#    Подсчёт количества секунд, прошедших с момента запуска сценария
+#  INPUTS
+#    args - префикс для выводимого сообщения о прошедших секундах
+#  EXAMPLE
+#    udfUptime >| grep -w "^[[:digit:]]*$"                                      #? true
+#  SOURCE
 #******
 #****f* libstd/udfShowVariable
 #  SYNOPSIS
