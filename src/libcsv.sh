@@ -1,5 +1,5 @@
 #
-# $Id: libcsv.sh 717 2017-03-28 16:41:16+04:00 toor $
+# $Id: libcsv.sh 718 2017-03-28 17:13:24+04:00 toor $
 #
 #****h* BASHLYK/libcsv
 #  DESCRIPTION
@@ -1483,5 +1483,3 @@ udfSerialize() {
 
 }
 #******
-
-

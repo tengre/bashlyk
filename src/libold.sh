@@ -1,5 +1,5 @@
 #
-# $Id: libold.sh 717 2017-03-28 16:49:13+04:00 toor $
+# $Id: libold.sh 718 2017-03-28 17:13:24+04:00 toor $
 #
 #****h* BASHLYK/libold
 #  DESCRIPTION
@@ -522,4 +522,3 @@ _pathDat() {
 
 }
 #******
-

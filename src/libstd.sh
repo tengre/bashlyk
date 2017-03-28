@@ -1,5 +1,5 @@
 #
-# $Id: libstd.sh 717 2017-03-28 16:41:16+04:00 toor $
+# $Id: libstd.sh 718 2017-03-28 17:13:24+04:00 toor $
 #
 #****h* BASHLYK/libstd
 #  DESCRIPTION
@@ -1202,3 +1202,4 @@ udfTrim() {
 #    udfCat < $fn | grep -E '^[[:space:]][0-9]{1,5}$'                           #? true
 #  SOURCE
 udfCat() { while IFS= read -t 32 || [[ $REPLY ]]; do echo "$REPLY"; done; }
+#******
