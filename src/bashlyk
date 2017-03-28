@@ -1,6 +1,6 @@
 #!/bin/bash
 #
-# $Id: bashlyk 715 2017-03-27 17:10:24+04:00 toor $
+# $Id: bashlyk 716 2017-03-28 11:46:04+04:00 toor $
 #
 #****h* BASHLYK/bashlyk
 #  DESCRIPTION
@@ -62,6 +62,19 @@ udfInit() {
 
   local pathCnf pathRoot pathRun pathLog pathDat sHome IFS=$' \t\n'
 
+  if   [[ -w /dev/shm ]]; then
+
+    TMPDIR=/dev/shm
+
+  elif [[ -w /run/shm ]]; then
+
+    TMPDIR=/run/shm
+
+  else
+
+    TMPDIR=/tmp
+
+  fi
 
   if [[ $_bashlyk ]]; then
 
@@ -93,7 +106,7 @@ udfInit() {
 
               sHome=$(getent passwd $_bashlyk_sUser | cut -d ":" -f 6)
               [[ $sHome && -d "$sHome" && -O "$sHome" ]] || \
-               sHome="/tmp/${$}_${_bashlyk_sUser}"
+               sHome="/${TMPDIR}/${$}_${_bashlyk_sUser}"
 
             else
 

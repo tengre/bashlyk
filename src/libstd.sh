@@ -1,5 +1,5 @@
 #
-# $Id: libstd.sh 715 2017-03-27 17:24:33+04:00 toor $
+# $Id: libstd.sh 716 2017-03-28 11:26:44+04:00 toor $
 #
 #****h* BASHLYK/libstd
 #  DESCRIPTION
@@ -40,14 +40,15 @@
 #    * $_bashlyk_aRequiredCmd_opt - список используемых в данном модуле внешних
 #    утилит
 #  SOURCE
+: ${TMPDIR:=/tmp}
 : ${_bashlyk_afoClean:=}
 : ${_bashlyk_afdClean:=}
 : ${_bashlyk_ajobClean:=}
 : ${_bashlyk_apidClean:=}
 : ${_bashlyk_pidLogSock:=}
 : ${_bashlyk_envXSession:=}
-: ${_bashlyk_pathDat:=/tmp}
 : ${_bashlyk_onError:=throw}
+: ${_bashlyk_pathDat:=$TMPDIR}
 : ${_bashlyk_sWSpaceAlias:=___}
 : ${_bashlyk_emailRcpt:=postmaster}
 : ${HOSTNAME:=$( exec -c hostname 2>/dev/null )}
@@ -71,7 +72,7 @@ declare -rg _bashlyk_aExport_std="                                             \
     udfCleanQueue udfDateR udfGetFreeFD udfGetPathMd5 udfIsNumber udfSerialize \
     udfIsValidVariable udfLocalVarFromCSV udfMakeTemp udfMakeTempV udfOnTrap   \
     udfPrepareByType udfQuoteIfNeeded udfShellExec udfShowVariable udfXml      \
-    udfTimeStamp udfUptime udfWSpace2Alias udfPrepare2Exec                     \
+    udfTimeStamp udfFinally udfUptime udfWSpace2Alias udfPrepare2Exec          \
                                                                                \
 "
 #******
@@ -117,17 +118,17 @@ udfIsNumber() {
 #******
 #****f* libstd/udfTimeStamp
 #  SYNOPSIS
-#    udfTimeStamp <args>
+#    udfTimeStamp <text>
 #  DESCRIPTION
-#    сформировать строку c заголовком в виде текущего времени в формате
-#    'Jun 25 14:52:56' (LANG=C LC_TIME=C)
+#    Show input <text> with time stamp in format 'Mar 28 10:03:40' (LC_ALL=C)
 #  INPUTS
-#    <args> - суффикс к заголовку
+#    <text> - suffix to the header
 #  OUTPUT
-#    строка с заголовком в виде "штампа времени"
+#    input <text> with time stamp in format 'Mar 28 10:03:40' (LC_ALL=C)
 #  EXAMPLE
-#    local re="[a-zA-Z]+ [0-9]+ [0-9]+:[0-9]+:[[:digit:]]+ foo bar"
-#    udfTimeStamp foo bar >| grep -E "$re"                                      #? true
+#    local re
+#    re='^[ADFJMNOS][abceglnoprtuyv]{2} [0-9]{2} [0-9]{2}:[0-9]{2}:[0-9]{2} AB$'
+#    udfTimeStamp AB >| grep -E "$re"                                           #? true
 #  SOURCE
 
 if (( _bashlyk_ShellVersion > 4002000 )); then
@@ -151,7 +152,7 @@ else
 fi
 
 #******
-#****f* liblog/udfDateR
+#****f* libstd/udfDateR
 #  SYNOPSIS
 #    udfDateR
 #  DESCRIPTION
@@ -160,16 +161,26 @@ fi
 #    udfDateR >| grep -P "^\S{3}, \d{2} \S{3} \d{4} \d{2}:\d{2}:\d{2} .\d{4}$"  #? true
 #  SOURCE
 #******
-#****f* liblog/udfUptime
+#****f* libstd/udfUptime
 #  SYNOPSIS
-#    udfUptime args
+#    udfUptime
 #  DESCRIPTION
-#    Подсчёт количества секунд, прошедших с момента запуска сценария
-#  INPUTS
-#    args - префикс для выводимого сообщения о прошедших секундах
+#    show uptime value in the seconds
 #  EXAMPLE
-#    udfUptime >| grep -w "^[[:digit:]]*$"                                      #? true
+#    udfUptime >| grep "^[[:digit:]]*$"                                         #? true
 #  SOURCE
+#******
+#****f* libstd/udfFinally
+#  SYNOPSIS
+#    udfFinally <text>
+#  DESCRIPTION
+#    show uptime with input text
+#  INPUTS
+#    <text> - prefix text before " uptime <number> sec"
+#  EXAMPLE
+#    udfFinally $RANDOM >| grep "^[[:digit:]]* uptime [[:digit:]]* sec$"        #? true
+#  SOURCE
+udfFinally() { echo "$@ uptime $( udfUptime ) sec"; }
 #******
 #****f* libstd/udfShowVariable
 #  SYNOPSIS
@@ -372,7 +383,7 @@ udfAlias2WSpace() {
 #    ls -1 $foTemp 2>/dev/null >| grep "pre\..*\.${s}3$"                        #? true
 #    rm -f $foTemp
 #    foTemp=$(udfMakeTemp prefix=pre. suffix=.${s}4 keep=false)                 #? true
-#    echo $foTemp | grep "/tmp/pre\..*\.${s}4"                                  #? true
+#    echo $foTemp >| grep "${TMPDIR}/pre\..*\.${s}4"                            #? true
 #    test -f $foTemp                                                            #? false
 #    rm -f $foTemp
 #    $(udfMakeTemp foTemp path=/tmp prefix=pre. suffix=.${s}5 keep=true)
@@ -397,14 +408,13 @@ udfMakeTemp() {
 
     [[ "$1" == "-v" ]] && shift
 
-    udfIsValidVariable $1 || eval $( udfOnError2 InvalidVariable "$1" )
+    udfIsValidVariable $1 || eval $( udfOnError InvalidVariable "$1" )
 
     eval 'export $1="$( shift; udfMakeTemp stdout-mode ${@//keep=false/} )"'
 
-    [[ ${!1} ]] || eval $( udfOnError2 iErrorEmptyResult "$1" )
+    [[ ${!1} ]] || eval $( udfOnError EmptyResult "$1" )
 
-    [[ $* =~ keep=false ]] && udfAddFO2Clean ${!1}
-    [[ $* =~ keep=true  ]] || udfAddFO2Clean ${!1}
+    [[ $* =~ keep=false || ! $* =~ keep=true ]] && udfAddFO2Clean ${!1}
 
     return 0
 
@@ -465,7 +475,7 @@ udfMakeTemp() {
 
   if [[ ! $path ]]; then
 
-    [[ $bPipe ]] && path=$( _ pathRun ) || path="/tmp"
+    [[ $bPipe ]] && path=$( _ pathRun ) || path="$TMPDIR"
 
   fi
 
@@ -667,14 +677,14 @@ udfShellExec() {
 #    udfMakeTemp fnTemp1 keep=true suffix=.${s}1
 #    test -f $fnTemp1                                                           #? true
 #    echo $(udfAddFile2Clean $fnTemp1 )
-#    ls -l /tmp/*.${s}1 2>/dev/null >| grep ".*\.${s}1"                         #? false
+#    ls -l ${TMPDIR}/*.${s}1 2>/dev/null >| grep ".*\.${s}1"                    #? false
 #    echo $(udfMakeTemp fnTemp2 suffix=.${s}2)
-#    ls -l /tmp/*.${s}2 2>/dev/null >| grep ".*\.${s}2"                         #? false
+#    ls -l ${TMPDIR}/*.${s}2 2>/dev/null >| grep ".*\.${s}2"                    #? false
 #    echo $(udfMakeTemp fnTemp2 suffix=.${s}3 keep=true)
-#    ls -l /tmp/*.${s}3 2>/dev/null >| grep ".*\.${s}3"                         #? true
-#    a=$(ls -1 /tmp/*.${s}3)
+#    ls -l ${TMPDIR}/*.${s}3 2>/dev/null >| grep ".*\.${s}3"                    #? true
+#    a=$(ls -1 ${TMPDIR}/*.${s}3)
 #    echo $(udfAddFile2Clean $a )
-#    ls -l /tmp/*.${s}3 2>/dev/null >| grep ".*\.${s}3"                         #? false
+#    ls -l ${TMPDIR}/*.${s}3 2>/dev/null >| grep ".*\.${s}3"                    #? false
 #  SOURCE
 udfAddFile2Clean() { udfAddFO2Clean $@; }
 #******
@@ -691,14 +701,14 @@ udfAddFile2Clean() { udfAddFO2Clean $@; }
 #    udfMakeTemp pathTemp1 keep=true suffix=.${s}1 type=dir
 #    test -d $pathTemp1                                                         #? true
 #    echo $(udfAddPath2Clean $pathTemp1 )
-#    ls -1ld /tmp/*.${s}1 2>/dev/null >| grep ".*\.${s}1"                       #? false
+#    ls -1ld ${TMPDIR}/*.${s}1 2>/dev/null >| grep ".*\.${s}1"                  #? false
 #    echo $(udfMakeTemp pathTemp2 suffix=.${s}2 type=dir)
-#    ls -1ld /tmp/*.${s}2 2>/dev/null >| grep ".*\.${s}2"                       #? false
+#    ls -1ld ${TMPDIR}/*.${s}2 2>/dev/null >| grep ".*\.${s}2"                  #? false
 #    echo $(udfMakeTemp pathTemp2 suffix=.${s}3 keep=true type=dir)
-#    ls -1ld /tmp/*.${s}3 2>/dev/null >| grep ".*\.${s}3"                       #? true
-#    a=$(ls -1ld /tmp/*.${s}3)
+#    ls -1ld ${TMPDIR}/*.${s}3 2>/dev/null >| grep ".*\.${s}3"                  #? true
+#    a=$(ls -1ld ${TMPDIR}/*.${s}3)
 #    echo $(udfAddPath2Clean $a )
-#    ls -1ld /tmp/*.${s}3 2>/dev/null >| grep ".*\.${s}3"                       #? false
+#    ls -1ld ${TMPDIR}/*.${s}3 2>/dev/null >| grep ".*\.${s}3"                  #? false
 #  SOURCE
 udfAddPath2Clean() { udfAddFO2Clean $@; }
 #******
@@ -930,8 +940,8 @@ _s0() {
 #  EXAMPLE
 #    local pathDat=$(_pathDat)
 #    _pathDat >| grep -w "^${_bashlyk_pathDat}$"                                #? true
-#    _pathDat "/tmp/testdat.$$"
-#    _pathDat >| grep -w "^/tmp/testdat.${$}$"                                  #? true
+#    _pathDat "${TMPDIR}/testdat.$$"
+#    _pathDat >| grep -w "^${TMPDIR}/testdat.${$}$"                             #? true
 #    rmdir $(_pathDat)                                                          #? true
 #    _pathDat $pathDat
 #  SOURCE

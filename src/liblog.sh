@@ -1,5 +1,5 @@
 #
-# $Id: liblog.sh 715 2017-03-27 17:10:24+04:00 toor $
+# $Id: liblog.sh 716 2017-03-28 11:26:44+04:00 toor $
 #
 #****h* BASHLYK/liblog
 #  DESCRIPTION
@@ -49,13 +49,14 @@
 
 declare -rg _bashlyk_aRequiredCmd_log="                                        \
                                                                                \
-    date dirname hostname logger mkdir mkfifo rm touch tty                     \
+    hostname logger mkdir mkfifo rm touch tty                                  \
                                                                                \
 "
+
 declare -rg _bashlyk_aExport_log="                                             \
                                                                                \
-    udfCheck4LogUse udfDebug udfFinally udfUptime udfLog udfLogger             \
-    udfSetLog udfSetLogSocket udfIsTerminal udfIsInteract _fnLog               \
+    udfCheck4LogUse udfDebug udfLog udfLogger udfSetLog                        \
+    udfSetLogSocket udfIsTerminal udfIsInteract _fnLog                         \
                                                                                \
 "
 #******
@@ -271,18 +272,6 @@ udfCheck4LogUse() {
   return $_bashlyk_bNotUseLog
 
 }
-#******
-#****f* liblog/udfFinally
-#  SYNOPSIS
-#    udfFinally args
-#  DESCRIPTION
-#    Псевдоним для udfUptime (Устаревшее)
-#  INPUTS
-#    args - префикс для выводимого сообщения о прошедших секундах
-#  EXAMPLE
-#    udfFinally $RANDOM >| grep "^[[:digit:]]* uptime [[:digit:]]* sec$"        #? true
-#  SOURCE
-udfFinally() { echo "$@ uptime $( udfUptime ) sec"; }
 #******
 #****f* liblog/udfSetLogSocket
 #  SYNOPSIS

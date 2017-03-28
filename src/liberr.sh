@@ -1,5 +1,5 @@
 #
-# $Id: liberr.sh 714 2017-03-27 15:02:12+04:00 toor $
+# $Id: liberr.sh 716 2017-03-28 11:26:44+04:00 toor $
 #
 #****h* BASHLYK/liberr
 #  DESCRIPTION
@@ -958,7 +958,7 @@ ERR::__add_throw_to_command() {
 #  TODO
 #    error handling for input 'try' function checking not worked
 #  EXAMPLE
-#    ERR::__convert_try_to_func >| grep '^/tmp/.*ok.*fail.*; false; }$'         #? true
+#    ERR::__convert_try_to_func >| grep "^${TMPDIR}/.*ok.*fail.*; false; }$"    #? true
 #  SOURCE
 ERR::__convert_try_to_func() {
 
