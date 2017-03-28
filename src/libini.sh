@@ -1,5 +1,5 @@
 #
-# $Id: libini.sh 715 2017-03-27 17:10:24+04:00 toor $
+# $Id: libini.sh 717 2017-03-28 16:41:16+04:00 toor $
 #
 #****h* BASHLYK/libini
 #  DESCRIPTION
@@ -92,8 +92,6 @@
 #  DESCRIPTION
 #    Global variables of the library
 #  SOURCE
-: ${_bashlyk_pathIni:=$( exec -c pwd )}
-
 declare -rg _bashlyk_cnf_reKey='^\b([_a-zA-Z][_a-zA-Z0-9]*)\b$'
 declare -rg _bashlyk_ini_reKey='^\b([^=]+)\b$'
 declare -rg _bashlyk_cnf_reKeyVal='^[[:space:]]*\b([_a-zA-Z][_a-zA-Z0-9]*)\b=(.*)[[:space:]]*$'
@@ -111,9 +109,10 @@ declare -rg _bashlyk_methods_ini="                                             \
 
 declare -rg _bashlyk_externals_ini="                                           \
                                                                                \
-    date echo getopt sha1sum mkdir mv pwd rm stat touch                        \
+    getopt sha1sum mkdir mv pwd rm stat touch                                  \
                                                                                \
 "
+
 declare -rg _bashlyk_exports_ini="                                             \
                                                                                \
     INI get set keys show save read load bind.cli getopt                       \

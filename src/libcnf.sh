@@ -1,5 +1,5 @@
 #
-# $Id: libcnf.sh 714 2017-03-27 15:02:12+04:00 toor $
+# $Id: libcnf.sh 717 2017-03-28 16:41:16+04:00 toor $
 #
 #****h* BASHLYK/libcnf
 #  DESCRIPTION
@@ -34,10 +34,9 @@
 #  DESCRIPTION
 #    Global variables of the library
 #  SOURCE
-: ${_bashlyk_pathCnf:=$( exec -c pwd )}
 : ${_bashlyk_sUnnamedKeyword:=_bashlyk_unnamed_key_}
 
-declare -rg _bashlyk_externals_cnf="mkdir pwd"
+declare -rg _bashlyk_externals_cnf="mkdir"
 declare -rg _bashlyk_exports_cnf="udfGetConfig udfSetConfig"
 #******
 #****p* libcnf/__getconfig

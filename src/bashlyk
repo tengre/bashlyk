@@ -1,6 +1,6 @@
 #!/bin/bash
 #
-# $Id: bashlyk 716 2017-03-28 11:46:04+04:00 toor $
+# $Id: bashlyk 717 2017-03-28 16:41:16+04:00 toor $
 #
 #****h* BASHLYK/bashlyk
 #  DESCRIPTION
@@ -37,6 +37,8 @@
 : ${USER:=$( exec -c id -nu )}
 : ${_bashlyk_sUser:=$USER}
 : ${_bashlyk_sGroup:=$( exec -c id -ng )}
+: ${HOSTNAME:=$( exec -c hostname 2>/dev/null )}
+: ${DEBUGLEVEL:=0}
 : ${_bashlyk_ShellVersion:=$(                                                  \
     printf '%d%03d%03d'                                                        \
            "${BASH_VERSINFO[0]}"                                               \

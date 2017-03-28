@@ -1,5 +1,5 @@
 #
-# $Id: libcsv.sh 714 2017-03-27 15:02:12+04:00 toor $
+# $Id: libcsv.sh 717 2017-03-28 16:41:16+04:00 toor $
 #
 #****h* BASHLYK/libcsv
 #  DESCRIPTION
@@ -34,9 +34,8 @@
 #  DESCRIPTION
 #    Global variables of the library
 #  SOURCE
-: ${_bashlyk_bSetOptions:=}
-: ${_bashlyk_csvOptions2Ini:=}
-: ${_bashlyk_pathIni:=$( exec -c pwd )}
+#: ${_bashlyk_bSetOptions:=}
+#: ${_bashlyk_csvOptions2Ini:=}
 : ${_bashlyk_sUnnamedKeyword:=_bashlyk_ini_void_autoKey_}
 
 declare -rg _bashlyk_externals_csv="                                           \
@@ -45,14 +44,112 @@ declare -rg _bashlyk_externals_csv="                                           \
     mv pwd rm sed sort touch tr true uniq xargs                                \
                                                                                \
 "
+
 declare -rg _bashlyk_exports_csv="                                             \
                                                                                \
-    udfAssembly udfCsvHash2Raw udfCsvKeys udfCsvOrder udfGetCsvSection         \
-    udfGetIni udfGetIniSection udfIni udfIni2Csv udfIniChange udfIniGroup2Csv  \
-    udfReadIniSection udfIniGroupSection2Csv udfIniSection2Csv udfIniWrite     \
-    udfOptions2Ini udfSelectEnumFromCsvHash udfSetVarFromCsv udfSetVarFromIni  \
+    udfBashlykUnquote udfCheckCsv udfCsvHash2Raw udfCsvKeys udfCsvOrder        \
+    udfGetCsvSection udfGetIni udfGetIniSection udfIni udfIni2Csv udfIniChange \
+    udfIniGroup2Csv udfIniGroupSection2Csv udfIniSection2Csv udfIniWrite       \
+    udfLocalVarFromCSV udfOptions2Ini udfPrepare2Exec udfReadIniSection        \
+    udfSelectEnumFromCsvHash udfSerialize udfSetVarFromCsv udfSetVarFromIni    \
+    udfShellExec                                                               \
                                                                                \
 "
+#******
+#****f* libstd/udfCheckCsv
+#  SYNOPSIS
+#    udfCheckCsv [[-v] <varname>] "<csv>;"
+#  DESCRIPTION
+#    Bringing the format "key = value" fields of the CSV-line. If the field does
+#    not contain a key or key contains a space, then the field receives key
+#    species _bashlyk_unnamed_key_<increment>, and all the contents of the field
+#    becomes the value. The result is printed to stdout or assigned to the <var>
+#    variable if the first argument is listed as -v <var> ( -v can be skipped )
+#  INPUTS
+#    csv;    - CSV-string, separated by ';'
+#    Important! Enclose the string in double quotes if it can contain spaces
+#    Important! The string must contain the field sign ";"
+#    varname - variable identifier (without the "$"). If present the result will
+#    be assigned to this variable, otherwise result will be printed to stdout
+#  OUTPUT
+#    separated by a ";" CSV-string in fields that contain data in the format
+#    "<key> = <value>; ..."
+#  ERRORS
+#    EmptyResult     - empty result
+#    MissingArgument - no arguments
+#    InvalidArgument - invalid argument
+#    InvalidVariable - invalid variable for output assign
+#  EXAMPLE
+#    local cmd=udfCheckCsv csv="a=b;a=c;s=a b c d e f;test value" v1 v2
+#    local re='^a=b;a=c;s="a b c d e f";_bashlyk_unnamed_key_0="test value";$'
+#    $cmd "$csv" >| grep "$re"                                                  #? true
+#    $cmd -v v1 "$csv"                                                          #? true
+#    echo $v1 >| grep "$re"                                                     #? true
+#    $cmd  v2 "$csv"                                                            #? true
+#    echo $v2 >| grep "$re"                                                     #? true
+#    $cmd  v2 ""                                                                #? ${_bashlyk_iErrorEmptyResult}
+#    echo $v2 >| grep "$re"                                                     #? false
+#    $cmd -v invalid+variable "$csv"                                            #? ${_bashlyk_iErrorInvalidVariable}
+#    $cmd    invalid+variable "$csv"                                            #? ${_bashlyk_iErrorInvalidVariable}
+#    $cmd invalid+variable                                                      #? ${_bashlyk_iErrorInvalidArgument}
+#    $cmd _valid_variable_                                                      #? ${_bashlyk_iErrorInvalidArgument}
+#    $cmd 'csv data;' | grep '^_bashlyk_unnamed_key_0="csv data";$'             #? true
+#    $cmd                                                                       #? ${_bashlyk_iErrorMissingArgument}
+#  SOURCE
+udfCheckCsv() {
+
+  if (( $# > 1 )); then
+
+    [[ "$1" == "-v" ]] && shift
+
+    udfIsValidVariable $1 || eval $( udfOnError return InvalidVariable "$1" )
+
+    eval 'export $1="$( shift; udfCheckCsv "$1" )"'
+
+    [[ ${!1} ]] || eval $( udfOnError return EmptyResult "$1" )
+
+    return 0
+
+  fi
+
+  udfOn MissingArgument $1 || return $?
+
+  [[ $1 =~ \; ]] || return $( _ iErrorInvalidArgument )
+
+  local csv i IFS k s v
+
+  IFS=';'
+  i=0
+  csv=''
+
+  for s in $1; do
+
+    s=${s/\[*\][;]/}
+    s=${s//[\'\"]/}
+
+    k="$( echo ${s%%=*} )"
+    v="$( echo ${s#*=} )"
+
+    [[ -n "$k" ]] || continue
+
+    if [[ "$k" == "$v" || "$k" =~ ^.*[[:space:]]+.*$ ]]; then
+
+      k=${_bashlyk_sUnnamedKeyword}${i}
+      i=$((i+1))
+
+    fi
+
+    IFS=' ' csv+="$k=$( udfQuoteIfNeeded $v );"
+
+  done
+
+  IFS=$' \t\n'
+
+  echo "$csv"
+
+  [[ $csv ]] && return 0 || return $( _ iErrorEmptyResult )
+
+}
 #******
 #****f* libcsv/udfGetIniSection
 #  SYNOPSIS
@@ -1204,3 +1301,187 @@ udfOptions2Ini() {
 
 }
 #******
+#****f* libstd/udfBashlykUnquote
+#  SYNOPSIS
+#    udfBashlykUnquote
+#  DESCRIPTION
+#    Преобразование метапоследовательностей _bashlyk_&#XX_ из потока со стандартного входа в символы '"[]()=;\'
+#  EXAMPLE
+#    local s="_bashlyk_&#34__bashlyk_&#91__bashlyk_&#93__bashlyk_&#59__bashlyk_&#40__bashlyk_&#41__bashlyk_&#61_"
+#    echo $s | udfBashlykUnquote >| grep -e '\"\[\];()='                                                          #? true
+#  SOURCE
+udfBashlykUnquote() {
+
+  local cmd='sed' i IFS=$' \t\n'
+  local -A a=( [34]='\"' [40]='\(' [41]='\)' [59]='\;' [61]='\=' [91]='\[' [92]='\\\' [93]='\]' )
+
+  for i in "${!a[@]}"; do
+
+    cmd+=" -e \"s/_bashlyk_\&#${i}_/${a[$i]}/g\""
+
+  done
+  ## TODO продумать команды для удаления "_bashlyk_csv_record=" и автоматических ключей
+  #cmd+=" -e \"s/\t\?_bashlyk_ini_.*_autoKey_[0-9]\+\t\?=\t\?//g\""
+  cmd+=' -e "s/^\"\(.*\)\"$/\1/"'
+
+  eval "$cmd"
+
+}
+#******
+#****f* libstd/udfPrepare2Exec
+#  SYNOPSIS
+#    udfPrepare2Exec - args
+#  DESCRIPTION
+#    Преобразование метапоследовательностей _bashlyk_&#XX_ в символы '[]()=;\'
+#    со стандартного входа или строки аргументов. В последнем случае,
+#    дополнительно происходит разделение полей "CSV;"-строки в отдельные
+#    строки
+#  INPUTS
+#    args - командная строка
+#       - - данные поступают со стандартного входа
+#  OUTPUT
+#    поток строк, пригодных для выполнения командным интерпретатором
+#  EXAMPLE
+#    local s1 s2
+#    s1="_bashlyk_&#91__bashlyk_&#93__bashlyk_&#59__bashlyk_&#40__bashlyk_&#41__bashlyk_&#61_"
+#    s2="while _bashlyk_&#91_ true _bashlyk_&#93_; do read;done"
+#    echo $s1 | udfPrepare2Exec -                                                              #? true
+#    udfPrepare2Exec $s1 >| grep -e '\[\];()='                                                 #? true
+#    udfPrepare2Exec $s2 >| grep -e "^while \[ true \]$\|^ do read$\|^done$"                   #? true
+#  SOURCE
+udfPrepare2Exec() {
+
+  local s IFS=$' \t\n'
+
+  if [[ "$1" == "-" ]]; then
+
+    udfBashlykUnquote
+
+  else
+
+    echo -e "${*//;/\\n}" | udfBashlykUnquote
+
+  fi
+
+  return 0
+
+}
+#******
+#****f* libstd/udfShellExec
+#  SYNOPSIS
+#    udfShellExec args
+#  DESCRIPTION
+#    Выполнение командной строки во внешнем временном файле
+#    в текущей среде интерпретатора оболочки
+#  INPUTS
+#    args - командная строка
+#  RETURN VALUE
+#    MissingArgument - аргумент не задан
+#    в остальных случаях код возврата командной строки с учетом доступа к временному файлу
+#  EXAMPLE
+#    udfShellExec 'true; false'                                                 #? false
+#    udfShellExec 'false; true'                                                 #? true
+#  SOURCE
+udfShellExec() {
+
+  udfOn MissingArgument $* || return $?
+
+  local rc fn IFS=$' \t\n'
+
+  udfMakeTemp fn
+  udfPrepare2Exec "$@" > $fn
+  . $fn
+  rc=$?
+  rm -f $fn
+
+  return $rc
+
+}
+#******
+#****f* libstd/udfLocalVarFromCSV
+#  SYNOPSIS
+#    udfLocalVarFromCSV CSV1 CSV2 ...
+#  DESCRIPTION
+#    Prepare string from comma separated lists (ex. INI options) for definition
+#    of the local variables by using eval
+#  ERRORS
+#    MissingArgument - аргумент не задан
+#  EXAMPLE
+#    udfLocalVarFromCSV a1,b2,c3                                                #? true
+#    udfLocalVarFromCSV a1 b2,c3                                                #? true
+#    udfLocalVarFromCSV a1,b2 c3                                                #? true
+#    echo $( udfLocalVarFromCSV a1,b2 c3,4d 2>/dev/null ) >| grep '^local'      #? false
+#  SOURCE
+udfLocalVarFromCSV() {
+
+  if [[ ! $@ ]]; then
+
+    udfOnError1 throw MissingArgument
+    return $( _ iErrorMissingArgument )
+
+  fi
+
+  local s
+  local -A h
+
+  for s in ${*//[;,]/ }; do
+
+    if ! udfIsValidVariable $s; then
+
+      udfOnError1 throw InvalidVariable "$s"
+      return $( _ iErrorInvalidVariable )
+
+    fi
+
+    h[$s]="$s"
+
+  done
+
+  if [[ ${h[@]} ]]; then
+
+    echo "local ${h[@]}"
+
+  else
+
+    udfOnError1 throw EmptyResult
+    return $( _ iErrorEmptyResult )
+
+  fi
+
+}
+#******
+#****f* libstd/udfSerialize
+#  SYNOPSIS
+#    udfSerialize variables
+#  DESCRIPTION
+#    Generate csv string from variable list
+#  INPUTS
+#    variables - list of variables
+#  OUTPUT
+#    Show csv string
+#  ERRORS
+#    MissingArgument - аргумент не задан
+#  EXAMPLE
+#    local sUname="$(uname -a)" sDate="" s=100
+#    udfSerialize sUname sDate s >| grep "^sUname=.*s=100;$"                                                                 #? true
+#  SOURCE
+udfSerialize() {
+
+  udfOn MissingArgument $1 || return $?
+
+  local bashlyk_s_Serialize csv IFS=$' \t\n'
+
+  for bashlyk_s_Serialize in $*; do
+
+    udfIsValidVariable "$bashlyk_s_Serialize" \
+      && csv+="${bashlyk_s_Serialize}=${!bashlyk_s_Serialize};" \
+      || udfSetLastError InvalidVariable "$bashlyk_s_Serialize"
+
+  done
+
+  echo "$csv"
+
+}
+#******
+
+

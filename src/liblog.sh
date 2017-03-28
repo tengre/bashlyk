@@ -1,5 +1,5 @@
 #
-# $Id: liblog.sh 716 2017-03-28 11:26:44+04:00 toor $
+# $Id: liblog.sh 717 2017-03-28 16:49:13+04:00 toor $
 #
 #****h* BASHLYK/liblog
 #  DESCRIPTION
@@ -34,13 +34,9 @@
 #  DESCRIPTION
 #    Global variables of the library
 #  SOURCE
-: ${_bashlyk_pidLogSock:=}
-: ${_bashlyk_fnLogSock:=}
-: ${HOSTNAME:=$( exec -c hostname )}
-: ${DEBUGLEVEL:=0}
-: ${_bashlyk_pathLog:=/tmp}
-: ${_bashlyk_pathRun:=/tmp}
-: ${_bashlyk_emailRcpt:=postmaster}
+#: ${_bashlyk_fnLogSock:=}
+#: ${_bashlyk_pidLogSock:=}
+: ${HOSTNAME:=localhost}
 : ${_bashlyk_emailSubj:="${_bashlyk_sUser}@${HOSTNAME}::${_bashlyk_s0}"}
 : ${_bashlyk_fnLog:="${_bashlyk_pathLog}/${_bashlyk_s0}.log"}
 : ${_bashlyk_bUseSyslog:=0}
@@ -177,19 +173,19 @@ udfLogger() {
 #   Зависит от параметров вывода
 #  EXAMPLE
 #    # TODO улучшить тест
-#    echo -n . | udfLog -                                                       #-
-#    echo test | udfLog - tag >| grep "tag test"                                #? true
+#    echo -n . | udfLog -                                  >| grep '^\.$'       #? true
+#    echo test | udfLog - tag                              >| grep '^tag test$' #? true
 #  SOURCE
 udfLog() {
 
-  local s sPrefix IFS=$' \t\n'
+  local s
 
   if [[ "$1" == "-" ]]; then
 
     shift
-    [[ $* ]] && sPrefix="$* " || sPrefix=
+    [[ $* ]] && s="$* "
 
-    while read s; do [[ $s ]] && udfLogger "${sPrefix}${s}"; done
+    while IFS= read -d '' || [[ $REPLY ]]; do udfLogger "${s}${REPLY}"; done
 
   else
 

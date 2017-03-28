@@ -1,5 +1,5 @@
 #
-# $Id: libold.sh 714 2017-03-27 15:02:12+04:00 toor $
+# $Id: libold.sh 717 2017-03-28 16:49:13+04:00 toor $
 #
 #****h* BASHLYK/libold
 #  DESCRIPTION
@@ -33,22 +33,16 @@
 #  DESCRIPTION
 #    global variables of the library
 #  SOURCE
-: ${_bashlyk_bSetOptions:=}
-: ${_bashlyk_csvOptions2Ini:=}
-: ${_bashlyk_pathIni:=$( exec -c pwd )}
+#: ${_bashlyk_bSetOptions:=}
+#: ${_bashlyk_csvOptions2Ini:=}
 : ${_bashlyk_sUnnamedKeyword:=_bashlyk_ini_void_autoKey_}
 
-declare -rg _bashlyk_externals_old="                                           \
-                                                                               \
-    awk cat cut dirname false grep mawk mkdir                                  \
-    mv pwd rm sed sort touch tr true uniq xargs                                \
-                                                                               \
-"
 declare -rg _bashlyk_exports_old="                                             \
                                                                                \
-    udfCsvKeys2Var udfCsvOrder2Var udfGetCsvSection2Var udfGetIni2Var          \
-    udfGetIniSection2Var udfIniGroupSection2CsvVar udfIniGroup2CsvVar          \
-    udfIniSection2CsvVar udfReadIniSection2Var udfIni2CsvVar                   \
+    _ARGUMENTS _gete _getv _pathDat _s0 _set udfCsvKeys2Var udfCsvOrder2Var    \
+    udfGetCsvSection2Var udfGetIni2Var udfGetIniSection2Var udfIni2CsvVar      \
+    udfIniGroup2CsvVar udfIniGroupSection2CsvVar udfIniSection2CsvVar          \
+    udfReadIniSection2Var                                                      \
                                                                                \
 "
 #******
@@ -356,3 +350,176 @@ udfIniGroup2CsvVar() {
 
 }
 #******
+#****f* libold/_ARGUMENTS
+#  SYNOPSIS
+#    _ARGUMENTS [args]
+#  DESCRIPTION
+#    Получить или установить значение переменной $_bashlyk_sArg -
+#    командная строка сценария
+#    устаревшая функция, заменяется _, _get{e,v}, _set
+#  INPUTS
+#    args - новая командная строка
+#  OUTPUT
+#    Вывод значения переменной $_bashlyk_sArg
+#  EXAMPLE
+#    local ARGUMENTS=$(_ARGUMENTS)
+#    _ARGUMENTS >| grep "^${_bashlyk_sArg}$"                                    #? true
+#    _ARGUMENTS "test"
+#    _ARGUMENTS >| grep -w "^test$"                                             #? true
+#    _ARGUMENTS $ARGUMENTS
+#  SOURCE
+_ARGUMENTS() {
+
+ [[ $1 ]] && _bashlyk_sArg="$*" || echo ${_bashlyk_sArg}
+
+}
+#******
+#****f* libstd/_gete
+#  SYNOPSIS
+#    _gete <subname>
+#  DESCRIPTION
+#    Вывести значение глобальной переменной $_bashlyk_<subname>
+#  INPUTS
+#    <subname> - содержательная часть глобальной имени ${_bashlyk_<subname>}
+#  ERRORS
+#    MissingArgument - аргумент не задан
+#  EXAMPLE
+#    _gete sWSpaceAlias >| grep "^${_bashlyk_sWSpaceAlias}$"                    #? true
+#  SOURCE
+_gete() {
+
+  udfOn MissingArgument $1 || return $?
+
+  local IFS=$' \t\n'
+
+  eval "echo \$_bashlyk_${1}"
+
+}
+#******
+#****f* libstd/_getv
+#  SYNOPSIS
+#    _getv <subname> [<get>]
+#  DESCRIPTION
+#    Получить (get) значение глобальной переменной $_bashlyk_<subname> в
+#    (локальную) переменную
+#  INPUTS
+#    <get>     - переменная для приема значения (get) ${_bashlyk_<subname>},
+#                может быть опущена, в этом случае приемником становится
+#                переменная <subname>
+#    <subname> - содержательная часть глобальной имени ${_bashlyk_<subname>}
+#  ERRORS
+#    MissingArgument - аргумент не задан
+#    InvalidVariable - не валидный идентификатор
+#  EXAMPLE
+#    local sS sWSpaceAlias
+#    _getv sWSpaceAlias sS
+#    echo "$sS" >| grep "^${_bashlyk_sWSpaceAlias}$"                            #? true
+#    _getv sWSpaceAlias
+#    echo "$sWSpaceAlias" >| grep "^${_bashlyk_sWSpaceAlias}$"                  #? true
+#  SOURCE
+_getv() {
+
+  udfOn MissingArgument $1 || return $?
+
+  local IFS=$' \t\n'
+
+  if [[ $2 ]]; then
+
+    udfIsValidVariable $2 || return $?
+    eval "export $2=\$_bashlyk_${1}"
+
+  else
+
+    udfIsValidVariable $1 || return $?
+    eval "export $1=\$_bashlyk_${1}"
+
+  fi
+
+  return 0
+
+}
+#******
+#****f* libstd/_set
+#  SYNOPSIS
+#    _set <subname> [<value>]
+#  DESCRIPTION
+#    установить (set) значение глобальной переменной $_bashlyk_<subname>
+#  INPUTS
+#    <subname> - содержательная часть глобальной имени ${_bashlyk_<subname>}
+#    <value>   - новое значение, в случае отсутствия - пустая строка
+#  ERRORS
+#    MissingArgument - аргумент не задан
+#  EXAMPLE
+#    local sWSpaceAlias=$(_ sWSpaceAlias)
+#    _set sWSpaceAlias _-_
+#    _ sWSpaceAlias >| grep "^_-_$"                                             #? true
+#    _set sWSpaceAlias $sWSpaceAlias
+#  SOURCE
+_set() {
+
+  udfOn MissingArgument $1 || return $?
+
+  local IFS=$' \t\n'
+
+  [[ $1 ]] || eval $( udfOnError return MissingArgument )
+
+  eval "_bashlyk_$1=$2"
+
+}
+#******
+#****f* libstd/_s0
+#  SYNOPSIS
+#    _s0
+#  DESCRIPTION
+#    Получить или установить значение переменной $_bashlyk_s0 -
+#    короткое имя сценария
+#    устаревшая функция, заменяется _, _get{e,v}, _set
+#  OUTPUT
+#    Вывод значения переменной $_bashlyk_s0
+#  EXAMPLE
+#    local s0=$(_s0)
+#    _s0 >| grep -w "^${_bashlyk_s0}$"                                          #? true
+#    _s0 "test"
+#    _s0 >| grep -w "^test$"                                                    #? true
+#    _s0 $s0
+#  SOURCE
+_s0() {
+
+ [[ $1 ]] && _bashlyk_s0="$*" || echo ${_bashlyk_s0}
+
+}
+#******
+#****f* libstd/_pathDat
+#  SYNOPSIS
+#    _pathDat
+#  DESCRIPTION
+#    Получить или установить значение переменной $_bashlyk_pathDat -
+#    полное имя каталога данных сценария
+#    устаревшая функция, заменяется _, _get{e,v}, _set
+#  OUTPUT
+#    Вывод значения переменной $_bashlyk_pathDat
+#  EXAMPLE
+#    local pathDat=$(_pathDat)
+#    _pathDat >| grep -w "^${_bashlyk_pathDat}$"                                #? true
+#    _pathDat "${TMPDIR}/testdat.$$"
+#    _pathDat >| grep -w "^${TMPDIR}/testdat.${$}$"                             #? true
+#    rmdir $(_pathDat)                                                          #? true
+#    _pathDat $pathDat
+#  SOURCE
+_pathDat() {
+
+  if [[ $1 ]]; then
+
+    _bashlyk_pathDat="$*"
+    ## TODO error handling
+    mkdir -p $_bashlyk_pathDat
+
+  else
+
+    echo ${_bashlyk_pathDat}
+
+  fi
+
+}
+#******
+

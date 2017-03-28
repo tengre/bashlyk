@@ -1,5 +1,5 @@
 #
-# $Id: libpid.sh 714 2017-03-27 15:02:12+04:00 toor $
+# $Id: libpid.sh 717 2017-03-28 16:41:16+04:00 toor $
 #
 #****h* BASHLYK/libpid
 #  DESCRIPTION
@@ -40,13 +40,13 @@
 : ${_bashlyk_fnPid:=}
 : ${_bashlyk_fnSock:=}
 : ${_bashlyk_s0:=${0##*/}}
-: ${_bashlyk_pathRun:=/tmp}
 
 declare -rg _bashlyk_externals_pid="                                           \
                                                                                \
-    head kill mkdir printf pgrep ps rm rmdir sleep xargs                       \
+    head kill mkdir pgrep                                                      \
                                                                                \
 "
+
 declare -rg _bashlyk_exports_pid="                                             \
                                                                                \
     udfCheckStarted udfExitIfAlreadyStarted udfSetPid udfStopProcess           \

@@ -1,5 +1,5 @@
 #
-# $Id: libmsg.sh 714 2017-03-27 15:02:12+04:00 toor $
+# $Id: libmsg.sh 717 2017-03-28 16:41:16+04:00 toor $
 #
 #****h* BASHLYK/libmsg
 #  DESCRIPTION
@@ -32,19 +32,18 @@
 #  DESCRIPTION
 #    Global variables of the library
 #  SOURCE
-: ${HOSTNAME:=$( exec -c hostname 2>/dev/null )}
+: ${HOSTNAME:=localhost}
+#: ${_bashlyk_envXSession:=}
 : ${_bashlyk_sLogin:=$( exec -c logname 2>/dev/null )}
-: ${_bashlyk_bNotUseLog:=1}
-: ${_bashlyk_emailRcpt:=postmaster}
 : ${_bashlyk_emailSubj:="${_bashlyk_sUser}@${HOSTNAME}::${0##*/}"}
-: ${_bashlyk_envXSession:=}
 
 declare -rg _bashlyk_externals_msg="                                           \
                                                                                \
-    cat cut echo grep head hostname logname mail printf ps rm sort             \
-    stat tee uniq which write notify-send|kdialog|zenity|xmessage              \
+    cut echo grep head logname mail rm sort stat tee uniq which write          \
+    notify-send|kdialog|zenity|xmessage                                        \
                                                                                \
 "
+
 declare -rg _bashlyk_exports_msg="                                             \
                                                                                \
     udfEcho udfGetXSessionProperties udfMail udfMessage udfNotify2X            \
@@ -74,12 +73,12 @@ udfEcho() {
 
     shift
     [[ $1 ]] && printf -- "%s\n----\n" "$*"
-    ## TODO alarm required...
-    cat
+
+    udfCat -
 
   else
 
-    [[ $1 ]] && echo $*
+    [[ $* ]] && echo $*
 
   fi
 
@@ -156,11 +155,15 @@ udfMail() {
     case "$1" in
 
       -)
+
          udfEcho $*
+
        ;;
 
       *)
-         [[ -s "$*" ]] && cat "$*" || echo "$*"
+
+         [[ -s "$*" ]] && udfCat < "$*" || echo "$*"
+
        ;;
 
     esac
@@ -204,7 +207,7 @@ udfMessage() {
 
     [[ $_bashlyk_sLogin ]] && write $_bashlyk_sLogin < $fnTmp
 
-  } || cat $fnTmp
+  } || udfCat < $fnTmp
 
   i=$?
   rm -f $fnTmp
@@ -240,7 +243,7 @@ udfNotify2X() {
 
   local iTimeout=8 s IFS=$' \t\n'
 
-  [[ -s "$*" ]] && s="$(< "$*")" || s="$( echo -e -- "$*" )"
+  [[ -s "$*" ]] && s="$( udfCat < "$*" )" || s="$( echo -e -- "$*" )"
 
   for cmd in notify-send kdialog zenity xmessage; do
 
