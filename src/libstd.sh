@@ -1,5 +1,5 @@
 #
-# $Id: libstd.sh 718 2017-03-28 17:13:24+04:00 toor $
+# $Id: libstd.sh 720 2017-04-04 17:20:59+04:00 toor $
 #
 #****h* BASHLYK/libstd
 #  DESCRIPTION
@@ -140,7 +140,7 @@ else
 
   readonly _bashlyk_iStartTimeStamp=$( exec -c date "+%s" )
 
-  udfTimeStamp() { LANG=C LC_TIME=C LC_ALL=C date "+%b %d %H:%M:%S $*"; }
+  udfTimeStamp() { LC_ALL=C date "+%b %d %H:%M:%S $*"; }
 
   udfDateR() { exec -c date -R; }
 
@@ -531,9 +531,9 @@ udfMakeTemp() {
 
   [[ $* =~ keep=false ]] && udfAddFO2Clean $s
 
-  echo $s
+  [[ $s ]] || return $( _ iErrorEmptyResult )
 
-  [[ $s ]] && return 0 || return $( _ iErrorEmptyResult )
+  echo $s
 
 }
 #******
@@ -1110,6 +1110,8 @@ udfGetTimeInSec() {
 #    get unused filedescriptor
 #  OUTPUT
 #    show given filedescriptor
+#  TODO
+#    race possible
 #  EXAMPLE
 #    udfGetFreeFD | grep -P "^\d+$"                                             #? true
 #  SOURCE
