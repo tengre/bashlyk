@@ -1,5 +1,5 @@
 #
-# $Id: libstd.sh 721 2017-04-05 12:08:02+04:00 toor $
+# $Id: libstd.sh 722 2017-04-05 16:25:18+04:00 toor $
 #
 #****h* BASHLYK/libstd
 #  DESCRIPTION
@@ -564,7 +564,7 @@ udfMakeTemp() {
 #    ls $foTemp >| grep "prefi"                                                 #? true
 #    udfMakeTempV foTemp dir                                                    #? true
 #    ls -ld $foTemp >| grep "^drwx------.*${foTemp}$"                           #? true
-#    echo $(udfAddPath2Clean $foTemp)
+#    echo $(udfAddFO2Clean $foTemp)
 #    test -d $foTemp                                                            #? false
 #  SOURCE
 udfMakeTempV() {
@@ -592,64 +592,7 @@ udfMakeTempV() {
 
 }
 #******
-#****f* libstd/udfAddFile2Clean
-#  SYNOPSIS
-#    udfAddFile2Clean args
-#  DESCRIPTION
-#    Добавляет имена файлов к списку удаляемых при завершении сценария
-#    Предназначен для удаления временных файлов.
-#  INPUTS
-#    args - имена файлов
-#  EXAMPLE
-#    local a fnTemp1 fnTemp2 s=$RANDOM
-#    udfMakeTemp fnTemp1 keep=true suffix=.${s}1
-#    test -f $fnTemp1                                                           #? true
-#    echo $(udfAddFile2Clean $fnTemp1 )
-#    ls -l ${TMPDIR}/*.${s}1 2>/dev/null >| grep ".*\.${s}1"                    #? false
-#    echo $(udfMakeTemp fnTemp2 suffix=.${s}2)
-#    ls -l ${TMPDIR}/*.${s}2 2>/dev/null >| grep ".*\.${s}2"                    #? false
-#    echo $(udfMakeTemp fnTemp2 suffix=.${s}3 keep=true)
-#    ls -l ${TMPDIR}/*.${s}3 2>/dev/null >| grep ".*\.${s}3"                    #? true
-#    a=$(ls -1 ${TMPDIR}/*.${s}3)
-#    echo $(udfAddFile2Clean $a )
-#    ls -l ${TMPDIR}/*.${s}3 2>/dev/null >| grep ".*\.${s}3"                    #? false
-#  SOURCE
-udfAddFile2Clean() { udfAddFO2Clean $@; }
-#******
-#****f* libstd/udfAddPath2Clean
-#  SYNOPSIS
-#    udfAddPath2Clean args
-#  DESCRIPTION
-#    Добавляет имена каталогов к списку удаляемых при завершении сценария.
-#    Предназначен для удаления временных каталогов (если они пустые).
-#  INPUTS
-#    args - имена каталогов
-#  EXAMPLE
-#    local a pathTemp1 pathTemp2 s=$RANDOM
-#    udfMakeTemp pathTemp1 keep=true suffix=.${s}1 type=dir
-#    test -d $pathTemp1                                                         #? true
-#    echo $(udfAddPath2Clean $pathTemp1 )
-#    ls -1ld ${TMPDIR}/*.${s}1 2>/dev/null >| grep ".*\.${s}1"                  #? false
-#    echo $(udfMakeTemp pathTemp2 suffix=.${s}2 type=dir)
-#    ls -1ld ${TMPDIR}/*.${s}2 2>/dev/null >| grep ".*\.${s}2"                  #? false
-#    echo $(udfMakeTemp pathTemp2 suffix=.${s}3 keep=true type=dir)
-#    ls -1ld ${TMPDIR}/*.${s}3 2>/dev/null >| grep ".*\.${s}3"                  #? true
-#    a=$(ls -1ld ${TMPDIR}/*.${s}3)
-#    echo $(udfAddPath2Clean $a )
-#    ls -1ld ${TMPDIR}/*.${s}3 2>/dev/null >| grep ".*\.${s}3"                  #? false
-#  SOURCE
-udfAddPath2Clean() { udfAddFO2Clean $@; }
-#******
-#****f* libstd/udfAddJob2Clean
-#  SYNOPSIS
-#    udfAddJob2Clean args
-#  NOTES
-#    deprecated
-#  DESCRIPTION
-#    функция удалена, осталась только заглушка
-#  SOURCE
 udfAddJob2Clean() { return 0; }
-#******
 #****f* libstd/udfAddPid2Clean
 #  SYNOPSIS
 #    udfAddPid2Clean args
@@ -673,36 +616,7 @@ udfAddPid2Clean() {
 
   _bashlyk_apidClean[$BASHPID]+=" $*"
 
-  trap "udfOnTrap" 2 5 9 15 EXIT
-
-}
-#******
-#****f* libstd/udfCleanQueue
-#  SYNOPSIS
-#    udfCleanQueue args
-#  DESCRIPTION
-#    Псевдоним для udfAddFile2Clean. (Устаревшее)
-#  INPUTS
-#    args - имена файлов
-#  SOURCE
-udfCleanQueue()    { udfAddFO2Clean $@; }
-udfAddFObj2Clean() { udfAddFO2Clean $@; }
-#******
-#****f* libstd/udfAddFO2Clean
-#  SYNOPSIS
-#    udfAddFO2Clean <args>
-#  DESCRIPTION
-#    add list of filesystem objects for cleaning on exit
-#  INPUTS
-#    args - files or directories for cleaning on exit
-#  SOURCE
-udfAddFO2Clean() {
-
-  udfOn MissingArgument return $*
-
-  _bashlyk_afoClean[$BASHPID]+=" $*"
-
-  trap "udfOnTrap" 2 5 9 15 EXIT
+  trap "udfOnTrap" EXIT
 
 }
 #******
@@ -720,10 +634,56 @@ udfAddFD2Clean() {
 
   _bashlyk_afdClean[$BASHPID]+=" $*"
 
-  trap "udfOnTrap" 2 5 9 15 EXIT
+  trap "udfOnTrap" EXIT
 
 }
 #******
+#****f* libstd/udfAddFO2Clean
+#  SYNOPSIS
+#    udfAddFO2Clean <args>
+#  DESCRIPTION
+#    add list of filesystem objects for cleaning on exit
+#  INPUTS
+#    args - files or directories for cleaning on exit
+#  EXAMPLE
+#    local a fnTemp1 fnTemp2 pathTemp1 pathTemp2 s=$RANDOM
+#    udfMakeTemp fnTemp1 keep=true suffix=.${s}1
+#    test -f $fnTemp1
+#    echo $(udfAddFO2Clean $fnTemp1 )
+#    ls -l ${TMPDIR}/*.${s}1 2>/dev/null >| grep ".*\.${s}1"                    #? false
+#    echo $(udfMakeTemp fnTemp2 suffix=.${s}2)
+#    ls -l ${TMPDIR}/*.${s}2 2>/dev/null >| grep ".*\.${s}2"                    #? false
+#    echo $(udfMakeTemp fnTemp2 suffix=.${s}3 keep=true)
+#    ls -l ${TMPDIR}/*.${s}3 2>/dev/null >| grep ".*\.${s}3"                    #? true
+#    a=$(ls -1 ${TMPDIR}/*.${s}3)
+#    echo $(udfAddFO2Clean $a )
+#    ls -l ${TMPDIR}/*.${s}3 2>/dev/null >| grep ".*\.${s}3"                    #? false
+#    udfMakeTemp pathTemp1 keep=true suffix=.${s}1 type=dir
+#    test -d $pathTemp1
+#    echo $(udfAddFO2Clean $pathTemp1 )
+#    ls -1ld ${TMPDIR}/*.${s}1 2>/dev/null >| grep ".*\.${s}1"                  #? false
+#    echo $(udfMakeTemp pathTemp2 suffix=.${s}2 type=dir)
+#    ls -1ld ${TMPDIR}/*.${s}2 2>/dev/null >| grep ".*\.${s}2"                  #? false
+#    echo $(udfMakeTemp pathTemp2 suffix=.${s}3 keep=true type=dir)
+#    ls -1ld ${TMPDIR}/*.${s}3 2>/dev/null >| grep ".*\.${s}3"                  #? true
+#    a=$(ls -1ld ${TMPDIR}/*.${s}3)
+#    echo $(udfAddFO2Clean $a )
+#    ls -1ld ${TMPDIR}/*.${s}3 2>/dev/null >| grep ".*\.${s}3"                  #? false
+#  SOURCE
+udfAddFO2Clean() {
+
+  udfOn MissingArgument return $*
+
+  _bashlyk_afoClean[$BASHPID]+=" $*"
+
+  trap "udfOnTrap" EXIT
+
+}
+#******
+udfCleanQueue()    { udfAddFO2Clean $@; }
+udfAddFObj2Clean() { udfAddFO2Clean $@; }
+udfAddFile2Clean() { udfAddFO2Clean $@; }
+udfAddPath2Clean() { udfAddFO2Clean $@; }
 #****f* libstd/udfOnTrap
 #  SYNOPSIS
 #    udfOnTrap
@@ -750,9 +710,9 @@ udfAddFD2Clean() {
 #    ls /proc/$$/fd >| grep -w $fd
 #    udfAddFD2Clean $fd
 #    udfAddPid2Clean $pid
-#    udfAddFile2Clean $fn1
-#    udfAddPath2Clean $path
-#    udfAddFile2Clean $pipe
+#    udfAddFO2Clean $fn1
+#    udfAddFO2Clean $path
+#    udfAddFO2Clean $pipe
 #    udfOnTrap
 #    ls /proc/$$/fd >| grep -w $fd                                              #? false
 #    ps -p $pid -o pid= >| grep -w $pid                                         #? false
@@ -774,7 +734,7 @@ udfOnTrap() {
 
       if [[  "$( pgrep -d' ' -P $$ )" =~ $re ]]; then
 
-        if ! kill -${s} ${a[i]}; then
+        if ! kill -${s} ${a[i]} >/dev/null 2>&1; then
 
           udfSetLastError NotPermitted "${a[i]}"
           sleep 0.1
@@ -976,10 +936,10 @@ udfGetMd5() {
 #    echo "digest test 1" > ${path}/testfile1                                   #-
 #    echo "digest test 2" > ${path}/testfile2                                   #-
 #    echo "digest test 3" > ${path}/testfile3                                   #-
-#    udfAddFile2Clean ${path}/testfile1
-#    udfAddFile2Clean ${path}/testfile2
-#    udfAddFile2Clean ${path}/testfile3
-#    udfAddPath2Clean ${path}
+#    udfAddFO2Clean ${path}/testfile1
+#    udfAddFO2Clean ${path}/testfile2
+#    udfAddFO2Clean ${path}/testfile3
+#    udfAddFO2Clean ${path}
 #    udfGetPathMd5 $path >| grep ^[[:xdigit:]]*.*testfile.$                     #? true
 #    udfGetPathMd5                                                              #? ${_bashlyk_iErrorMissingArgument}
 #    udfGetPathMd5 /notexist/path                                               #? ${_bashlyk_iErrorNoSuchFileOrDir}

@@ -1,5 +1,5 @@
 #
-# $Id: libini.sh 717 2017-03-28 16:41:16+04:00 toor $
+# $Id: libini.sh 722 2017-04-05 15:14:02+04:00 toor $
 #
 #****h* BASHLYK/libini
 #  DESCRIPTION
@@ -1229,8 +1229,8 @@ INI::read() {
 #    EOFini                                                                     #-
 #    iniLoad="${iniMain%/*}/child.${iniMain##*/}"                               #-
 #    iniSave="${iniMain%/*}/write.${iniMain##*/}"                               #-
-#    udfAddFile2Clean $iniLoad                                                  #-
-#    udfAddFile2Clean $iniSave                                                  #-
+#    udfAddFO2Clean $iniLoad                                                    #-
+#    udfAddFO2Clean $iniSave                                                    #-
 #    cat <<-'EOFiniChild' > $iniLoad                                            #-
 #    section  =  global                                                         #-
 #    file     =  child                                                          #-

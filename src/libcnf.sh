@@ -1,5 +1,5 @@
 #
-# $Id: libcnf.sh 717 2017-03-28 16:41:16+04:00 toor $
+# $Id: libcnf.sh 722 2017-04-05 16:23:31+04:00 toor $
 #
 #****h* BASHLYK/libcnf
 #  DESCRIPTION
@@ -64,7 +64,7 @@ declare -rg _bashlyk_exports_cnf="udfGetConfig udfSetConfig"
 #    local b confChild confMain pid s s0
 #    udfMakeTemp confMain suffix=.conf
 #    confChild="${confMain%/*}/child.${confMain##*/}"                           #-
-#    udfAddFile2Clean $confChild                                                #-
+#    udfAddFO2Clean $confChild                                                  #-
 #    cat <<'EOFconf' > $confMain                                                #-
 #                                                                               #-
 #    s0=$0                                                                      #-
@@ -166,7 +166,7 @@ __getconfig() {
 #    local b confChild confMain pid s s0
 #    udfMakeTemp confMain suffix=.conf
 #    confChild="${confMain%/*}/child.${confMain##*/}"                           #-
-#    udfAddFile2Clean $confChild                                                #-
+#    udfAddFO2Clean $confChild                                                  #-
 #    cat <<'EOFconf' > $confMain                                                #-
 #                                                                               #-
 #    s0=$0                                                                      #-
