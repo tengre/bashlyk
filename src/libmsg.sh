@@ -1,5 +1,5 @@
 #
-# $Id: libmsg.sh 717 2017-03-28 16:41:16+04:00 toor $
+# $Id: libmsg.sh 721 2017-04-05 12:08:02+04:00 toor $
 #
 #****h* BASHLYK/libmsg
 #  DESCRIPTION
@@ -39,7 +39,7 @@
 
 declare -rg _bashlyk_externals_msg="                                           \
                                                                                \
-    cut echo grep head logname mail rm sort stat tee uniq which write          \
+    cut echo grep head logname mail rm sort stat tee uniq write                \
     notify-send|kdialog|zenity|xmessage                                        \
                                                                                \
 "
@@ -145,7 +145,7 @@ udfMail() {
 
   local sTo=$_bashlyk_sLogin IFS=$' \t\n'
 
-  which mail >/dev/null 2>&1 || eval $(udfOnError return CommandNotFound 'mail')
+  udfOn CommandNotFound mail || return
 
   [[ $sTo ]] || sTo=$_bashlyk_sUser
   [[ $sTo ]] || sTo=postmaster
@@ -368,7 +368,7 @@ udfNotifyCommand() {
     [xmessage]="$X $1 -center -timeout $t \"$(printf -- "%s via %s\n\n%s\n" "$2" "$1" "$3")\" 2>/dev/null"         \
   )
 
-  if [[ -x "$( which "$1" )" ]]; then
+  if hash "$1" 2>/dev/null; then
 
     eval "${h[$1]}"
     rc=$?

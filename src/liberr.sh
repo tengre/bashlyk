@@ -1,5 +1,5 @@
 #
-# $Id: liberr.sh 716 2017-03-28 11:26:44+04:00 toor $
+# $Id: liberr.sh 721 2017-04-05 12:08:02+04:00 toor $
 #
 #****h* BASHLYK/liberr
 #  DESCRIPTION
@@ -97,7 +97,7 @@ _bashlyk_hError[$_bashlyk_iErrorNotAvailable]="target is not available"
 #
 : ${_bashlyk_onError:=throw}
 
-declare -rg _bashlyk_aRequiredCmd_err="sed which"
+declare -rg _bashlyk_aRequiredCmd_err="sed"
 declare -rg _bashlyk_aExport_err="                                             \
                                                                                \
     udfCommandNotFound udfEmptyArgument udfEmptyOrMissingArgument              \
@@ -592,7 +592,6 @@ udfOn() {
 #    designed to check the conditions in the function udfOn
 #  INPUTS
 #    filename - argument for executable file matching by searching the PATH
-#    (used which)
 #  RETURN VALUE
 #    0 - no arguments, specified filename is nonexistent or not executable
 #    1 - specified filename are found and executable
@@ -605,7 +604,7 @@ udfOn() {
 #  SOURCE
 udfCommandNotFound() {
 
-  [[ $1 && $( which $1 ) ]] && return 1 || return 0
+  [[ $1 ]] && hash "$1" 2>/dev/null && return 1 || return 0
 
 }
 #******

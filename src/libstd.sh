@@ -1,5 +1,5 @@
 #
-# $Id: libstd.sh 720 2017-04-04 17:20:59+04:00 toor $
+# $Id: libstd.sh 721 2017-04-05 12:08:02+04:00 toor $
 #
 #****h* BASHLYK/libstd
 #  DESCRIPTION
@@ -58,7 +58,8 @@ declare -rg _bashlyk_iMaxOutputLines=1000
 declare -rg _bashlyk_aRequiredCmd_std="                                        \
                                                                                \
     chgrp chmod chown date echo expr hostname kill logname md5sum mkdir mkfifo \
-    mktemp pgrep pwd rm rmdir sed sleep tempfile touch which                   \
+    pgrep pwd rm rmdir sed sleep touch                                         \
+    mktemp|tempfile                                                            \
                                                                                \
 "
 
@@ -460,11 +461,11 @@ udfMakeTemp() {
   sPrefix=${sPrefix//\//}
   sSuffix=${sSuffix//\//}
 
-  if   [[ -f "$( exec -c which mktemp )" ]]; then
+  if   hash mktemp   2>/dev/null; then
 
     cmd=mktemp
 
-  elif [[ -f "$( exec -c which tempfile )" ]]; then
+  elif hash tempfile 2>/dev/null; then
 
     [[ $optDir ]] && cmd=direct || cmd=tempfile
 
