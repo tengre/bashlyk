@@ -1,5 +1,5 @@
 #
-# $Id: liblog.sh 722 2017-04-05 15:14:02+04:00 toor $
+# $Id: liblog.sh 723 2017-04-06 14:45:39+04:00 toor $
 #
 #****h* BASHLYK/liblog
 #  DESCRIPTION
@@ -58,23 +58,26 @@ declare -rg _bashlyk_aExport_log="                                             \
 #******
 #****f* liblog/udfLogger
 #  SYNOPSIS
-#    udfLogger args
+#    udfLogger <text>
 #  DESCRIPTION
-#    Селектор вывода строки аргументов в зависимости от режима работы.
+#    add <text> to log file with standart stamps if logging is setted
 #  INPUTS
-#    args - строка для вывода
+#    <text> - input text
 #  OUTPUT
-#    Возможны четыре варианта:
-#     * Вывод только на консоль терминала
-#     * Вывод только в файл $_bashlyk_fnLog
-#     * Вывод в системный журнал (syslog) и на консоль терминала
-#     * Вывод в системный журнал (syslog) и в файл $_bashlyk_fnLog
+#    There are four possibilities:
+#     * stdout only
+#     * $_bashlyk_fnLog only
+#     * syslog by logger and stdout
+#     * syslog by logger and $_bashlyk_fnLog
 #  EXAMPLE
 #    local bInteract bNotUseLog bTerminal
 #    _ =bInteract
 #    _ =bNotUseLog
 #    _ =bTerminal
-#    local fnExec=$(mktemp --suffix=.sh || tempfile -s .test.sh)                #? true
+#    local b=true fnExec reT reP s
+#    fnExec=$(mktemp --suffix=.sh || tempfile -s .test.sh)
+#    reT='[ADFJMNOS][abceglnoprtuyv]{2} [0-9]{2} [0-9]{2}:[0-9]{2}:[0-9]{2}'
+#    reP="[[:space:]]$HOSTNAME ${0##*/}\[[[:digit:]]{5}\]:[[:space:]].*"
 #    cat <<'EOF' > $fnExec                                                      #-
 #    local fnLog=$(mktemp --suffix=.log || tempfile -s .test.log)               #-
 #    _ fnLog $fnLog                                                             #-
@@ -90,12 +93,9 @@ declare -rg _bashlyk_aExport_log="                                             \
 #    . $fnExec
 #    kill $_bashlyk_pidLogSock
 #    rm -f $_bashlyk_fnLogSock
-#    sleep 0.5                                                                  #? true
-#    sleep 0.4                                                                  #? true
-#    sleep 0.3                                                                  #? true
-#    sleep 0.2                                                                  #? true
-#    sleep 0.1                                                                  #? true
-#    cat $fnLog
+#    sleep 0.1
+#    while read -t9 s; do [[ $s =~ ^${reT}${reP}$ ]] || b=false; done < $fnLog  #-
+#    [[ $b == true ]]                                                           #? true
 #    rm -f $fnExec $fnLog
 #    _ bInteract "$bInteract"
 #    _ bNotUseLog "$bNotUseLog"
@@ -161,31 +161,31 @@ udfLogger() {
 #******
 #****f* liblog/udfLog
 #  SYNOPSIS
-#    udfLog [-] args
+#    udfLog [-] [<text>]
 #  DESCRIPTION
-#    Передача данных селектору вывода udfLogger
+#    Wrapper around udfLogger to support stream from standard input
 #  INPUTS
-#    -    - данные читаются из стандартного ввода
-#    args - строка для вывода. Если имеется в качестве первого аргумента
-#           "-", то строка считается префиксом (тэгом) для каждой строки
-#           из стандартного ввода
+#    -      - data is expected from standard input
+#    <text> - String (tag) for output.
+#             If there is a "-" as the first argument, then the string is
+#             considered a prefix (tag) for each line from the standard input.
 #  OUTPUT
-#   Зависит от параметров вывода
+#   Depends on output parameters
 #  EXAMPLE
-#    # TODO улучшить тест
+#    # TODO improved test
 #    echo -n . | udfLog -                                  >| grep '^\.$'       #? true
 #    echo test | udfLog - tag                              >| grep '^tag test$' #? true
 #  SOURCE
 udfLog() {
 
-  local s
+  local sTag s
 
   if [[ "$1" == "-" ]]; then
 
     shift
-    [[ $* ]] && s="$* "
+    [[ $* ]] && sTag="$* "
 
-    while read || [[ $REPLY ]]; do udfLogger "${s}${REPLY}"; done
+    while read s || [[ $s ]]; do [[ $s ]] && udfLogger "${sTag}${s}"; done
 
   else
 
@@ -199,12 +199,12 @@ udfLog() {
 #  SYNOPSIS
 #    udfIsInteract
 #  DESCRIPTION
-#    Проверка режима работы устройств стандартного ввода и вывода
+#    Checking the operating mode of standard input and output devices
 #  RETURN VALUE
-#    0 - "неинтерактивный" режим, имеется перенаправление стандартных ввода
-#        и/или вывода
-#    1 - "интерактивный" режим, перенаправление стандартных ввода и/или вывода
-#        не обнаружено
+#    0 - "non-interactive" mode, there is redirection of standard input and/or
+#         output
+#    1 - "interactive" mode, redirection of standard input and/or output is not
+#        detected
 #  EXAMPLE
 #    udfIsInteract                                                              #? true
 #    udfIsInteract                                                              #= false
@@ -222,10 +222,10 @@ udfIsInteract() {
 #  SYNOPSIS
 #    udfIsTerminal
 #  DESCRIPTION
-#    Проверка наличия управляющего терминала
+#    Checking the presence of a control terminal
 #  RETURN VALUE
-#    0 - терминал отсутствует
-#    1 - терминал обнаружен
+#    0 - terminal not detected
+#    1 - terminal detected
 #  EXAMPLE
 #    udfIsTerminal                                                              #? false
 #    udfIsTerminal                                                              #= false
@@ -241,10 +241,10 @@ udfIsTerminal() {
 #  SYNOPSIS
 #    udfCheck4LogUse
 #  DESCRIPTION
-#    Проверка условий использования лог-файла
+#    Check the conditions for using the log file
 #  RETURN VALUE
-#    0 - вести запись лог-файла
-#    1 - не требуется
+#    0 - save stdout and stderr to log file
+#    1 - logging do not required
 #  EXAMPLE
 #    _bashlyk_sCond4Log='redirect'
 #    udfCheck4LogUse                                                            #? true

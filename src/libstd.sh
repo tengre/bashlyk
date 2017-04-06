@@ -1,5 +1,5 @@
 #
-# $Id: libstd.sh 722 2017-04-05 16:25:18+04:00 toor $
+# $Id: libstd.sh 723 2017-04-06 14:45:39+04:00 toor $
 #
 #****h* BASHLYK/libstd
 #  DESCRIPTION
@@ -604,10 +604,10 @@ udfAddJob2Clean() { return 0; }
 #  EXAMPLE
 #    sleep 99 &
 #    udfAddPid2Clean $!
-#    test "${_bashlyk_apidClean[$BASHPID]}" -eq "$!"                                    #? true
-#    ps -p $! -o pid= >| grep -w $!                                                     #? true
-#    echo $(udfAddPid2Clean $!; echo "$BASHPID : $! : ${_bashlyk_apidClean[$BASHPID]}")
-#    ps -p $! -o pid= >| grep -w $!                                                     #? false
+#    test "${_bashlyk_apidClean[$BASHPID]}" -eq "$!"                            #? true
+#    ps -p $! -o pid= >| grep -w $!                                             #? true
+#    echo $(udfAddPid2Clean $!; echo "$BASHPID : $! ")
+#    ps -p $! -o pid= >| grep -w $!                                             #? false
 #
 #  SOURCE
 udfAddPid2Clean() {
