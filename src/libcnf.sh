@@ -1,5 +1,5 @@
 #
-# $Id: libcnf.sh 722 2017-04-05 16:23:31+04:00 toor $
+# $Id: libcnf.sh 724 2017-04-06 17:29:28+04:00 toor $
 #
 #****h* BASHLYK/libcnf
 #  DESCRIPTION
@@ -250,7 +250,7 @@ udfSetConfig() {
 
     ${o}.set $REPLY
 
-  done< <( echo -e "${2//[;,]/\\\n}" )
+  done< <( printf -- "${2//[;,]/\\\n}" )
 
   ${o}.save $conf
   s=$?

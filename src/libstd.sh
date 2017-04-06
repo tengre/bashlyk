@@ -1,5 +1,5 @@
 #
-# $Id: libstd.sh 723 2017-04-06 14:45:39+04:00 toor $
+# $Id: libstd.sh 724 2017-04-06 17:29:28+04:00 toor $
 #
 #****h* BASHLYK/libstd
 #  DESCRIPTION
@@ -220,7 +220,7 @@ udfShowVariable() {
 
   done
 
-  echo -e ": Variable listing>\n${bashlyk_udfShowVariable_a}"
+  printf -- ": Variable listing>\n${bashlyk_udfShowVariable_a}"
 
   return 0
 

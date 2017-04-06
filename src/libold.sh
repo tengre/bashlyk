@@ -1,5 +1,5 @@
 #
-# $Id: libold.sh 718 2017-03-28 17:13:24+04:00 toor $
+# $Id: libold.sh 724 2017-04-06 17:29:28+04:00 toor $
 #
 #****h* BASHLYK/libold
 #  DESCRIPTION
@@ -39,10 +39,10 @@
 
 declare -rg _bashlyk_exports_old="                                             \
                                                                                \
-    _ARGUMENTS _gete _getv _pathDat _s0 _set udfCsvKeys2Var udfCsvOrder2Var    \
-    udfGetCsvSection2Var udfGetIni2Var udfGetIniSection2Var udfIni2CsvVar      \
-    udfIniGroup2CsvVar udfIniGroupSection2CsvVar udfIniSection2CsvVar          \
-    udfReadIniSection2Var                                                      \
+    _ARGUMENTS _gete _getv _pathDat _fnLog _s0 _set udfCsvKeys2Var             \
+    udfCsvOrder2Var udfGetCsvSection2Var udfGetIni2Var udfGetIniSection2Var    \
+    udfIni2CsvVar udfIniGroup2CsvVar udfIniGroupSection2CsvVar                 \
+    udfIniSection2CsvVar udfReadIniSection2Var                                 \
                                                                                \
 "
 #******
@@ -522,3 +522,25 @@ _pathDat() {
 
 }
 #******
+#****f* liblog/_fnLog
+#  SYNOPSIS
+#    _fnLog
+#  DESCRIPTION
+#    Получить или установить значение переменной $_bashlyk_fnLog -
+#    полное имя лог-файла
+#  OUTPUT
+#    Вывод значения переменной $_bashlyk_fnLog
+#  EXAMPLE
+#    local fnLog=$(mktemp --suffix=.log || tempfile -s .test.log)
+#    rm -f $fnLog
+#    _fnLog $fnLog                                                              #? true
+#    ls -l $fnLog                                                               #? true
+#    rm -f $fnLog
+#  SOURCE
+_fnLog() {
+
+  [[ $1 ]] && udfSetLog "$1" || _ fnLog
+
+}
+#******
+

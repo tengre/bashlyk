@@ -1,5 +1,5 @@
 #
-# $Id: liblog.sh 723 2017-04-06 14:45:39+04:00 toor $
+# $Id: liblog.sh 724 2017-04-06 17:29:28+04:00 toor $
 #
 #****h* BASHLYK/liblog
 #  DESCRIPTION
@@ -52,7 +52,7 @@ declare -rg _bashlyk_aRequiredCmd_log="                                        \
 declare -rg _bashlyk_aExport_log="                                             \
                                                                                \
     udfCheck4LogUse udfDebug udfLog udfLogger udfSetLog                        \
-    udfSetLogSocket udfIsTerminal udfIsInteract _fnLog                         \
+    udfSetLogSocket udfIsTerminal udfIsInteract                                \
                                                                                \
 "
 #******
@@ -273,16 +273,16 @@ udfCheck4LogUse() {
 #  SYNOPSIS
 #    udfSetLogSocket
 #  DESCRIPTION
-#    Установка механизма ведения лога согласно ранее установленных условий.
-#    Используется специальный сокет для того чтобы отмечать тегами строки
-#    журнала.
+#    Creating a named pipe for redirecting the output of stdout and stderr to a
+#     log file with automatic addition of standard stamps.
 #  ERRORS
-#     1                  - Сокет не создан, но стандартный вывод
-#                          перенаправляется в файл лога (без тегирования)
-#     NotExistNotCreated - Каталог для сокета не существует и не может
-#                          быть создан
+#     1                  - The socket is not created, but the output of the
+#                          stdout and the stderr is redirected to the log file
+#                          (without stamps)
+#     NotExistNotCreated - The socket directory does not exist and can not be
+#                          created
 #  EXAMPLE
-#    local fnLog=$(mktemp --suffix=.log || tempfile -s .test.log)               #? true
+#    local fnLog=$(mktemp --suffix=.log || tempfile -s .test.log)
 #    _ fnLog $fnLog                                                             #? true
 #    udfSetLogSocket                                                            #? true
 #    ls -l $fnLog                                                               #? true
@@ -314,6 +314,11 @@ udfSetLogSocket() {
     _bashlyk_pidLogSock=$!
     exec >>$fnSock 2>&1
 
+    _bashlyk_fnLogSock=$fnSock
+     udfAddFO2Clean $fnSock
+
+     return 0
+
   else
 
     udfWarn "Warn: Socket $fnSock not created..."
@@ -326,24 +331,18 @@ udfSetLogSocket() {
 
   fi
 
-  _bashlyk_fnLogSock=$fnSock
-
-  udfAddFO2Clean $fnSock
-
-  return 0
-
 }
 #******
 #****f* liblog/udfSetLog
 #  SYNOPSIS
-#    udfSetLog [arg]
+#    udfSetLog [<filename>]
 #  DESCRIPTION
-#    Установка файла лога
+#    Wrapper around udfSetLogSocket to activate output redirection to the log
+#    file with error handling
 #  ERRORS
-#     NotExistNotCreated - файл лога создать не удается, аварийное завершение
-#                          сценария
+#     NotExistNotCreated - log file can not be created, abort
 #  EXAMPLE
-#    local fnLog=$(mktemp --suffix=.log || tempfile -s .test.log)               #? true
+#    local fnLog=$(mktemp --suffix=.log || tempfile -s .test.log)
 #    rm -f $fnLog
 #    udfSetLog $fnLog                                                           #? true
 #    ls -l $fnLog                                                               #? true
@@ -373,63 +372,41 @@ udfSetLog() {
 
 }
 #******
-#****f* liblog/_fnLog
-#  SYNOPSIS
-#    _fnLog
-#  DESCRIPTION
-#    Получить или установить значение переменной $_bashlyk_fnLog -
-#    полное имя лог-файла
-#  OUTPUT
-#    Вывод значения переменной $_bashlyk_fnLog
-#  EXAMPLE
-#    local fnLog=$(mktemp --suffix=.log || tempfile -s .test.log)               #? true
-#    rm -f $fnLog
-#    _fnLog $fnLog                                                              #? true
-#    ls -l $fnLog                                                               #? true
-#    rm -f $fnLog
-#  SOURCE
-_fnLog() {
-
-  [[ $1 ]] && udfSetLog "$1" || _ fnLog
-
-}
-#******
 #****f* liblog/udfDebug
 #  SYNOPSIS
-#    udfDebug level message
+#    udfDebug <level> <message>
 #  DESCRIPTION
-#    Позволяет выводить сообщение, если его уровень не больше значения
-#    глобальной переменной DEBUGLEVEL
+#    show a <message> on stderr if the <level> is equal or less than the
+#    $DEBUGLEVEL value otherwise return code 1
 #  INPUTS
-#    level   - уровень отладочных сообщений, десятичное число, если неправильно
-#    задан, то принимается значение 0
-#    message - текст отладочного сообщения
+#    <level>   - decimal number of the debug level ( 0 for wrong argument)
+#    <message> - debug message
 #  OUTPUT
-#    Текст отладочного сообщения (аргумент "message"), если его уровень
-#    (аргумент "level") не больше заданного для сценария переменной DEBUGLEVEL
+#    show a <message> on stderr
 #  RETURN VALUE
-#    0               - уровень "level" не больше DEBUGLEVEL
-#    1               - уровень "level"    больше DEBUGLEVEL
-#    MissingArgument - аргументы отсутствуют
+#    0               - <level> equal or less than $DEBUGLEVEL value
+#    1               - <level> more than $DEBUGLEVEL value
+#    MissingArgument - no arguments
 #  EXAMPLE
 #    DEBUGLEVEL=0
-#    udfDebug                                                                   #? $_bashlyk_iErrorEmptyOrMissingArgument
+#    udfDebug                                                                   #? $_bashlyk_iErrorMissingArgument
 #    udfDebug 0 echo level 0                                                    #? true
 #    udfDebug 1 silence level 0                                                 #? 1
 #    DEBUGLEVEL=5
 #    udfDebug 0 echo level 5                                                    #? true
 #    udfDebug 6 echo 5                                                          #? 1
-#    udfDebug non valid test level 5                                            #? true
+#    udfDebug default level test '(0)'                                          #? true
 #  SOURCE
 udfDebug() {
 
-  local i re='^[0-9]+$' IFS=$' \t\n'
+  udfOn MissingArgument $* || return
 
-  [[ $* ]] && i=$1 || eval $(udfOnError return MissingArgument)
-  shift
+  if [[ $1 =~ ^[0-9]+$ ]]; then
 
-  [[ "$i" =~ ^[0-9]+$ ]]  || i=0
-  (( $DEBUGLEVEL >= $i )) || return 1
+    (( ${DEBUGLEVEL:=0} >= $1 )) && shift || return 1
+
+  fi
+
   [[ $* ]] && echo "$*" >&2
 
   return 0

@@ -1,5 +1,5 @@
 #
-# $Id: libmsg.sh 721 2017-04-05 12:08:02+04:00 toor $
+# $Id: libmsg.sh 724 2017-04-06 17:29:28+04:00 toor $
 #
 #****h* BASHLYK/libmsg
 #  DESCRIPTION
@@ -243,7 +243,7 @@ udfNotify2X() {
 
   local iTimeout=8 s IFS=$' \t\n'
 
-  [[ -s "$*" ]] && s="$( udfCat < "$*" )" || s="$( echo -e -- "$*" )"
+  [[ -s "$*" ]] && s="$( udfCat < "$*" )" || s="$( printf -- "$*" )"
 
   for cmd in notify-send kdialog zenity xmessage; do
 

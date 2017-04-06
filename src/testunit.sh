@@ -1,5 +1,5 @@
 #
-# $Id: testunit.sh 722 2017-04-05 15:14:02+04:00 toor $
+# $Id: testunit.sh 724 2017-04-06 17:29:28+04:00 toor $
 #
 #****h* BASHLYK/testunit
 #  DESCRIPTION
@@ -85,7 +85,7 @@ udfMain() {
 
   [[ $1 ]] || return 254
 
-  local a s fn fnErr="/tmp/bashlyk.${1}.err" IFS=$' \t\n'
+  local a s fn fnErr="${_bashlyk_TestUnit_fnTmp}.${1}.err" IFS=$' \t\n'
 
   fn=${_bashlyk_pathLib}/lib${1}.sh
 
