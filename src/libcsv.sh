@@ -1,5 +1,5 @@
 #
-# $Id: libcsv.sh 718 2017-03-28 17:13:24+04:00 toor $
+# $Id: libcsv.sh 725 2017-04-10 15:25:21+04:00 toor $
 #
 #****h* BASHLYK/libcsv
 #  DESCRIPTION
@@ -254,7 +254,7 @@ udfGetIniSection() {
 #    local csvResult
 #    local csvTest='b=true;iXo=1920;iYo=1080;sTxt="foo bar";'
 #    udfCsvOrder "$csv" >| grep "^${csvTest}$"                                  #? true
-#    udfCsvOrder ""                                                             #? $_bashlyk_iErrorEmptyOrMissingArgument
+#    udfCsvOrder                                                                #? $_bashlyk_iErrorMissingArgument
 #    ## TODO тест пустой результат
 #  SOURCE
 udfCsvOrder() {
@@ -263,8 +263,8 @@ udfCsvOrder() {
 
   local aKeys csv fnExec IFS=$' \t\n'
 
-  csv="$(udfCheckCsv "$1")"
-  aKeys="$(udfCsvKeys "$csv" | tr ' ' '\n' | sort -u | uniq -u | xargs)"
+  csv="$( udfCheckCsv "$1" )"
+  aKeys="$( udfCsvKeys "$csv" | tr ' ' '\n' | sort -u | uniq -u | xargs )"
   csv=$( echo -e "${csv/;/\\n}" )
   #
   udfMakeTemp fnExec
