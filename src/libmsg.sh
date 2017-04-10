@@ -1,5 +1,5 @@
 #
-# $Id: libmsg.sh 725 2017-04-10 16:28:40+04:00 toor $
+# $Id: libmsg.sh 726 2017-04-10 16:38:11+04:00 toor $
 #
 #****h* BASHLYK/libmsg
 #  DESCRIPTION
@@ -144,8 +144,8 @@ udfMail() {
 
   udfOn CommandNotFound mail || return
 
-  : {$sTo:=$_bashlyk_sUser}
-  : {$sTo:=postmaster}
+  : ${sTo:=$_bashlyk_sUser}
+  : ${sTo:=postmaster}
 
   {
 
