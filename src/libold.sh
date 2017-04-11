@@ -1,5 +1,5 @@
 #
-# $Id: libold.sh 724 2017-04-06 17:29:28+04:00 toor $
+# $Id: libold.sh 727 2017-04-11 17:26:51+04:00 toor $
 #
 #****h* BASHLYK/libold
 #  DESCRIPTION
@@ -36,6 +36,8 @@
 #: ${_bashlyk_bSetOptions:=}
 #: ${_bashlyk_csvOptions2Ini:=}
 : ${_bashlyk_sUnnamedKeyword:=_bashlyk_ini_void_autoKey_}
+: ${_bashlyk_reMetaRules:='34=":40=(:41=):59=;:91=[:92=\\:93=]:61=='}
+
 
 declare -rg _bashlyk_exports_old="                                             \
                                                                                \
@@ -374,7 +376,7 @@ _ARGUMENTS() {
 
 }
 #******
-#****f* libstd/_gete
+#****f* libold/_gete
 #  SYNOPSIS
 #    _gete <subname>
 #  DESCRIPTION
@@ -396,7 +398,7 @@ _gete() {
 
 }
 #******
-#****f* libstd/_getv
+#****f* libold/_getv
 #  SYNOPSIS
 #    _getv <subname> [<get>]
 #  DESCRIPTION
@@ -439,7 +441,7 @@ _getv() {
 
 }
 #******
-#****f* libstd/_set
+#****f* libold/_set
 #  SYNOPSIS
 #    _set <subname> [<value>]
 #  DESCRIPTION
@@ -467,7 +469,7 @@ _set() {
 
 }
 #******
-#****f* libstd/_s0
+#****f* libold/_s0
 #  SYNOPSIS
 #    _s0
 #  DESCRIPTION
@@ -489,7 +491,7 @@ _s0() {
 
 }
 #******
-#****f* libstd/_pathDat
+#****f* libold/_pathDat
 #  SYNOPSIS
 #    _pathDat
 #  DESCRIPTION

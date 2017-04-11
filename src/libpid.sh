@@ -1,5 +1,5 @@
 #
-# $Id: libpid.sh 717 2017-03-28 16:41:16+04:00 toor $
+# $Id: libpid.sh 727 2017-04-11 17:26:51+04:00 toor $
 #
 #****h* BASHLYK/libpid
 #  DESCRIPTION
@@ -35,21 +35,26 @@
 #  DESCRIPTION
 #    Global variables of the library
 #  SOURCE
-: ${_bashlyk_afoClean:=}
-: ${_bashlyk_afdClean:=}
-: ${_bashlyk_fnPid:=}
-: ${_bashlyk_fnSock:=}
+#: ${_bashlyk_fnPid:=}
+#: ${_bashlyk_fnSock:=}
+#: ${_bashlyk_afoClean:=}
+#: ${_bashlyk_afdClean:=}
+#: ${_bashlyk_ajobClean:=}
+#: ${_bashlyk_apidClean:=}
+#: ${_bashlyk_pidLogSock:=}
 : ${_bashlyk_s0:=${0##*/}}
 
 declare -rg _bashlyk_externals_pid="                                           \
                                                                                \
-    head kill mkdir pgrep                                                      \
+    head kill mkdir pgrep rm rmdir sleep                                       \
                                                                                \
 "
 
 declare -rg _bashlyk_exports_pid="                                             \
                                                                                \
-    udfCheckStarted udfExitIfAlreadyStarted udfSetPid udfStopProcess           \
+    udfAddFD2Clean udfAddFile2Clean udfAddFO2Clean udfAddFObj2Clean            \
+    udfAddJob2Clean udfAddPath2Clean udfAddPid2Clean udfCheckStarted           \
+    udfCleanQueue udfExitIfAlreadyStarted udfOnTrap udfSetPid udfStopProcess   \
                                                                                \
 "
 #******
@@ -352,6 +357,184 @@ udfSetPid() {
 udfExitIfAlreadyStarted() {
 
   udfSetPid || exit $?
+
+}
+#******
+udfAddJob2Clean() { return 0; }
+#****f* libpid/udfAddPid2Clean
+#  SYNOPSIS
+#    udfAddPid2Clean args
+#  DESCRIPTION
+#    Добавляет идентификаторы запущенных процессов к списку очистки при
+#    завершении текущего процесса.
+#  INPUTS
+#    args - идентификаторы процессов
+#  EXAMPLE
+#    sleep 99 &
+#    udfAddPid2Clean $!
+#    test "${_bashlyk_apidClean[$BASHPID]}" -eq "$!"                            #? true
+#    ps -p $! -o pid= >| grep -w $!                                             #? true
+#    echo $(udfAddPid2Clean $!; echo "$BASHPID : $! ")
+#    ps -p $! -o pid= >| grep -w $!                                             #? false
+#
+#  SOURCE
+udfAddPid2Clean() {
+
+  [[ $1 ]] || return 0
+
+  _bashlyk_apidClean[$BASHPID]+=" $*"
+
+  trap "udfOnTrap" EXIT
+
+}
+#******
+#****f* libpid/udfAddFD2Clean
+#  SYNOPSIS
+#    udfAddFD2Clean <args>
+#  DESCRIPTION
+#    add list of filedescriptors for cleaning on exit
+#  ARGUMENTS
+#    <args> - file descriptors
+#  SOURCE
+udfAddFD2Clean() {
+
+  udfOn MissingArgument $* || return $?
+
+  _bashlyk_afdClean[$BASHPID]+=" $*"
+
+  trap "udfOnTrap" EXIT
+
+}
+#******
+#****f* libpid/udfAddFO2Clean
+#  SYNOPSIS
+#    udfAddFO2Clean <args>
+#  DESCRIPTION
+#    add list of filesystem objects for cleaning on exit
+#  INPUTS
+#    args - files or directories for cleaning on exit
+#  EXAMPLE
+#    local a fnTemp1 fnTemp2 pathTemp1 pathTemp2 s=$RANDOM
+#    udfMakeTemp fnTemp1 keep=true suffix=.${s}1
+#    test -f $fnTemp1
+#    echo $(udfAddFO2Clean $fnTemp1 )
+#    ls -l ${TMPDIR}/*.${s}1 2>/dev/null >| grep ".*\.${s}1"                    #? false
+#    echo $(udfMakeTemp fnTemp2 suffix=.${s}2)
+#    ls -l ${TMPDIR}/*.${s}2 2>/dev/null >| grep ".*\.${s}2"                    #? false
+#    echo $(udfMakeTemp fnTemp2 suffix=.${s}3 keep=true)
+#    ls -l ${TMPDIR}/*.${s}3 2>/dev/null >| grep ".*\.${s}3"                    #? true
+#    a=$(ls -1 ${TMPDIR}/*.${s}3)
+#    echo $(udfAddFO2Clean $a )
+#    ls -l ${TMPDIR}/*.${s}3 2>/dev/null >| grep ".*\.${s}3"                    #? false
+#    udfMakeTemp pathTemp1 keep=true suffix=.${s}1 type=dir
+#    test -d $pathTemp1
+#    echo $(udfAddFO2Clean $pathTemp1 )
+#    ls -1ld ${TMPDIR}/*.${s}1 2>/dev/null >| grep ".*\.${s}1"                  #? false
+#    echo $(udfMakeTemp pathTemp2 suffix=.${s}2 type=dir)
+#    ls -1ld ${TMPDIR}/*.${s}2 2>/dev/null >| grep ".*\.${s}2"                  #? false
+#    echo $(udfMakeTemp pathTemp2 suffix=.${s}3 keep=true type=dir)
+#    ls -1ld ${TMPDIR}/*.${s}3 2>/dev/null >| grep ".*\.${s}3"                  #? true
+#    a=$(ls -1ld ${TMPDIR}/*.${s}3)
+#    echo $(udfAddFO2Clean $a )
+#    ls -1ld ${TMPDIR}/*.${s}3 2>/dev/null >| grep ".*\.${s}3"                  #? false
+#  SOURCE
+udfAddFO2Clean() {
+
+  udfOn MissingArgument return $*
+
+  _bashlyk_afoClean[$BASHPID]+=" $*"
+
+  trap "udfOnTrap" EXIT
+
+}
+#******
+udfCleanQueue()    { udfAddFO2Clean $@; }
+udfAddFObj2Clean() { udfAddFO2Clean $@; }
+udfAddFile2Clean() { udfAddFO2Clean $@; }
+udfAddPath2Clean() { udfAddFO2Clean $@; }
+#****f* libpid/udfOnTrap
+#  SYNOPSIS
+#    udfOnTrap
+#  DESCRIPTION
+#    The cleaning procedure at the end of the calling script.
+#    Suitable for trap command call.
+#    Produced deletion of files and empty directories; stop child processes,
+#    closure of open file descriptors listed in the corresponding global
+#    variables. All processes must be related and descended from the working
+#    script process. Closes the socket script log if it was used.
+#  EXAMPLE
+#    local fd fn1 fn2 path pid pipe
+#    udfMakeTemp fn1
+#    udfMakeTemp fn2
+#    udfMakeTemp path type=dir
+#    udfMakeTemp pipe type=pipe
+#    fd=$( udfGetFreeFD )
+#    eval "exec ${fd}>$fn2"
+#    (sleep 1024)&
+#    pid=$!
+#    test -f $fn1
+#    test -d $path
+#    ps -p $pid -o pid= >| grep -w $pid
+#    ls /proc/$$/fd >| grep -w $fd
+#    udfAddFD2Clean $fd
+#    udfAddPid2Clean $pid
+#    udfAddFO2Clean $fn1
+#    udfAddFO2Clean $path
+#    udfAddFO2Clean $pipe
+#    udfOnTrap
+#    ls /proc/$$/fd >| grep -w $fd                                              #? false
+#    ps -p $pid -o pid= >| grep -w $pid                                         #? false
+#    test -f $fn1                                                               #? false
+#    test -d $path                                                              #? false
+#  SOURCE
+udfOnTrap() {
+
+  local i IFS=$' \t\n' re s
+  local -a a
+
+  a=( ${_bashlyk_apidClean[$BASHPID]} )
+
+  for (( i=${#a[@]}-1; i>=0 ; i-- )) ; do
+
+    re="\\b${a[i]}\\b"
+
+    for s in 15 9; do
+
+      if [[  "$( pgrep -d' ' -P $$ )" =~ $re ]]; then
+
+        if ! kill -${s} ${a[i]} >/dev/null 2>&1; then
+
+          udfSetLastError NotPermitted "${a[i]}"
+          sleep 0.1
+
+        fi
+
+      fi
+
+    done
+
+  done
+
+  for s in ${_bashlyk_afdClean[$BASHPID]}; do
+
+    udfIsNumber $s && eval "exec ${s}>&-"
+
+  done
+
+  for s in ${_bashlyk_afoClean[$BASHPID]}; do
+
+    [[ -f $s ]] && rm -f $s && continue
+    [[ -p $s ]] && rm -f $s && continue
+    [[ -d $s ]] && rmdir --ignore-fail-on-non-empty $s 2>/dev/null && continue
+
+  done
+
+  if [[ -n "${_bashlyk_pidLogSock}" ]]; then
+
+    exec >/dev/null 2>&1
+    wait ${_bashlyk_pidLogSock}
+
+  fi
 
 }
 #******

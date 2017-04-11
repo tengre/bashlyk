@@ -1,5 +1,5 @@
 #
-# $Id: libcsv.sh 725 2017-04-10 15:25:21+04:00 toor $
+# $Id: libcsv.sh 727 2017-04-11 17:26:50+04:00 toor $
 #
 #****h* BASHLYK/libcsv
 #  DESCRIPTION
@@ -36,6 +36,7 @@
 #  SOURCE
 #: ${_bashlyk_bSetOptions:=}
 #: ${_bashlyk_csvOptions2Ini:=}
+#: ${_bashlyk_sUnnamedKeyword:=_bashlyk_unnamed_key_}
 : ${_bashlyk_sUnnamedKeyword:=_bashlyk_ini_void_autoKey_}
 
 declare -rg _bashlyk_externals_csv="                                           \
@@ -56,7 +57,7 @@ declare -rg _bashlyk_exports_csv="                                             \
                                                                                \
 "
 #******
-#****f* libstd/udfCheckCsv
+#****f* libcsv/udfCheckCsv
 #  SYNOPSIS
 #    udfCheckCsv [[-v] <varname>] "<csv>;"
 #  DESCRIPTION
@@ -1301,7 +1302,7 @@ udfOptions2Ini() {
 
 }
 #******
-#****f* libstd/udfBashlykUnquote
+#****f* libcsv/udfBashlykUnquote
 #  SYNOPSIS
 #    udfBashlykUnquote
 #  DESCRIPTION
@@ -1328,7 +1329,7 @@ udfBashlykUnquote() {
 
 }
 #******
-#****f* libstd/udfPrepare2Exec
+#****f* libcsv/udfPrepare2Exec
 #  SYNOPSIS
 #    udfPrepare2Exec - args
 #  DESCRIPTION
@@ -1367,7 +1368,7 @@ udfPrepare2Exec() {
 
 }
 #******
-#****f* libstd/udfShellExec
+#****f* libcsv/udfShellExec
 #  SYNOPSIS
 #    udfShellExec args
 #  DESCRIPTION
@@ -1398,7 +1399,7 @@ udfShellExec() {
 
 }
 #******
-#****f* libstd/udfLocalVarFromCSV
+#****f* libcsv/udfLocalVarFromCSV
 #  SYNOPSIS
 #    udfLocalVarFromCSV CSV1 CSV2 ...
 #  DESCRIPTION
@@ -1450,7 +1451,7 @@ udfLocalVarFromCSV() {
 
 }
 #******
-#****f* libstd/udfSerialize
+#****f* libcsv/udfSerialize
 #  SYNOPSIS
 #    udfSerialize variables
 #  DESCRIPTION

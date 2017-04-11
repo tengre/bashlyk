@@ -1,5 +1,5 @@
 #
-# $Id: liblog.sh 724 2017-04-06 17:29:28+04:00 toor $
+# $Id: liblog.sh 727 2017-04-11 17:26:51+04:00 toor $
 #
 #****h* BASHLYK/liblog
 #  DESCRIPTION
@@ -51,8 +51,8 @@ declare -rg _bashlyk_aRequiredCmd_log="                                        \
 
 declare -rg _bashlyk_aExport_log="                                             \
                                                                                \
-    udfCheck4LogUse udfDebug udfLog udfLogger udfSetLog                        \
-    udfSetLogSocket udfIsTerminal udfIsInteract                                \
+    udfCheck4LogUse udfDateR udfDebug udfFinally udfIsInteract udfIsTerminal   \
+    udfLog udfLogger udfSetLog udfSetLogSocket udfTimeStamp udfUptime          \
                                                                                \
 "
 #******
@@ -349,6 +349,7 @@ udfSetLogSocket() {
 #    rm -f $fnLog
 #  SOURCE
 udfSetLog() {
+
   local IFS=$' \t\n'
 
   case "$1" in
@@ -412,4 +413,69 @@ udfDebug() {
   return 0
 
 }
+#******
+#****f* liblog/udfTimeStamp
+#  SYNOPSIS
+#    udfTimeStamp <text>
+#  DESCRIPTION
+#    Show input <text> with time stamp in format 'Mar 28 10:03:40' (LC_ALL=C)
+#  INPUTS
+#    <text> - suffix to the header
+#  OUTPUT
+#    input <text> with time stamp in format 'Mar 28 10:03:40' (LC_ALL=C)
+#  EXAMPLE
+#    local re
+#    re='^[ADFJMNOS][abceglnoprtuyv]{2} [0-9]{2} [0-9]{2}:[0-9]{2}:[0-9]{2} AB$'
+#    udfTimeStamp AB >| grep -E "$re"                                           #? true
+#  SOURCE
+
+if (( _bashlyk_ShellVersion > 4002000 )); then
+
+udfTimeStamp() { LC_ALL=C printf -- '%(%b %d %H:%M:%S)T %s\n' '-1' "$*"; }
+
+udfDateR() { LC_ALL=C printf -- '%(%a, %d %b %Y %T %z)T\n' '-1'; }
+
+udfUptime() { echo $(( $(printf '%(%s)T' '-1') - $(printf '%(%s)T' '-2') )); }
+
+else
+
+readonly _bashlyk_iStartTimeStamp=$( exec -c date "+%s" )
+
+udfTimeStamp() { LC_ALL=C date "+%b %d %H:%M:%S $*"; }
+
+udfDateR() { exec -c date -R; }
+
+udfUptime() { echo $(( $(exec -c date "+%s") - _bashlyk_iStartTimeStamp )); }
+
+fi
+#******
+#****f* liblog/udfDateR
+#  SYNOPSIS
+#    udfDateR
+#  DESCRIPTION
+#    show 'date -R' like output
+#  EXAMPLE
+#    udfDateR >| grep -P "^\S{3}, \d{2} \S{3} \d{4} \d{2}:\d{2}:\d{2} .\d{4}$"  #? true
+#  SOURCE
+#******
+#****f* liblog/udfUptime
+#  SYNOPSIS
+#    udfUptime
+#  DESCRIPTION
+#    show uptime value in the seconds
+#  EXAMPLE
+#    udfUptime >| grep "^[[:digit:]]*$"                                         #? true
+#  SOURCE
+#******
+#****f* liblog/udfFinally
+#  SYNOPSIS
+#    udfFinally <text>
+#  DESCRIPTION
+#    show uptime with input text
+#  INPUTS
+#    <text> - prefix text before " uptime <number> sec"
+#  EXAMPLE
+#    udfFinally $RANDOM >| grep "^[[:digit:]]* uptime [[:digit:]]* sec$"        #? true
+#  SOURCE
+udfFinally() { echo "$@ uptime $( udfUptime ) sec"; }
 #******

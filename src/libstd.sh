@@ -1,12 +1,9 @@
 #
-# $Id: libstd.sh 725 2017-04-10 15:25:21+04:00 toor $
+# $Id: libstd.sh 727 2017-04-11 17:26:51+04:00 toor $
 #
 #****h* BASHLYK/libstd
 #  DESCRIPTION
-#    стандартный набор функций, включает автоматически управляемые функции
-#    вывода сообщений, контроля корректности входных данных, создания временных
-#    объектов и автоматического их удаления после завершения сценария или
-#    фонового процесса, обработки ошибок
+#    simple common used functions
 #  USES
 #    liberr libmsg
 #  AUTHOR
@@ -34,43 +31,28 @@
 #****v* libstd/Global Variables
 #  DESCRIPTION
 #    Global variables of the library
-#    Блок инициализации глобальных переменных
-#    * $_bashlyk_sArg - аргументы командной строки вызова сценария
-#    * $_bashlyk_sWSpaceAlias - заменяющая пробел последовательность символов
-#    * $_bashlyk_aRequiredCmd_opt - список используемых в данном модуле внешних
-#    утилит
+#    * $_bashlyk_sWSpaceAlias - substitution for whitespace
 #  SOURCE
-: ${TMPDIR:=/tmp}
-#: ${_bashlyk_afoClean:=}
-#: ${_bashlyk_afdClean:=}
-#: ${_bashlyk_ajobClean:=}
-#: ${_bashlyk_apidClean:=}
-#: ${_bashlyk_pidLogSock:=}
 #: ${_bashlyk_envXSession:=}
-: ${_bashlyk_sWSpaceAlias:=___}
+: ${TMPDIR:=/tmp}
 : ${HOSTNAME:=$( exec -c hostname 2>/dev/null )}
-: ${_bashlyk_sUnnamedKeyword:=_bashlyk_unnamed_key_}
-#: ${_bashlyk_reMetaRules:='34=":40=(:41=):59=;:91=[:92=\\:93=]:61=='}
+: ${_bashlyk_sWSpaceAlias:=$( printf -- "\u00a0" )}
 : ${_bashlyk_emailSubj:="${_bashlyk_sUser}@${HOSTNAME}::${_bashlyk_s0}"}
 
 declare -rg _bashlyk_iMaxOutputLines=1000
 
 declare -rg _bashlyk_aRequiredCmd_std="                                        \
                                                                                \
-    chgrp chmod chown date echo expr hostname kill logname md5sum mkdir mkfifo \
-    pgrep pwd rm rmdir sed sleep touch                                         \
-    mktemp|tempfile                                                            \
+    chgrp chmod chown echo expr md5sum mkdir mkfifo mktemp|tempfile rm touch   \
                                                                                \
 "
 
 declare -rg _bashlyk_aExport_std="                                             \
                                                                                \
-    _ udfAddFD2Clean udfAddFile2Clean udfAddFO2Clean udfAddFObj2Clean          \
-    udfAddJob2Clean udfAddPath2Clean udfAddPid2Clean udfAlias2WSpace udfCat    \
-    udfCleanQueue udfFinally udfGetFreeFD udfGetMd5 udfGetPathMd5              \
+    _  udfAlias2WSpace udfCat udfGetFreeFD udfGetMd5 udfGetPathMd5             \
     udfGetTimeInSec udfIsHash udfIsNumber udfIsValidVariable udfMakeTemp       \
-    udfMakeTempV udfOnTrap udfPrepareByType udfQuoteIfNeeded udfShowVariable   \
-    udfTrim udfWSpace2Alias udfXml                                             \
+    udfMakeTempV  udfPrepareByType udfQuoteIfNeeded udfShowVariable udfTrim    \
+    udfWSpace2Alias udfXml                                                     \
                                                                                \
 "
 #******
@@ -78,18 +60,19 @@ declare -rg _bashlyk_aExport_std="                                             \
 #  SYNOPSIS
 #    udfIsNumber <number> [<tag>]
 #  DESCRIPTION
-#    Проверка аргумента на то, что он является натуральным числом
-#    Аргумент считается числом, если он содержит цифры и может иметь в конце
-#    символ - признак порядка, например, k M G T (kilo-, Mega-, Giga-, Terra-)
+#    Checking the argument that it is a natural number
+#    The argument is considered a number if it contains decimal digits and can
+#    have a symbol at the end - a sign of order, for example, k M G T
+#    (kilo-, Mega-, Giga-, Terra-)
 #  INPUTS
-#    number - проверяемое значение
-#    tag    - набор символов, один из которых можно применить
-#             после цифр для указания признака числа, например,
-#             порядка. (регистр не имеет значения)
+#    <number> - input data
+#    <tag>    - a set of characters, one of which is permissible after the
+#    digits to indicate a characteristic of a number, for example, of order.
+#    (The register does not matter)
 #  RETURN VALUE
-#    0               - аргумент является натуральным числом
-#    NotNumber - аргумент не является натуральным числом
-#    MissingArgument - аргумент не задан
+#    0               - argument is a natural number
+#    NotNumber       - argument is not natural number
+#    MissingArgument - no arguments
 #  EXAMPLE
 #    udfIsNumber 12                                                             #? true
 #    udfIsNumber 34k k                                                          #? true
@@ -114,93 +97,28 @@ udfIsNumber() {
 
 }
 #******
-#****f* libstd/udfTimeStamp
-#  SYNOPSIS
-#    udfTimeStamp <text>
-#  DESCRIPTION
-#    Show input <text> with time stamp in format 'Mar 28 10:03:40' (LC_ALL=C)
-#  INPUTS
-#    <text> - suffix to the header
-#  OUTPUT
-#    input <text> with time stamp in format 'Mar 28 10:03:40' (LC_ALL=C)
-#  EXAMPLE
-#    local re
-#    re='^[ADFJMNOS][abceglnoprtuyv]{2} [0-9]{2} [0-9]{2}:[0-9]{2}:[0-9]{2} AB$'
-#    udfTimeStamp AB >| grep -E "$re"                                           #? true
-#  SOURCE
-
-if (( _bashlyk_ShellVersion > 4002000 )); then
-
-  udfTimeStamp() { LC_ALL=C printf -- '%(%b %d %H:%M:%S)T %s\n' '-1' "$*"; }
-
-  udfDateR() { LC_ALL=C printf -- '%(%a, %d %b %Y %T %z)T\n' '-1'; }
-
-  udfUptime() { echo $(( $(printf '%(%s)T' '-1') - $(printf '%(%s)T' '-2') )); }
-
-else
-
-  readonly _bashlyk_iStartTimeStamp=$( exec -c date "+%s" )
-
-  udfTimeStamp() { LC_ALL=C date "+%b %d %H:%M:%S $*"; }
-
-  udfDateR() { exec -c date -R; }
-
-  udfUptime() { echo $(( $(exec -c date "+%s") - _bashlyk_iStartTimeStamp )); }
-
-fi
-
-#******
-#****f* libstd/udfDateR
-#  SYNOPSIS
-#    udfDateR
-#  DESCRIPTION
-#    show 'date -R' like output
-#  EXAMPLE
-#    udfDateR >| grep -P "^\S{3}, \d{2} \S{3} \d{4} \d{2}:\d{2}:\d{2} .\d{4}$"  #? true
-#  SOURCE
-#******
-#****f* libstd/udfUptime
-#  SYNOPSIS
-#    udfUptime
-#  DESCRIPTION
-#    show uptime value in the seconds
-#  EXAMPLE
-#    udfUptime >| grep "^[[:digit:]]*$"                                         #? true
-#  SOURCE
-#******
-#****f* libstd/udfFinally
-#  SYNOPSIS
-#    udfFinally <text>
-#  DESCRIPTION
-#    show uptime with input text
-#  INPUTS
-#    <text> - prefix text before " uptime <number> sec"
-#  EXAMPLE
-#    udfFinally $RANDOM >| grep "^[[:digit:]]* uptime [[:digit:]]* sec$"        #? true
-#  SOURCE
-udfFinally() { echo "$@ uptime $( udfUptime ) sec"; }
-#******
 #****f* libstd/udfShowVariable
 #  SYNOPSIS
-#    udfShowVariable args
+#    udfShowVariable <var>[,|;| ]...
 #  DESCRIPTION
-#    Вывод листинга значений аргументов, если они являются именами переменными. Допускается
-#    разделять имена переменных знаками ',' и ';', однако, необходимо помнить, что знак ';'
-#    (или аргументы целиком) необходимо экранировать кавычками, иначе интерпретатор воспримет
-#    аргумент как следующую команду!
-#    Если аргумент не является валидным именем переменной, то выводится соответствующее сообщение.
-#    Функцию можно использовать для формирования строк инициализации переменных, при этом
-#    информационные строки за счет экранирования командой ':' не выполняют никаких действий
-#    при разборе интерпретатором, их также можно отфильтровать командой "grep -v '^:'"
+#    Listing the values of the arguments if they are variable names. It is
+#    possible to separate the names of variables by the signs ',' and ';',
+#    however, it must be remembered that the ';' (Or entire arguments) must be
+#    quoted.
+#    If the argument is not a valid variable name, an appropriate message is
+#    displayed. The function can be used to form the initialization lines for
+#    variables, while the information lines are escaped by the ':' command when
+#    parsing by the interpreter; they can also be filtered using the command
+#    "grep -v '^:'".
 #  INPUTS
-#    args - ожидаются имена переменных
+#    <var> - list of the variables
 #  OUTPUT
-#    служебные строки выводятся с начальным ':' для автоматической подавления возможности выполнения
-#    Валидное имя переменной и значение в виде <Имя>=<Значение>
+#    Listing the values of the arguments if they are variable names.
+#    Service lines are output with the initial ':' to automatically suppress the
+#    execution capability
 #  EXAMPLE
 #    local s='text' b='true' i=2015 a='true 2015 text'
-#    udfShowVariable "a,b; i" s  >| grep -w "a=true 2015 text\|b=true\|i=2015\|s=text"                                    #? true
-#    udfShowVariable a b i s 12w >| grep '^:.*12w.* not valid'                                                            #? true                                                                             #? true
+#    udfShowVariable a,b';' i s 1w >| md5sum - | grep ^72f4ca740b23dcec5a82.*-$ #? true
 #  SOURCE
 udfShowVariable() {
 
@@ -297,15 +215,29 @@ udfQuoteIfNeeded() {
 #  OUTPUT
 #   Аргумент с заменой пробелов на специальную последовательность символов
 #  EXAMPLE
-#    udfWSpace2Alias 'a b  cd' >| grep  '^a___b______cd$'                       #? true
-#    echo 'a b  cd' | udfWSpace2Alias - >| grep '^a___b______cd$'               #? true
+#    a=($(udfWSpace2Alias single argument expected ... ))
+#    echo ${#a[@]}                                                  >| grep ^1$ #? true
+#    a=($(echo single argument expected ... | udfWSpace2Alias -))
+#    echo ${#a[@]}                                                  >| grep ^1$ #? true
 #  SOURCE
 udfWSpace2Alias() {
 
+  local s=$*
+
   case $* in
 
-    -) sed -e "s/ /$_bashlyk_sWSpaceAlias/g";;
-    *) echo "${*// /$_bashlyk_sWSpaceAlias}";;
+    -)
+       ## TODO - on/off timeout
+       while read s; do
+
+         echo "${s// /$_bashlyk_sWSpaceAlias}"
+
+       done
+    ;;
+
+    *)
+       echo "${s// /$_bashlyk_sWSpaceAlias}"
+    ;;
 
   esac
 
@@ -324,15 +256,33 @@ udfWSpace2Alias() {
 #  OUTPUT
 #    Аргумент с заменой специальной последовательности символов на пробел
 #  EXAMPLE
-#    udfAlias2WSpace a___b______cd >| grep '^"a b  cd"$'                        #? true
-#    echo a___b______cd | udfAlias2WSpace - >| grep '^a b  cd$'                 #? true
+#    local text s
+#    s="${_bashlyk_sWSpaceAlias}"
+#    text="many${s}arguments${s}expected${s}..."
+#    udfAlias2WSpace $text
+#    a=($(udfAlias2WSpace $text))
+#    echo ${#a[@]}                                                  >| grep ^4$ #? true
+#    a=($(echo $text | udfAlias2WSpace -))
+#    echo ${#a[@]}                                                  >| grep ^4$ #? true
 #  SOURCE
 udfAlias2WSpace() {
 
-  case "$1" in
+  local s=$*
 
-    -) sed -e "s/$_bashlyk_sWSpaceAlias/ /g";;
-    *) udfQuoteIfNeeded "${*//$_bashlyk_sWSpaceAlias/ }";;
+  case "$s" in
+
+    -)
+       ## TODO - on/off timeout
+       while read s; do
+
+         echo "${s//${_bashlyk_sWSpaceAlias}/ }"
+
+       done
+    ;;
+
+    *)
+       udfQuoteIfNeeded "${s//${_bashlyk_sWSpaceAlias}/ }"
+    ;;
 
   esac
 }
@@ -589,184 +539,6 @@ udfMakeTempV() {
   esac
 
   udfMakeTemp $1 $sType $sKeep $sPrefix
-
-}
-#******
-udfAddJob2Clean() { return 0; }
-#****f* libstd/udfAddPid2Clean
-#  SYNOPSIS
-#    udfAddPid2Clean args
-#  DESCRIPTION
-#    Добавляет идентификаторы запущенных процессов к списку очистки при
-#    завершении текущего процесса.
-#  INPUTS
-#    args - идентификаторы процессов
-#  EXAMPLE
-#    sleep 99 &
-#    udfAddPid2Clean $!
-#    test "${_bashlyk_apidClean[$BASHPID]}" -eq "$!"                            #? true
-#    ps -p $! -o pid= >| grep -w $!                                             #? true
-#    echo $(udfAddPid2Clean $!; echo "$BASHPID : $! ")
-#    ps -p $! -o pid= >| grep -w $!                                             #? false
-#
-#  SOURCE
-udfAddPid2Clean() {
-
-  [[ $1 ]] || return 0
-
-  _bashlyk_apidClean[$BASHPID]+=" $*"
-
-  trap "udfOnTrap" EXIT
-
-}
-#******
-#****f* libstd/udfAddFD2Clean
-#  SYNOPSIS
-#    udfAddFD2Clean <args>
-#  DESCRIPTION
-#    add list of filedescriptors for cleaning on exit
-#  ARGUMENTS
-#    <args> - file descriptors
-#  SOURCE
-udfAddFD2Clean() {
-
-  udfOn MissingArgument $* || return $?
-
-  _bashlyk_afdClean[$BASHPID]+=" $*"
-
-  trap "udfOnTrap" EXIT
-
-}
-#******
-#****f* libstd/udfAddFO2Clean
-#  SYNOPSIS
-#    udfAddFO2Clean <args>
-#  DESCRIPTION
-#    add list of filesystem objects for cleaning on exit
-#  INPUTS
-#    args - files or directories for cleaning on exit
-#  EXAMPLE
-#    local a fnTemp1 fnTemp2 pathTemp1 pathTemp2 s=$RANDOM
-#    udfMakeTemp fnTemp1 keep=true suffix=.${s}1
-#    test -f $fnTemp1
-#    echo $(udfAddFO2Clean $fnTemp1 )
-#    ls -l ${TMPDIR}/*.${s}1 2>/dev/null >| grep ".*\.${s}1"                    #? false
-#    echo $(udfMakeTemp fnTemp2 suffix=.${s}2)
-#    ls -l ${TMPDIR}/*.${s}2 2>/dev/null >| grep ".*\.${s}2"                    #? false
-#    echo $(udfMakeTemp fnTemp2 suffix=.${s}3 keep=true)
-#    ls -l ${TMPDIR}/*.${s}3 2>/dev/null >| grep ".*\.${s}3"                    #? true
-#    a=$(ls -1 ${TMPDIR}/*.${s}3)
-#    echo $(udfAddFO2Clean $a )
-#    ls -l ${TMPDIR}/*.${s}3 2>/dev/null >| grep ".*\.${s}3"                    #? false
-#    udfMakeTemp pathTemp1 keep=true suffix=.${s}1 type=dir
-#    test -d $pathTemp1
-#    echo $(udfAddFO2Clean $pathTemp1 )
-#    ls -1ld ${TMPDIR}/*.${s}1 2>/dev/null >| grep ".*\.${s}1"                  #? false
-#    echo $(udfMakeTemp pathTemp2 suffix=.${s}2 type=dir)
-#    ls -1ld ${TMPDIR}/*.${s}2 2>/dev/null >| grep ".*\.${s}2"                  #? false
-#    echo $(udfMakeTemp pathTemp2 suffix=.${s}3 keep=true type=dir)
-#    ls -1ld ${TMPDIR}/*.${s}3 2>/dev/null >| grep ".*\.${s}3"                  #? true
-#    a=$(ls -1ld ${TMPDIR}/*.${s}3)
-#    echo $(udfAddFO2Clean $a )
-#    ls -1ld ${TMPDIR}/*.${s}3 2>/dev/null >| grep ".*\.${s}3"                  #? false
-#  SOURCE
-udfAddFO2Clean() {
-
-  udfOn MissingArgument return $*
-
-  _bashlyk_afoClean[$BASHPID]+=" $*"
-
-  trap "udfOnTrap" EXIT
-
-}
-#******
-udfCleanQueue()    { udfAddFO2Clean $@; }
-udfAddFObj2Clean() { udfAddFO2Clean $@; }
-udfAddFile2Clean() { udfAddFO2Clean $@; }
-udfAddPath2Clean() { udfAddFO2Clean $@; }
-#****f* libstd/udfOnTrap
-#  SYNOPSIS
-#    udfOnTrap
-#  DESCRIPTION
-#    The cleaning procedure at the end of the calling script.
-#    Suitable for trap command call.
-#    Produced deletion of files and empty directories; stop child processes,
-#    closure of open file descriptors listed in the corresponding global
-#    variables. All processes must be related and descended from the working
-#    script process. Closes the socket script log if it was used.
-#  EXAMPLE
-#    local fd fn1 fn2 path pid pipe
-#    udfMakeTemp fn1
-#    udfMakeTemp fn2
-#    udfMakeTemp path type=dir
-#    udfMakeTemp pipe type=pipe
-#    fd=$( udfGetFreeFD )
-#    eval "exec ${fd}>$fn2"
-#    (sleep 1024)&
-#    pid=$!
-#    test -f $fn1
-#    test -d $path
-#    ps -p $pid -o pid= >| grep -w $pid
-#    ls /proc/$$/fd >| grep -w $fd
-#    udfAddFD2Clean $fd
-#    udfAddPid2Clean $pid
-#    udfAddFO2Clean $fn1
-#    udfAddFO2Clean $path
-#    udfAddFO2Clean $pipe
-#    udfOnTrap
-#    ls /proc/$$/fd >| grep -w $fd                                              #? false
-#    ps -p $pid -o pid= >| grep -w $pid                                         #? false
-#    test -f $fn1                                                               #? false
-#    test -d $path                                                              #? false
-#  SOURCE
-udfOnTrap() {
-
-  local i IFS=$' \t\n' re s
-  local -a a
-
-  a=( ${_bashlyk_apidClean[$BASHPID]} )
-
-  for (( i=${#a[@]}-1; i>=0 ; i-- )) ; do
-
-    re="\\b${a[i]}\\b"
-
-    for s in 15 9; do
-
-      if [[  "$( pgrep -d' ' -P $$ )" =~ $re ]]; then
-
-        if ! kill -${s} ${a[i]} >/dev/null 2>&1; then
-
-          udfSetLastError NotPermitted "${a[i]}"
-          sleep 0.1
-
-        fi
-
-      fi
-
-    done
-
-  done
-
-  for s in ${_bashlyk_afdClean[$BASHPID]}; do
-
-    udfIsNumber $s && eval "exec ${s}>&-"
-
-  done
-
-  for s in ${_bashlyk_afoClean[$BASHPID]}; do
-
-    [[ -f $s ]] && rm -f $s && continue
-    [[ -p $s ]] && rm -f $s && continue
-    [[ -d $s ]] && rmdir --ignore-fail-on-non-empty $s 2>/dev/null && continue
-
-  done
-
-  if [[ -n "${_bashlyk_pidLogSock}" ]]; then
-
-    exec >/dev/null 2>&1
-    wait ${_bashlyk_pidLogSock}
-
-  fi
 
 }
 #******
