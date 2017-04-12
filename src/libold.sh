@@ -1,5 +1,5 @@
 #
-# $Id: libold.sh 727 2017-04-11 17:26:51+04:00 toor $
+# $Id: libold.sh 732 2017-04-12 18:47:00+04:00 toor $
 #
 #****h* BASHLYK/libold
 #  DESCRIPTION
@@ -26,7 +26,6 @@
 # SOURCE
 [[ -s ${_bashlyk_pathLib}/liberr.sh ]] && . "${_bashlyk_pathLib}/liberr.sh"
 [[ -s ${_bashlyk_pathLib}/libstd.sh ]] && . "${_bashlyk_pathLib}/libstd.sh"
-[[ -s ${_bashlyk_pathLib}/libopt.sh ]] && . "${_bashlyk_pathLib}/libopt.sh"
 [[ -s ${_bashlyk_pathLib}/libcsv.sh ]] && . "${_bashlyk_pathLib}/libcsv.sh"
 #******
 #****G* libold/Global variables

@@ -1,12 +1,12 @@
 #
-# $Id: libcsv.sh 731 2017-04-12 17:12:43+04:00 toor $
+# $Id: libcsv.sh 732 2017-04-12 18:45:18+04:00 toor $
 #
 #****h* BASHLYK/libcsv
 #  DESCRIPTION
 #    Management of the configuration files in the INI-style
 #    Deprecated, for backward compatibility
 #  USES
-#    libstd libopt
+#    liberr libstd libold
 #  AUTHOR
 #    Damir Sh. Yakupov <yds@bk.ru>
 #******
@@ -28,7 +28,7 @@
 # SOURCE
 [[ -s ${_bashlyk_pathLib}/liberr.sh ]] && . "${_bashlyk_pathLib}/liberr.sh"
 [[ -s ${_bashlyk_pathLib}/libstd.sh ]] && . "${_bashlyk_pathLib}/libstd.sh"
-[[ -s ${_bashlyk_pathLib}/libopt.sh ]] && . "${_bashlyk_pathLib}/libopt.sh"
+[[ -s ${_bashlyk_pathLib}/libold.sh ]] && . "${_bashlyk_pathLib}/libold.sh"
 #******
 #****G* libcsv/Global variables
 #  DESCRIPTION
@@ -82,7 +82,7 @@ declare -rg _bashlyk_exports_csv="                                             \
 #    InvalidVariable - invalid variable for output assign
 #  EXAMPLE
 #    local cmd=udfCheckCsv csv="a=b;a=c;s=a b c d e f;test value" v1 v2
-#    local re="^a=b;a=c;s='a b c d e f';${_bashlyk_sUnnamedKeyword}0='test value';$"
+#    local re="^a=b;a=c;s=\"a b c d e f\";${_bashlyk_sUnnamedKeyword}0=\"test value\";$"
 #    $cmd "$csv" >| grep "$re"                                                  #? true
 #    $cmd -v v1 "$csv"                                                          #? true
 #    echo $v1 >| grep "$re"                                                     #? true
@@ -94,7 +94,7 @@ declare -rg _bashlyk_exports_csv="                                             \
 #    $cmd    invalid+variable "$csv"                                            #? ${_bashlyk_iErrorInvalidVariable}
 #    $cmd invalid+variable                                                      #? ${_bashlyk_iErrorInvalidArgument}
 #    $cmd _valid_variable_                                                      #? ${_bashlyk_iErrorInvalidArgument}
-#    $cmd 'csv data;' | grep ^${_bashlyk_sUnnamedKeyword}0="csv data";$'        #? true
+#    $cmd 'csv data;' | grep "^${_bashlyk_sUnnamedKeyword}0=.csv.data.;$"       #? true
 #    $cmd                                                                       #? ${_bashlyk_iErrorMissingArgument}
 #  SOURCE
 udfCheckCsv() {

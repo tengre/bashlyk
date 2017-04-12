@@ -1,5 +1,5 @@
 #
-# $Id: libmsg.sh 726 2017-04-10 16:38:11+04:00 toor $
+# $Id: libmsg.sh 732 2017-04-12 18:45:18+04:00 toor $
 #
 #****h* BASHLYK/libmsg
 #  DESCRIPTION
@@ -133,7 +133,8 @@ udfWarn() {
 #  EXAMPLE
 #    echo "notification testing" | udfMail - "bashlyk::libmsg::udfMail"
 #    [ $? -eq $(_ iErrorCommandNotFound) -o $? -eq 0 ] && true                  #? true
-#    udfMail -                                                                  #? true
+#    udfMail -
+#    [ $? -eq $(_ iErrorCommandNotFound) -o $? -eq 0 ] && true                  #? true
 ##   see user (or aliased) mailbox for result checking
 #  SOURCE
 udfMail() {

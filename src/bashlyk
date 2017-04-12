@@ -1,6 +1,6 @@
 #!/bin/bash
 #
-# $Id: bashlyk 731 2017-04-12 17:12:43+04:00 toor $
+# $Id: bashlyk 732 2017-04-12 18:45:18+04:00 toor $
 #
 #****h* BASHLYK/bashlyk
 #  DESCRIPTION
@@ -26,7 +26,7 @@
 #    global variables of the library
 #  SOURCE
 [[ -s "/etc/bashlyk/bashlyk.conf" ]] && . /etc/bashlyk/bashlyk.conf
-: ${_bashlyk_aLib:="err,std,ini,csv,pid,net,log,old,msg,cnf"}
+: ${_bashlyk_aLib:="err,csv,std,ini,pid,net,log,old,msg,cnf"}
 : ${_bashlyk_pathLib:="/usr/share/bashlyk"}
 : ${_bashlyk_s0:=${0##*/}}
 : ${_bashlyk_sArg:="$@"}
