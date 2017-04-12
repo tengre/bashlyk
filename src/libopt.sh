@@ -1,5 +1,5 @@
 #
-# $Id: libopt.sh 714 2017-03-27 15:02:12+04:00 toor $
+# $Id: libopt.sh 729 2017-04-12 16:37:14+04:00 toor $
 #
 #****h* BASHLYK/libopt
 #  DESCRIPTION
@@ -108,8 +108,7 @@ udfGetOptHash() {
 
   shift
 
-  ## TODO ситуация iErrorEmptyResult недостижима ?
-  [[ $csvHash ]] && echo "$csvHash" || eval $( udfOnError return EmptyResult )
+  [[ $csvHash ]] && echo "$csvHash" || return $_bashlyk_iErrorEmptyResult
 
 }
 #******
@@ -128,12 +127,12 @@ udfGetOptHash() {
 #    local job bForce
 #    udfSetOptHash "job=main;bForce=1;"                                         #? true
 #    echo "$job :: $bForce" >| grep "^main :: 1$"                               #? true
-#    udfSetOptHash                                                              #? $_bashlyk_iErrorEmptyOrMissingArgument
+#    udfSetOptHash                                                              #? $_bashlyk_iErrorMissingArgument
 #    ## TODO коды возврата проверить
 #  SOURCE
 udfSetOptHash() {
 
-  udfOn MissingArgument $* || return $?
+  udfOn MissingArgument $* || return
 
   local _bashlyk_udfGetOptHash_confTmp IFS=$' \t\n'
 
@@ -166,8 +165,7 @@ udfSetOptHash() {
 #  SOURCE
 udfGetOpt() {
 
-  udfSetOptHash $( udfGetOptHash $* )
-  _bashlyk_bSetOptions=1
+  udfSetOptHash $( udfGetOptHash $* ) && _bashlyk_bSetOptions=1
 
 }
 #******
