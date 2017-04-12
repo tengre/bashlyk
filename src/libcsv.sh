@@ -1,5 +1,5 @@
 #
-# $Id: libcsv.sh 729 2017-04-12 16:37:14+04:00 toor $
+# $Id: libcsv.sh 731 2017-04-12 17:12:43+04:00 toor $
 #
 #****h* BASHLYK/libcsv
 #  DESCRIPTION
@@ -63,9 +63,9 @@ declare -rg _bashlyk_exports_csv="                                             \
 #  DESCRIPTION
 #    Bringing the format "key = value" fields of the CSV-line. If the field does
 #    not contain a key or key contains a space, then the field receives key
-#    species _bashlyk_unnamed_key_<increment>, and all the contents of the field
-#    becomes the value. The result is printed to stdout or assigned to the <var>
-#    variable if the first argument is listed as -v <var> ( -v can be skipped )
+#    species ${_bashlyk_sUnnamedKeyword_}<increment>, and all the contents of
+#    the field becomes the value. The result is printed to stdout or assigned to
+#    the <var> if the first argument is listed as -v <var> ( -v can be skipped )
 #  INPUTS
 #    csv;    - CSV-string, separated by ';'
 #    Important! Enclose the string in double quotes if it can contain spaces
@@ -82,7 +82,7 @@ declare -rg _bashlyk_exports_csv="                                             \
 #    InvalidVariable - invalid variable for output assign
 #  EXAMPLE
 #    local cmd=udfCheckCsv csv="a=b;a=c;s=a b c d e f;test value" v1 v2
-#    local re='^a=b;a=c;s="a b c d e f";_bashlyk_unnamed_key_0="test value";$'
+#    local re="^a=b;a=c;s='a b c d e f';${_bashlyk_sUnnamedKeyword}0='test value';$"
 #    $cmd "$csv" >| grep "$re"                                                  #? true
 #    $cmd -v v1 "$csv"                                                          #? true
 #    echo $v1 >| grep "$re"                                                     #? true
@@ -94,7 +94,7 @@ declare -rg _bashlyk_exports_csv="                                             \
 #    $cmd    invalid+variable "$csv"                                            #? ${_bashlyk_iErrorInvalidVariable}
 #    $cmd invalid+variable                                                      #? ${_bashlyk_iErrorInvalidArgument}
 #    $cmd _valid_variable_                                                      #? ${_bashlyk_iErrorInvalidArgument}
-#    $cmd 'csv data;' | grep '^_bashlyk_unnamed_key_0="csv data";$'             #? true
+#    $cmd 'csv data;' | grep ^${_bashlyk_sUnnamedKeyword}0="csv data";$'        #? true
 #    $cmd                                                                       #? ${_bashlyk_iErrorMissingArgument}
 #  SOURCE
 udfCheckCsv() {
