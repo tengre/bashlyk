@@ -1,5 +1,5 @@
 #
-# $Id: libstd.sh 727 2017-04-11 17:26:51+04:00 toor $
+# $Id: libstd.sh 728 2017-04-12 16:09:55+04:00 toor $
 #
 #****h* BASHLYK/libstd
 #  DESCRIPTION
@@ -148,13 +148,13 @@ udfShowVariable() {
 #  SYNOPSIS
 #    udfIsValidVariable <arg>
 #  DESCRIPTION
-#    Проверка аргумента на то, что он может быть валидным идентификатором
-#    переменной
+#    Validate <arg> as variable name
 #  INPUTS
-#    arg - проверяемое значение
+#    <arg> - expected valid variable name (without leader '$')
 #  RETURN VALUE
-#    0               - аргумент валидный идентификатор
-#    InvalidVariable - аргумент невалидный идентификатор (или не задан)
+#    0               - valid variable name
+#    MissingArgument - no arguments
+#    InvalidVariable - is not valid variable name
 #  EXAMPLE
 #    udfIsValidVariable                                                         #? $_bashlyk_iErrorMissingArgument
 #    udfIsValidVariable "12w"                                                   #? $_bashlyk_iErrorInvalidVariable
@@ -163,14 +163,13 @@ udfShowVariable() {
 #    udfIsValidVariable "&w1"                                                   #? $_bashlyk_iErrorInvalidVariable
 #    udfIsValidVariable "#k12s"                                                 #? $_bashlyk_iErrorInvalidVariable
 #    udfIsValidVariable ":v1"                                                   #? $_bashlyk_iErrorInvalidVariable
-#    udfIsValidVariable ";q1"                                                   #? $_bashlyk_iErrorInvalidVariable
-#    udfIsValidVariable ",g99"                                                  #? $_bashlyk_iErrorInvalidVariable
+#    udfIsValidVariable "a1-b"                                                  #? $_bashlyk_iErrorInvalidVariable
 #  SOURCE
 udfIsValidVariable() {
 
   [[ "$1" =~ ^[_a-zA-Z][_a-zA-Z0-9]*$ ]] && return 0
 
-  udfOn MissingArgument $1 || return $?
+  udfOn MissingArgument $1 || return
 
   return $_bashlyk_iErrorInvalidVariable
 
@@ -180,14 +179,15 @@ udfIsValidVariable() {
 #  SYNOPSIS
 #    udfQuoteIfNeeded <arg>
 #  DESCRIPTION
-#   Аргумент, содержащий пробел(ы) отмечается кавычками
+#    Argument with whitespaces is doublequoted
 #  INPUTS
-#    arg - argument
+#    <arg> - input
 #  OUTPUT
-#    аргумент с кавычками, если есть пробелы
+#    doublequoted input with whitespaces
 #  EXAMPLE
-#    udfQuoteIfNeeded "word" >| grep '^word$'                                   #? true
-#    udfQuoteIfNeeded two words >| grep '^".*"$'                                #? true
+#    udfQuoteIfNeeded                                                           #? $_bashlyk_iErrorMissingArgument
+#    udfQuoteIfNeeded "word"                                 >| grep '^word$'   #? true
+#    udfQuoteIfNeeded two words                              >| grep '^\".*\"$' #? true
 #  SOURCE
 udfQuoteIfNeeded() {
 
@@ -197,7 +197,7 @@ udfQuoteIfNeeded() {
 
   else
 
-    echo "$*"
+    [[ $* ]] && echo "$*" || return $_bashlyk_iErrorMissingArgument
 
   fi
 
@@ -207,13 +207,14 @@ udfQuoteIfNeeded() {
 #  SYNOPSIS
 #    udfWSpace2Alias -|<arg>
 #  DESCRIPTION
-#   Пробел в аргументе заменяется "магической" последовательностью символов,
-#   определённых в глобальной переменной $_bashlyk_sWSpaceAlias
+#    The whitespace in the argument is replaced by the "magic" sequence of
+#    characters defined in the global variable $_bashlyk_sWSpaceAlias
 #  INPUTS
-#    arg - argument
-#    "-" - ожидается ввод в конвейере
+#    <arg> - input data for conversion
+#        - - expected data from the standard input
 #  OUTPUT
-#   Аргумент с заменой пробелов на специальную последовательность символов
+#   input data with replaced (masked) whitespaces by a special sequence of
+#   characters
 #  EXAMPLE
 #    a=($(udfWSpace2Alias single argument expected ... ))
 #    echo ${#a[@]}                                                  >| grep ^1$ #? true
@@ -247,14 +248,14 @@ udfWSpace2Alias() {
 #  SYNOPSIS
 #    udfAlias2WSpace -|<arg>
 #  DESCRIPTION
-#    Последовательность символов, определённых в глобальной переменной
-#    $_bashlyk_sWSpaceAlias заменяется на пробел в заданном аргументе.
-#    Причём, если появляются пробелы, то вывод обрамляется кавычками.
-#    В случае ввода в конвейере вывод не обрамляется кавычками
+#    If the input contains a sequence of characters defined in the global
+#    variable $_bashlyk_WSpase2Alias, then they are replaced by a whitespace.
+#    If, as a result of processing data from arguments (not from the standard
+#    input), replacements are made for whitespace, then the output is quoted.
 #  INPUTS
 #    arg - argument
 #  OUTPUT
-#    Аргумент с заменой специальной последовательности символов на пробел
+#    input data with "restored" whitespaces
 #  EXAMPLE
 #    local text s
 #    s="${_bashlyk_sWSpaceAlias}"
@@ -578,24 +579,23 @@ udfPrepareByType() {
 #  SYNOPSIS
 #    _ [[<get>]=]<subname> [<value>]
 #  DESCRIPTION
-#    Получить или установить (get/set) значение глобальной переменной
-#    $_bashlyk_<subname>
+#    Special getter/setter for global variables with names like "$_bashlyk_..."
 #  INPUTS
-#    <get>     - переменная для приема значения (get) ${_bashlyk_<subname>},
-#                может быть опущена (знак "=" не опускается), в этом случае
-#                предполагается, что она имеет имя <subname>
-#    <subname> - содержательная часть глобальной имени ${_bashlyk_<subname>}
-#    <value>   - новое значение (set) для ${_bashlyk_<subname>}. Имеет приоритет
-#                перед режимом "get"
-#    Важно! Если используется переменная в качестве <value>, то она обязательно
-#    должна быть в двойных кавычках, иначе в случае принятия пустого значения
-#    смысл операции поменяется с "set" на "get" c выводом значения на STDOUT
+#    <get>     - (local) variable for getting value ${_bashlyk_<subname>}, may
+#                be supressed if their name equal <subname>
+#    <subname> - substantial part of the global variable ${_bashlyk_<subname>}
+#    <value>   - new value for ${_bashlyk_<subname>}. The operation takes
+#                precedence over the "get" mode
+#                Important! If a variable is used as a <value>, then it must
+#                be in double quotes, otherwise in the case of an empty value,
+#                the meaning of the operation changes from "set" to "get" with
+#                the output of the value to STDOUT
 #  OUTPUT
-#    Вывод значения переменной $_bashlyk_<subname> в режиме get, если не указана
-#    приемная переменная и нет знака "="
+#                Output the variable $_bashlyk_<subname> value in get mode
 #  ERRORS
-#    MissingArgument - аргумент не задан
-#    InvalidVariable - не валидный идентификатор
+#    MissingArgument - no arguments
+#    InvalidVariable - invalid variable for "get" mode
+#    ## TODO updated needed
 #  EXAMPLE
 #    local sS sWSpaceAlias pid=$BASHPID k=key1 v=val1
 #    _ k=sWSpaceAlias
@@ -633,12 +633,12 @@ _(){
 
         if [[ -n "${1%=*}" ]]; then
 
-          udfOn InvalidVariable ${1%=*} || return $?
+          udfOn InvalidVariable ${1%=*} || return
           eval "export ${1%=*}=\$$( udfPrepareByType "_bashlyk_${1##*=}" )"
 
         else
 
-          udfOn InvalidVariable $( udfPrepareByType "${1##*=}" ) || return $?
+          udfOn InvalidVariable $( udfPrepareByType "${1##*=}" ) || return
           eval "export $( udfPrepareByType "${1##*=}" )=\$$( udfPrepareByType "_bashlyk_${1##*=}" )"
 
         fi
@@ -659,13 +659,15 @@ _(){
 #  SYNOPSIS
 #    udfGetMd5 [-]|--file <filename>|<args>
 #  DESCRIPTION
-#   Получить дайджест MD5 указанных данных
+#   make MD5 digest for input data
 #  INPUTS
-#    "-"  - использовать поток данных "input"
-#    --file <filename> - использовать в качестве данных указанный файл
-#    <args> - использовать строку аргументов
+#    -                 - data expected from standart input
+#    --file <filename> - data is a file
+#    <args>            - data is a arguments list
 #  OUTPUT
-#    Дайджест MD5
+#    MD5 digest only
+#  ERRORS
+#    EmptyResult - no digest
 #  EXAMPLE
 #    local fn
 #    udfMakeTemp fn
@@ -694,15 +696,17 @@ udfGetMd5() {
 #  SYNOPSIS
 #    udfGetPathMd5 <path>
 #  DESCRIPTION
-#   Получить дайджест MD5 всех нескрытых файлов в каталоге <path>
+#   Get recursively MD5 digest of all the non-hidden files in the directory
+#   <path>
 #  INPUTS
-#    <path>  - начальный каталог
+#    <path>  - source path
 #  OUTPUT
-#    Список MD5-сумм и имён нескрытых файлов в каталоге <path> рекурсивно
+#    List of MD5 digest with the names of non-hidden files in the directory
+#    <path> recursively
 #  ERRORS
-#    MissingArgument - аргумент не задан
-#    NoSuchFileOrDir - путь не доступен
-#    NotPermitted    - нет прав
+#    MissingArgument - not arguments
+#    NoSuchFileOrDir - path not found
+#    NotPermitted    - not permissible
 #  EXAMPLE
 #    local path=$(udfMakeTemp type=dir)
 #    echo "digest test 1" > ${path}/testfile1                                   #-
