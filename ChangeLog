@@ -1,3 +1,84 @@
+Thu, 13 Apr 2017 16:13:37 +0400
+	New upstream release
+	Version 1.90
+
+- features of bash version 4.2 are used, performance is improved, the number of
+  external utilities used is reduced:
+  - small optimizations from goo.gl/tDs1In
+  - used $(exec -c ...) for some external commands
+  - try using tmpfs for temporary files, init \$TMPDIR
+  - added udfCat function (cat analog) with timeout
+  - implicit call of the loader (bashlyk) in each library with error handling
+  - compatibility checked into the loader, moved some common globals init to the
+    loader
+- updated the list and contents of libraries - libopt.sh, libcsv.sh and
+  deprecated functions from libstd.sh moved to libold.sh
+- a new scheme for naming functions is applied for libnet.sh:
+  <library>::<class>.<method>, so udfGetValidIPsOnly and udfGetValidCIDR are
+  renamed to net::ipv4.host and net::ipv4.cidr, added new functions:
+  net::ipv4.{broadcast,mask,network,range}
+- libpid - udfStopProcess - fixed argument parsing
+- improved code, updated robodocs and tests, externals and exports lists
+
+bashlyk:
+- added _bashlyk_s0 DEBUGLEVEL HOSTNAME init
+- added global _bashlyk_ShellVersion to use available features
+- udfInit - init TMPDIR variable by writable tmpfs source or /tmp
+
+libmsg.sh:
+- udf{Echo,Mail,Notify2X} - used udfCat with timeout instead 'cat'
+- 'which mail ...OnError ..' replaced by 'udfOn CommandNotFound mail ..'
+- udfMail - prevent empty message body, added testing
+- udfMessage - the output is not duplicated to a standard device
+- udfNotify2X - fixed test error, return last command status
+- udfGetXSessionProperties:
+  - improved code - not used external commands 'cut', 'sort', 'uniq'
+  - better unification of X-Sessions helper with assosiative array
+- udfNotifyCommand:
+  - added debugging mode with saving the error log to
+    $TMPDIR/msg.<random>.notify_command.<command>.err
+
+liblog.sh:
+- udfCheck4LogUse - use _bashlyk_sCond4Log='redirect' for test
+- udfLog - improved input handling
+- udfSetLogSocket updated
+- udfDebug improved
+- added some functions from libstd.sh - udf{TimeStamp,Finally,Uptime,DateR}
+
+libstd.sh:
+- removed deprecated functions udfBaseId and udfDate
+- udfMakeTemp:
+  - improved arguments handling
+  - used $TMPDIR
+  - no show empty line
+- improved udfGetMd5
+
+libini.sh:
+- INI::__section.select - <o>.__section.get used $* instead $1
+- INI::get:
+  - fixed a bug due to changes in the method INI::__section.select
+  - added test for key with whitespaces
+- INI::__section.show - used whitespaces for ident from settings iPadding
+
+libpid.sh:
+- udfStopProcess - check argument after option checking, updated tests
+- added some functions from libstd.sh (udfAdd*, udfOnTrap)
+- udfAdd{FD,FO,Pid}2Clean - removed trap on 9 15 signals
+
+libnet.sh:
+- udfGetValid{IPsOnly,CIDR} renamed to net::ipv4.{host,cidr}
+- added functions net::ipv4.{broadcast,mask,network}
+- added new function net::ipv4.range - get range of the usable IP for CIDR
+- added new regexes _bashlyk_net_re{Address,Host,Mask,MaskBit,Network,Broadcast}
+- added aliases udfGetValid{IPsOnly,CIDR} for compatibility
+- use keys of the array for store and unification of the results
+- 'dig' and 'ipcalc' do not required now
+
+testunit.sh:
+- added temporary randomized debug log files to every lib test for stderr
+  messages saving
+
+
 Mon, 27 Feb 2017 16:48:08 +0400
 	New upstream release
 	Version 1.89
