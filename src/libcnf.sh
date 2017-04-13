@@ -1,5 +1,5 @@
 #
-# $Id: libcnf.sh 724 2017-04-06 17:29:28+04:00 toor $
+# $Id: libcnf.sh 734 2017-04-13 12:09:09+04:00 toor $
 #
 #****h* BASHLYK/libcnf
 #  DESCRIPTION
@@ -94,7 +94,7 @@ declare -rg _bashlyk_exports_cnf="udfGetConfig udfSetConfig"
 #    rm -f $confChild                                                           #-
 #    _ onError return                                                           #-
 #    eval "$( __getconfig $confChild )"                                         #? $_bashlyk_iErrorNoSuchFileOrDir
-#    eval "$( __getconfig )"                                                    #? $_bashlyk_iErrorEmptyOrMissingArgument
+#    eval "$( __getconfig )"                                                    #? $_bashlyk_iErrorMissingArgument
 #  SOURCE
 __getconfig() {
 
@@ -193,7 +193,7 @@ __getconfig() {
 #    echo "$b $pid $test" >| grep "false $$ test"                               #? true
 #    rm -f $confChild
 #    udfGetConfig $confChild s                                                  #? $_bashlyk_iErrorNoSuchFileOrDir
-#    udfGetConfig                                                               #? $_bashlyk_iErrorEmptyOrMissingArgument
+#    udfGetConfig                                                               #? $_bashlyk_iErrorMissingArgument
 #  SOURCE
 udfGetConfig() {
 
