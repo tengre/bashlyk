@@ -1,85 +1,58 @@
 #
-# $Id: libstd.sh 712 2017-03-21 17:21:34+04:00 toor $
+# $Id: libstd.sh 728 2017-04-12 16:09:55+04:00 toor $
 #
 #****h* BASHLYK/libstd
 #  DESCRIPTION
-#    стандартный набор функций, включает автоматически управляемые функции
-#    вывода сообщений, контроля корректности входных данных, создания временных
-#    объектов и автоматического их удаления после завершения сценария или
-#    фонового процесса, обработки ошибок
+#    simple common used functions
 #  USES
 #    liberr libmsg
 #  AUTHOR
 #    Damir Sh. Yakupov <yds@bk.ru>
 #******
-#***iV* liberr/BASH Compability
+#***iV* libstd/BASH compatibility
 #  DESCRIPTION
-#    BASH version 4.xx or more required for this script
+#    Compatibility checked by bashlyk (BASH version 4.xx or more required)
+#    $_BASHLYK_LIBSTD provides protection against re-using of this module
 #  SOURCE
-[ -n "$BASH_VERSION" ] && (( ${BASH_VERSINFO[0]} >= 4 )) || eval '             \
+[ -n "$_BASHLYK_LIBSTD" ] && return 0 || _BASHLYK_LIBSTD=1
+[ -n "$_BASHLYK" ] || . bashlyk || eval '                                      \
                                                                                \
-    echo "[!] BASH shell version 4.xx required for ${0}, abort.."; exit 255    \
+    echo "[!] bashlyk loader required for ${0}, abort.."; exit 255             \
                                                                                \
 '
 #******
-#  $_BASHLYK_LIBSTD provides protection against re-using of this module
-[[ $_BASHLYK_LIBSTD ]] && return 0 || _BASHLYK_LIBSTD=1
 #****L* libstd/Used libraries
 # DESCRIPTION
 #   Loading external libraries
 # SOURCE
-: ${_bashlyk_pathLib:=/usr/share/bashlyk}
 [[ -s ${_bashlyk_pathLib}/liberr.sh ]] && . "${_bashlyk_pathLib}/liberr.sh"
 [[ -s ${_bashlyk_pathLib}/libmsg.sh ]] && . "${_bashlyk_pathLib}/libmsg.sh"
 #******
 #****v* libstd/Global Variables
 #  DESCRIPTION
 #    Global variables of the library
-#    Блок инициализации глобальных переменных
-#    * $_bashlyk_sArg - аргументы командной строки вызова сценария
-#    * $_bashlyk_sWSpaceAlias - заменяющая пробел последовательность символов
-#    * $_bashlyk_aRequiredCmd_opt - список используемых в данном модуле внешних
-#    утилит
+#    * $_bashlyk_sWSpaceAlias - substitution for whitespace
 #  SOURCE
-: ${_bashlyk_afoClean:=}
-: ${_bashlyk_afdClean:=}
-: ${_bashlyk_ajobClean:=}
-: ${_bashlyk_apidClean:=}
-: ${_bashlyk_pidLogSock:=}
-: ${_bashlyk_envXSession:=}
-#
-: ${_bashlyk_sArg:="$@"}
-: ${_bashlyk_s0:=${0##*/}}
-: ${USER:=$( exec -c id -nu )}
-: ${_bashlyk_sUser:=$USER}
-: ${_bashlyk_pathDat:=/tmp}
-: ${_bashlyk_bNotUseLog:=1}
-: ${_bashlyk_onError:=throw}
-: ${_bashlyk_sWSpaceAlias:=___}
-: ${_bashlyk_emailRcpt:=postmaster}
-: ${_bashlyk_sId:=${_bashlyk_s0%.sh}}
+#: ${_bashlyk_envXSession:=}
+: ${TMPDIR:=/tmp}
 : ${HOSTNAME:=$( exec -c hostname 2>/dev/null )}
-: ${_bashlyk_sUnnamedKeyword:=_bashlyk_unnamed_key_}
-: ${_bashlyk_reMetaRules:='34=":40=(:41=):59=;:91=[:92=\\:93=]:61=='}
+: ${_bashlyk_sWSpaceAlias:=$( printf -- "\u00a0" )}
 : ${_bashlyk_emailSubj:="${_bashlyk_sUser}@${HOSTNAME}::${_bashlyk_s0}"}
 
 declare -rg _bashlyk_iMaxOutputLines=1000
+
 declare -rg _bashlyk_aRequiredCmd_std="                                        \
                                                                                \
-    cat chgrp chmod chown cut date echo expr grep hostname kill logname md5sum \
-    mkdir mkfifo mktemp pgrep ps pwd rm rmdir sed sleep tempfile touch tr      \
-    which xargs                                                                \
+    chgrp chmod chown echo expr md5sum mkdir mkfifo mktemp|tempfile rm touch   \
                                                                                \
 "
+
 declare -rg _bashlyk_aExport_std="                                             \
                                                                                \
-    _ _ARGUMENTS _gete _getv _pathDat _s0 _set udfAddFile2Clean udfAddFD2Clean \
-    udfAddFO2Clean udfAddFObj2Clean udfAddJob2Clean udfAddPath2Clean udfBaseId \
-    udfAddPid2Clean udfAlias2WSpace udfBashlykUnquote udfCheckCsv udfGetMd5    \
-    udfCleanQueue udfDate udfGetFreeFD  udfGetPathMd5 udfIsNumber udfSerialize \
-    udfIsValidVariable udfLocalVarFromCSV udfMakeTemp udfMakeTempV udfOnTrap   \
-    udfPrepareByType udfQuoteIfNeeded udfShellExec udfShowVariable udfXml      \
-    udfTimeStamp udfWSpace2Alias udfPrepare2Exec                               \
+    _  udfAlias2WSpace udfCat udfGetFreeFD udfGetMd5 udfGetPathMd5             \
+    udfGetTimeInSec udfIsHash udfIsNumber udfIsValidVariable udfMakeTemp       \
+    udfMakeTempV  udfPrepareByType udfQuoteIfNeeded udfShowVariable udfTrim    \
+    udfWSpace2Alias udfXml                                                     \
                                                                                \
 "
 #******
@@ -87,18 +60,19 @@ declare -rg _bashlyk_aExport_std="                                             \
 #  SYNOPSIS
 #    udfIsNumber <number> [<tag>]
 #  DESCRIPTION
-#    Проверка аргумента на то, что он является натуральным числом
-#    Аргумент считается числом, если он содержит цифры и может иметь в конце
-#    символ - признак порядка, например, k M G T (kilo-, Mega-, Giga-, Terra-)
+#    Checking the argument that it is a natural number
+#    The argument is considered a number if it contains decimal digits and can
+#    have a symbol at the end - a sign of order, for example, k M G T
+#    (kilo-, Mega-, Giga-, Terra-)
 #  INPUTS
-#    number - проверяемое значение
-#    tag    - набор символов, один из которых можно применить
-#             после цифр для указания признака числа, например,
-#             порядка. (регистр не имеет значения)
+#    <number> - input data
+#    <tag>    - a set of characters, one of which is permissible after the
+#    digits to indicate a characteristic of a number, for example, of order.
+#    (The register does not matter)
 #  RETURN VALUE
-#    0               - аргумент является натуральным числом
-#    NotNumber - аргумент не является натуральным числом
-#    MissingArgument - аргумент не задан
+#    0               - argument is a natural number
+#    NotNumber       - argument is not natural number
+#    MissingArgument - no arguments
 #  EXAMPLE
 #    udfIsNumber 12                                                             #? true
 #    udfIsNumber 34k k                                                          #? true
@@ -123,83 +97,28 @@ udfIsNumber() {
 
 }
 #******
-#****f* libstd/udfBaseId
-#  SYNOPSIS
-#    udfBaseId
-#  DESCRIPTION
-#    получить имя сценария без расширения .sh
-#    устаревшая - заменяется "_ sId"
-#  OUTPUT
-#    Короткое имя запущенного сценария без расширения ".sh"
-#  EXAMPLE
-#    udfBaseId >| grep -w "^$(basename $0 .sh)$"                                #? true
-#  SOURCE
-udfBaseId() {
-
-  _ sId
-
-}
-#******
-#****f* libstd/udfTimeStamp
-#  SYNOPSIS
-#    udfTimeStamp <args>
-#  DESCRIPTION
-#    сформировать строку c заголовком в виде текущего времени в формате
-#    'Jun 25 14:52:56' (LANG=C LC_TIME=C)
-#  INPUTS
-#    <args> - суффикс к заголовку
-#  OUTPUT
-#    строка с заголовком в виде "штампа времени"
-#  EXAMPLE
-#    local re="[a-zA-Z]+ [0-9]+ [0-9]+:[0-9]+:[[:digit:]]+ foo bar"
-#    udfTimeStamp foo bar >| grep -E "$re"                                      #? true
-#  SOURCE
-udfTimeStamp() {
-
-  LANG=C LC_TIME=C LC_ALL=C date "+%b %d %H:%M:%S $*"
-
-}
-#******
-#****f* libstd/udfDate
-#  SYNOPSIS
-#    udfDate <args>
-#  DESCRIPTION
-#    сформировать строку c заголовком в виде текущего времени
-#  INPUTS
-#    <args> - суффикс к заголовку
-#  OUTPUT
-#    строка с заголовком в виде "штампа времени"
-#  EXAMPLE
-#    local re="[[:graph:]]+ [0-9]+ [0-9]+:[0-9]+:[[:digit:]]+ foo bar"
-#    udfDate foo bar >| grep -E "$re"                                           #? true
-#  SOURCE
-udfDate() {
-
-  date "+%b %d %H:%M:%S $*"
-
-}
-#******
 #****f* libstd/udfShowVariable
 #  SYNOPSIS
-#    udfShowVariable args
+#    udfShowVariable <var>[,|;| ]...
 #  DESCRIPTION
-#    Вывод листинга значений аргументов, если они являются именами переменными. Допускается
-#    разделять имена переменных знаками ',' и ';', однако, необходимо помнить, что знак ';'
-#    (или аргументы целиком) необходимо экранировать кавычками, иначе интерпретатор воспримет
-#    аргумент как следующую команду!
-#    Если аргумент не является валидным именем переменной, то выводится соответствующее сообщение.
-#    Функцию можно использовать для формирования строк инициализации переменных, при этом
-#    информационные строки за счет экранирования командой ':' не выполняют никаких действий
-#    при разборе интерпретатором, их также можно отфильтровать командой "grep -v '^:'"
+#    Listing the values of the arguments if they are variable names. It is
+#    possible to separate the names of variables by the signs ',' and ';',
+#    however, it must be remembered that the ';' (Or entire arguments) must be
+#    quoted.
+#    If the argument is not a valid variable name, an appropriate message is
+#    displayed. The function can be used to form the initialization lines for
+#    variables, while the information lines are escaped by the ':' command when
+#    parsing by the interpreter; they can also be filtered using the command
+#    "grep -v '^:'".
 #  INPUTS
-#    args - ожидаются имена переменных
+#    <var> - list of the variables
 #  OUTPUT
-#    служебные строки выводятся с начальным ':' для автоматической подавления возможности выполнения
-#    Валидное имя переменной и значение в виде <Имя>=<Значение>
+#    Listing the values of the arguments if they are variable names.
+#    Service lines are output with the initial ':' to automatically suppress the
+#    execution capability
 #  EXAMPLE
 #    local s='text' b='true' i=2015 a='true 2015 text'
-#    udfShowVariable "a,b; i" s  >| grep -w "a=true 2015 text\|b=true\|i=2015\|s=text"                                    #? true
-#    udfShowVariable a b i s 12w >| grep '^:.*12w.* not valid'                                                            #? true                                                                             #? true
+#    udfShowVariable a,b';' i s 1w >| md5sum - | grep ^72f4ca740b23dcec5a82.*-$ #? true
 #  SOURCE
 udfShowVariable() {
 
@@ -229,13 +148,13 @@ udfShowVariable() {
 #  SYNOPSIS
 #    udfIsValidVariable <arg>
 #  DESCRIPTION
-#    Проверка аргумента на то, что он может быть валидным идентификатором
-#    переменной
+#    Validate <arg> as variable name
 #  INPUTS
-#    arg - проверяемое значение
+#    <arg> - expected valid variable name (without leader '$')
 #  RETURN VALUE
-#    0               - аргумент валидный идентификатор
-#    InvalidVariable - аргумент невалидный идентификатор (или не задан)
+#    0               - valid variable name
+#    MissingArgument - no arguments
+#    InvalidVariable - is not valid variable name
 #  EXAMPLE
 #    udfIsValidVariable                                                         #? $_bashlyk_iErrorMissingArgument
 #    udfIsValidVariable "12w"                                                   #? $_bashlyk_iErrorInvalidVariable
@@ -244,14 +163,13 @@ udfShowVariable() {
 #    udfIsValidVariable "&w1"                                                   #? $_bashlyk_iErrorInvalidVariable
 #    udfIsValidVariable "#k12s"                                                 #? $_bashlyk_iErrorInvalidVariable
 #    udfIsValidVariable ":v1"                                                   #? $_bashlyk_iErrorInvalidVariable
-#    udfIsValidVariable ";q1"                                                   #? $_bashlyk_iErrorInvalidVariable
-#    udfIsValidVariable ",g99"                                                  #? $_bashlyk_iErrorInvalidVariable
+#    udfIsValidVariable "a1-b"                                                  #? $_bashlyk_iErrorInvalidVariable
 #  SOURCE
 udfIsValidVariable() {
 
   [[ "$1" =~ ^[_a-zA-Z][_a-zA-Z0-9]*$ ]] && return 0
 
-  udfOn MissingArgument $1 || return $?
+  udfOn MissingArgument $1 || return
 
   return $_bashlyk_iErrorInvalidVariable
 
@@ -261,14 +179,15 @@ udfIsValidVariable() {
 #  SYNOPSIS
 #    udfQuoteIfNeeded <arg>
 #  DESCRIPTION
-#   Аргумент, содержащий пробел(ы) отмечается кавычками
+#    Argument with whitespaces is doublequoted
 #  INPUTS
-#    arg - argument
+#    <arg> - input
 #  OUTPUT
-#    аргумент с кавычками, если есть пробелы
+#    doublequoted input with whitespaces
 #  EXAMPLE
-#    udfQuoteIfNeeded "word" >| grep '^word$'                                   #? true
-#    udfQuoteIfNeeded two words >| grep '^".*"$'                                #? true
+#    udfQuoteIfNeeded                                                           #? $_bashlyk_iErrorMissingArgument
+#    udfQuoteIfNeeded "word"                                 >| grep '^word$'   #? true
+#    udfQuoteIfNeeded two words                              >| grep '^\".*\"$' #? true
 #  SOURCE
 udfQuoteIfNeeded() {
 
@@ -278,7 +197,7 @@ udfQuoteIfNeeded() {
 
   else
 
-    echo "$*"
+    [[ $* ]] && echo "$*" || return $_bashlyk_iErrorMissingArgument
 
   fi
 
@@ -288,23 +207,38 @@ udfQuoteIfNeeded() {
 #  SYNOPSIS
 #    udfWSpace2Alias -|<arg>
 #  DESCRIPTION
-#   Пробел в аргументе заменяется "магической" последовательностью символов,
-#   определённых в глобальной переменной $_bashlyk_sWSpaceAlias
+#    The whitespace in the argument is replaced by the "magic" sequence of
+#    characters defined in the global variable $_bashlyk_sWSpaceAlias
 #  INPUTS
-#    arg - argument
-#    "-" - ожидается ввод в конвейере
+#    <arg> - input data for conversion
+#        - - expected data from the standard input
 #  OUTPUT
-#   Аргумент с заменой пробелов на специальную последовательность символов
+#   input data with replaced (masked) whitespaces by a special sequence of
+#   characters
 #  EXAMPLE
-#    udfWSpace2Alias 'a b  cd' >| grep  '^a___b______cd$'                       #? true
-#    echo 'a b  cd' | udfWSpace2Alias - >| grep '^a___b______cd$'               #? true
+#    a=($(udfWSpace2Alias single argument expected ... ))
+#    echo ${#a[@]}                                                  >| grep ^1$ #? true
+#    a=($(echo single argument expected ... | udfWSpace2Alias -))
+#    echo ${#a[@]}                                                  >| grep ^1$ #? true
 #  SOURCE
 udfWSpace2Alias() {
 
+  local s=$*
+
   case $* in
 
-    -) sed -e "s/ /$_bashlyk_sWSpaceAlias/g";;
-    *) echo "${*// /$_bashlyk_sWSpaceAlias}";;
+    -)
+       ## TODO - on/off timeout
+       while read s; do
+
+         echo "${s// /$_bashlyk_sWSpaceAlias}"
+
+       done
+    ;;
+
+    *)
+       echo "${s// /$_bashlyk_sWSpaceAlias}"
+    ;;
 
   esac
 
@@ -314,24 +248,42 @@ udfWSpace2Alias() {
 #  SYNOPSIS
 #    udfAlias2WSpace -|<arg>
 #  DESCRIPTION
-#    Последовательность символов, определённых в глобальной переменной
-#    $_bashlyk_sWSpaceAlias заменяется на пробел в заданном аргументе.
-#    Причём, если появляются пробелы, то вывод обрамляется кавычками.
-#    В случае ввода в конвейере вывод не обрамляется кавычками
+#    If the input contains a sequence of characters defined in the global
+#    variable $_bashlyk_WSpase2Alias, then they are replaced by a whitespace.
+#    If, as a result of processing data from arguments (not from the standard
+#    input), replacements are made for whitespace, then the output is quoted.
 #  INPUTS
 #    arg - argument
 #  OUTPUT
-#    Аргумент с заменой специальной последовательности символов на пробел
+#    input data with "restored" whitespaces
 #  EXAMPLE
-#    udfAlias2WSpace a___b______cd >| grep '^"a b  cd"$'                        #? true
-#    echo a___b______cd | udfAlias2WSpace - >| grep '^a b  cd$'                 #? true
+#    local text s
+#    s="${_bashlyk_sWSpaceAlias}"
+#    text="many${s}arguments${s}expected${s}..."
+#    udfAlias2WSpace $text
+#    a=($(udfAlias2WSpace $text))
+#    echo ${#a[@]}                                                  >| grep ^4$ #? true
+#    a=($(echo $text | udfAlias2WSpace -))
+#    echo ${#a[@]}                                                  >| grep ^4$ #? true
 #  SOURCE
 udfAlias2WSpace() {
 
-  case "$1" in
+  local s=$*
 
-    -) sed -e "s/$_bashlyk_sWSpaceAlias/ /g";;
-    *) udfQuoteIfNeeded "${*//$_bashlyk_sWSpaceAlias/ }";;
+  case "$s" in
+
+    -)
+       ## TODO - on/off timeout
+       while read s; do
+
+         echo "${s//${_bashlyk_sWSpaceAlias}/ }"
+
+       done
+    ;;
+
+    *)
+       udfQuoteIfNeeded "${s//${_bashlyk_sWSpaceAlias}/ }"
+    ;;
 
   esac
 }
@@ -380,7 +332,7 @@ udfAlias2WSpace() {
 #    ls -1 $foTemp 2>/dev/null >| grep "pre\..*\.${s}3$"                        #? true
 #    rm -f $foTemp
 #    foTemp=$(udfMakeTemp prefix=pre. suffix=.${s}4 keep=false)                 #? true
-#    echo $foTemp | grep "/tmp/pre\..*\.${s}4"                                  #? true
+#    echo $foTemp >| grep "${TMPDIR}/pre\..*\.${s}4"                            #? true
 #    test -f $foTemp                                                            #? false
 #    rm -f $foTemp
 #    $(udfMakeTemp foTemp path=/tmp prefix=pre. suffix=.${s}5 keep=true)
@@ -405,14 +357,13 @@ udfMakeTemp() {
 
     [[ "$1" == "-v" ]] && shift
 
-    udfIsValidVariable $1 || eval $( udfOnError2 InvalidVariable "$1" )
+    udfIsValidVariable $1 || eval $( udfOnError InvalidVariable "$1" )
 
     eval 'export $1="$( shift; udfMakeTemp stdout-mode ${@//keep=false/} )"'
 
-    [[ ${!1} ]] || eval $( udfOnError2 iErrorEmptyResult "$1" )
+    [[ ${!1} ]] || eval $( udfOnError EmptyResult "$1" )
 
-    [[ $* =~ keep=false ]] && udfAddFO2Clean ${!1}
-    [[ $* =~ keep=true  ]] || udfAddFO2Clean ${!1}
+    [[ $* =~ keep=false || ! $* =~ keep=true ]] && udfAddFO2Clean ${!1}
 
     return 0
 
@@ -461,11 +412,11 @@ udfMakeTemp() {
   sPrefix=${sPrefix//\//}
   sSuffix=${sSuffix//\//}
 
-  if   [[ -f "$( exec -c which mktemp )" ]]; then
+  if   hash mktemp   2>/dev/null; then
 
     cmd=mktemp
 
-  elif [[ -f "$( exec -c which tempfile )" ]]; then
+  elif hash tempfile 2>/dev/null; then
 
     [[ $optDir ]] && cmd=direct || cmd=tempfile
 
@@ -473,7 +424,7 @@ udfMakeTemp() {
 
   if [[ ! $path ]]; then
 
-    [[ $bPipe ]] && path=$( _ pathRun ) || path="/tmp"
+    [[ $bPipe ]] && path=$( _ pathRun ) || path="$TMPDIR"
 
   fi
 
@@ -532,9 +483,9 @@ udfMakeTemp() {
 
   [[ $* =~ keep=false ]] && udfAddFO2Clean $s
 
-  echo $s
+  [[ $s ]] || return $( _ iErrorEmptyResult )
 
-  [[ $s ]] && return 0 || return $( _ iErrorEmptyResult )
+  echo $s
 
 }
 #******
@@ -564,7 +515,7 @@ udfMakeTemp() {
 #    ls $foTemp >| grep "prefi"                                                 #? true
 #    udfMakeTempV foTemp dir                                                    #? true
 #    ls -ld $foTemp >| grep "^drwx------.*${foTemp}$"                           #? true
-#    echo $(udfAddPath2Clean $foTemp)
+#    echo $(udfAddFO2Clean $foTemp)
 #    test -d $foTemp                                                            #? false
 #  SOURCE
 udfMakeTempV() {
@@ -589,373 +540,6 @@ udfMakeTempV() {
   esac
 
   udfMakeTemp $1 $sType $sKeep $sPrefix
-
-}
-#******
-#****f* libstd/udfPrepare2Exec
-#  SYNOPSIS
-#    udfPrepare2Exec - args
-#  DESCRIPTION
-#    Преобразование метапоследовательностей _bashlyk_&#XX_ в символы '[]()=;\'
-#    со стандартного входа или строки аргументов. В последнем случае,
-#    дополнительно происходит разделение полей "CSV;"-строки в отдельные
-#    строки
-#  INPUTS
-#    args - командная строка
-#       - - данные поступают со стандартного входа
-#  OUTPUT
-#    поток строк, пригодных для выполнения командным интерпретатором
-#  EXAMPLE
-#    local s1 s2
-#    s1="_bashlyk_&#91__bashlyk_&#93__bashlyk_&#59__bashlyk_&#40__bashlyk_&#41__bashlyk_&#61_"
-#    s2="while _bashlyk_&#91_ true _bashlyk_&#93_; do read;done"
-#    echo $s1 | udfPrepare2Exec -                                                              #? true
-#    udfPrepare2Exec $s1 >| grep -e '\[\];()='                                                 #? true
-#    udfPrepare2Exec $s2 >| grep -e "^while \[ true \]$\|^ do read$\|^done$"                   #? true
-#  SOURCE
-udfPrepare2Exec() {
-
-  local s IFS=$' \t\n'
-
-  if [[ "$1" == "-" ]]; then
-
-    udfBashlykUnquote
-
-  else
-
-    echo -e "${*//;/\\n}" | udfBashlykUnquote
-
-  fi
-
-  return 0
-
-}
-#******
-#****f* libstd/udfShellExec
-#  SYNOPSIS
-#    udfShellExec args
-#  DESCRIPTION
-#    Выполнение командной строки во внешнем временном файле
-#    в текущей среде интерпретатора оболочки
-#  INPUTS
-#    args - командная строка
-#  RETURN VALUE
-#    MissingArgument - аргумент не задан
-#    в остальных случаях код возврата командной строки с учетом доступа к временному файлу
-#  EXAMPLE
-#    udfShellExec 'true; false'                                                 #? false
-#    udfShellExec 'false; true'                                                 #? true
-#  SOURCE
-udfShellExec() {
-
-  udfOn MissingArgument $* || return $?
-
-  local rc fn IFS=$' \t\n'
-
-  udfMakeTemp fn
-  udfPrepare2Exec "$@" > $fn
-  . $fn
-  rc=$?
-  rm -f $fn
-
-  return $rc
-
-}
-#******
-#****f* libstd/udfAddFile2Clean
-#  SYNOPSIS
-#    udfAddFile2Clean args
-#  DESCRIPTION
-#    Добавляет имена файлов к списку удаляемых при завершении сценария
-#    Предназначен для удаления временных файлов.
-#  INPUTS
-#    args - имена файлов
-#  EXAMPLE
-#    local a fnTemp1 fnTemp2 s=$RANDOM
-#    udfMakeTemp fnTemp1 keep=true suffix=.${s}1
-#    test -f $fnTemp1                                                           #? true
-#    echo $(udfAddFile2Clean $fnTemp1 )
-#    ls -l /tmp/*.${s}1 2>/dev/null >| grep ".*\.${s}1"                         #? false
-#    echo $(udfMakeTemp fnTemp2 suffix=.${s}2)
-#    ls -l /tmp/*.${s}2 2>/dev/null >| grep ".*\.${s}2"                         #? false
-#    echo $(udfMakeTemp fnTemp2 suffix=.${s}3 keep=true)
-#    ls -l /tmp/*.${s}3 2>/dev/null >| grep ".*\.${s}3"                         #? true
-#    a=$(ls -1 /tmp/*.${s}3)
-#    echo $(udfAddFile2Clean $a )
-#    ls -l /tmp/*.${s}3 2>/dev/null >| grep ".*\.${s}3"                         #? false
-#  SOURCE
-udfAddFile2Clean() { udfAddFO2Clean $@; }
-#******
-#****f* libstd/udfAddPath2Clean
-#  SYNOPSIS
-#    udfAddPath2Clean args
-#  DESCRIPTION
-#    Добавляет имена каталогов к списку удаляемых при завершении сценария.
-#    Предназначен для удаления временных каталогов (если они пустые).
-#  INPUTS
-#    args - имена каталогов
-#  EXAMPLE
-#    local a pathTemp1 pathTemp2 s=$RANDOM
-#    udfMakeTemp pathTemp1 keep=true suffix=.${s}1 type=dir
-#    test -d $pathTemp1                                                         #? true
-#    echo $(udfAddPath2Clean $pathTemp1 )
-#    ls -1ld /tmp/*.${s}1 2>/dev/null >| grep ".*\.${s}1"                       #? false
-#    echo $(udfMakeTemp pathTemp2 suffix=.${s}2 type=dir)
-#    ls -1ld /tmp/*.${s}2 2>/dev/null >| grep ".*\.${s}2"                       #? false
-#    echo $(udfMakeTemp pathTemp2 suffix=.${s}3 keep=true type=dir)
-#    ls -1ld /tmp/*.${s}3 2>/dev/null >| grep ".*\.${s}3"                       #? true
-#    a=$(ls -1ld /tmp/*.${s}3)
-#    echo $(udfAddPath2Clean $a )
-#    ls -1ld /tmp/*.${s}3 2>/dev/null >| grep ".*\.${s}3"                       #? false
-#  SOURCE
-udfAddPath2Clean() { udfAddFO2Clean $@; }
-#******
-#****f* libstd/udfAddJob2Clean
-#  SYNOPSIS
-#    udfAddJob2Clean args
-#  NOTES
-#    deprecated
-#  DESCRIPTION
-#    функция удалена, осталась только заглушка
-#  SOURCE
-udfAddJob2Clean() { return 0; }
-#******
-#****f* libstd/udfAddPid2Clean
-#  SYNOPSIS
-#    udfAddPid2Clean args
-#  DESCRIPTION
-#    Добавляет идентификаторы запущенных процессов к списку очистки при
-#    завершении текущего процесса.
-#  INPUTS
-#    args - идентификаторы процессов
-#  EXAMPLE
-#    sleep 99 &
-#    udfAddPid2Clean $!
-#    test "${_bashlyk_apidClean[$BASHPID]}" -eq "$!"                                    #? true
-#    ps -p $! -o pid= >| grep -w $!                                                     #? true
-#    echo $(udfAddPid2Clean $!; echo "$BASHPID : $! : ${_bashlyk_apidClean[$BASHPID]}")
-#    ps -p $! -o pid= >| grep -w $!                                                     #? false
-#
-#  SOURCE
-udfAddPid2Clean() {
-
-  [[ $1 ]] || return 0
-
-  _bashlyk_apidClean[$BASHPID]+=" $*"
-
-  trap "udfOnTrap" 2 5 9 15 EXIT
-
-}
-#******
-#****f* libstd/udfCleanQueue
-#  SYNOPSIS
-#    udfCleanQueue args
-#  DESCRIPTION
-#    Псевдоним для udfAddFile2Clean. (Устаревшее)
-#  INPUTS
-#    args - имена файлов
-#  SOURCE
-udfCleanQueue()    { udfAddFile2Clean $@; }
-udfAddFObj2Clean() { udfAddFO2Clean   $@; }
-#******
-#****f* libstd/udfAddFO2Clean
-#  SYNOPSIS
-#    udfAddFO2Clean <args>
-#  DESCRIPTION
-#    add list of filesystem objects for cleaning on exit
-#  INPUTS
-#    args - files or directories for cleaning on exit
-#  SOURCE
-udfAddFO2Clean() {
-
-  udfOn MissingArgument return $*
-
-  _bashlyk_afoClean[$BASHPID]+=" $*"
-
-  trap "udfOnTrap" 2 5 9 15 EXIT
-
-}
-#******
-#****f* libstd/udfAddFD2Clean
-#  SYNOPSIS
-#    udfAddFD2Clean <args>
-#  DESCRIPTION
-#    add list of filedescriptors for cleaning on exit
-#  ARGUMENTS
-#    <args> - file descriptors
-#  SOURCE
-udfAddFD2Clean() {
-
-  udfOn MissingArgument $* || return $?
-
-  _bashlyk_afdClean[$BASHPID]+=" $*"
-
-  trap "udfOnTrap" 2 5 9 15 EXIT
-
-}
-#******
-#****f* libstd/udfOnTrap
-#  SYNOPSIS
-#    udfOnTrap
-#  DESCRIPTION
-#    The cleaning procedure at the end of the calling script.
-#    Suitable for trap command call.
-#    Produced deletion of files and empty directories; stop child processes,
-#    closure of open file descriptors listed in the corresponding global
-#    variables. All processes must be related and descended from the working
-#    script process. Closes the socket script log if it was used.
-#  EXAMPLE
-#    local fd fn1 fn2 path pid pipe
-#    udfMakeTemp fn1
-#    udfMakeTemp fn2
-#    udfMakeTemp path type=dir
-#    udfMakeTemp pipe type=pipe
-#    fd=$( udfGetFreeFD )
-#    eval "exec ${fd}>$fn2"
-#    (sleep 1024)&
-#    pid=$!
-#    test -f $fn1
-#    test -d $path
-#    ps -p $pid -o pid= >| grep -w $pid
-#    ls /proc/$$/fd >| grep -w $fd
-#    udfAddFD2Clean $fd
-#    udfAddPid2Clean $pid
-#    udfAddFile2Clean $fn1
-#    udfAddPath2Clean $path
-#    udfAddFile2Clean $pipe
-#    udfOnTrap
-#    ls /proc/$$/fd >| grep -w $fd                                              #? false
-#    ps -p $pid -o pid= >| grep -w $pid                                         #? false
-#    test -f $fn1                                                               #? false
-#    test -d $path                                                              #? false
-#  SOURCE
-udfOnTrap() {
-
-  local i IFS=$' \t\n' re s
-  local -a a
-
-  a=( ${_bashlyk_apidClean[$BASHPID]} )
-
-  for (( i=${#a[@]}-1; i>=0 ; i-- )) ; do
-
-    re="\\b${a[i]}\\b"
-
-    for s in 15 9; do
-
-      if [[  "$( pgrep -d' ' -P $$ )" =~ $re ]]; then
-
-        if ! kill -${s} ${a[i]}; then
-
-          udfSetLastError NotPermitted "${a[i]}"
-          sleep 0.1
-
-        fi
-
-      fi
-
-    done
-
-  done
-
-  for s in ${_bashlyk_afdClean[$BASHPID]}; do
-
-    udfIsNumber $s && eval "exec ${s}>&-"
-
-  done
-
-  for s in ${_bashlyk_afoClean[$BASHPID]}; do
-
-    [[ -f $s ]] && rm -f $s && continue
-    [[ -p $s ]] && rm -f $s && continue
-    [[ -d $s ]] && rmdir --ignore-fail-on-non-empty $s 2>/dev/null && continue
-
-  done
-
-  if [[ -n "${_bashlyk_pidLogSock}" ]]; then
-
-    exec >/dev/null 2>&1
-    wait ${_bashlyk_pidLogSock}
-
-  fi
-
-}
-#******
-#****f* libstd/_ARGUMENTS
-#  SYNOPSIS
-#    _ARGUMENTS [args]
-#  DESCRIPTION
-#    Получить или установить значение переменной $_bashlyk_sArg -
-#    командная строка сценария
-#    устаревшая функция, заменяется _, _get{e,v}, _set
-#  INPUTS
-#    args - новая командная строка
-#  OUTPUT
-#    Вывод значения переменной $_bashlyk_sArg
-#  EXAMPLE
-#    local ARGUMENTS=$(_ARGUMENTS)
-#    _ARGUMENTS >| grep "^${_bashlyk_sArg}$"                                    #? true
-#    _ARGUMENTS "test"
-#    _ARGUMENTS >| grep -w "^test$"                                             #? true
-#    _ARGUMENTS $ARGUMENTS
-#  SOURCE
-_ARGUMENTS() {
-
- [[ $1 ]] && _bashlyk_sArg="$*" || echo ${_bashlyk_sArg}
-
-}
-#******
-#****f* libstd/_s0
-#  SYNOPSIS
-#    _s0
-#  DESCRIPTION
-#    Получить или установить значение переменной $_bashlyk_s0 -
-#    короткое имя сценария
-#    устаревшая функция, заменяется _, _get{e,v}, _set
-#  OUTPUT
-#    Вывод значения переменной $_bashlyk_s0
-#  EXAMPLE
-#    local s0=$(_s0)
-#    _s0 >| grep -w "^${_bashlyk_s0}$"                                          #? true
-#    _s0 "test"
-#    _s0 >| grep -w "^test$"                                                    #? true
-#    _s0 $s0
-#  SOURCE
-_s0() {
-
- [[ $1 ]] && _bashlyk_s0="$*" || echo ${_bashlyk_s0}
-
-}
-#******
-#****f* libstd/_pathDat
-#  SYNOPSIS
-#    _pathDat
-#  DESCRIPTION
-#    Получить или установить значение переменной $_bashlyk_pathDat -
-#    полное имя каталога данных сценария
-#    устаревшая функция, заменяется _, _get{e,v}, _set
-#  OUTPUT
-#    Вывод значения переменной $_bashlyk_pathDat
-#  EXAMPLE
-#    local pathDat=$(_pathDat)
-#    _pathDat >| grep -w "^${_bashlyk_pathDat}$"                                #? true
-#    _pathDat "/tmp/testdat.$$"
-#    _pathDat >| grep -w "^/tmp/testdat.${$}$"                                  #? true
-#    rmdir $(_pathDat)                                                          #? true
-#    _pathDat $pathDat
-#  SOURCE
-_pathDat() {
-
-  if [[ $1 ]]; then
-
-    _bashlyk_pathDat="$*"
-    ## TODO error handling
-    mkdir -p $_bashlyk_pathDat
-
-  else
-
-    echo ${_bashlyk_pathDat}
-
-  fi
 
 }
 #******
@@ -995,24 +579,23 @@ udfPrepareByType() {
 #  SYNOPSIS
 #    _ [[<get>]=]<subname> [<value>]
 #  DESCRIPTION
-#    Получить или установить (get/set) значение глобальной переменной
-#    $_bashlyk_<subname>
+#    Special getter/setter for global variables with names like "$_bashlyk_..."
 #  INPUTS
-#    <get>     - переменная для приема значения (get) ${_bashlyk_<subname>},
-#                может быть опущена (знак "=" не опускается), в этом случае
-#                предполагается, что она имеет имя <subname>
-#    <subname> - содержательная часть глобальной имени ${_bashlyk_<subname>}
-#    <value>   - новое значение (set) для ${_bashlyk_<subname>}. Имеет приоритет
-#                перед режимом "get"
-#    Важно! Если используется переменная в качестве <value>, то она обязательно
-#    должна быть в двойных кавычках, иначе в случае принятия пустого значения
-#    смысл операции поменяется с "set" на "get" c выводом значения на STDOUT
+#    <get>     - (local) variable for getting value ${_bashlyk_<subname>}, may
+#                be supressed if their name equal <subname>
+#    <subname> - substantial part of the global variable ${_bashlyk_<subname>}
+#    <value>   - new value for ${_bashlyk_<subname>}. The operation takes
+#                precedence over the "get" mode
+#                Important! If a variable is used as a <value>, then it must
+#                be in double quotes, otherwise in the case of an empty value,
+#                the meaning of the operation changes from "set" to "get" with
+#                the output of the value to STDOUT
 #  OUTPUT
-#    Вывод значения переменной $_bashlyk_<subname> в режиме get, если не указана
-#    приемная переменная и нет знака "="
+#                Output the variable $_bashlyk_<subname> value in get mode
 #  ERRORS
-#    MissingArgument - аргумент не задан
-#    InvalidVariable - не валидный идентификатор
+#    MissingArgument - no arguments
+#    InvalidVariable - invalid variable for "get" mode
+#    ## TODO updated needed
 #  EXAMPLE
 #    local sS sWSpaceAlias pid=$BASHPID k=key1 v=val1
 #    _ k=sWSpaceAlias
@@ -1050,12 +633,12 @@ _(){
 
         if [[ -n "${1%=*}" ]]; then
 
-          udfOn InvalidVariable ${1%=*} || return $?
+          udfOn InvalidVariable ${1%=*} || return
           eval "export ${1%=*}=\$$( udfPrepareByType "_bashlyk_${1##*=}" )"
 
         else
 
-          udfOn InvalidVariable $( udfPrepareByType "${1##*=}" ) || return $?
+          udfOn InvalidVariable $( udfPrepareByType "${1##*=}" ) || return
           eval "export $( udfPrepareByType "${1##*=}" )=\$$( udfPrepareByType "_bashlyk_${1##*=}" )"
 
         fi
@@ -1072,222 +655,40 @@ _(){
 
 }
 #******
-#****f* libstd/_getv
-#  SYNOPSIS
-#    _getv <subname> [<get>]
-#  DESCRIPTION
-#    Получить (get) значение глобальной переменной $_bashlyk_<subname> в
-#    (локальную) переменную
-#  INPUTS
-#    <get>     - переменная для приема значения (get) ${_bashlyk_<subname>},
-#                может быть опущена, в этом случае приемником становится
-#                переменная <subname>
-#    <subname> - содержательная часть глобальной имени ${_bashlyk_<subname>}
-#  ERRORS
-#    MissingArgument - аргумент не задан
-#    InvalidVariable - не валидный идентификатор
-#  EXAMPLE
-#    local sS sWSpaceAlias
-#    _getv sWSpaceAlias sS
-#    echo "$sS" >| grep "^${_bashlyk_sWSpaceAlias}$"                            #? true
-#    _getv sWSpaceAlias
-#    echo "$sWSpaceAlias" >| grep "^${_bashlyk_sWSpaceAlias}$"                  #? true
-#  SOURCE
-_getv() {
-
-  udfOn MissingArgument $1 || return $?
-
-  local IFS=$' \t\n'
-
-  if [[ $2 ]]; then
-
-    udfIsValidVariable $2 || return $?
-    eval "export $2=\$_bashlyk_${1}"
-
-  else
-
-    udfIsValidVariable $1 || return $?
-    eval "export $1=\$_bashlyk_${1}"
-
-  fi
-
-  return 0
-
-}
-#******
-#****f* libstd/_gete
-#  SYNOPSIS
-#    _gete <subname>
-#  DESCRIPTION
-#    Вывести значение глобальной переменной $_bashlyk_<subname>
-#  INPUTS
-#    <subname> - содержательная часть глобальной имени ${_bashlyk_<subname>}
-#  ERRORS
-#    MissingArgument - аргумент не задан
-#  EXAMPLE
-#    _gete sWSpaceAlias >| grep "^${_bashlyk_sWSpaceAlias}$"                    #? true
-#  SOURCE
-_gete() {
-
-  udfOn MissingArgument $1 || return $?
-
-  local IFS=$' \t\n'
-
-  eval "echo \$_bashlyk_${1}"
-
-}
-#******
-#****f* libstd/_set
-#  SYNOPSIS
-#    _set <subname> [<value>]
-#  DESCRIPTION
-#    установить (set) значение глобальной переменной $_bashlyk_<subname>
-#  INPUTS
-#    <subname> - содержательная часть глобальной имени ${_bashlyk_<subname>}
-#    <value>   - новое значение, в случае отсутствия - пустая строка
-#  ERRORS
-#    MissingArgument - аргумент не задан
-#  EXAMPLE
-#    local sWSpaceAlias=$(_ sWSpaceAlias)
-#    _set sWSpaceAlias _-_
-#    _ sWSpaceAlias >| grep "^_-_$"                                             #? true
-#    _set sWSpaceAlias $sWSpaceAlias
-#  SOURCE
-_set() {
-
-  udfOn MissingArgument $1 || return $?
-
-  local IFS=$' \t\n'
-
-  [[ $1 ]] || eval $( udfOnError return MissingArgument )
-
-  eval "_bashlyk_$1=$2"
-
-}
-#******
-#****f* libstd/udfCheckCsv
-#  SYNOPSIS
-#    udfCheckCsv [[-v] <varname>] "<csv>;"
-#  DESCRIPTION
-#    Bringing the format "key = value" fields of the CSV-line. If the field does
-#    not contain a key or key contains a space, then the field receives key
-#    species _bashlyk_unnamed_key_<increment>, and all the contents of the field
-#    becomes the value. The result is printed to stdout or assigned to the <var>
-#    variable if the first argument is listed as -v <var> ( -v can be skipped )
-#  INPUTS
-#    csv;    - CSV-string, separated by ';'
-#    Important! Enclose the string in double quotes if it can contain spaces
-#    Important! The string must contain the field sign ";"
-#    varname - variable identifier (without the "$"). If present the result will
-#    be assigned to this variable, otherwise result will be printed to stdout
-#  OUTPUT
-#    separated by a ";" CSV-string in fields that contain data in the format
-#    "<key> = <value>; ..."
-#  ERRORS
-#    EmptyResult     - empty result
-#    MissingArgument - no arguments
-#    InvalidArgument - invalid argument
-#    InvalidVariable - invalid variable for output assign
-#  EXAMPLE
-#    local cmd=udfCheckCsv csv="a=b;a=c;s=a b c d e f;test value" v1 v2
-#    local re='^a=b;a=c;s="a b c d e f";_bashlyk_unnamed_key_0="test value";$'
-#    $cmd "$csv" >| grep "$re"                                                  #? true
-#    $cmd -v v1 "$csv"                                                          #? true
-#    echo $v1 >| grep "$re"                                                     #? true
-#    $cmd  v2 "$csv"                                                            #? true
-#    echo $v2 >| grep "$re"                                                     #? true
-#    $cmd  v2 ""                                                                #? ${_bashlyk_iErrorEmptyResult}
-#    echo $v2 >| grep "$re"                                                     #? false
-#    $cmd -v invalid+variable "$csv"                                            #? ${_bashlyk_iErrorInvalidVariable}
-#    $cmd    invalid+variable "$csv"                                            #? ${_bashlyk_iErrorInvalidVariable}
-#    $cmd invalid+variable                                                      #? ${_bashlyk_iErrorInvalidArgument}
-#    $cmd _valid_variable_                                                      #? ${_bashlyk_iErrorInvalidArgument}
-#    $cmd 'csv data;' | grep '^_bashlyk_unnamed_key_0="csv data";$'             #? true
-#    $cmd                                                                       #? ${_bashlyk_iErrorMissingArgument}
-#  SOURCE
-udfCheckCsv() {
-
-  if (( $# > 1 )); then
-
-    [[ "$1" == "-v" ]] && shift
-
-    udfIsValidVariable $1 || eval $( udfOnError return InvalidVariable "$1" )
-
-    eval 'export $1="$( shift; udfCheckCsv "$1" )"'
-
-    [[ ${!1} ]] || eval $( udfOnError return EmptyResult "$1" )
-
-    return 0
-
-  fi
-
-  udfOn MissingArgument $1 || return $?
-
-  [[ $1 =~ \; ]] || return $( _ iErrorInvalidArgument )
-
-  local csv i IFS k s v
-
-  IFS=';'
-  i=0
-  csv=''
-
-  for s in $1; do
-
-    s=${s/\[*\][;]/}
-    s=${s//[\'\"]/}
-
-    k="$( echo ${s%%=*} )"
-    v="$( echo ${s#*=} )"
-
-    [[ -n "$k" ]] || continue
-    if [[ "$k" == "$v" || -n "$(echo "$k" | grep '.*[[:space:]+].*')" ]]; then
-
-      k=${_bashlyk_sUnnamedKeyword}${i}
-      i=$((i+1))
-
-    fi
-
-    IFS=' ' csv+="$k=$( udfQuoteIfNeeded $v );"
-
-  done
-
-  IFS=$' \t\n'
-
-  echo "$csv"
-
-  [[ $csv ]] && return 0 || return $( _ iErrorEmptyResult )
-
-}
-#******
 #****f* libstd/udfGetMd5
 #  SYNOPSIS
 #    udfGetMd5 [-]|--file <filename>|<args>
 #  DESCRIPTION
-#   Получить дайджест MD5 указанных данных
+#   make MD5 digest for input data
 #  INPUTS
-#    "-"  - использовать поток данных "input"
-#    --file <filename> - использовать в качестве данных указанный файл
-#    <args> - использовать строку аргументов
+#    -                 - data expected from standart input
+#    --file <filename> - data is a file
+#    <args>            - data is a arguments list
 #  OUTPUT
-#    Дайджест MD5
+#    MD5 digest only
+#  ERRORS
+#    EmptyResult - no digest
 #  EXAMPLE
-#    udfGetMd5 "test" >| grep -w 'd8e8fca2dc0f896fd7cb4cb0031ba249'             #? true
+#    local fn
+#    udfMakeTemp fn
+#    echo test > $fn                                                            #-
+#    echo test | udfGetMd5 -      >| grep -w 'd8e8fca2dc0f896fd7cb4cb0031ba249' #? true
+#    udfGetMd5 --file "$fn"       >| grep -w 'd8e8fca2dc0f896fd7cb4cb0031ba249' #? true
+#    udfGetMd5 test               >| grep -w 'd8e8fca2dc0f896fd7cb4cb0031ba249' #? true
 #  SOURCE
 udfGetMd5() {
 
-  {
+  local s
 
-    case "$1" in
+  case "$1" in
 
-          "-") cat | md5sum -;;
-     "--file") [[ -f "$2" ]] && md5sum "$2";;
-            *) [[ $* ]] && echo "$*" | md5sum -;;
+         -)                s="$( exec -c md5sum - < <( udfCat ) )";;
+    --file) [[ -f $2 ]] && s="$( exec -c md5sum "$2" )"           ;;
+         *) [[    $* ]] && s="$( exec -c md5sum - <<< "$*" )"     ;;
 
-    esac
+  esac
 
-  } | cut -f 1 -d' '
-
-  return 0
+  [[ $s ]] && echo ${s%% *} || return $_bashlyk_iErrorEmptyResult
 
 }
 #******
@@ -1295,24 +696,26 @@ udfGetMd5() {
 #  SYNOPSIS
 #    udfGetPathMd5 <path>
 #  DESCRIPTION
-#   Получить дайджест MD5 всех нескрытых файлов в каталоге <path>
+#   Get recursively MD5 digest of all the non-hidden files in the directory
+#   <path>
 #  INPUTS
-#    <path>  - начальный каталог
+#    <path>  - source path
 #  OUTPUT
-#    Список MD5-сумм и имён нескрытых файлов в каталоге <path> рекурсивно
+#    List of MD5 digest with the names of non-hidden files in the directory
+#    <path> recursively
 #  ERRORS
-#    MissingArgument - аргумент не задан
-#    NoSuchFileOrDir - путь не доступен
-#    NotPermitted    - нет прав
+#    MissingArgument - not arguments
+#    NoSuchFileOrDir - path not found
+#    NotPermitted    - not permissible
 #  EXAMPLE
 #    local path=$(udfMakeTemp type=dir)
 #    echo "digest test 1" > ${path}/testfile1                                   #-
 #    echo "digest test 2" > ${path}/testfile2                                   #-
 #    echo "digest test 3" > ${path}/testfile3                                   #-
-#    udfAddFile2Clean ${path}/testfile1
-#    udfAddFile2Clean ${path}/testfile2
-#    udfAddFile2Clean ${path}/testfile3
-#    udfAddPath2Clean ${path}
+#    udfAddFO2Clean ${path}/testfile1
+#    udfAddFO2Clean ${path}/testfile2
+#    udfAddFO2Clean ${path}/testfile3
+#    udfAddFO2Clean ${path}
 #    udfGetPathMd5 $path >| grep ^[[:xdigit:]]*.*testfile.$                     #? true
 #    udfGetPathMd5                                                              #? ${_bashlyk_iErrorMissingArgument}
 #    udfGetPathMd5 /notexist/path                                               #? ${_bashlyk_iErrorNoSuchFileOrDir}
@@ -1368,118 +771,6 @@ udfXml() {
   s=($1)
   shift
   echo "<${s[*]}>${*}</${s[0]}>"
-
-}
-#******
-#****f* libstd/udfSerialize
-#  SYNOPSIS
-#    udfSerialize variables
-#  DESCRIPTION
-#    Generate csv string from variable list
-#  INPUTS
-#    variables - list of variables
-#  OUTPUT
-#    Show csv string
-#  ERRORS
-#    MissingArgument - аргумент не задан
-#  EXAMPLE
-#    local sUname="$(uname -a)" sDate="" s=100
-#    udfSerialize sUname sDate s >| grep "^sUname=.*s=100;$"                                                                 #? true
-#  SOURCE
-udfSerialize() {
-
-  udfOn MissingArgument $1 || return $?
-
-  local bashlyk_s_Serialize csv IFS=$' \t\n'
-
-  for bashlyk_s_Serialize in $*; do
-
-    udfIsValidVariable "$bashlyk_s_Serialize" \
-      && csv+="${bashlyk_s_Serialize}=${!bashlyk_s_Serialize};" \
-      || udfSetLastError InvalidVariable "$bashlyk_s_Serialize"
-
-  done
-
-  echo "$csv"
-
-}
-#******
-#****f* libstd/udfBashlykUnquote
-#  SYNOPSIS
-#    udfBashlykUnquote
-#  DESCRIPTION
-#    Преобразование метапоследовательностей _bashlyk_&#XX_ из потока со стандартного входа в символы '"[]()=;\'
-#  EXAMPLE
-#    local s="_bashlyk_&#34__bashlyk_&#91__bashlyk_&#93__bashlyk_&#59__bashlyk_&#40__bashlyk_&#41__bashlyk_&#61_"
-#    echo $s | udfBashlykUnquote >| grep -e '\"\[\];()='                                                          #? true
-#  SOURCE
-udfBashlykUnquote() {
-
-  local cmd='sed' i IFS=$' \t\n'
-  local -A a=( [34]='\"' [40]='\(' [41]='\)' [59]='\;' [61]='\=' [91]='\[' [92]='\\\' [93]='\]' )
-
-  for i in "${!a[@]}"; do
-
-    cmd+=" -e \"s/_bashlyk_\&#${i}_/${a[$i]}/g\""
-
-  done
-  ## TODO продумать команды для удаления "_bashlyk_csv_record=" и автоматических ключей
-  #cmd+=" -e \"s/\t\?_bashlyk_ini_.*_autoKey_[0-9]\+\t\?=\t\?//g\""
-  cmd+=' -e "s/^\"\(.*\)\"$/\1/"'
-
-  eval "$cmd"
-
-}
-#******
-#****f* libstd/udfLocalVarFromCSV
-#  SYNOPSIS
-#    udfLocalVarFromCSV CSV1 CSV2 ...
-#  DESCRIPTION
-#    Prepare string from comma separated lists (ex. INI options) for definition
-#    of the local variables by using eval
-#  ERRORS
-#    MissingArgument - аргумент не задан
-#  EXAMPLE
-#    udfLocalVarFromCSV a1,b2,c3                                                #? true
-#    udfLocalVarFromCSV a1 b2,c3                                                #? true
-#    udfLocalVarFromCSV a1,b2 c3                                                #? true
-#    echo $( udfLocalVarFromCSV a1,b2 c3,4d 2>/dev/null ) >| grep '^local'      #? false
-#  SOURCE
-udfLocalVarFromCSV() {
-
-  if [[ ! $@ ]]; then
-
-    udfOnError1 throw MissingArgument
-    return $( _ iErrorMissingArgument )
-
-  fi
-
-  local s
-  local -A h
-
-  for s in ${*//[;,]/ }; do
-
-    if ! udfIsValidVariable $s; then
-
-      udfOnError1 throw InvalidVariable "$s"
-      return $( _ iErrorInvalidVariable )
-
-    fi
-
-    h[$s]="$s"
-
-  done
-
-  if [[ ${h[@]} ]]; then
-
-    echo "local ${h[@]}"
-
-  else
-
-    udfOnError1 throw EmptyResult
-    return $( _ iErrorEmptyResult )
-
-  fi
 
 }
 #******
@@ -1556,6 +847,8 @@ udfGetTimeInSec() {
 #    get unused filedescriptor
 #  OUTPUT
 #    show given filedescriptor
+#  TODO
+#    race possible
 #  EXAMPLE
 #    udfGetFreeFD | grep -P "^\d+$"                                             #? true
 #  SOURCE
@@ -1633,4 +926,19 @@ udfTrim() {
   echo "$( expr "$s" : "^\ *\(.*[^ ]\)\ *$" )"
 
 }
+#******
+#****f* libstd/udfCat
+#  SYNOPSIS
+#    udfCat
+#  DESCRIPTION
+#    show input by line
+#  OUTPUT
+#    show input by line
+#  EXAMPLE
+#    local s fn
+#    udfMakeTemp -v fn
+#    for s in $( seq 0 12 ); do printf -- '\t%s\n' "$RANDOM"; done > $fn        #-
+#    udfCat < $fn | grep -E '^[[:space:]][0-9]{1,5}$'                           #? true
+#  SOURCE
+udfCat() { while IFS= read -t 32 || [[ $REPLY ]]; do echo "$REPLY"; done; }
 #******

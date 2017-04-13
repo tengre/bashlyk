@@ -1,5 +1,5 @@
 #
-# $Id: libnet.sh 710 2017-03-20 16:58:58+04:00 toor $
+# $Id: libnet.sh 714 2017-03-27 15:02:12+04:00 toor $
 #
 #****h* BASHLYK/libnet
 #  DESCRIPTION
@@ -9,23 +9,22 @@
 #  AUTHOR
 #    Damir Sh. Yakupov <yds@bk.ru>
 #******
-#***iV* liberr/BASH Compability
+#***iV* libnet/BASH compatibility
 #  DESCRIPTION
-#    BASH version 4.xx or more required for this script
+#    Compatibility checked by bashlyk (BASH version 4.xx or more required)
+#    $_BASHLYK_LIBNET provides protection against re-using of this module
 #  SOURCE
-[ -n "$BASH_VERSION" ] && (( ${BASH_VERSINFO[0]} >= 4 )) || eval '             \
+[ -n "$_BASHLYK_LIBNET" ] && return 0 || _BASHLYK_LIBNET=1
+[ -n "$_BASHLYK" ] || . bashlyk || eval '                                      \
                                                                                \
-    echo "[!] BASH shell version 4.xx required for ${0}, abort.."; exit 255    \
+    echo "[!] bashlyk loader required for ${0}, abort.."; exit 255             \
                                                                                \
 '
 #******
-#  $_BASHLYK_LIBNET provides protection against re-using of this module
-[[ $_BASHLYK_LIBNET ]] && return 0 || _BASHLYK_LIBNET=1
 #****L* libnet/Used libraries
 # DESCRIPTION
 #   Loading external libraries
 # SOURCE
-: ${_bashlyk_pathLib:=/usr/share/bashlyk}
 [[ -s ${_bashlyk_pathLib}/liberr.sh ]] && . "${_bashlyk_pathLib}/liberr.sh"
 [[ -s ${_bashlyk_pathLib}/libstd.sh ]] && . "${_bashlyk_pathLib}/libstd.sh"
 #******
@@ -33,8 +32,6 @@
 #  DESCRIPTION
 #    global variables of the library
 #  SOURCE
-: ${_bashlyk_sArg:="$@"}
-
 declare -rg _bashlyk_net_reAddress='[[:space:]]address[[:space:]]+-[[:space:]]([0-9.]+)$'
 declare -rg _bashlyk_net_reHost="^Host${_bashlyk_net_reAddress}"
 declare -rg _bashlyk_net_reNetwork="^Network${_bashlyk_net_reAddress}"

@@ -1,5 +1,5 @@
 #
-# $Id: testunit.sh 712 2017-03-21 17:21:34+04:00 toor $
+# $Id: testunit.sh 724 2017-04-06 17:29:28+04:00 toor $
 #
 #****h* BASHLYK/testunit
 #  DESCRIPTION
@@ -85,7 +85,7 @@ udfMain() {
 
   [[ $1 ]] || return 254
 
-  local a s fn IFS=$' \t\n'
+  local a s fn fnErr="${_bashlyk_TestUnit_fnTmp}.${1}.err" IFS=$' \t\n'
 
   fn=${_bashlyk_pathLib}/lib${1}.sh
 
@@ -100,12 +100,13 @@ udfMain() {
   echo "testunit for $fn library" > $_bashlyk_TestUnit_fnLog
   echo -n "${fn}: "
 
-  . $_bashlyk_TestUnit_fnTmp
+  . $_bashlyk_TestUnit_fnTmp 2>$fnErr
 
   if [[ $? == "0" && "$_bashlyk_TestUnit_iCount" == "0" ]]; then
 
     echo " ok."
     rm -f $_bashlyk_TestUnit_fnTmp
+    [[ -s $fnErr ]] || rm -f $fnErr
 
   else
 

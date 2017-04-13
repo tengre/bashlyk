@@ -1,5 +1,5 @@
 #
-# $Id: liblog.sh 712 2017-03-21 17:21:33+04:00 toor $
+# $Id: liblog.sh 727 2017-04-11 17:26:51+04:00 toor $
 #
 #****h* BASHLYK/liblog
 #  DESCRIPTION
@@ -10,22 +10,22 @@
 #  AUTHOR
 #    Damir Sh. Yakupov <yds@bk.ru>
 #******
-#***iV* liberr/BASH Compability
+#***iV* liblog/BASH compatibility
 #  DESCRIPTION
-#    BASH version 4.xx or more required for this script
+#    Compatibility checked by bashlyk (BASH version 4.xx or more required)
+#    $_BASHLYK_LIBLOG provides protection against re-using of this module
 #  SOURCE
-[ -n "$BASH_VERSION" ] && (( ${BASH_VERSINFO[0]} >= 4 )) || eval '             \
+[ -n "$_BASHLYK_LIBLOG" ] && return 0 || _BASHLYK_LIBLOG=1
+[ -n "$_BASHLYK" ] || . bashlyk || eval '                                      \
                                                                                \
-    echo "[!] BASH shell version 4.xx required for ${0}, abort.."; exit 255    \
+    echo "[!] bashlyk loader required for ${0}, abort.."; exit 255             \
                                                                                \
 '
 #******
-[[ $_BASHLYK_LIBLOG ]] && return 0 || _BASHLYK_LIBLOG=1
 #****L* liblog/Used libraries
 #  DESCRIPTION
 #    Loading external libraries
 #  SOURCE
-: ${_bashlyk_pathLib:=/usr/share/bashlyk}
 [[ -s ${_bashlyk_pathLib}/liberr.sh ]] && . "${_bashlyk_pathLib}/liberr.sh"
 [[ -s ${_bashlyk_pathLib}/libstd.sh ]] && . "${_bashlyk_pathLib}/libstd.sh"
 [[ -s ${_bashlyk_pathLib}/libmsg.sh ]] && . "${_bashlyk_pathLib}/libmsg.sh"
@@ -34,19 +34,9 @@
 #  DESCRIPTION
 #    Global variables of the library
 #  SOURCE
-: ${_bashlyk_pidLogSock:=}
-: ${_bashlyk_fnLogSock:=}
-
-: ${USER:=$( exec -c id -nu )}
-: ${_bashlyk_sUser:=$USER}
-: ${HOSTNAME:=$( exec -c hostname )}
-: ${DEBUGLEVEL:=0}
-: ${_bashlyk_pathLog:=/tmp}
-: ${_bashlyk_s0:=${0##*/}}
-: ${_bashlyk_sId:=${_bashlyk_s0%.sh}}
-: ${_bashlyk_pathRun:=/tmp}
-: ${_bashlyk_iStartTimeStamp:=$( exec -c date "+%s" )}
-: ${_bashlyk_emailRcpt:=postmaster}
+#: ${_bashlyk_fnLogSock:=}
+#: ${_bashlyk_pidLogSock:=}
+: ${HOSTNAME:=localhost}
 : ${_bashlyk_emailSubj:="${_bashlyk_sUser}@${HOSTNAME}::${_bashlyk_s0}"}
 : ${_bashlyk_fnLog:="${_bashlyk_pathLog}/${_bashlyk_s0}.log"}
 : ${_bashlyk_bUseSyslog:=0}
@@ -55,35 +45,39 @@
 
 declare -rg _bashlyk_aRequiredCmd_log="                                        \
                                                                                \
-    date dirname hostname logger mkdir mkfifo rm touch tty                     \
+    hostname logger mkdir mkfifo rm touch tty                                  \
                                                                                \
 "
+
 declare -rg _bashlyk_aExport_log="                                             \
                                                                                \
-    udfCheck4LogUse udfDebug udfFinally udfUptime udfLog udfLogger             \
-    udfSetLog udfSetLogSocket udfIsTerminal udfIsInteract _fnLog               \
+    udfCheck4LogUse udfDateR udfDebug udfFinally udfIsInteract udfIsTerminal   \
+    udfLog udfLogger udfSetLog udfSetLogSocket udfTimeStamp udfUptime          \
                                                                                \
 "
 #******
 #****f* liblog/udfLogger
 #  SYNOPSIS
-#    udfLogger args
+#    udfLogger <text>
 #  DESCRIPTION
-#    Селектор вывода строки аргументов в зависимости от режима работы.
+#    add <text> to log file with standart stamps if logging is setted
 #  INPUTS
-#    args - строка для вывода
+#    <text> - input text
 #  OUTPUT
-#    Возможны четыре варианта:
-#     * Вывод только на консоль терминала
-#     * Вывод только в файл $_bashlyk_fnLog
-#     * Вывод в системный журнал (syslog) и на консоль терминала
-#     * Вывод в системный журнал (syslog) и в файл $_bashlyk_fnLog
+#    There are four possibilities:
+#     * stdout only
+#     * $_bashlyk_fnLog only
+#     * syslog by logger and stdout
+#     * syslog by logger and $_bashlyk_fnLog
 #  EXAMPLE
 #    local bInteract bNotUseLog bTerminal
 #    _ =bInteract
 #    _ =bNotUseLog
 #    _ =bTerminal
-#    local fnExec=$(mktemp --suffix=.sh || tempfile -s .test.sh)                #? true
+#    local b=true fnExec reT reP s
+#    fnExec=$(mktemp --suffix=.sh || tempfile -s .test.sh)
+#    reT='[ADFJMNOS][abceglnoprtuyv]{2} [0-9]{2} [0-9]{2}:[0-9]{2}:[0-9]{2}'
+#    reP="[[:space:]]$HOSTNAME ${0##*/}\[[[:digit:]]{5}\]:[[:space:]].*"
 #    cat <<'EOF' > $fnExec                                                      #-
 #    local fnLog=$(mktemp --suffix=.log || tempfile -s .test.log)               #-
 #    _ fnLog $fnLog                                                             #-
@@ -99,12 +93,9 @@ declare -rg _bashlyk_aExport_log="                                             \
 #    . $fnExec
 #    kill $_bashlyk_pidLogSock
 #    rm -f $_bashlyk_fnLogSock
-#    sleep 0.5                                                                  #? true
-#    sleep 0.4                                                                  #? true
-#    sleep 0.3                                                                  #? true
-#    sleep 0.2                                                                  #? true
-#    sleep 0.1                                                                  #? true
-#    cat $fnLog
+#    sleep 0.1
+#    while read -t9 s; do [[ $s =~ ^${reT}${reP}$ ]] || b=false; done < $fnLog  #-
+#    [[ $b == true ]]                                                           #? true
 #    rm -f $fnExec $fnLog
 #    _ bInteract "$bInteract"
 #    _ bNotUseLog "$bNotUseLog"
@@ -142,7 +133,7 @@ udfLogger() {
   mkdir -p "$_bashlyk_pathLog" \
     || eval $( udfOnError throw NotExistNotCreated "${_bashlyk_pathLog}" )
 
-  udfAddPath2Clean $_bashlyk_pathLog
+  udfAddFO2Clean $_bashlyk_pathLog
 
   case "${bSysLog}${bUseLog}" in
 
@@ -170,31 +161,31 @@ udfLogger() {
 #******
 #****f* liblog/udfLog
 #  SYNOPSIS
-#    udfLog [-] args
+#    udfLog [-] [<text>]
 #  DESCRIPTION
-#    Передача данных селектору вывода udfLogger
+#    Wrapper around udfLogger to support stream from standard input
 #  INPUTS
-#    -    - данные читаются из стандартного ввода
-#    args - строка для вывода. Если имеется в качестве первого аргумента
-#           "-", то строка считается префиксом (тэгом) для каждой строки
-#           из стандартного ввода
+#    -      - data is expected from standard input
+#    <text> - String (tag) for output.
+#             If there is a "-" as the first argument, then the string is
+#             considered a prefix (tag) for each line from the standard input.
 #  OUTPUT
-#   Зависит от параметров вывода
+#   Depends on output parameters
 #  EXAMPLE
-#    # TODO улучшить тест
-#    echo -n . | udfLog -                                                       #-
-#    echo test | udfLog - tag >| grep "tag test"                                #? true
+#    # TODO improved test
+#    echo -n . | udfLog -                                  >| grep '^\.$'       #? true
+#    echo test | udfLog - tag                              >| grep '^tag test$' #? true
 #  SOURCE
 udfLog() {
 
-  local s sPrefix IFS=$' \t\n'
+  local sTag s
 
   if [[ "$1" == "-" ]]; then
 
     shift
-    [[ $* ]] && sPrefix="$* " || sPrefix=
+    [[ $* ]] && sTag="$* "
 
-    while read s; do [[ $s ]] && udfLogger "${sPrefix}${s}"; done
+    while read s || [[ $s ]]; do [[ $s ]] && udfLogger "${sTag}${s}"; done
 
   else
 
@@ -208,12 +199,12 @@ udfLog() {
 #  SYNOPSIS
 #    udfIsInteract
 #  DESCRIPTION
-#    Проверка режима работы устройств стандартного ввода и вывода
+#    Checking the operating mode of standard input and output devices
 #  RETURN VALUE
-#    0 - "неинтерактивный" режим, имеется перенаправление стандартных ввода
-#        и/или вывода
-#    1 - "интерактивный" режим, перенаправление стандартных ввода и/или вывода
-#        не обнаружено
+#    0 - "non-interactive" mode, there is redirection of standard input and/or
+#         output
+#    1 - "interactive" mode, redirection of standard input and/or output is not
+#        detected
 #  EXAMPLE
 #    udfIsInteract                                                              #? true
 #    udfIsInteract                                                              #= false
@@ -231,10 +222,10 @@ udfIsInteract() {
 #  SYNOPSIS
 #    udfIsTerminal
 #  DESCRIPTION
-#    Проверка наличия управляющего терминала
+#    Checking the presence of a control terminal
 #  RETURN VALUE
-#    0 - терминал отсутствует
-#    1 - терминал обнаружен
+#    0 - terminal not detected
+#    1 - terminal detected
 #  EXAMPLE
 #    udfIsTerminal                                                              #? false
 #    udfIsTerminal                                                              #= false
@@ -250,11 +241,12 @@ udfIsTerminal() {
 #  SYNOPSIS
 #    udfCheck4LogUse
 #  DESCRIPTION
-#    Проверка условий использования лог-файла
+#    Check the conditions for using the log file
 #  RETURN VALUE
-#    0 - вести запись лог-файла
-#    1 - не требуется
+#    0 - save stdout and stderr to log file
+#    1 - logging do not required
 #  EXAMPLE
+#    _bashlyk_sCond4Log='redirect'
 #    udfCheck4LogUse                                                            #? true
 #    udfCheck4LogUse                                                            #= false
 #  SOURCE
@@ -277,44 +269,20 @@ udfCheck4LogUse() {
 
 }
 #******
-#****f* liblog/udfUptime
-#  SYNOPSIS
-#    udfUptime args
-#  DESCRIPTION
-#    Подсчёт количества секунд, прошедших с момента запуска сценария
-#  INPUTS
-#    args - префикс для выводимого сообщения о прошедших секундах
-#  EXAMPLE
-#    udfUptime >| grep -w "^[[:digit:]]*$"                                      #? true
-#  SOURCE
-udfUptime() { echo $(( $( exec -c date "+%s" ) - _bashlyk_iStartTimeStamp )); }
-#******
-#****f* liblog/udfFinally
-#  SYNOPSIS
-#    udfFinally args
-#  DESCRIPTION
-#    Псевдоним для udfUptime (Устаревшее)
-#  INPUTS
-#    args - префикс для выводимого сообщения о прошедших секундах
-#  EXAMPLE
-#    udfFinally $RANDOM >| grep "^[[:digit:]]* uptime [[:digit:]]* sec$"        #? true
-#  SOURCE
-udfFinally() { echo "$@ uptime $( udfUptime ) sec"; }
-#******
 #****f* liblog/udfSetLogSocket
 #  SYNOPSIS
 #    udfSetLogSocket
 #  DESCRIPTION
-#    Установка механизма ведения лога согласно ранее установленных условий.
-#    Используется специальный сокет для того чтобы отмечать тегами строки
-#    журнала.
+#    Creating a named pipe for redirecting the output of stdout and stderr to a
+#     log file with automatic addition of standard stamps.
 #  ERRORS
-#     1                  - Сокет не создан, но стандартный вывод
-#                          перенаправляется в файл лога (без тегирования)
-#     NotExistNotCreated - Каталог для сокета не существует и не может
-#                          быть создан
+#     1                  - The socket is not created, but the output of the
+#                          stdout and the stderr is redirected to the log file
+#                          (without stamps)
+#     NotExistNotCreated - The socket directory does not exist and can not be
+#                          created
 #  EXAMPLE
-#    local fnLog=$(mktemp --suffix=.log || tempfile -s .test.log)               #? true
+#    local fnLog=$(mktemp --suffix=.log || tempfile -s .test.log)
 #    _ fnLog $fnLog                                                             #? true
 #    udfSetLogSocket                                                            #? true
 #    ls -l $fnLog                                                               #? true
@@ -346,6 +314,11 @@ udfSetLogSocket() {
     _bashlyk_pidLogSock=$!
     exec >>$fnSock 2>&1
 
+    _bashlyk_fnLogSock=$fnSock
+     udfAddFO2Clean $fnSock
+
+     return 0
+
   else
 
     udfWarn "Warn: Socket $fnSock not created..."
@@ -358,30 +331,25 @@ udfSetLogSocket() {
 
   fi
 
-  _bashlyk_fnLogSock=$fnSock
-
-  udfAddFile2Clean $fnSock
-
-  return 0
-
 }
 #******
 #****f* liblog/udfSetLog
 #  SYNOPSIS
-#    udfSetLog [arg]
+#    udfSetLog [<filename>]
 #  DESCRIPTION
-#    Установка файла лога
+#    Wrapper around udfSetLogSocket to activate output redirection to the log
+#    file with error handling
 #  ERRORS
-#     NotExistNotCreated - файл лога создать не удается, аварийное завершение
-#                          сценария
+#     NotExistNotCreated - log file can not be created, abort
 #  EXAMPLE
-#    local fnLog=$(mktemp --suffix=.log || tempfile -s .test.log)               #? true
+#    local fnLog=$(mktemp --suffix=.log || tempfile -s .test.log)
 #    rm -f $fnLog
 #    udfSetLog $fnLog                                                           #? true
 #    ls -l $fnLog                                                               #? true
 #    rm -f $fnLog
 #  SOURCE
 udfSetLog() {
+
   local IFS=$' \t\n'
 
   case "$1" in
@@ -405,66 +373,109 @@ udfSetLog() {
 
 }
 #******
-#****f* liblog/_fnLog
-#  SYNOPSIS
-#    _fnLog
-#  DESCRIPTION
-#    Получить или установить значение переменной $_bashlyk_fnLog -
-#    полное имя лог-файла
-#  OUTPUT
-#    Вывод значения переменной $_bashlyk_fnLog
-#  EXAMPLE
-#    local fnLog=$(mktemp --suffix=.log || tempfile -s .test.log)               #? true
-#    rm -f $fnLog
-#    _fnLog $fnLog                                                              #? true
-#    ls -l $fnLog                                                               #? true
-#    rm -f $fnLog
-#  SOURCE
-_fnLog() {
-
-  [[ $1 ]] && udfSetLog "$1" || _ fnLog
-
-}
-#******
 #****f* liblog/udfDebug
 #  SYNOPSIS
-#    udfDebug level message
+#    udfDebug <level> <message>
 #  DESCRIPTION
-#    Позволяет выводить сообщение, если его уровень не больше значения
-#    глобальной переменной DEBUGLEVEL
+#    show a <message> on stderr if the <level> is equal or less than the
+#    $DEBUGLEVEL value otherwise return code 1
 #  INPUTS
-#    level   - уровень отладочных сообщений, десятичное число, если неправильно
-#    задан, то принимается значение 0
-#    message - текст отладочного сообщения
+#    <level>   - decimal number of the debug level ( 0 for wrong argument)
+#    <message> - debug message
 #  OUTPUT
-#    Текст отладочного сообщения (аргумент "message"), если его уровень
-#    (аргумент "level") не больше заданного для сценария переменной DEBUGLEVEL
+#    show a <message> on stderr
 #  RETURN VALUE
-#    0               - уровень "level" не больше DEBUGLEVEL
-#    1               - уровень "level"    больше DEBUGLEVEL
-#    MissingArgument - аргументы отсутствуют
+#    0               - <level> equal or less than $DEBUGLEVEL value
+#    1               - <level> more than $DEBUGLEVEL value
+#    MissingArgument - no arguments
 #  EXAMPLE
 #    DEBUGLEVEL=0
-#    udfDebug                                                                   #? $_bashlyk_iErrorEmptyOrMissingArgument
+#    udfDebug                                                                   #? $_bashlyk_iErrorMissingArgument
 #    udfDebug 0 echo level 0                                                    #? true
 #    udfDebug 1 silence level 0                                                 #? 1
 #    DEBUGLEVEL=5
 #    udfDebug 0 echo level 5                                                    #? true
 #    udfDebug 6 echo 5                                                          #? 1
-#    udfDebug non valid test level 5                                            #? true
+#    udfDebug default level test '(0)'                                          #? true
 #  SOURCE
 udfDebug() {
 
-  local i re='^[0-9]+$' IFS=$' \t\n'
+  udfOn MissingArgument $* || return
 
-  [[ $* ]] && i=$1 || eval $(udfOnError return MissingArgument)
-  shift
+  if [[ $1 =~ ^[0-9]+$ ]]; then
 
-  [[ "$i" =~ ^[0-9]+$ ]]  || i=0
-  (( $DEBUGLEVEL >= $i )) || return 1
+    (( ${DEBUGLEVEL:=0} >= $1 )) && shift || return 1
+
+  fi
+
   [[ $* ]] && echo "$*" >&2
 
   return 0
 
 }
+#******
+#****f* liblog/udfTimeStamp
+#  SYNOPSIS
+#    udfTimeStamp <text>
+#  DESCRIPTION
+#    Show input <text> with time stamp in format 'Mar 28 10:03:40' (LC_ALL=C)
+#  INPUTS
+#    <text> - suffix to the header
+#  OUTPUT
+#    input <text> with time stamp in format 'Mar 28 10:03:40' (LC_ALL=C)
+#  EXAMPLE
+#    local re
+#    re='^[ADFJMNOS][abceglnoprtuyv]{2} [0-9]{2} [0-9]{2}:[0-9]{2}:[0-9]{2} AB$'
+#    udfTimeStamp AB >| grep -E "$re"                                           #? true
+#  SOURCE
+
+if (( _bashlyk_ShellVersion > 4002000 )); then
+
+udfTimeStamp() { LC_ALL=C printf -- '%(%b %d %H:%M:%S)T %s\n' '-1' "$*"; }
+
+udfDateR() { LC_ALL=C printf -- '%(%a, %d %b %Y %T %z)T\n' '-1'; }
+
+udfUptime() { echo $(( $(printf '%(%s)T' '-1') - $(printf '%(%s)T' '-2') )); }
+
+else
+
+readonly _bashlyk_iStartTimeStamp=$( exec -c date "+%s" )
+
+udfTimeStamp() { LC_ALL=C date "+%b %d %H:%M:%S $*"; }
+
+udfDateR() { exec -c date -R; }
+
+udfUptime() { echo $(( $(exec -c date "+%s") - _bashlyk_iStartTimeStamp )); }
+
+fi
+#******
+#****f* liblog/udfDateR
+#  SYNOPSIS
+#    udfDateR
+#  DESCRIPTION
+#    show 'date -R' like output
+#  EXAMPLE
+#    udfDateR >| grep -P "^\S{3}, \d{2} \S{3} \d{4} \d{2}:\d{2}:\d{2} .\d{4}$"  #? true
+#  SOURCE
+#******
+#****f* liblog/udfUptime
+#  SYNOPSIS
+#    udfUptime
+#  DESCRIPTION
+#    show uptime value in the seconds
+#  EXAMPLE
+#    udfUptime >| grep "^[[:digit:]]*$"                                         #? true
+#  SOURCE
+#******
+#****f* liblog/udfFinally
+#  SYNOPSIS
+#    udfFinally <text>
+#  DESCRIPTION
+#    show uptime with input text
+#  INPUTS
+#    <text> - prefix text before " uptime <number> sec"
+#  EXAMPLE
+#    udfFinally $RANDOM >| grep "^[[:digit:]]* uptime [[:digit:]]* sec$"        #? true
+#  SOURCE
+udfFinally() { echo "$@ uptime $( udfUptime ) sec"; }
 #******

@@ -1,5 +1,5 @@
 #
-# $Id: libtst.sh 695 2017-02-27 15:17:24+04:00 toor $
+# $Id: libtst.sh 733 2017-04-13 09:58:01+04:00 toor $
 #
 #****h* BASHLYK/libtst
 #  DESCRIPTION
@@ -9,23 +9,22 @@
 #  AUTHOR
 #    Damir Sh. Yakupov <yds@bk.ru>
 #******
-#***iV* liberr/BASH Compability
+#***iV* libtst/BASH compatibility
 #  DESCRIPTION
-#    BASH version 4.xx or more required for this script
+#    Compatibility checked by bashlyk (BASH version 4.xx or more required)
+#    $_BASHLYK_LIBTST provides protection against re-using of this module
 #  SOURCE
-[ -n "$BASH_VERSION" ] && (( ${BASH_VERSINFO[0]} >= 4 )) || eval '             \
+[ -n "$_BASHLYK_LIBTST" ] && return 0 || _BASHLYK_LIBTST=1
+[ -n "$_BASHLYK" ] || . bashlyk || eval '                                      \
                                                                                \
-    echo "[!] BASH shell version 4.xx required for ${0}, abort.."; exit 255    \
+    echo "[!] bashlyk loader required for ${0}, abort.."; exit 255             \
                                                                                \
 '
 #******
-#  $_BASHLYK_LIBTST provides protection against re-using of this module
-[[ $_BASHLYK_LIBTST ]] && return 0 || _BASHLYK_LIBTST=1
 #****L* libtst/Used libraries
 # DESCRIPTION
 #   Loading external libraries
 # SOURCE
-: ${_bashlyk_pathLib:=/usr/share/bashlyk}
 [[ -s ${_bashlyk_pathLib}/liberr.sh ]] && . "${_bashlyk_pathLib}/liberr.sh"
 [[ -s ${_bashlyk_pathLib}/libstd.sh ]] && . "${_bashlyk_pathLib}/libstd.sh"
 [[ -s ${_bashlyk_pathLib}/libini.sh ]] && . "${_bashlyk_pathLib}/libini.sh"
@@ -34,8 +33,6 @@
 #  DESCRIPTION
 #    Global variables of the library
 #  SOURCE
-: ${USER:=$(id -nu)}
-: ${_bashlyk_sUser:=$USER}
 : ${_bashlyk_bNotUseLog:=1}
 : ${_bashlyk_emailRcpt:=postmaster}
 : ${HOSTNAME:=$(hostname 2>/dev/null)}
@@ -65,36 +62,7 @@ declare -rg _bashlyk_exports_tst="udfTest"
 #  SOURCE
 udfTest() {
 
-  udfOn MissingArgument $1 || return $?
-
-  return 0
-
-}
-#******
-#****f* libtst/cnf::get
-#  SYNOPSIS
-#    cnf::get args
-#  DESCRIPTION
-#    ...
-#  INPUTS
-#    ...
-#  OUTPUT
-#    ...
-#  RETURN VALUE
-#    ...
-#  EXAMPLE
-###    cnf::get                                                                   #? $_bashlyk_iErrorMissingArgument
-#    cnf::get                                                                   #? true
-#  SOURCE
-cnf::get() {
-
-  #udfOn MissingArgument $1 || return $?
-
-  INI ini
-
-  ini.read bashlyk.test.conf                                                #? true
-
-  ini.show                                                                  #? true
+  udfOn MissingArgument $1 || return
 
   return 0
 
@@ -114,7 +82,7 @@ cnf::get() {
 #  EXAMPLE
 #    __interface = input                                                        #? true
 #    __interface + more input data                                              #? true
-#    __interface ,  comma separate input data                                    #? true
+#    __interface ,  comma separate input data                                   #? true
 #    __interface                                                                #? true
 #    __interface _                                                              #? true
 #    __interface                                                                #? true
