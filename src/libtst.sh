@@ -1,5 +1,5 @@
 #
-# $Id: libtst.sh 714 2017-03-27 15:02:12+04:00 toor $
+# $Id: libtst.sh 733 2017-04-13 09:58:01+04:00 toor $
 #
 #****h* BASHLYK/libtst
 #  DESCRIPTION
@@ -62,36 +62,7 @@ declare -rg _bashlyk_exports_tst="udfTest"
 #  SOURCE
 udfTest() {
 
-  udfOn MissingArgument $1 || return $?
-
-  return 0
-
-}
-#******
-#****f* libtst/cnf::get
-#  SYNOPSIS
-#    cnf::get args
-#  DESCRIPTION
-#    ...
-#  INPUTS
-#    ...
-#  OUTPUT
-#    ...
-#  RETURN VALUE
-#    ...
-#  EXAMPLE
-###    cnf::get                                                                   #? $_bashlyk_iErrorMissingArgument
-#    cnf::get                                                                   #? true
-#  SOURCE
-cnf::get() {
-
-  #udfOn MissingArgument $1 || return $?
-
-  INI ini
-
-  ini.read bashlyk.test.conf                                                #? true
-
-  ini.show                                                                  #? true
+  udfOn MissingArgument $1 || return
 
   return 0
 
@@ -111,7 +82,7 @@ cnf::get() {
 #  EXAMPLE
 #    __interface = input                                                        #? true
 #    __interface + more input data                                              #? true
-#    __interface ,  comma separate input data                                    #? true
+#    __interface ,  comma separate input data                                   #? true
 #    __interface                                                                #? true
 #    __interface _                                                              #? true
 #    __interface                                                                #? true

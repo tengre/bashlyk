@@ -1,5 +1,5 @@
 #
-# $Id: libcsv.sh 732 2017-04-12 18:45:18+04:00 toor $
+# $Id: libcsv.sh 733 2017-04-13 09:58:01+04:00 toor $
 #
 #****h* BASHLYK/libcsv
 #  DESCRIPTION
@@ -280,8 +280,8 @@ udfCsvOrder() {
 	#
 	  $csv
 	#
-	  udfShowVariable $aKeys | grep -v '^:' | tr -d '\t' \
-	    | sed -e "s/=\(.*[[:space:]]\+.*\)/=\"\1\"/" | tr '\n' ';' | sed -e "s/;;/;/"
+	  udfShowVariable $aKeys | grep -v '^:' | tr -d '\t' | \
+	   sed -e "s/=\(.*[[:space:]]\+.*\)/=\"\1\"/" | tr '\n' ';' | sed -e "s/;;/;/"
 	#
 	  return 0
 	}

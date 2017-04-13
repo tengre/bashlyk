@@ -1,10 +1,9 @@
 #
-# $Id: libold.sh 732 2017-04-12 18:47:00+04:00 toor $
+# $Id: libold.sh 733 2017-04-13 09:58:01+04:00 toor $
 #
 #****h* BASHLYK/libold
 #  DESCRIPTION
-#    Управление пассивными конфигурационными файлов в стиле INI. Имеется
-#    возможность подгрузки исполнимого контента
+#    Deprecated functions
 #  AUTHOR
 #    Damir Sh. Yakupov <yds@bk.ru>
 #******
@@ -49,28 +48,23 @@ declare -rg _bashlyk_exports_old="                                             \
 #******
 #****f* libold/udfGetIniSection2Var
 #  SYNOPSIS
-#    udfGetIniSection <varname> <file> [<section>]
+#    udfGetIniSection2Var <varname> <file> [<section>]
 #  DESCRIPTION
-#    поместить результат вызова udfGetIniSection в переменную <varname>
+#    set <varname> by output of a udfGetIniSection
 #  INPUTS
-#    file    - имя файла конфигурации
-#    section - название секции конфигурации, при отсутствии этого аргумента
-#              считываются данные до первого заголовка секции [<...>] данных или
-#              до конца конфигурационного файла, если секций нет
-#    varname - валидный идентификатор переменной (без "$ "). Результат в виде
-#              CSV; строки формата "ключ=значение;" будет помещен в
-#              соответствующую переменную.
+#    <file>    - source INI configuration
+#    <section> - INI configuration section name, default - unnamed
+#    <varname> - valid variable name (without '$') for result
 #  ERRORS
-#    InvalidVariable - аргумент <varname> не является валидным идентификатором
-#                       переменной
-#    MissingArgument - аргумент отсутствует
+#    InvalidVariable - invalid variable name <varname>
+#    MissingArgument - no arguments
 #  EXAMPLE
-#    #пример приведен в описании udfGetIniSection
+#    #see udfGetIniSection
 #  SOURCE
 udfGetIniSection2Var() {
 
-  udfOn InvalidVariable $1 || return $?
-  udfOn NoSuchFileOrDir $2 || return $?
+  udfOn InvalidVariable $1 || return
+  udfOn NoSuchFileOrDir $2 || return
 
   eval 'export $1="$( udfGetIniSection "$2" $3 )"'
 
@@ -82,21 +76,16 @@ udfGetIniSection2Var() {
 #  SYNOPSIS
 #    udfReadIniSection2Var <varname> <file> [<section>]
 #  DESCRIPTION
-#    поместить результат вызова udfReadIniSection в переменную <varname>
+#    set <varname> by output of a udfReadIniSection
 #  INPUTS
-#    file    - имя файла конфигурации
-#    section - название секции конфигурации, при отсутствии этого аргумента
-#              считываются данные до первого заголовка секции [<...>] данных
-#              или до конца конфигурационного файла, если секций нет
-#    varname - идентификатор переменной (без "$"). При его наличии результат
-#              будет помещен в соответствующую переменную. При отсутствии такого
-#              идентификатора результат будет выдан на стандартный вывод
+#    <file>    - source INI configuration
+#    <section> - INI configuration section name, default - unnamed
+#    <varname> - valid variable name (without '$') for result
 #  ERRORS
-#    InvalidVariable - аргумент <varname> не является валидным идентификатором
-#                      переменной
-#    MissingArgument - аргумент отсутствует или файл конфигурации не найден
+#    InvalidVariable - invalid variable name <varname>
+#    MissingArgument - no arguments
 #  EXAMPLE
-#    #пример приведен в описании udfIniGroup2Csv
+#    #see udfReadIniSection
 #  SOURCE
 udfReadIniSection2Var() {
 
@@ -113,20 +102,15 @@ udfReadIniSection2Var() {
 #  SYNOPSIS
 #    udfCsvOrder2Var <varname> <csv;>
 #  DESCRIPTION
-#    поместить результат вызова udfCsvOrder в переменную <varname>
+#    set <varname> by output of a udfCsvOrder
 #  INPUTS
-#    csv;    - CSV-строка, разделённая ";", поля которой содержат данные вида
-#              "key=value"
-#    varname - валидный идентификатор переменной (без "$ "). Результат в виде
-#              разделённой символом ";" CSV-строки, поля которого содержат
-#              данные в формате "<key>=<value>;...", будет помещен в
-#              соответствующую переменну.
+#    <csv;>    - CSV string with fields like "key=value", splitted by ";"
+#    <varname> - valid variable name (without '$') for result
 #  ERRORS
-#   InvalidVariable - аргумент <varname> не является валидным идентификатором
-#                     переменной
-#   MissingArgument - аргумент отсутствует
+#    InvalidVariable - invalid variable name <varname>
+#    MissingArgument - no arguments
 #  EXAMPLE
-#    #пример приведен в описании udfCsvOrder
+#    #see udfCsvOrder
 #  SOURCE
 udfCsvOrder2Var() {
 
@@ -143,18 +127,15 @@ udfCsvOrder2Var() {
 #  SYNOPSIS
 #    udfCsvKeys2Var <varname> <csv;>
 #  DESCRIPTION
-#    Поместить вывод udfCsvKeys в переменную <varname>
+#    set <varname> by output of a udfCsvKeys
 #  INPUTS
-#    csv;  - CSV-строка, разделённая ";", поля которой содержат данные вида
-#            "key=value"
-#  varname - валидный идентификатор переменной. Результат в виде строки ключей,
-#            разделенной пробелами, будет помещёна в соответствующую переменную
+#    <csv;>    - CSV string with fields like "key=value", splitted by ";"
+#    <varname> - valid variable name (without '$') for result
 #  ERRORS
-#    InvalidVariable - аргумент <varname> не является валидным идентификатором
-#                      переменной
-#    MissingArgument - аргумент отсутствует
+#    InvalidVariable - invalid variable name <varname>
+#    MissingArgument - no arguments
 #  EXAMPLE
-#    #пример приведен в описании udfCsvKeys
+#    #see udfCsvKeys
 #  SOURCE
 udfCsvKeys2Var() {
 
@@ -169,20 +150,19 @@ udfCsvKeys2Var() {
 #******
 #****f* libold/udfGetIni2Var
 #  SYNOPSIS
-#    udfGetIni2Var <varname> <file> [<section>] ...
+#    udfGetIni2Var <varname> <file> [<sections>] ...
 #  DESCRIPTION
-#    Поместить вывод udfGetIni в переменную <varname>
+#    set <varname> by output of a udfGetIni
 #  INPUTS
-#    file    - файл конфигурации формата "*.ini".
-#    varname - валидный идентификатор переменной. Результат в виде
-#              CSV-строки в формате "[section];<key>=<value>;..." будет
-#              помещён в соответствующую переменную
-#    section - список имен секций, данные которых нужно получить
+#    <varname>  - valid variable name (without '$') for result
+#                 ( "[section];<key>=<value>;..." )
+#    <file>     - source INI configuration
+#    <sections> - INI configuration section name list
 #  ERRORS
-#    InvalidVariable - не валидный идентификатор переменной
-#    MissingArgument - аргументы отсутствуют
+#    InvalidVariable - invalid variable name <varname>
+#    MissingArgument - no arguments
 #  EXAMPLE
-#    #пример приведен в описании udfGetIni
+#    #see udfGetIni
 #  SOURCE
 udfGetIni2Var() {
 
@@ -200,11 +180,11 @@ udfGetIni2Var() {
 #******
 #****f* libold/udfGetCsvSection2Var
 #  SYNOPSIS
-#    udfGetCsvSection <varname> <csv> [<tag>]
+#    udfGetCsvSection2Var <varname> <csv> [<tag>]
 #  DESCRIPTION
-#    поместить результат вызова udfGetCsvSection в переменную <varname>
+#    set <varname> by output of a udfGetCsvSection
 #  INPUTS
-#    tag     - имя ini-секции
+#    tag     - section name
 #    csv     - строка сериализации данных ini-файлов
 #    varname - валидный идентификатор переменной (без "$ "). Результат в виде
 #              CSV; строки формата "ключ=значение;" будет помещен в
@@ -523,7 +503,7 @@ _pathDat() {
 
 }
 #******
-#****f* liblog/_fnLog
+#****f* libold/_fnLog
 #  SYNOPSIS
 #    _fnLog
 #  DESCRIPTION
