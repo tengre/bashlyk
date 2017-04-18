@@ -1,5 +1,5 @@
 #
-# $Id: libini.sh 737 2017-04-18 17:20:07+04:00 toor $
+# $Id: libini.sh 739 2017-04-18 21:16:12+04:00 toor $
 #
 #****h* BASHLYK/libini
 #  DESCRIPTION
@@ -1298,17 +1298,15 @@ INI::load() {
     local s sSection
 
     sSection=$( udfTrim ${1:-__global__} )
-    s="${2//, /,}"
-    s="$( udfTrim "${s//,,/,}" )"
-    s="${s//,/\|}"
+    s="$( udfTrim "${2//,[, ]/,}" )"
 
     if [[ $s =~ ^[=+\-]$ ]]; then
 
-      hRawMode[$sSection]="$s"
+      hRawMode[$sSection]="${s//,/\|}"
 
     else
 
-      hKeyValue[$sSection]=${fmtPairs/\%KEY\%/$s}
+      hKeyValue[$sSection]=${fmtPairs/\%KEY\%/${s//,/\|}}
 
     fi
 
