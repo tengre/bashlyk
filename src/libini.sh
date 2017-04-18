@@ -1,5 +1,5 @@
 #
-# $Id: libini.sh 722 2017-04-05 15:14:02+04:00 toor $
+# $Id: libini.sh 737 2017-04-18 17:20:07+04:00 toor $
 #
 #****h* BASHLYK/libini
 #  DESCRIPTION
@@ -1273,7 +1273,8 @@ INI::read() {
 #    *.lit                                                                      #-
 #    EOFiniChild                                                                #-
 #   INI tLoad
-#   tLoad.load $iniLoad ::[]file,main,child :: [exec]- :: [main]hint, msg , cnt :: [replace]- :: [unify]= :: [acc]+ :: #? true
+#   ## TODO add more tests
+#   tLoad.load $iniLoad []file,main,child [exec]- [main]hint, msg, cnt [replace]- [unify]= [acc]+ #? true
 #   tLoad.save $iniSave                                                         #? true
 #   tLoad.show         >| md5sum -| grep ^9d20121502695508ff37c79f94b6ca16.*-$  #? true
 ##    tLoad.free
@@ -1291,6 +1292,30 @@ INI::load() {
   fmtSections='^[[:space:]]*(:?)\[[[:space:]]*(%SECTION%)[[:space:]]*\](:?)[[:space:]]*$'
 
   fmtPairs=$( ${o}.settings fmtPairs )
+
+  INI::load::parse() {
+
+    local s sSection
+
+    sSection=$( udfTrim ${1:-__global__} )
+    s="${2//, /,}"
+    s="$( udfTrim "${s//,,/,}" )"
+    s="${s//,/\|}"
+
+    if [[ $s =~ ^[=+\-]$ ]]; then
+
+      hRawMode[$sSection]="$s"
+
+    else
+
+      hKeyValue[$sSection]=${fmtPairs/\%KEY\%/$s}
+
+    fi
+
+    ${o}.__section.select $sSection
+    csv+="${sSection}|"
+
+  }
 
   [[ "$1" == "${1##*/}" && -f "$(_ pathIni)/$1" ]] && path=$(_ pathIni)
   [[ "$1" == "${1##*/}" && -f "$1"              ]] && path=$( exec -c pwd )
@@ -1310,45 +1335,19 @@ INI::load() {
 
   shift
 
-  s="$*" && IFS=':' && a=( $s )
+  s=$* && IFS='][' && a=( $s ) && IFS=$' \t\n'
 
-  for s in ${a[@]}; do
+  [[ ${a[0]} ]] && INI::load::parse "" "${a[0]}"
 
-    s="${s//, /,}"
-    s="$( udfTrim "${s//,,/,}" )"
+  for (( i=1; i < ${#a[@]}; i++ )); do
 
-    if [[ $s =~ ^(\[(.*)\])?(([=+\-]?)|([^=+\-].*))$ ]]; then
+    INI::load::parse "${a[$i]}" "${a[$i+1]}"
 
-      [[ ${BASH_REMATCH[1]} ]] || continue
-
-      sSection="${BASH_REMATCH[2]:-__global__}"
-
-      if   [[ ${BASH_REMATCH[3]} == ${BASH_REMATCH[5]} ]]; then
-
-        s="${BASH_REMATCH[3]}"
-        ## TODO check by shellmode
-        s="${s//,/\|}"
-        hKeyValue[$sSection]=${fmtPairs/\%KEY\%/$s}
-
-      elif [[ ${BASH_REMATCH[3]} == ${BASH_REMATCH[4]} ]]; then
-
-        hRawMode[$sSection]="${BASH_REMATCH[3]}"
-
-      else
-
-        continue
-
-      fi
-
-      ${o}.__section.select $sSection
-
-      csv+="${sSection}|"
-
-    fi
+    i=$(( i+1 ))
 
   done
 
-  IFS=$' \t\n' && a=( ${ini//./ } )
+  a=( ${ini//./ } )
 
   csv=${csv%*|}
 
@@ -1412,7 +1411,7 @@ INI::load() {
 #    tCLI.bind.cli                                                              #? $_bashlyk_iErrorInvalidOption
 #    tCLI.bind.cli file{F}: exec{E}:- main-hint{H}: main-msg{M}: unify{U}:=     #? $_bashlyk_iErrorInvalidOption
 #    tCLI.bind.cli file{F}: exec{E}:- main-hint{H}: main-msg{M}: unify{U}:= acc:+                      #? true
-#    tCLI.load $ini []file,main,child : [exec]- : [main]hint,msg,cnt : [replace]- : [unify]= : [acc]+  #? true
+#    tCLI.load $ini []file,main,child [exec]- [main]hint,msg,cnt [replace]- [unify]= [acc]+  #? true
 #    tCLI.show         >| md5sum - | grep ^264dd527123fc976df435cda9785dd3c.*-$ #? true
 #    tCLI.free
 #  SOURCE
