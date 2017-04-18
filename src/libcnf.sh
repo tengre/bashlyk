@@ -1,5 +1,5 @@
 #
-# $Id: libcnf.sh 734 2017-04-13 12:09:09+04:00 toor $
+# $Id: libcnf.sh 737 2017-04-18 17:25:06+04:00 toor $
 #
 #****h* BASHLYK/libcnf
 #  DESCRIPTION
@@ -41,7 +41,7 @@ declare -rg _bashlyk_exports_cnf="udfGetConfig udfSetConfig"
 #******
 #****p* libcnf/__getconfig
 #  SYNOPSIS
-#    __getconfig <file> [variable name s]
+#    __getconfig <file> [<comma separated variable list>]
 #  DESCRIPTION
 #    Safely reading of the active configuration by using the INI library.
 #    configuration source can be a single file or a group of related files. For
@@ -57,7 +57,9 @@ declare -rg _bashlyk_exports_cnf="udfGetConfig udfSetConfig"
 #    configuration sources are ignored if they do not owned by the owner of the
 #    process or root.
 #  ARGUMENTS
-#    <file> - filename of the configuration
+#    <file>                          - filename of the configuration
+#    <comma separated variable list> - list of selected variables, default - all
+#                                      variables from configuration
 #  OUTPUT
 #    a serialized CSV-string or an error code and message.
 #  EXAMPLE
@@ -189,7 +191,7 @@ __getconfig() {
 #                                                                               #-
 #    EOFchild                                                                   #-
 #    cat $confChild
-#    udfGetConfig $confChild pid b test                                         #? true
+#    udfGetConfig $confChild pid,b,test                                         #? true
 #    echo "$b $pid $test" >| grep "false $$ test"                               #? true
 #    rm -f $confChild
 #    udfGetConfig $confChild s                                                  #? $_bashlyk_iErrorNoSuchFileOrDir
