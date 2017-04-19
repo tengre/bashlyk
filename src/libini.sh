@@ -1,5 +1,5 @@
 #
-# $Id: libini.sh 739 2017-04-18 21:16:12+04:00 toor $
+# $Id: libini.sh 740 2017-04-19 12:53:33+04:00 toor $
 #
 #****h* BASHLYK/libini
 #  DESCRIPTION
@@ -940,6 +940,7 @@ INI::show() {
 #  EXAMPLE
 #    local fn
 #    udfMakeTemp fn
+#    udfAddFO2Clean ${fn}.bak
 #    INI tSave
 #    tSave.__section.select section
 #    tSave.__section.set key "is value"
@@ -1293,6 +1294,9 @@ INI::load() {
 
   fmtPairs=$( ${o}.settings fmtPairs )
 
+  #
+  # Internal temporary function into INI::load namespace
+  #
   INI::load::parse() {
 
     local s sSection
@@ -1314,6 +1318,9 @@ INI::load() {
     csv+="${sSection}|"
 
   }
+  #
+  # end INI::load::parse
+  #
 
   [[ "$1" == "${1##*/}" && -f "$(_ pathIni)/$1" ]] && path=$(_ pathIni)
   [[ "$1" == "${1##*/}" && -f "$1"              ]] && path=$( exec -c pwd )
@@ -1344,6 +1351,8 @@ INI::load() {
     i=$(( i+1 ))
 
   done
+
+  unset -f INI::load::parse
 
   a=( ${ini//./ } )
 
