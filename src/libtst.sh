@@ -1,5 +1,5 @@
 #
-# $Id: libtst.sh 733 2017-04-13 09:58:01+04:00 toor $
+# $Id: libtst.sh 742 2017-04-21 16:20:01+04:00 toor $
 #
 #****h* BASHLYK/libtst
 #  DESCRIPTION
@@ -150,6 +150,139 @@ __private() {
     eval "${f/__/bashlyk.$s}"
 
   done
+
+}
+#******
+#****f* liberr/err::action
+#  SYNOPSIS
+#    err::action [<action>] [<state>] [<message>]
+#  DESCRIPTION
+#    Flexible error handling. Processing is controlled by global variables or
+#    arguments, and consists in a warning message, the function returns, or the
+#    end of the script with a certain return code. Messages may include a stack
+#    trace and printed to stderr
+#  INPUTS
+#    <action> - directly determines how the error handling. Possible actions:
+#
+#     echo     - just prepare a message from the string argument to STDOUT
+#     warn     - prepare a message from the string argument for transmission to
+#                the notification system
+#     return   - set return from the function. In the global context - the end
+#                of the script (exit)
+#     retecho  - the combined action of 'echo'+'return', however, if the code is
+#                not within the function, it is only the transfer of messages
+#                from a string of arguments to STDOUT
+#     retwarn  - the combined action of 'warn'+'return', however, if the code is
+#                not within the function, it is only the transfer of messages
+#                from a string of arguments to the notification system
+#     exit     - set unconditional completion of the script
+#     exitecho - the same as 'exit', but with the transfer of messages from a
+#                string of arguments to STDOUT
+#     exitwarn - the same as 'exitecho', but with the transfer of messages to
+#                the notification system
+#     throw    - the same as 'exitwarn', but with the transfer of messages and
+#                the call stack to the notification system
+#
+#    If an action is not specified, it uses stored in the global variable
+#    $_bashlyk_onError action. If it is not valid, then use action 'throw'
+#
+#    state - number or predefined name as 'iError<Name>' or '<Name>' by which
+#            one can get the error code from the global variable
+#            $_bashlyk_iError<..> and its description from global hash
+#            $_bashlyk_hError
+#            If the error code is not specified, it is set to the return code of
+#            the last executed command. In the end, the resulting numeric code
+#            initializes a global variable $_bashlyk_iLastError[$BASHPID]
+#
+#    message - error detail, such as the filename. When specifying message
+#    should bear in mind that in the error table ($_bashlyk_hError) are already
+#    prepared descriptions <...>
+#
+#  OUTPUT
+#    command line, which can be performed using the eval <...>
+#  EXAMPLE
+#    err::action <<< "retecho InvalidArgument message error"
+#    echo "$LINENO :: $COMP_LINE"
+#    declare -pa BASH_LINENO
+#    onError retecho InvalidArgument message error
+#  SOURCE
+shopt -s expand_aliases
+alias onError='err::action <<< "$(sed -n "${BASH_LINENO[1]}p" ${BASH_SOURCE[1]})"'
+
+err::action() {
+
+  local re rs=$? sAction=$_bashlyk_onError sMessage='' s IFS=$' \t\n'
+  re='^(echo|exit|exitecho|exitwarn|retecho|retwarn|return|warn|throw)$'
+
+  read -t 1
+  echo "dbg $REPLY" >> /tmp/tst.log
+  eval set -- "$REPLY"
+
+  [[ ${1,,} =~ $re ]] && sAction=${1,,} && shift
+
+  udfSetLastError $1; s=$?
+
+  if [[ $s == $_bashlyk_iErrorUnknown ]]; then
+
+    if [[ ${_bashlyk_hError[$rs]} ]]; then
+
+      s=$rs
+      rs="${_bashlyk_hError[$rs]} - $* .. ($rs)"
+
+    else
+
+      (( $rs == 0 )) && rs=$_bashlyk_iErrorUnexpected
+      rs="$* .. ($rs)"
+      s=$_bashlyk_iErrorUnexpected
+
+    fi
+
+  else
+
+    shift
+
+    if [[ ${_bashlyk_hError[$s]} ]]; then
+
+      rs="${_bashlyk_hError[$s]} - $* .. ($s)"
+
+    else
+
+      (( $s == 0 )) && s=$_bashlyk_iErrorUnexpected
+      rs="$* .. ($s)"
+
+    fi
+
+  fi
+
+  rs=${rs//\(/\\\(}
+  rs=${rs//\)/\\\)}
+  rs=${rs//\;/\\\;}
+
+  if [[ "${FUNCNAME[1]}" == "main" || -z "${FUNCNAME[1]}" ]]; then
+
+    [[ "$sAction" == "retecho" ]] && sAction='exitecho'
+    [[ "$sAction" == "retwarn" ]] && sAction='exitwarn'
+    [[ "$sAction" == "return"  ]] && sAction='exitecho'
+
+  fi
+
+  case "${sAction,,}" in
+
+           echo) sAction=': ';        sMessage="udfLog  Warn: ";;
+        retecho) sAction='return $?'; sMessage="udfLog Error: ";;
+       exitecho) sAction='exit $?';   sMessage="udfLog Error: ";;
+           warn) sAction=':';         sMessage="udfWarn  Warn: ";;
+        retwarn) sAction='return $?'; sMessage="udfWarn Error: ";;
+       exitwarn) sAction='exit $?';   sMessage="udfWarn Error: ";;
+    exit|return) sAction="$sAction \$?"; sMessage=": ";;
+              *)
+                 sAction='exit $?'
+                 sMessage='udfStackTrace | udfWarn - Error: '
+          ;;
+
+  esac
+
+  printf -- '%s >&2; udfSetLastError %s %s; %s\n' "${sMessage}${rs}" "$s" "$rs" "$sAction"
 
 }
 #******
