@@ -1,5 +1,5 @@
 #
-# $Id: libtst.sh 742 2017-04-21 16:20:01+04:00 toor $
+# $Id: libtst.sh 743 2017-04-24 00:11:10+04:00 toor $
 #
 #****h* BASHLYK/libtst
 #  DESCRIPTION
@@ -153,9 +153,9 @@ __private() {
 
 }
 #******
-#****f* liberr/err::action
+#****f* liberr/err::handler
 #  SYNOPSIS
-#    err::action [<action>] [<state>] [<message>]
+#    err::handler [<action>] [<state>] [<message>]
 #  DESCRIPTION
 #    Flexible error handling. Processing is controlled by global variables or
 #    arguments, and consists in a warning message, the function returns, or the
@@ -201,39 +201,34 @@ __private() {
 #  OUTPUT
 #    command line, which can be performed using the eval <...>
 #  EXAMPLE
-#    err::action <<< "retecho InvalidArgument message error"
-#    echo "$LINENO :: $COMP_LINE"
-#    declare -pa BASH_LINENO
-#    onError retecho InvalidArgument message error
+#    false || on error warn InvalidArgument message error                       #? true
 #  SOURCE
-shopt -s expand_aliases
-alias onError='err::action <<< "$(sed -n "${BASH_LINENO[1]}p" ${BASH_SOURCE[1]})"'
+err::handler() {
 
-err::action() {
+  local rc=$? re rs sAction=$_bashlyk_onError sMessage='' s IFS=$' \t\n'
+  re='^(echo|exit|echo\+exit|warn\+exit|echo\+return|warn\+return|return|warn|throw)$'
 
-  local re rs=$? sAction=$_bashlyk_onError sMessage='' s IFS=$' \t\n'
-  re='^(echo|exit|exitecho|exitwarn|retecho|retwarn|return|warn|throw)$'
+  s="$( sed -n "${BASH_LINENO[0]}p" ${BASH_SOURCE[1]} )"
 
-  read -t 1
-  echo "dbg $REPLY" >> /tmp/tst.log
-  eval set -- "$REPLY"
+  s="${s##*on error }"; s="${s%%>*}"
+  eval set -- "$s"
 
   [[ ${1,,} =~ $re ]] && sAction=${1,,} && shift
 
-  udfSetLastError $1; s=$?
+  udfSetLastError $1; rs=$?
 
-  if [[ $s == $_bashlyk_iErrorUnknown ]]; then
+  if [[ $rs == $_bashlyk_iErrorUnknown ]]; then
 
-    if [[ ${_bashlyk_hError[$rs]} ]]; then
+    if [[ ${_bashlyk_hError[$rc]} ]]; then
 
-      s=$rs
-      rs="${_bashlyk_hError[$rs]} - $* .. ($rs)"
+      rs=$rc
+      s="${_bashlyk_hError[$rc]} - $* .. ($rc)"
 
     else
 
-      (( $rs == 0 )) && rs=$_bashlyk_iErrorUnexpected
-      rs="$* .. ($rs)"
-      s=$_bashlyk_iErrorUnexpected
+      (( $rc == 0 )) && rc=$_bashlyk_iErrorUnexpected
+      s="$* .. ($rc)"
+      rs=$_bashlyk_iErrorUnexpected
 
     fi
 
@@ -241,40 +236,38 @@ err::action() {
 
     shift
 
-    if [[ ${_bashlyk_hError[$s]} ]]; then
+    if [[ ${_bashlyk_hError[$rs]} ]]; then
 
-      rs="${_bashlyk_hError[$s]} - $* .. ($s)"
+      s="${_bashlyk_hError[$rs]} - $* .. ($rs)"
 
     else
 
-      (( $s == 0 )) && s=$_bashlyk_iErrorUnexpected
-      rs="$* .. ($s)"
+      (( $rs == 0 )) && rs=$_bashlyk_iErrorUnexpected
+      s="$* .. ($rs)"
 
     fi
 
   fi
 
-  rs=${rs//\(/\\\(}
-  rs=${rs//\)/\\\)}
-  rs=${rs//\;/\\\;}
+  s=${s//\(/\\\(}
+  s=${s//\)/\\\)}
+  s=${s//\;/\\\;}
 
   if [[ "${FUNCNAME[1]}" == "main" || -z "${FUNCNAME[1]}" ]]; then
 
-    [[ "$sAction" == "retecho" ]] && sAction='exitecho'
-    [[ "$sAction" == "retwarn" ]] && sAction='exitwarn'
-    [[ "$sAction" == "return"  ]] && sAction='exitecho'
+    [[ $sAction =~ ^((echo|warn)\+)?return$ ]] && sAction="${sAction/return/exit}"
 
   fi
 
   case "${sAction,,}" in
 
-           echo) sAction=': ';        sMessage="udfLog  Warn: ";;
-        retecho) sAction='return $?'; sMessage="udfLog Error: ";;
-       exitecho) sAction='exit $?';   sMessage="udfLog Error: ";;
-           warn) sAction=':';         sMessage="udfWarn  Warn: ";;
-        retwarn) sAction='return $?'; sMessage="udfWarn Error: ";;
-       exitwarn) sAction='exit $?';   sMessage="udfWarn Error: ";;
-    exit|return) sAction="$sAction \$?"; sMessage=": ";;
+           echo) sAction=': ';        sMessage="echo  Warn: ";;
+    echo+return) sAction='return $?'; sMessage="echo Error: ";;
+      echo+exit) sAction='exit $?';   sMessage="echo Error: ";;
+           warn) sAction=': ';        sMessage="udfWarn  Warn: ";;
+    warn+return) sAction='return $?'; sMessage="udfWarn Error: ";;
+      warn+exit) sAction='exit $?';   sMessage="udfWarn Error: ";;
+    exit|return) sAction="${sAction,,} \$?"; sMessage=": ";;
               *)
                  sAction='exit $?'
                  sMessage='udfStackTrace | udfWarn - Error: '
@@ -282,7 +275,10 @@ err::action() {
 
   esac
 
-  printf -- '%s >&2; udfSetLastError %s %s; %s\n' "${sMessage}${rs}" "$s" "$rs" "$sAction"
+  printf -- '%s >&2; udfSetLastError %s %s; %s; : '                            \
+            "${sMessage}${s}" "$rs" "$s" "$sAction"
 
 }
 #******
+shopt -s expand_aliases
+alias on='eval $( err::handler )'

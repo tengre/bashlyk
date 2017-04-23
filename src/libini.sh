@@ -1,5 +1,5 @@
 #
-# $Id: libini.sh 740 2017-04-19 12:53:33+04:00 toor $
+# $Id: libini.sh 743 2017-04-24 00:11:10+04:00 toor $
 #
 #****h* BASHLYK/libini
 #  DESCRIPTION
@@ -120,7 +120,7 @@ declare -rg _bashlyk_exports_ini="                                             \
                                                                                \
 "
 _bashlyk_iErrorIniMissingMethod=111
-_bashlyk_iErrorIniMissingMethod=110
+_bashlyk_iErrorIniBadMethod=110
 _bashlyk_iErrorIniExtraCharInKey=109
 _bashlyk_hError[$_bashlyk_iErrorIniMissingMethod]="instance failed - missing method"
 _bashlyk_hError[$_bashlyk_iErrorIniBadMethod]="instance failed - bad method"
