@@ -1,5 +1,5 @@
 #
-# $Id: libtst.sh 744 2017-04-24 21:34:07+04:00 toor $
+# $Id: libtst.sh 747 2017-04-24 22:21:49+04:00 toor $
 #
 #****h* BASHLYK/libtst
 #  DESCRIPTION
@@ -217,9 +217,8 @@ __private() {
 #  SOURCE
 err::eval() {
 
-  #local -a a
   local rc=$? re rs sAction=$_bashlyk_onError sMessage='' s IFS=$' \t\n'
-  re='^(echo|exit|echo\+exit|warn\+exit|echo\+return|warn\+return|return|warn|throw)$'
+  re='^(echo|warn)$|^((echo|warn)[+])?(exit|return)$|^throw$'
 
   s="$( sed -n "${BASH_LINENO[0]}p" ${BASH_SOURCE[1]} )"
 
