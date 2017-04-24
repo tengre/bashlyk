@@ -1,5 +1,5 @@
 #
-# $Id: liberr.sh 721 2017-04-05 12:08:02+04:00 toor $
+# $Id: liberr.sh 744 2017-04-24 21:34:07+04:00 toor $
 #
 #****h* BASHLYK/liberr
 #  DESCRIPTION
@@ -65,7 +65,7 @@ _bashlyk_iErrorXsessionNotFound=170
 _bashlyk_iErrorIncompatibleVersion=169
 _bashlyk_iErrorTryBoxException=168
 _bashlyk_iErrorNotAvailable=166
-_bashlyk_Success=0
+_bashlyk_iErrorNotDetected=0
 
 _bashlyk_hError[$_bashlyk_iErrorUnknown]="unknown (unexpected) error"
 _bashlyk_hError[$_bashlyk_iErrorMissingArgument]="empty or missing argument"
@@ -94,6 +94,7 @@ _bashlyk_hError[$_bashlyk_iErrorXsessionNotFound]="X-Session not found"
 _bashlyk_hError[$_bashlyk_iErrorIncompatibleVersion]="incompatible version"
 _bashlyk_hError[$_bashlyk_iErrorTryBoxException]="try box exception"
 _bashlyk_hError[$_bashlyk_iErrorNotAvailable]="target is not available"
+_bashlyk_hError[$_bashlyk_iErrorNotDetected]="unknown (unexpected) error, maybe everything is fine"
 #
 : ${_bashlyk_onError:=throw}
 
