@@ -1,5 +1,5 @@
 #
-# $Id: liberr.sh 744 2017-04-24 17:27:08+04:00 toor $
+# $Id: liberr.sh 744 2017-04-24 21:34:07+04:00 toor $
 #
 #****h* BASHLYK/liberr
 #  DESCRIPTION
