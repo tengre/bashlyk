@@ -1,5 +1,5 @@
 #
-# $Id: libtst.sh 747 2017-04-24 22:21:49+04:00 toor $
+# $Id: libtst.sh 748 2017-04-25 16:14:21+04:00 toor $
 #
 #****h* BASHLYK/libtst
 #  DESCRIPTION
@@ -164,6 +164,148 @@ __private() {
 
 }
 #******
+#****f* liberr/err::status
+#  SYNOPSIS
+#    err::status <number> <string>
+#  DESCRIPTION
+#    Set in global variables $_bashlyk_{i,s}Error[$BASHPID] arbitrary values as
+#    error states - number and string
+#  INPUTS
+#    <number> - error code - number or predefined name as 'iErrorXXX' or 'XXX'
+#    <string> - error text
+#  ERRORS
+#    MissingArgument - arguments missing
+#    Unknown         - first argument is non valid
+#    1-255           - valid value of first argument
+#  EXAMPLE
+#    local pid=$BASHPID
+#    udfSetLastError iErrorInvalidVariable "12Invalid"                          #? $_bashlyk_iErrorInvalidVariable
+#    err::status::show                                                          #? $_bashlyk_iErrorInvalidArgument
+#    err::status::show invalid argument                                         #? $_bashlyk_iErrorInvalidArgument
+#    err::status::show $$                                                       #? $_bashlyk_iErrorInvalidVariable
+#  SOURCE
+err::status::pid() {
+
+  local pid
+
+  [[ $1 =~ ^[0-9]+$ ]] && (( $1 < 65536 )) && pid=$1 || pid=$BASHPID
+
+  local i s
+
+  i=${_bashlyk_iLastError[$pid]}
+  s=${_bashlyk_sLastError[$pid]}
+
+  if [[ $i =~ ^[0-9]+$ ]] && (( $i < 255 )); then
+
+    echo "${_bashlyk_hError[$i]} - $s ($i)"
+    return $i
+
+  else
+
+    echo "$s ($i)"
+    return $_bashlyk_iErrorUnexpected
+
+  fi
+
+}
+#******
+#****f* liberr/err::status
+#  SYNOPSIS
+#    err::status <number> <string>
+#  DESCRIPTION
+#    Set in global variables $_bashlyk_{i,s}Error[$BASHPID] arbitrary values as
+#    error states - number and string
+#  INPUTS
+#    <number> - error code - number or predefined name as 'iErrorXXX' or 'XXX'
+#    <string> - error text
+#  ERRORS
+#    MissingArgument - arguments missing
+#    Unknown         - first argument is non valid
+#    1-255           - valid value of first argument
+#  EXAMPLE
+#    local pid=$BASHPID
+#    err::status                                                                #? $_bashlyk_iErrorMissingArgument
+#    err::status non valid argument                                             #? $_bashlyk_iErrorUnknown
+#    err::status 555                                                            #? $_bashlyk_iErrorUnexpected
+#    err::status AlreadyStarted "$$"                                            #? $_bashlyk_iErrorAlreadyStarted
+#    err::status iErrorInvalidVariable "12Invalid Variable"                     #? $_bashlyk_iErrorInvalidVariable
+#    _ iLastError[$pid] >| grep -w "$_bashlyk_iErrorInvalidVariable"            #? true
+#    _ sLastError[$pid] >| grep "^12Invalid Variable$"                          #? true
+#  SOURCE
+err::status() {
+
+  if [[ ! $1 ]]; then
+
+    if [[ ${_bashlyk_iLastError[$BASHPID]} ]]; then
+
+      err::status::show $BASHPID
+
+    elif [[ ${_bashlyk_iLastError[$$]} ]]; then
+
+      err::status::show $$
+
+    fi
+
+    return
+
+  fi
+
+  if [[ $1 =~ ^[0-9]+$ ]]; then
+
+    i=$1
+
+  else
+
+    eval "i=\$_bashlyk_iError${1}"
+    [[ $i ]] || eval "i=\$_bashlyk_${1}"
+
+  fi
+
+  [[ $i =~ ^[0-9]+$ ]] && (( $i < 255 )) && shift || i=$_bashlyk_iErrorUnknown
+
+  _bashlyk_iLastError[$BASHPID]=$i
+  [[ $* ]] && _bashlyk_sLastError[$BASHPID]="$*"
+
+  return $i
+
+}
+#******
+#****f* liberr/err::stacktrace
+#  SYNOPSIS
+#    err::stacktrace
+#  DESCRIPTION
+#    OUTPUT BASH Stack Trace
+#  OUTPUT
+#    BASH Stack Trace
+#  EXAMPLE
+#    err::stacktrace
+#  SOURCE
+err::stacktrace() {
+
+  local i s=$( printf -- '|' )
+  #local i s=$( printf -- '\u00a0' )
+
+  printf -- '\nStack trace by %s from %s:\n+-->>-----\n'                       \
+            "${FUNCNAME[0]}" "${BASH_SOURCE[0]}"
+
+  for (( i=${#FUNCNAME[@]}-1; i >= 0; i-- )); do
+
+    (( ${BASH_LINENO[i]} == 0 )) && continue
+
+    printf -- '%s%d: call %s:%s %s ..\n%s%d: code %s\n'                        \
+              "$s" "$i"                                                        \
+              "${BASH_SOURCE[$i+1]}" "${BASH_LINENO[$i]}" "${FUNCNAME[$i]}"    \
+              "$s" "$i"                                                        \
+              "$( sed -n "${BASH_LINENO[$i]}p" ${BASH_SOURCE[$i+1]} )"
+
+    s+=" "
+
+  done
+
+  printf -- '+-->>-----\n'
+
+}
+#******
 #****f* liberr/err::eval
 #  SYNOPSIS
 #    err::eval [<action>] [<state>] [<message>]
@@ -237,7 +379,7 @@ err::eval() {
     if [[ ${_bashlyk_hError[$rc]} ]]; then
 
       rs=$rc
-      s+="${_bashlyk_hError[$rc]}, detail: $* .. ($rc)"
+      s+="${_bashlyk_hError[$rc]} - $* .. ($rc)"
 
     else
 
@@ -251,7 +393,7 @@ err::eval() {
 
     if [[ ${_bashlyk_hError[$rs]} ]]; then
 
-      s="${_bashlyk_hError[$rs]}, detail: $* .. ($rs)"
+      s="${_bashlyk_hError[$rs]} - $* .. ($rs)"
 
     else
 
@@ -288,7 +430,7 @@ err::eval() {
   esac
 
   printf -- '%s >&2; udfSetLastError %s %s; %s; : '                            \
-            "${sMessage}${s}" "$rs" "$s" "$sAction"
+            "${sMessage}${s}" "$rs" "$*" "$sAction"
 
 }
 #******
