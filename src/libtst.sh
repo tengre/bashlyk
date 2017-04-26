@@ -1,5 +1,5 @@
 #
-# $Id: libtst.sh 748 2017-04-25 16:14:21+04:00 toor $
+# $Id: libtst.sh 749 2017-04-26 06:28:19+04:00 toor $
 #
 #****h* BASHLYK/libtst
 #  DESCRIPTION
@@ -164,27 +164,24 @@ __private() {
 
 }
 #******
-#****f* liberr/err::status
+#****f* liberr/err::status::show
 #  SYNOPSIS
-#    err::status <number> <string>
+#    err::status::show [<pid>]
 #  DESCRIPTION
-#    Set in global variables $_bashlyk_{i,s}Error[$BASHPID] arbitrary values as
-#    error states - number and string
+#    Show last saved error state for process with <pid> or $BASHPID default
 #  INPUTS
-#    <number> - error code - number or predefined name as 'iErrorXXX' or 'XXX'
-#    <string> - error text
+#    <pid> - select process, default current bash subshell $BASHPID
 #  ERRORS
-#    MissingArgument - arguments missing
 #    Unknown         - first argument is non valid
-#    1-255           - valid value of first argument
+#    1-254           - valid value of first argument
 #  EXAMPLE
 #    local pid=$BASHPID
 #    udfSetLastError iErrorInvalidVariable "12Invalid"                          #? $_bashlyk_iErrorInvalidVariable
-#    err::status::show                                                          #? $_bashlyk_iErrorInvalidArgument
-#    err::status::show invalid argument                                         #? $_bashlyk_iErrorInvalidArgument
+#    err::status::show                                                          #? $_bashlyk_iErrorInvalidVariable
+#    err::status::show invalid argument                                         #? $_bashlyk_iErrorInvalidVariable
 #    err::status::show $$                                                       #? $_bashlyk_iErrorInvalidVariable
 #  SOURCE
-err::status::pid() {
+err::status::show() {
 
   local pid
 
@@ -224,7 +221,8 @@ err::status::pid() {
 #    1-255           - valid value of first argument
 #  EXAMPLE
 #    local pid=$BASHPID
-#    err::status                                                                #? $_bashlyk_iErrorMissingArgument
+#    udfSetLastError iErrorInvalidVariable "23Invalid"
+#    err::status                                                                #? $_bashlyk_iErrorInvalidVariable
 #    err::status non valid argument                                             #? $_bashlyk_iErrorUnknown
 #    err::status 555                                                            #? $_bashlyk_iErrorUnexpected
 #    err::status AlreadyStarted "$$"                                            #? $_bashlyk_iErrorAlreadyStarted
@@ -282,8 +280,8 @@ err::status() {
 #  SOURCE
 err::stacktrace() {
 
-  local i s=$( printf -- '|' )
-  #local i s=$( printf -- '\u00a0' )
+  #local i s=$( printf -- '|' )
+  local i s=$( printf -- '\u00a0' )
 
   printf -- '\nStack trace by %s from %s:\n+-->>-----\n'                       \
             "${FUNCNAME[0]}" "${BASH_SOURCE[0]}"
