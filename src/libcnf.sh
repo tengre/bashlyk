@@ -1,5 +1,5 @@
 #
-# $Id: libcnf.sh 737 2017-04-18 17:25:06+04:00 toor $
+# $Id: libcnf.sh 752 2017-04-26 17:02:22+04:00 toor $
 #
 #****h* BASHLYK/libcnf
 #  DESCRIPTION
@@ -95,6 +95,7 @@ declare -rg _bashlyk_exports_cnf="udfGetConfig udfSetConfig"
 #    __getconfig $confChild b,pid >| grep 'pid=$$\|b=false\|;$'                 #? true
 #    rm -f $confChild                                                           #-
 #    _ onError return                                                           #-
+#    __getconfig $confChild
 #    eval "$( __getconfig $confChild )"                                         #? $_bashlyk_iErrorNoSuchFileOrDir
 #    eval "$( __getconfig )"                                                    #? $_bashlyk_iErrorMissingArgument
 #  SOURCE
@@ -106,7 +107,7 @@ __getconfig() {
 
   if [[ ! $1 ]]; then
 
-    udfOnError return MissingArgument '1'
+    err::eval return MissingArgument '1'
     return $(_ MissingArgument )
 
   fi
@@ -116,7 +117,7 @@ __getconfig() {
 
   if ! ${o}.load "$@"; then
 
-    udfOnError return ${_bashlyk_iLastError[$BASHPID]} "$1"
+    err::eval return ${_bashlyk_iLastError[$BASHPID]} "$1"
     return ${_bashlyk_iLastError[$BASHPID]}
 
   fi
@@ -231,18 +232,14 @@ udfGetConfig() {
 #  SOURCE
 udfSetConfig() {
 
-  udfOn MissingArgument throw "$@"
+  throw on MissingArgument $@
 
   local conf path o s
 
   [[ "$1" != "${1##*/}" ]] && path="${1%/*}" || path="$( _ pathCnf )"
   conf="${path}/${1##*/}"
 
-  mkdir -p $path && touch $conf || eval $(
-
-    udfOnError throw NotExistNotCreated "$conf"
-
-  )
+  mkdir -p $path && touch $conf || on error throw NotExistNotCreated $conf
 
   o="${FUNCNAME[0]%%.*}_${RANDOM}${RANDOM}"
   INI $o
