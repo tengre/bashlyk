@@ -1,5 +1,5 @@
 #
-# $Id: libtst.sh 749 2017-04-26 06:28:19+04:00 toor $
+# $Id: libtst.sh 750 2017-04-26 14:33:12+04:00 toor $
 #
 #****h* BASHLYK/libtst
 #  DESCRIPTION
@@ -221,14 +221,15 @@ err::status::show() {
 #    1-255           - valid value of first argument
 #  EXAMPLE
 #    local pid=$BASHPID
-#    udfSetLastError iErrorInvalidVariable "23Invalid"
+#    err::status
 #    err::status                                                                #? $_bashlyk_iErrorInvalidVariable
 #    err::status non valid argument                                             #? $_bashlyk_iErrorUnknown
 #    err::status 555                                                            #? $_bashlyk_iErrorUnexpected
 #    err::status AlreadyStarted "$$"                                            #? $_bashlyk_iErrorAlreadyStarted
-#    err::status iErrorInvalidVariable "12Invalid Variable"                     #? $_bashlyk_iErrorInvalidVariable
-#    _ iLastError[$pid] >| grep -w "$_bashlyk_iErrorInvalidVariable"            #? true
-#    _ sLastError[$pid] >| grep "^12Invalid Variable$"                          #? true
+#    err::status iErrorInvalidVariable 12Invalid test                           #? $_bashlyk_iErrorInvalidVariable
+#    err::status          >| grep '^invalid variable - 12Invalid test (200)$'   #? true
+#    err::status NotAvailable test unit
+#    echo $(err::status)  >| grep '^target is not available - test unit (166)$' #? true
 #  SOURCE
 err::status() {
 
@@ -628,12 +629,12 @@ err::EmptyResult() {
 #    ECHO on NoSuchFileOrDir /notexist                                          #? true
 #    $(throw on NoSuchFileOrDir /notexist)                                      #? $_bashlyk_iErrorNoSuchFileOrDir
 #    $(EXIT on CommandNotFound notexist)                                        #? $_bashlyk_iErrorCommandNotFound
-#    warn on CommandNotFound notexist                                           #? true
+#    warn on CommandNotFound notexist nomoreexist                               #? true
 #  SOURCE
 err::handler() {
 
   local -a aErrHandler=( $* )
-  local re='^(echo|warn)$|^((echo|warn)[+])?(exit|return)$|^throw$'
+  local re='^(echo|warn)$|^((echo|warn)[+])?(exit|return)$|^throw$' i=0 j=0 s
   ## TODO add reAction and reState for safely arguments parsing
 
   [[ $1 =~ $re ]] && shift || on error throw InvalidArgument "1 - $1"
@@ -648,8 +649,28 @@ err::handler() {
 
   unset aErrHandler[1]
 
-  ## TODO many arguments checking mode
-  err::${aErrHandler[2]} $* || on error ${aErrHandler[@]}
+  [[ $* ]] || on error ${aErrHandler[@]}
+
+  for s in "$@"; do
+
+    : $(( j++ ))
+
+    if ! err::${aErrHandler[2]} $s; then
+
+      [[ $s ]] || s=$j
+
+      (( i++ == 0 )) && aErrHandler[3]=$s || aErrHandler[3]+=", $s"
+
+    fi
+
+  done
+
+  if (( i > 0 )); then
+
+    (( i > 1 )) && aErrHandler[3]+=" [total $i]"
+    on error ${aErrHandler[@]:0:3}
+
+  fi
 
 }
 #******

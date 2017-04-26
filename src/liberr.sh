@@ -1,5 +1,5 @@
 #
-# $Id: liberr.sh 744 2017-04-24 21:34:07+04:00 toor $
+# $Id: liberr.sh 750 2017-04-26 14:33:12+04:00 toor $
 #
 #****h* BASHLYK/liberr
 #  DESCRIPTION
@@ -63,7 +63,7 @@ _bashlyk_iErrorAlreadyLocked=179
 _bashlyk_iErrorUserXsessionNotFound=171
 _bashlyk_iErrorXsessionNotFound=170
 _bashlyk_iErrorIncompatibleVersion=169
-_bashlyk_iErrorTryBoxException=168
+_bashlyk_iErrorTryBlockException=168
 _bashlyk_iErrorNotAvailable=166
 _bashlyk_iErrorNotDetected=0
 
@@ -92,7 +92,7 @@ _bashlyk_hError[$_bashlyk_iErrorAlreadyLocked]="already locked"
 _bashlyk_hError[$_bashlyk_iErrorUserXsessionNotFound]="user X-Session not found"
 _bashlyk_hError[$_bashlyk_iErrorXsessionNotFound]="X-Session not found"
 _bashlyk_hError[$_bashlyk_iErrorIncompatibleVersion]="incompatible version"
-_bashlyk_hError[$_bashlyk_iErrorTryBoxException]="try box exception"
+_bashlyk_hError[$_bashlyk_iErrorTryBlockException]="try block exception"
 _bashlyk_hError[$_bashlyk_iErrorNotAvailable]="target is not available"
 _bashlyk_hError[$_bashlyk_iErrorNotDetected]="unknown (unexpected) error, maybe everything is fine"
 #
@@ -413,7 +413,7 @@ alias try-every-line="udfTryEveryLine <<-catch-every-line"
 #  EXAMPLE
 #    local fn s                                                                 #-
 #    fn=$(mktemp --suffix=.sh || tempfile -s test.sh)                           #? true
-#    s='Error: try box exception - internal line: 3, code: touch /not.*(168)'
+#    s='Error: try block exception - internal line: 3, code: touch /not.*(168)'
 #    cat <<-EOF > $fn                                                           #-
 #     . bashlyk                                                                 #-
 #     try-every-line                                                            #-
@@ -455,8 +455,8 @@ udfTryEveryLine() {
   if ! $b; then
 
     echo "?"
-    [[ -s $fn ]] && udfDebug 0 "Error: try box exception output: $(< $fn)"
-    eval $( udfOnError throw TryBoxException "internal line: ${i}, code: ${s}" )
+    [[ -s $fn ]] && udfDebug 0 "Error: try block exception output: $(< $fn)"
+    eval $( udfOnError throw TryBlockException "internal line: ${i}, code: ${s}" )
 
   else
 
@@ -1018,21 +1018,16 @@ ERR::__convert_try_to_func() {
 #                                                                               #-
 #   }                                                                           #-
 #   EOFtry                                                                      #-
-#  . $fn               >| md5sum - | grep ^907e5939aef9c0e0f1e7875ada7a5c80.*-$ #? true
+#  . $fn                  >| md5sum -| grep ^65128961dfcf8819e88831025ad5f1.*-$ #? true
 #  SOURCE
 ERR::exception.message() {
 
   local msg=${_bashlyk_sLastError[$BASHPID]} rc=${_bashlyk_iLastError[$BASHPID]}
   udfIsNumber $rc || return $?
 
-  echo -e "try box exception:\n~~~~~~~~~~~~~~~~~~"
-  echo " status: $rc"
+  printf -- "\ntry block exception:\n~~~~~~~~~~~~~~~~~~~~\n status: %s\n" "$rc"
 
-  if [[ $msg ]]; then
-
-    echo -e $msg
-
-  fi
+  [[ $msg ]] && printf -- "${msg}\n"
 
   return $rc
 
