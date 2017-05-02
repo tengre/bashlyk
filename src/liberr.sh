@@ -1,5 +1,5 @@
 #
-# $Id: liberr.sh 752 2017-04-26 17:02:22+04:00 toor $
+# $Id: liberr.sh 753 2017-05-02 17:22:39+04:00 toor $
 #
 #****h* BASHLYK/liberr
 #  DESCRIPTION
@@ -323,10 +323,23 @@ err::eval() {
   local rc=$? re rs sAction=$_bashlyk_onError sMessage='' s IFS=$' \t\n'
   re='^(echo|warn)$|^((echo|warn)[+])?(exit|return)$|^throw$'
 
+  ## TODO try use FUNCNAME or save after?
   s="$( sed -n "${BASH_LINENO[0]}p" ${BASH_SOURCE[1]} )"
 
-  s="${s##*on error }"; s="${s##*err::eval }"; s="${s%%>*}"
+  if [[ $s =~ ((on|\$\(.?err::eval.?\)).error|err::eval)[[:space:]]*?([^>]*)[[:space:]]*?[^\>]? ]]; then
 
+    s=${BASH_REMATCH[3]}
+
+  else
+
+    s="${s##*on error }";
+    s="${s##*\$\( err::eval \) error }";
+    s="${s##*err::eval }"
+    s="${s%%>*}"
+
+  fi
+
+  ## TODO replace eval set -- "$s" with array
   eval set -- "$s"
 
   [[ ${1,,} =~ $re ]] && sAction=${1,,} && shift
@@ -390,7 +403,7 @@ err::eval() {
 
   esac
 
-  printf -- '%s >&2; err::status %s %s; %s; : ' "${sMessage}${s}" "$rs" "$*" "$sAction"
+  printf -- '%s >&2; err::status %s %s; %s; : \n' "${sMessage}${s}" "$rs" "$*" "$sAction"
 
 }
 #******
@@ -585,18 +598,16 @@ err::EmptyResult() {
 #    see on error ...
 #  EXAMPLE
 #    ## TODO improve tests
-#    err::handler warn on NoSuchFileOrDir /notexist                             #? true
-#    warn on NoSuchFileOrDir /notexist                                          #? true
-#    ECHO on NoSuchFileOrDir /notexist                                          #? true
-#    $(throw on NoSuchFileOrDir /notexist)                                      #? $_bashlyk_iErrorNoSuchFileOrDir
-#    $(EXIT on CommandNotFound notexist)                                        #? $_bashlyk_iErrorCommandNotFound
+#    err::handler warn on NoSuchFileOrDir /err.handler                          #? true
+#    echo+return on CommandNotFound notexist.return                             #? $_bashlyk_iErrorCommandNotFound
+#    warn on NoSuchFileOrDir /notexist.warn                                     #? true
+#    ECHO on NoSuchFileOrDir /notexist.echo                                     #? true
+#    $(throw on NoSuchFileOrDir /notexist.throw.child)                          #? $_bashlyk_iErrorNoSuchFileOrDir
+#    $(echo+exit on CommandNotFound notexist.exit.child)                        #? $_bashlyk_iErrorCommandNotFound
+#    $(RETURN on CommandNotFound notexist.exit.child || return)                 #? $_bashlyk_iErrorCommandNotFound
 #    warn on CommandNotFound notexist nomoreexist                               #? true
 #  SOURCE
 err::handler() {
-
- ## TODO evaluate for *return
- #s="$(sed -n "${BASH_LINENO[0]}p" ${BASH_SOURCE[1]})"
- #s="${s%%>*}"
 
   local -a aErrHandler=( $* )
   local re='^(echo|warn)$|^((echo|warn)[+])?(exit|return)$|^throw$' i=0 j=0 s

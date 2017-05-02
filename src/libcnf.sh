@@ -1,5 +1,5 @@
 #
-# $Id: libcnf.sh 752 2017-04-26 17:02:22+04:00 toor $
+# $Id: libcnf.sh 753 2017-05-02 17:22:39+04:00 toor $
 #
 #****h* BASHLYK/libcnf
 #  DESCRIPTION
@@ -112,6 +112,7 @@ __getconfig() {
 
   fi
 
+  ## TODO temporary object source file do not removed!!!
   INI $o
   ${o}.settings.shellmode true
 

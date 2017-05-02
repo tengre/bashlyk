@@ -1,5 +1,5 @@
 #
-# $Id: libini.sh 743 2017-04-24 00:11:10+04:00 toor $
+# $Id: libini.sh 753 2017-05-02 17:22:39+04:00 toor $
 #
 #****h* BASHLYK/libini
 #  DESCRIPTION
@@ -151,9 +151,10 @@ _bashlyk_hError[$_bashlyk_iErrorIniExtraCharInKey]="extra character(s) in the ke
 #  SOURCE
 INI() {
 
-  local f s o=${1:-INI}
+  local f fn s o=${1:-INI}
 
-  udfOn InvalidVariable throw $o
+  #udfOn InvalidVariable throw $o
+  throw on InvalidVariable $o
 
   declare -Ag -- _h${o^^}_settings='(                                          \
                                                                                \
@@ -171,22 +172,30 @@ INI() {
   declare -Ag -- _h${o^^}="([__settings__]=_h${o^^}_settings)"
   declare -ag -- _a${o^^}="()"
 
+  udfMakeTemp fn path="${TMPDIR}/${USER}/bashlyk" prefix='ini.' suffix=".${o}"
+
   for s in $_bashlyk_methods_ini; do
 
-    f=$( declare -pf INI::${s} 2>/dev/null ) || eval $(                        \
-                                                                               \
-      udfOnError throw IniMissingMethod "INI::${s} for $o"                     \
-                                                                               \
-    )
+    f=$( declare -pf INI::${s} 2>/dev/null ) || on error throw IniMissingMethod "INI::${s} for $o"
 
-    eval "${f/INI::$s/${o}.$s}" || eval $(                                     \
-                                                                               \
-      udfOnError throw IniBadMethod "INI::$s for $o"                           \
-                                                                               \
-    )
+#    f=$( declare -pf INI::${s} 2>/dev/null ) || eval $(                        \
+#                                                                               \
+#      udfOnError throw IniMissingMethod "INI::${s} for $o"                     \
+#                                                                               \
+#    )
+
+    echo "${f/INI::$s/${o}.$s}" >> $fn || on error throw IniBadMethod "INI::$s for $o"
+    #eval "${f/INI::$s/${o}.$s}" || on error throw IniBadMethod "INI::$s for $o"
+
+#    eval "${f/INI::$s/${o}.$s}" || eval $(                                     \
+#                                                                               \
+#      udfOnError throw IniBadMethod "INI::$s for $o"                           \
+#                                                                               \
+#    )
 
   done
 
+  source $fn || on error throw InvalidArgument "$fn"
   return 0
 
 }
@@ -586,7 +595,8 @@ INI::__section.getArray() {
   o=${FUNCNAME[0]%%.*}
   ${o}.__section.select $*
   id=$( ${o}.__section.id $* )
-  udfIsHash $id || eval $( udfOnError InvalidHash '$id' )
+  udfIsHash $id || on error $(_ onError) InvalidHash $id
+  #eval $( udfOnError InvalidHash '$id' )
 
   sU=$( ${o}.__section.get _bashlyk_raw_mode )
 
@@ -668,7 +678,8 @@ INI::__section.getArray() {
 #  SOURCE
 INI::get() {
 
-  udfOn MissingArgument $* || return $?
+  #udfOn MissingArgument $* || return $?
+  RETURN on MissingArgument $* || return
 
   local -a a
   local IFS o k s="$*" v
@@ -695,7 +706,8 @@ INI::get() {
       ;;
 
     *)
-      eval $( udfOnError retwarn InvalidArgument "$*" )
+      #eval $( udfOnError retwarn InvalidArgument "$*" )
+      on error warn+return InvalidArgument $*
       ;;
 
   esac
@@ -767,7 +779,8 @@ INI::keys() {
     ;;
 
     *)
-      eval $( udfOnError retwarn InvalidArgument "$*" )
+      #eval $( udfOnError retwarn InvalidArgument "$*" )
+      on error warn+return InvalidArgument $*
     ;;
 
   esac
@@ -815,6 +828,7 @@ INI::keys() {
 #                      or 'key = value'
 #  EXAMPLE
 #    INI tSet
+#    tSet.set                                                                   #? $_bashlyk_iErrorMissingArgument
 #    tSet.set [section]key = is value
 #    tSet.set key = is unnamed section
 #    tSet.set key with spaces = is unnamed section
@@ -840,7 +854,8 @@ INI::keys() {
 #  SOURCE
 INI::set() {
 
-  udfOn MissingArgument $* || return $?
+  #udfOn MissingArgument $* || return $?
+  RETURN on MissingArgument $* || return
 
   local iKeyWidth o k s v
 
@@ -852,7 +867,8 @@ INI::set() {
 
   else
 
-    eval $( udfOnError InvalidArgument "$*" )
+    #eval $( udfOnError InvalidArgument "$*" )
+    on error InvalidArgument $*
 
   fi
 
@@ -874,7 +890,8 @@ INI::set() {
 
   else
 
-    [[ $k =~ $( ${o}.settings reKey ) ]] || eval $( udfOnError IniExtraCharInKey "$k" )
+    #[[ $k =~ $( ${o}.settings reKey ) ]] || eval $( udfOnError IniExtraCharInKey "$k" )
+    [[ $k =~ $( ${o}.settings reKey ) ]] || on error IniExtraCharInKey "$k"
 
     iKeyWidth=$( ${o}.__section.get _bashlyk_key_width )
     udfIsNumber $iKeyWidth || iKeyWidth=0
@@ -961,7 +978,8 @@ INI::show() {
 #  SOURCE
 INI::save() {
 
-  udfOn MissingArgument throw "$1"
+  #udfOn MissingArgument throw "$1"
+  throw on MissingArgument $1
 
   local c fmtComment fn o
 
@@ -974,11 +992,14 @@ INI::save() {
 
   [[ -s $fn ]] && mv -f $fn ${fn}.bak
 
-  mkdir -p ${fn%/*} && touch $fn || eval $(                                    \
-                                                                               \
-    udfOnError throw NotExistNotCreated "${fn%/*}"                             \
-                                                                               \
-  )
+  mkdir -p ${fn%/*} && touch $fn || on error throw NotExistNotCreated ${fn%/*}
+
+
+#  mkdir -p ${fn%/*} && touch $fn || eval $(                                    \
+#                                                                               \
+#    udfOnError throw NotExistNotCreated "${fn%/*}"                             \
+#                                                                               \
+#  )
 
   {
 
@@ -1050,7 +1071,9 @@ INI::save() {
 #  SOURCE
 INI::read() {
 
-  udfOn NoSuchFileOrDir $1 || return
+  #udfOn NoSuchFileOrDir $1 || return
+  RETURN on MissingArgument $1 || return
+  RETURN on NoSuchFileOrDir $1 || return
 
   local bActiveSection bIgnore csv fn i iKeyWidth reComment reKeyVal reSection
   local reValidSections s
@@ -1072,7 +1095,8 @@ INI::read() {
   ## TODO permit hi uid ?
   if [[ ! $( exec -c stat -c %u $fn ) =~ ^($UID|0)$ ]]; then
 
-    eval $( udfOnError NotPermitted "$1 owned by $( stat -c %U $fn )" )
+    on error NotPermitted $1 owned by $( stat -c %U $fn )
+    #eval $( udfOnError NotPermitted "$1 owned by $( stat -c %U $fn )" )
 
   fi
 
@@ -1332,7 +1356,8 @@ INI::load() {
 
   else
 
-    udfOn NoSuchFileOrDir $1 || return $?
+    RETURN on NoSuchFileOrDir $1 || return
+    #udfOn NoSuchFileOrDir $1 || return $?
 
   fi
 
@@ -1455,7 +1480,8 @@ INI::bind.cli() {
 
     else
 
-      eval $( udfOnError InvalidArgument "$s - format error" )
+      #eval $( udfOnError InvalidArgument "$s - format error" )
+      on error InvalidArgument $s - format error
 
     fi
 
@@ -1505,12 +1531,14 @@ INI::bind.cli() {
       [[ ${h[unrecognized]} ]] && s+="${h[unrecognized]%*,}"
 
       unset h
-      eval $( udfOnError InvalidOption "${s%*,} (command line:  $( _ sArg ))" )
+      #eval $( udfOnError InvalidOption "${s%*,} (command line:  $( _ sArg ))" )
+      on error warn+return InvalidOption "${s%*,} command line:  $( _ sArg )"
 
     ;;
 
     *)
-      eval $( udfOnError InvalidOption "internal fail - $( < $fnErr )" )
+      #eval $( udfOnError InvalidOption "internal fail - $( < $fnErr )" )
+      on error InvalidOption "internal fail - $( < $fnErr )"
     ;;
 
   esac
@@ -1569,7 +1597,8 @@ INI::getopt() {
     ;;
 
     *)
-      udfOn MissingArgument "$*" || return $?
+      #udfOn MissingArgument "$*" || return $?
+      RETURN on MissingArgument "$*" || return
       return $( _ iErrorInvalidArgument )
     ;;
 
@@ -1578,7 +1607,8 @@ INI::getopt() {
   o=${FUNCNAME[0]%%.*}
   eval "o=\${_h${o^^}[__cli__]}"
 
-  udfOn EmptyVariable o || return $( _ iErrorNotAvailable )
+  #udfOn EmptyVariable o || return $( _ iErrorNotAvailable )
+  RETURN on EmptyVariable o || return $( _ iErrorNotAvailable )
 
   ${o}.get [${s}]${k}
 
