@@ -1,5 +1,5 @@
 #
-# $Id: liberr.sh 753 2017-05-02 17:22:39+04:00 toor $
+# $Id: liberr.sh 754 2017-05-02 23:09:26+04:00 toor $
 #
 #****h* BASHLYK/liberr
 #  DESCRIPTION
@@ -320,27 +320,30 @@ err::stacktrace() {
 #  SOURCE
 err::eval() {
 
-  local rc=$? re rs sAction=$_bashlyk_onError sMessage='' s IFS=$' \t\n'
+  local rc=$? re rs sAction=$_bashlyk_onError sMessage='' sErrEval s IFS=$' \t\n'
   re='^(echo|warn)$|^((echo|warn)[+])?(exit|return)$|^throw$'
 
   ## TODO try use FUNCNAME or save after?
-  s="$( sed -n "${BASH_LINENO[0]}p" ${BASH_SOURCE[1]} )"
+  sErrEval="$( sed -n "${BASH_LINENO[0]}p" ${BASH_SOURCE[1]} )"
 
-  if [[ $s =~ ((on|\$\(.?err::eval.?\)).error|err::eval)[[:space:]]*?([^>]*)[[:space:]]*?[^\>]? ]]; then
+  if [[ $sErrEval =~ ((on|\$\(.?err::eval.?\)).error|err::eval)[[:space:]]*?([^>]*)[[:space:]]*?[^\>]? ]]; then
 
-    s=${BASH_REMATCH[3]}
+    s=$( eval "echo \"${BASH_REMATCH[3]}\"" )
 
   else
 
-    s="${s##*on error }";
-    s="${s##*\$\( err::eval \) error }";
-    s="${s##*err::eval }"
-    s="${s%%>*}"
+    echo "invalid arguments for error handling, abort..."
+    err::stacktrace
+    exit $( _ iErrorInvalidArgument )
 
   fi
 
-  ## TODO replace eval set -- "$s" with array
-  eval set -- "$s"
+  ## TODO replace eval set -- "$s" with array, escaping () required
+  s=${s//\(/\\\(}
+  s=${s//\)/\\\)}
+  s=${s//\;/\\\;}
+
+  eval set -- $s
 
   [[ ${1,,} =~ $re ]] && sAction=${1,,} && shift
 
@@ -403,7 +406,7 @@ err::eval() {
 
   esac
 
-  printf -- '%s >&2; err::status %s %s; %s; : \n' "${sMessage}${s}" "$rs" "$*" "$sAction"
+  printf -- '%s >&2; err::status %s "%s"; %s; : ' "${sMessage}${s}" "$rs" "$*" "$sAction"
 
 }
 #******

@@ -1,5 +1,5 @@
 #
-# $Id: libini.sh 753 2017-05-02 17:22:39+04:00 toor $
+# $Id: libini.sh 754 2017-05-02 23:09:26+04:00 toor $
 #
 #****h* BASHLYK/libini
 #  DESCRIPTION
@@ -1532,7 +1532,7 @@ INI::bind.cli() {
 
       unset h
       #eval $( udfOnError InvalidOption "${s%*,} (command line:  $( _ sArg ))" )
-      on error warn+return InvalidOption "${s%*,} command line:  $( _ sArg )"
+      on error warn+return InvalidOption "${s%*,} \(command line:  $( _ sArg )\)"
 
     ;;
 
