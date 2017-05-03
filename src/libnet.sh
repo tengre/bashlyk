@@ -1,5 +1,5 @@
 #
-# $Id: libnet.sh 714 2017-03-27 15:02:12+04:00 toor $
+# $Id: libnet.sh 755 2017-05-03 16:40:47+04:00 toor $
 #
 #****h* BASHLYK/libnet
 #  DESCRIPTION
@@ -68,7 +68,7 @@ alias udfGetValidCIDR="net::ipv4.cidr"
 #  SOURCE
 net::ipv4.host() {
 
-  udfOn MissingArgument $* || return
+  RETURN on MissingArgument $* || return
 
   local -A h
 
@@ -80,7 +80,7 @@ net::ipv4.host() {
 
   echo "${!h[@]}"
 
-  udfOn EmptyResult return "${!h[@]}"
+  RETURN on EmptyResult "${!h[@]}"
 
 }
 #******
@@ -106,7 +106,7 @@ net::ipv4.host() {
 #  SOURCE
 net::ipv4.mask() {
 
-  udfOn MissingArgument $* || return
+  RETURN on MissingArgument $* || return
 
   local -A h
 
@@ -118,7 +118,7 @@ net::ipv4.mask() {
 
   echo "${!h[@]}"
 
-  udfOn EmptyResult return "${!h[@]}"
+  RETURN on EmptyResult "${!h[@]}"
 
 }
 #******
@@ -144,7 +144,7 @@ net::ipv4.mask() {
 #  SOURCE
 net::ipv4.network() {
 
-  udfOn MissingArgument $* || return
+  RETURN on MissingArgument $* || return
 
   local -A h
 
@@ -156,7 +156,7 @@ net::ipv4.network() {
 
   echo "${!h[@]}"
 
-  udfOn EmptyResult return "${!h[@]}"
+  RETURN on EmptyResult "${!h[@]}"
 
 }
 #******
@@ -181,7 +181,7 @@ net::ipv4.network() {
 #  SOURCE
 net::ipv4.broadcast() {
 
-  udfOn MissingArgument $* || return
+  RETURN on MissingArgument $* || return
 
   local -A h
 
@@ -193,7 +193,7 @@ net::ipv4.broadcast() {
 
   echo "${!h[@]}"
 
-  udfOn EmptyResult return "${!h[@]}"
+  RETURN on EmptyResult "${!h[@]}"
 
 }
 #******
@@ -221,7 +221,7 @@ net::ipv4.broadcast() {
 #  SOURCE
 net::ipv4.cidr() {
 
-  udfOn MissingArgument $* || return
+  RETURN on MissingArgument $* || return
 
   local s
   local -A h
@@ -247,7 +247,7 @@ net::ipv4.cidr() {
 
   echo "${!h[@]}"
 
-  udfOn EmptyResult return "${!h[@]}"
+  RETURN on EmptyResult "${!h[@]}"
 
 }
 #******
@@ -276,7 +276,7 @@ net::ipv4.cidr() {
 #  SOURCE
 net::ipv4.range() {
 
-  udfOn MissingArgument $* || return
+  RETURN on MissingArgument $* || return
 
   local IFS i s
   local -a aA aB
@@ -318,7 +318,7 @@ net::ipv4.range() {
   s="$( udfTrim "$s" )"
   eval "echo ${s// /.}"
 
-  udfOn EmptyResult return "$s"
+  RETURN on EmptyResult "$s"
 
 }
 #******

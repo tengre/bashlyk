@@ -1,5 +1,5 @@
 #
-# $Id: libcnf.sh 753 2017-05-02 17:22:39+04:00 toor $
+# $Id: libcnf.sh 755 2017-05-03 16:40:47+04:00 toor $
 #
 #****h* BASHLYK/libcnf
 #  DESCRIPTION
@@ -91,13 +91,14 @@ declare -rg _bashlyk_exports_cnf="udfGetConfig udfSetConfig"
 #    test=test                                                                  #-
 #                                                                               #-
 #    EOFchild                                                                   #-
+#    echo "cat start --"
 #    cat $confChild
+#    echo "cat stop  --"
+#    _ onError echo+return
 #    __getconfig $confChild b,pid >| grep 'pid=$$\|b=false\|;$'                 #? true
-#    rm -f $confChild                                                           #-
-#    _ onError return                                                           #-
-#    __getconfig $confChild
-#    eval "$( __getconfig $confChild )"                                         #? $_bashlyk_iErrorNoSuchFileOrDir
-#    eval "$( __getconfig )"                                                    #? $_bashlyk_iErrorMissingArgument
+#    rm -f $confChild
+#    __getconfig $confChild  >| grep "err::status $( _ iErrorNoSuchFileOrDir )" #? true
+#    __getconfig             >| grep "err::status $( _ iErrorMissingArgument )" #? true
 #  SOURCE
 __getconfig() {
 
@@ -107,7 +108,7 @@ __getconfig() {
 
   if [[ ! $1 ]]; then
 
-    err::eval return MissingArgument '1'
+    err::eval MissingArgument '1'
     return $(_ MissingArgument )
 
   fi
@@ -118,7 +119,8 @@ __getconfig() {
 
   if ! ${o}.load "$@"; then
 
-    err::eval return ${_bashlyk_iLastError[$BASHPID]} "$1"
+    e="${_bashlyk_iLastError[$BASHPID]} $@"
+    err::eval $e
     return ${_bashlyk_iLastError[$BASHPID]}
 
   fi
@@ -196,6 +198,7 @@ __getconfig() {
 #    udfGetConfig $confChild pid,b,test                                         #? true
 #    echo "$b $pid $test" >| grep "false $$ test"                               #? true
 #    rm -f $confChild
+#    _ onError echo+return
 #    udfGetConfig $confChild s                                                  #? $_bashlyk_iErrorNoSuchFileOrDir
 #    udfGetConfig                                                               #? $_bashlyk_iErrorMissingArgument
 #  SOURCE

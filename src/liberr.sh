@@ -1,5 +1,5 @@
 #
-# $Id: liberr.sh 754 2017-05-02 23:09:26+04:00 toor $
+# $Id: liberr.sh 755 2017-05-03 16:40:47+04:00 toor $
 #
 #****h* BASHLYK/liberr
 #  DESCRIPTION
@@ -211,6 +211,8 @@ err::status() {
 
   fi
 
+  local i
+
   if [[ $1 =~ ^[0-9]+$ ]]; then
 
     i=$1
@@ -320,15 +322,16 @@ err::stacktrace() {
 #  SOURCE
 err::eval() {
 
-  local rc=$? re rs sAction=$_bashlyk_onError sMessage='' sErrEval s IFS=$' \t\n'
+  local rc=$?
+  local i re rs sAction=$_bashlyk_onError sMessage='' s IFS=$' \t\n'
+  local -a a
   re='^(echo|warn)$|^((echo|warn)[+])?(exit|return)$|^throw$'
 
   ## TODO try use FUNCNAME or save after?
-  sErrEval="$( sed -n "${BASH_LINENO[0]}p" ${BASH_SOURCE[1]} )"
 
-  if [[ $sErrEval =~ ((on|\$\(.?err::eval.?\)).error|err::eval)[[:space:]]*?([^>]*)[[:space:]]*?[^\>]? ]]; then
+  if [[ $( sed -n "${BASH_LINENO[0]}p" ${BASH_SOURCE[1]} ) =~ ((on|\$\(.?err::eval.?\)).error|err::eval)[[:space:]]*?([^\>]*)[[:space:]]*?[\>\|]? ]]; then
 
-    s=$( eval "echo \"${BASH_REMATCH[3]}\"" )
+    a=( $( eval echo "\"${BASH_REMATCH[3]//\"/}\"" ) )
 
   else
 
@@ -338,16 +341,9 @@ err::eval() {
 
   fi
 
-  ## TODO replace eval set -- "$s" with array, escaping () required
-  s=${s//\(/\\\(}
-  s=${s//\)/\\\)}
-  s=${s//\;/\\\;}
+  [[ ${a[0],,} =~ $re ]] && sAction=${a[0],,} && i=1 || i=0
 
-  eval set -- $s
-
-  [[ ${1,,} =~ $re ]] && sAction=${1,,} && shift
-
-  err::status $1; rs=$?
+  err::status ${a[$i]}; rs=$?
 
   if [[ $rs == $_bashlyk_iErrorUnknown ]]; then
 
@@ -356,33 +352,31 @@ err::eval() {
     if [[ ${_bashlyk_hError[$rc]} ]]; then
 
       rs=$rc
-      s+="${_bashlyk_hError[$rc]} - $* .. ($rc)"
+      s+="${_bashlyk_hError[$rc]} - ${a[@]:$i} .. ($rc)"
 
     else
 
-      s+="$* .. ($rc)"
+      s+="${a[@]:$i} .. ($rc)"
 
     fi
 
   else
 
-    shift
+    : $(( i++ ))
 
     if [[ ${_bashlyk_hError[$rs]} ]]; then
 
-      s="${_bashlyk_hError[$rs]} - $* .. ($rs)"
+      s="${_bashlyk_hError[$rs]} - ${a[@]:$i} .. ($rs)"
 
     else
 
-      s="$* .. ($rs)"
+      s="${a[@]:$i} .. ($rs)"
 
     fi
 
   fi
 
-  s=${s//\(/\\\(}
-  s=${s//\)/\\\)}
-  s=${s//\;/\\\;}
+  s=${s//\(/\\\(}; s=${s//\)/\\\)}; s=${s//\;/\\\;}
 
   if [[ "${FUNCNAME[1]}" == "main" || -z "${FUNCNAME[1]}" ]]; then
 
@@ -401,12 +395,13 @@ err::eval() {
     exit|return) sAction="${sAction,,} \$?"; sMessage=": ";;
               *)
                  sAction='exit $?'
-                 sMessage='udfStackTrace | udfWarn - Error: '
+                 sMessage='err::stacktrace | udfWarn - Error: '
           ;;
 
   esac
 
-  printf -- '%s >&2; err::status %s "%s"; %s; : ' "${sMessage}${s}" "$rs" "$*" "$sAction"
+  i=${a[@]:$i}
+  printf -- '%s >&2; err::status %s "%s"; %s; # \n' "${sMessage}${s}" "$rs" "${i//\;/}" "$sAction"
 
 }
 #******

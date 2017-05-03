@@ -1,5 +1,5 @@
 #
-# $Id: liblog.sh 727 2017-04-11 17:26:51+04:00 toor $
+# $Id: liblog.sh 755 2017-05-03 16:40:47+04:00 toor $
 #
 #****h* BASHLYK/liblog
 #  DESCRIPTION
@@ -130,8 +130,7 @@ udfLogger() {
 
   fi
 
-  mkdir -p "$_bashlyk_pathLog" \
-    || eval $( udfOnError throw NotExistNotCreated "${_bashlyk_pathLog}" )
+  mkdir -p "$_bashlyk_pathLog" || on error throw NotExistNotCreated $_bashlyk_pathLog
 
   udfAddFO2Clean $_bashlyk_pathLog
 
@@ -361,11 +360,9 @@ udfSetLog() {
            ;;
   esac
 
-  mkdir -p "$_bashlyk_pathLog" \
-    || eval $(udfOnError throw NotExistNotCreated "$_bashlyk_pathLog")
+  mkdir -p "$_bashlyk_pathLog" || on error throw NotExistNotCreated $_bashlyk_pathLog
 
-  touch "$_bashlyk_fnLog" \
-    || eval $(udfOnError throw NotExistNotCreated "$_bashlyk_fnLog")
+  touch "$_bashlyk_fnLog" || on error throw NotExistNotCreated $_bashlyk_fnLog
 
   udfSetLogSocket
 
@@ -400,7 +397,7 @@ udfSetLog() {
 #  SOURCE
 udfDebug() {
 
-  udfOn MissingArgument $* || return
+  RETURN on MissingArgument $* || return
 
   if [[ $1 =~ ^[0-9]+$ ]]; then
 

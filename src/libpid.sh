@@ -1,5 +1,5 @@
 #
-# $Id: libpid.sh 727 2017-04-11 17:26:51+04:00 toor $
+# $Id: libpid.sh 755 2017-05-03 16:40:47+04:00 toor $
 #
 #****h* BASHLYK/libpid
 #  DESCRIPTION
@@ -86,7 +86,7 @@ declare -rg _bashlyk_exports_pid="                                             \
 #  SOURCE
 udfCheckStarted() {
 
-  udfOn MissingArgument "$*" || return $?
+  RETURN on MissingArgument $* || return
 
   local re="\\b${1}\\b"
 
@@ -181,12 +181,12 @@ udfStopProcess() {
 
   done
 
-  udfOn MissingArgument $* || return $?
+  RETURN on MissingArgument $* || return
 
   rc=$( _ iErrorNoSuchProcess )
 
-  udfOn MissingArgument "${a[*]}" || a=( $( pgrep -d' ' ${1##*/} ) )
-  udfOn MissingArgument "${a[*]}" || return $rc
+  RETURN on MissingArgument "${a[*]}" || a=( $( pgrep -d' ' ${1##*/} ) )
+  RETURN on MissingArgument "${a[*]}" || return $rc
 
   iStopped=0
   for (( i=0; i<${#a[*]}; i++ )) ; do
@@ -290,8 +290,7 @@ udfSetPid() {
 
   fi
 
-  mkdir -p "${fnPid%/*}" \
-    || eval $( udfOnError retecho NotExistNotCreated "${fnPid%/*}" )
+  mkdir -p "${fnPid%/*}" || on error echo+return NotExistNotCreated ${fnPid%/*}
 
   fd=$( udfGetFreeFD )
   udfThrowOnEmptyVariable fd
@@ -304,7 +303,7 @@ udfSetPid() {
 
     if udfCheckStarted "$pid" $( _ s0 ) $( _ sArg ); then
 
-      eval $( udfOnError retecho AlreadyStarted "$pid" )
+      on error echo+return AlreadyStarted $pid
 
     fi
 
@@ -316,7 +315,7 @@ udfSetPid() {
 
     else
 
-      eval $( udfOnError retecho NotExistNotCreated "$fnPid" )
+      on error echo+return NotExistNotCreated $fnPid
 
     fi
 
@@ -324,11 +323,11 @@ udfSetPid() {
 
     if udfCheckStarted "$pid" $( _ s0 ) $( _ sArg ); then
 
-      eval $( udfOnError retecho AlreadyStarted "$pid" )
+      on error echo+return AlreadyStarted $pid
 
     else
 
-      eval $( udfOnError retecho AlreadyLocked "$fnPid" )
+      on error echo+return AlreadyLocked $fnPid
 
     fi
 
@@ -384,7 +383,7 @@ udfAddPid2Clean() {
 
   _bashlyk_apidClean[$BASHPID]+=" $*"
 
-  trap "udfOnTrap" EXIT
+  trap "udfOnTrap" EXIT INT TERM
 
 }
 #******
@@ -398,11 +397,11 @@ udfAddPid2Clean() {
 #  SOURCE
 udfAddFD2Clean() {
 
-  udfOn MissingArgument $* || return $?
+  RETURN on MissingArgument $* || return
 
   _bashlyk_afdClean[$BASHPID]+=" $*"
 
-  trap "udfOnTrap" EXIT
+  trap "udfOnTrap" EXIT INT TERM
 
 }
 #******
@@ -440,11 +439,11 @@ udfAddFD2Clean() {
 #  SOURCE
 udfAddFO2Clean() {
 
-  udfOn MissingArgument return $*
+  RETURN on MissingArgument $* || return
 
   _bashlyk_afoClean[$BASHPID]+=" $*"
 
-  trap "udfOnTrap" EXIT
+  trap "udfOnTrap" EXIT INT TERM
 
 }
 #******

@@ -1,5 +1,5 @@
 #
-# $Id: libmsg.sh 732 2017-04-12 18:45:18+04:00 toor $
+# $Id: libmsg.sh 755 2017-05-03 16:40:47+04:00 toor $
 #
 #****h* BASHLYK/libmsg
 #  DESCRIPTION
@@ -139,11 +139,11 @@ udfWarn() {
 #  SOURCE
 udfMail() {
 
-  udfOn MissingArgument $1 || return $?
+  RETURN on MissingArgument $* || return
 
   local sTo=$_bashlyk_sLogin IFS=$' \t\n'
 
-  udfOn CommandNotFound mail || return
+  RETURN on CommandNotFound mail || return
 
   : ${sTo:=$_bashlyk_sUser}
   : ${sTo:=postmaster}
@@ -237,7 +237,7 @@ udfMessage() {
 #  SOURCE
 udfNotify2X() {
 
-  udfOn MissingArgument $1 || return $?
+  RETURN on MissingArgument $* || return
 
   local iTimeout=8 s IFS=$' \t\n'
 
@@ -366,7 +366,7 @@ udfGetXSessionProperties() {
 #  SOURCE
 udfNotifyCommand() {
 
-  udfOn MissingArgument $4 || return $?
+  RETURN on MissingArgument $* || return
 
   local h t rc X IFS=$' \t\n'
 
