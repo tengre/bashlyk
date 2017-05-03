@@ -1,5 +1,5 @@
 #
-# $Id: liberr.sh 755 2017-05-03 16:40:47+04:00 toor $
+# $Id: liberr.sh 756 2017-05-04 00:08:12+04:00 toor $
 #
 #****h* BASHLYK/liberr
 #  DESCRIPTION
@@ -21,6 +21,20 @@
                                                                                \
 '
 #******
+shopt -s expand_aliases
+alias try='try()'
+alias on='eval $( err::eval )'
+alias ECHO='err::handler echo'
+alias EXIT='err::handler exit'
+alias warn='err::handler warn'
+alias throw='err::handler throw'
+alias RETURN='err::handler return'
+alias errorify='err::handler return'
+alias echo+exit='err::handler echo+exit'
+alias warn+exit='err::handler warn+exit'
+alias echo+return='err::handler echo+return'
+alias warn+return='err::handler warn+return'
+alias catch='; eval "$( err::__convert_try_to_func )" ||'
 #****L* liberr/Used libraries
 # DESCRIPTION
 #   Loading external libraries
@@ -111,21 +125,6 @@ declare -rg _bashlyk_aExport_err="                                             \
                                                                                \
 "
 #******
-
-shopt -s expand_aliases
-alias try='try()'
-alias on='eval $( err::eval )'
-alias ECHO='err::handler echo'
-alias EXIT='err::handler exit'
-alias warn='err::handler warn'
-alias throw='err::handler throw'
-alias RETURN='err::handler return'
-alias echo+exit='err::handler echo+exit'
-alias warn+exit='err::handler warn+exit'
-alias echo+return='err::handler echo+return'
-alias warn+return='err::handler warn+return'
-alias catch='; eval "$( err::__convert_try_to_func )" ||'
-
 #****f* liberr/err::status::show
 #  SYNOPSIS
 #    err::status::show [<pid>]
