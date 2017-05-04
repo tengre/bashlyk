@@ -1,5 +1,5 @@
 #
-# $Id: libnet.sh 755 2017-05-03 16:40:47+04:00 toor $
+# $Id: libnet.sh 757 2017-05-04 17:05:00+04:00 toor $
 #
 #****h* BASHLYK/libnet
 #  DESCRIPTION
@@ -28,10 +28,19 @@
 [[ -s ${_bashlyk_pathLib}/liberr.sh ]] && . "${_bashlyk_pathLib}/liberr.sh"
 [[ -s ${_bashlyk_pathLib}/libstd.sh ]] && . "${_bashlyk_pathLib}/libstd.sh"
 #******
+shopt -s expand_aliases
+#****A* libnet/Aliases
+#  DESCRIPTION
+#    aliases for deprecated functions
+#  SOURCE
+alias udfGetValidIPsOnly='net::ipv4.host'
+alias udfGetValidCIDR='net::ipv4.cidr'
+#******
 #****G* libnet/Global variables
 #  DESCRIPTION
 #    global variables of the library
 #  SOURCE
+declare -rg _bashlyk_net_externals='sipcalc'
 declare -rg _bashlyk_net_reAddress='[[:space:]]address[[:space:]]+-[[:space:]]([0-9.]+)$'
 declare -rg _bashlyk_net_reHost="^Host${_bashlyk_net_reAddress}"
 declare -rg _bashlyk_net_reNetwork="^Network${_bashlyk_net_reAddress}"
@@ -39,12 +48,9 @@ declare -rg _bashlyk_net_reBroadcast="^Broadcast${_bashlyk_net_reAddress}"
 declare -rg _bashlyk_net_reMask='^Network[[:space:]]mask[[:space:]]+-[[:space:]]([0-9.]+)$'
 declare -rg _bashlyk_net_reMaskBit='^Network[[:space:]]mask[[:space:]]\(bits\)[[:space:]]+-[[:space:]]([0-9]+)$'
 declare -rg _bashlyk_net_reRange='^Usable[[:space:]]range[[:space:]]+-[[:space:]]([0-9.]+)[[:space:]]-[[:space:]]([0-9.]+)$'
-declare -rg _bashlyk_net_exports='net::ipv4.broadcast net::ipv4.cidr net::ipv4.host net::ipv4.mask net::ipv4.network net::ipv4.range'
-declare -rg _bashlyk_net_externals='sipcalc'
+#######
+declare -rg _bashlyk_net_exports='net::ipv4.{broadcast,cidr,host,mask,network,range}'
 #******
-shopt -s expand_aliases
-alias udfGetValidIPsOnly="net::ipv4.host"
-alias udfGetValidCIDR="net::ipv4.cidr"
 #****f* libnet/net::ipv4.host
 #  SYNOPSIS
 #    net::ipv4.host <arg> ...
@@ -68,7 +74,7 @@ alias udfGetValidCIDR="net::ipv4.cidr"
 #  SOURCE
 net::ipv4.host() {
 
-  RETURN on MissingArgument $* || return
+  errorify on MissingArgument $* || return
 
   local -A h
 
@@ -80,7 +86,7 @@ net::ipv4.host() {
 
   echo "${!h[@]}"
 
-  RETURN on EmptyResult "${!h[@]}"
+  errorify on EmptyResult ${!h[@]}
 
 }
 #******
@@ -106,7 +112,7 @@ net::ipv4.host() {
 #  SOURCE
 net::ipv4.mask() {
 
-  RETURN on MissingArgument $* || return
+  errorify on MissingArgument $* || return
 
   local -A h
 
@@ -118,7 +124,7 @@ net::ipv4.mask() {
 
   echo "${!h[@]}"
 
-  RETURN on EmptyResult "${!h[@]}"
+  errorify on EmptyResult ${!h[@]}
 
 }
 #******
@@ -144,7 +150,7 @@ net::ipv4.mask() {
 #  SOURCE
 net::ipv4.network() {
 
-  RETURN on MissingArgument $* || return
+  errorify on MissingArgument $* || return
 
   local -A h
 
@@ -156,7 +162,7 @@ net::ipv4.network() {
 
   echo "${!h[@]}"
 
-  RETURN on EmptyResult "${!h[@]}"
+  errorify on EmptyResult ${!h[@]}
 
 }
 #******
@@ -181,7 +187,7 @@ net::ipv4.network() {
 #  SOURCE
 net::ipv4.broadcast() {
 
-  RETURN on MissingArgument $* || return
+  errorify on MissingArgument $* || return
 
   local -A h
 
@@ -193,7 +199,7 @@ net::ipv4.broadcast() {
 
   echo "${!h[@]}"
 
-  RETURN on EmptyResult "${!h[@]}"
+  errorify on EmptyResult ${!h[@]}
 
 }
 #******
@@ -221,7 +227,7 @@ net::ipv4.broadcast() {
 #  SOURCE
 net::ipv4.cidr() {
 
-  RETURN on MissingArgument $* || return
+  errorify on MissingArgument $* || return
 
   local s
   local -A h
@@ -247,7 +253,7 @@ net::ipv4.cidr() {
 
   echo "${!h[@]}"
 
-  RETURN on EmptyResult "${!h[@]}"
+  errorify on EmptyResult ${!h[@]}
 
 }
 #******
@@ -276,7 +282,7 @@ net::ipv4.cidr() {
 #  SOURCE
 net::ipv4.range() {
 
-  RETURN on MissingArgument $* || return
+  errorify on MissingArgument $* || return
 
   local IFS i s
   local -a aA aB
@@ -318,7 +324,7 @@ net::ipv4.range() {
   s="$( udfTrim "$s" )"
   eval "echo ${s// /.}"
 
-  RETURN on EmptyResult "$s"
+  errorify on EmptyResult $s
 
 }
 #******

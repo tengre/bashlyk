@@ -1,5 +1,5 @@
 #
-# $Id: libold.sh 755 2017-05-03 16:40:47+04:00 toor $
+# $Id: libold.sh 757 2017-05-04 17:05:00+04:00 toor $
 #
 #****h* BASHLYK/libold
 #  DESCRIPTION
@@ -2134,7 +2134,7 @@ udfExcludePairFromHash() {
 
 }
 #******
-#****f* liberr/udfSetLastError
+#****f* libold/udfSetLastError
 #  SYNOPSIS
 #    udfSetLastError <number> <string>
 #  DESCRIPTION
@@ -2183,7 +2183,7 @@ udfSetLastError() {
 
 }
 #******
-#****f* liberr/udfStackTrace
+#****f* libold/udfStackTrace
 #  SYNOPSIS
 #    udfStackTrace
 #  DESCRIPTION
@@ -2210,7 +2210,7 @@ udfStackTrace() {
 
 }
 #******
-#****f* liberr/udfOnError
+#****f* libold/udfOnError
 #  SYNOPSIS
 #    udfOnError [<action>] [<state>] [<message>]
 #  DESCRIPTION
@@ -2365,7 +2365,7 @@ udfOnError() {
 }
 #******
 udfOnError2() { udfOnError "$@"; }
-#****f* liberr/udfOnError1
+#****f* libold/udfOnError1
 #  SYNOPSIS
 #    udfOnError1 [<action>] [<state>] [<message>]
 #  DESCRIPTION
@@ -2385,7 +2385,7 @@ udfOnError1() {
 
 }
 #******
-#****f* liberr/udfThrow
+#****f* libold/udfThrow
 #  SYNOPSIS
 #    udfThrow [-] args
 #  DESCRIPTION
@@ -2419,7 +2419,7 @@ udfThrow() {
 #******
 shopt -s expand_aliases
 alias try-every-line="udfTryEveryLine <<-catch-every-line"
-#****f* liberr/udfTryEveryLine
+#****f* libold/udfTryEveryLine
 #  SYNOPSIS
 #    try-every-line
 #    <commands>
@@ -2489,7 +2489,7 @@ udfTryEveryLine() {
 
 }
 #******
-#****f* liberr/udfOn
+#****f* libold/udfOn
 #  SYNOPSIS
 #    udfOn <error> [<action>] <args>
 #  DESCRIPTION
@@ -2608,7 +2608,7 @@ udfOn() {
 
 }
 #******
-#****f* liberr/udfCommandNotFound
+#****f* libold/udfCommandNotFound
 #  SYNOPSIS
 #    udfCommandNotFound <filename>
 #  DESCRIPTION
@@ -2632,7 +2632,7 @@ udfCommandNotFound() {
 
 }
 #******
-#****f* liberr/udfNoSuchFileOrDir
+#****f* libold/udfNoSuchFileOrDir
 #  SYNOPSIS
 #    udfNoSuchFileOrDir <filename>
 #  DESCRIPTION
@@ -2656,7 +2656,7 @@ udfNoSuchFileOrDir() {
 
 }
 #******
-#****f* liberr/udfInvalidVariable
+#****f* libold/udfInvalidVariable
 #  SYNOPSIS
 #    udfInvalidVariable <variable>
 #  DESCRIPTION
@@ -2679,7 +2679,7 @@ udfInvalidVariable() {
 
 }
 #******
-#****f* liberr/udfEmptyVariable
+#****f* libold/udfEmptyVariable
 #  SYNOPSIS
 #    udfEmptyVariable <variable>
 #  DESCRIPTION
@@ -2705,7 +2705,7 @@ udfEmptyVariable() {
 
 }
 #******
-#****f* liberr/udfEmptyOrMissingArgument
+#****f* libold/udfEmptyOrMissingArgument
 #  SYNOPSIS
 #    udfEmptyOrMissingArgument <argument>
 #  DESCRIPTION
@@ -2734,7 +2734,7 @@ udfEmptyOrMissingArgument() {
 udfMissingArgument() { udfEmptyOrMissingArgument $@; }
 udfEmptyArgument()   { udfEmptyOrMissingArgument $@; }
 udfEmptyResult()     { udfEmptyOrMissingArgument $@; }
-#****f* liberr/udfOnCommandNotFound
+#****f* libold/udfOnCommandNotFound
 #  SYNOPSIS
 #    udfOnCommandNotFound [<action>] <filenames>
 #  DESCRIPTION
@@ -2763,7 +2763,7 @@ udfEmptyResult()     { udfEmptyOrMissingArgument $@; }
 #  SOURCE
 udfOnCommandNotFound() { udfOn CommandNotFound "$@"; }
 #******
-#****f* liberr/udfThrowOnCommandNotFound
+#****f* libold/udfThrowOnCommandNotFound
 #  SYNOPSIS
 #    udfThrowOnCommandNotFound <filenames>
 #  DESCRIPTION
@@ -2783,7 +2783,7 @@ udfOnCommandNotFound() { udfOn CommandNotFound "$@"; }
 #  SOURCE
 udfThrowOnCommandNotFound() { udfOnCommandNotFound throw $@; }
 #******
-#****f* liberr/udfWarnOnCommandNotFound
+#****f* libold/udfWarnOnCommandNotFound
 #  SYNOPSIS
 #    udfWarnOnCommandNotFound <filenames>
 #  DESCRIPTION
@@ -2803,7 +2803,7 @@ udfThrowOnCommandNotFound() { udfOnCommandNotFound throw $@; }
 #  SOURCE
 udfWarnOnCommandNotFound() { udfOnCommandNotFound warn $@; }
 #******
-#****f* liberr/udfOnEmptyVariable
+#****f* libold/udfOnEmptyVariable
 #  SYNOPSIS
 #    udfOnEmptyVariable [<action>] <args>
 #  DESCRIPTION
@@ -2833,7 +2833,7 @@ udfWarnOnCommandNotFound() { udfOnCommandNotFound warn $@; }
 #  SOURCE
 udfOnEmptyVariable() { udfOn EmptyVariable "$@"; }
 #******
-#****f* liberr/udfThrowOnEmptyVariable
+#****f* libold/udfThrowOnEmptyVariable
 #  SYNOPSIS
 #    udfThrowOnEmptyVariable <args>
 #  DESCRIPTION
@@ -2853,7 +2853,7 @@ udfOnEmptyVariable() { udfOn EmptyVariable "$@"; }
 #  SOURCE
 udfThrowOnEmptyVariable() { udfOnEmptyVariable throw "$@"; }
 #******
-#****f* liberr/udfWarnOnEmptyVariable
+#****f* libold/udfWarnOnEmptyVariable
 #  SYNOPSIS
 #    udfWarnOnEmptyVariable <args>
 #  DESCRIPTION
@@ -2873,7 +2873,7 @@ udfThrowOnEmptyVariable() { udfOnEmptyVariable throw "$@"; }
 #  SOURCE
 udfWarnOnEmptyVariable() { udfOnEmptyVariable Warn "$@"; }
 #******
-#****f* liberr/udfOnEmptyOrMissingArgument
+#****f* libold/udfOnEmptyOrMissingArgument
 #  SYNOPSIS
 #    udfOnEmptyOrMissingArgument [<action>] <args>
 #  DESCRIPTION
@@ -2902,7 +2902,7 @@ udfWarnOnEmptyVariable() { udfOnEmptyVariable Warn "$@"; }
 #  SOURCE
 udfOnEmptyOrMissingArgument() { udfOn EmptyOrMissingArgument "$@"; }
 #******
-#****f* liberr/udfThrowOnEmptyMissingArgument
+#****f* libold/udfThrowOnEmptyMissingArgument
 #  SYNOPSIS
 #    udfThrowOnEmptyOrMissingArgument <args>
 #  DESCRIPTION
@@ -2921,7 +2921,7 @@ udfOnEmptyOrMissingArgument() { udfOn EmptyOrMissingArgument "$@"; }
 #  SOURCE
 udfThrowOnEmptyOrMissingArgument() { udfOnEmptyOrMissingArgument throw "$@"; }
 #******
-#****f* liberr/udfWarnOnEmptyOrMissingArgument
+#****f* libold/udfWarnOnEmptyOrMissingArgument
 #  SYNOPSIS
 #    udfWarnOnEmptyOrMissingArgument <args>
 #  DESCRIPTION
@@ -2943,7 +2943,7 @@ udfWarnOnEmptyOrMissingArgument() { udfOnEmptyOrMissingArgument warn "$@"; }
 shopt -s expand_aliases
 alias try="try()"
 alias catch='; eval "$( ERR::__convert_try_to_func )" ||'
-#****f* liberr/ERR::__add_throw_to_command
+#****f* libold/ERR::__add_throw_to_command
 #  SYNOPSIS
 #    ERR::__add_throw_to_command <command line>
 #  DESCRIPTION
@@ -2969,7 +2969,7 @@ ERR::__add_throw_to_command() {
 
 }
 #******
-#****f* liberr/ERR::__convert_try_to_func
+#****f* libold/ERR::__convert_try_to_func
 #  SYNOPSIS
 #    ERR::__convert_try_to_func
 #  DESCRIPTION
@@ -3008,7 +3008,7 @@ ERR::__convert_try_to_func() {
 
 }
 #******
-#****f* liberr/ERR::exception.message
+#****f* libold/ERR::exception.message
 #  SYNOPSIS
 #    ERR::exception.message
 #  DESCRIPTION
@@ -3942,16 +3942,6 @@ udfTrim() {
 #  SOURCE
 udfCat() { while IFS= read -t 32 || [[ $REPLY ]]; do echo "$REPLY"; done; }
 #******
-#  DESCRIPTION
-#    A set of functions for delivering messages from the script using various
-#    transports:
-#    - X Window System Notification System
-#    - e-mail
-#    - write utility
-#  USES
-#    libstd
-#  AUTHOR
-#    Damir Sh. Yakupov <yds@bk.ru>
 #****f* libold/udfEcho
 #  SYNOPSIS
 #    udfEcho [-] <text>

@@ -1,11 +1,11 @@
 #
-# $Id: liberr.sh 756 2017-05-04 00:08:12+04:00 toor $
+# $Id: liberr.sh 757 2017-05-04 17:08:09+04:00 toor $
 #
 #****h* BASHLYK/liberr
 #  DESCRIPTION
 #    a set of functions to handle errors
 #  USES
-#    libmsg
+#    std msg
 #  AUTHOR
 #    Damir Sh. Yakupov <yds@bk.ru>
 #******
@@ -22,30 +22,48 @@
 '
 #******
 shopt -s expand_aliases
-alias try='try()'
-alias on='eval $( err::eval )'
-alias ECHO='err::handler echo'
-alias EXIT='err::handler exit'
-alias warn='err::handler warn'
-alias throw='err::handler throw'
-alias RETURN='err::handler return'
-alias errorify='err::handler return'
-alias echo+exit='err::handler echo+exit'
-alias warn+exit='err::handler warn+exit'
-alias echo+return='err::handler echo+return'
-alias warn+return='err::handler warn+return'
-alias catch='; eval "$( err::__convert_try_to_func )" ||'
-#****L* liberr/Used libraries
-# DESCRIPTION
-#   Loading external libraries
-# SOURCE
-[[ -s ${_bashlyk_pathLib}/libstd.sh ]] && . "${_bashlyk_pathLib}/libstd.sh"
-[[ -s ${_bashlyk_pathLib}/libmsg.sh ]] && . "${_bashlyk_pathLib}/libmsg.sh"
+#****A* liberr/Aliases
+#  DESCRIPTION
+#    usable aliases for exported functions
+#  SOURCE
+alias           try='try()'
+alias            on='eval $( err::eval )'
+alias          show='err::handler echo'
+alias          warn='err::handler warn'
+alias         abort='err::handler exit'
+alias         throw='err::handler throw'
+alias      errorify='err::handler return'
+alias     exit+echo='err::handler echo+exit'
+alias     exit+warn='err::handler warn+exit'
+alias errorify+echo='err::handler echo+return'
+alias errorify+warn='err::handler warn+return'
+alias         catch='; eval "$( err::__convert_try_to_func )" ||'
 #******
 #****G* liberr/Global Variables
 #  DESCRIPTION
 #    Global variables of the library
 #  SOURCE
+declare -rg _bashlyk_aRequiredCmd_err="rm sed"
+
+declare -rg _bashlyk_methods_err="                                             \
+                                                                               \
+    err::{__add_throw_to_command,CommandNotFound,__convert_try_to_func,        \
+    EmptyArgument,EmptyResult,EmptyVariable,eval,exception::message,handler,   \
+    InvalidVariable,MissingArgument,NoSuchFileOrDir,stacktrace,status,         \
+    status::show}                                                              \
+"
+
+declare -rg _bashlyk_aExport_err="                                             \
+                                                                               \
+    abort catch err::{exception::message,stacktrace,status} errorify           \
+    errorify+echo errorify+warn exit+echo exit+warn on show throw try warn     \
+                                                                               \
+"
+: ${_bashlyk_onError:=throw}
+#
+
+# Error states definition
+#
 _bashlyk_iErrorUnknown=254
 _bashlyk_iErrorUnexpected=254
 _bashlyk_iErrorEmptyOrMissingArgument=253
@@ -109,29 +127,23 @@ _bashlyk_hError[$_bashlyk_iErrorIncompatibleVersion]="incompatible version"
 _bashlyk_hError[$_bashlyk_iErrorTryBlockException]="try block exception"
 _bashlyk_hError[$_bashlyk_iErrorNotAvailable]="target is not available"
 _bashlyk_hError[$_bashlyk_iErrorNotDetected]="unknown (unexpected) error, maybe everything is fine"
-#
-: ${_bashlyk_onError:=throw}
-
-declare -rg _bashlyk_aRequiredCmd_err="sed"
-declare -rg _bashlyk_aExport_err="                                             \
-                                                                               \
-    udfCommandNotFound udfEmptyArgument udfEmptyOrMissingArgument              \
-    udfEmptyResult udfEmptyVariable udfInvalidVariable udfMissingArgument      \
-    udfOn udfOnCommandNotFound udfOnEmptyOrMissingArgument udfOnEmptyVariable  \
-    udfOnError udfOnError1 udfOnError2 udfSetLastError udfStackTrace udfThrow  \
-    udfThrowOnCommandNotFound udfThrowOnEmptyOrMissingArgument udfTryEveryLine \
-    udfThrowOnEmptyVariable udfWarnOnCommandNotFound udfWarnOnEmptyVariable    \
-    udfWarnOnEmptyOrMissingArgument                                            \
-                                                                               \
-"
 #******
-#****f* liberr/err::status::show
+#****L* liberr/Used libraries
+# DESCRIPTION
+#   Loading external libraries
+# SOURCE
+[[ -s ${_bashlyk_pathLib}/libstd.sh ]] && . "${_bashlyk_pathLib}/libstd.sh"
+[[ -s ${_bashlyk_pathLib}/libmsg.sh ]] && . "${_bashlyk_pathLib}/libmsg.sh"
+#******
+#****p* liberr/err::status::show
 #  SYNOPSIS
 #    err::status::show [<pid>]
 #  DESCRIPTION
 #    Show last saved error state for process with <pid> or $BASHPID default
 #  INPUTS
 #    <pid> - select process, default current bash subshell $BASHPID
+#  NOTES
+#    private method
 #  ERRORS
 #    Unknown         - first argument is non valid
 #    1-254           - valid value of first argument
@@ -167,7 +179,7 @@ err::status::show() {
 
 }
 #******
-#****f* liberr/err::status
+#****e* liberr/err::status
 #  SYNOPSIS
 #    err::status <number> <string>
 #  DESCRIPTION
@@ -176,6 +188,8 @@ err::status::show() {
 #  INPUTS
 #    <number> - error code - number or predefined name as 'iErrorXXX' or 'XXX'
 #    <string> - error text
+#  NOTES
+#    public method
 #  ERRORS
 #    MissingArgument - arguments missing
 #    Unknown         - first argument is non valid
@@ -232,11 +246,13 @@ err::status() {
 
 }
 #******
-#****f* liberr/err::stacktrace
+#****e* liberr/err::stacktrace
 #  SYNOPSIS
 #    err::stacktrace
 #  DESCRIPTION
 #    OUTPUT BASH Stack Trace
+#  NOTES
+#    public method
 #  OUTPUT
 #    BASH Stack Trace
 #  EXAMPLE
@@ -244,7 +260,6 @@ err::status() {
 #  SOURCE
 err::stacktrace() {
 
-  #local i s=$( printf -- '|' )
   local i s=$( printf -- '\u00a0' )
 
   printf -- '\nStack trace by %s from %s:\n+-->>-----\n'                       \
@@ -268,7 +283,7 @@ err::stacktrace() {
 
 }
 #******
-#****f* liberr/err::eval
+#****p* liberr/err::eval
 #  SYNOPSIS
 #    err::eval [<action>] [<state>] [<message>]
 #  DESCRIPTION
@@ -276,6 +291,8 @@ err::stacktrace() {
 #    arguments, and consists in a warning message, the function returns, or the
 #    end of the script with a certain return code. Messages may include a stack
 #    trace and printed to stderr
+#  NOTES
+#    private method
 #  INPUTS
 #    <action> - directly determines how the error handling. Possible actions:
 #
@@ -321,16 +338,17 @@ err::stacktrace() {
 #  SOURCE
 err::eval() {
 
-  local rc=$?
-  local i re rs sAction=$_bashlyk_onError sMessage='' s IFS=$' \t\n'
-  local -a a
-  re='^(echo|warn)$|^((echo|warn)[+])?(exit|return)$|^throw$'
+  local rc=$? rs
+  local i IFS=$' \t\n' reAct reArg sAction=$_bashlyk_onError sMessage s
+
+  reAct='^(echo|warn)$|^((echo|warn)[+])?(exit|return)$|^throw$'
+  reArg='((on|\$\(.?err::eval.?\)).error|err::eval)[[:space:]]*?([^\>]*)[[:space:]]*?[\>\|]?'
 
   ## TODO try use FUNCNAME or save after?
 
-  if [[ $( sed -n "${BASH_LINENO[0]}p" ${BASH_SOURCE[1]} ) =~ ((on|\$\(.?err::eval.?\)).error|err::eval)[[:space:]]*?([^\>]*)[[:space:]]*?[\>\|]? ]]; then
+  if [[ $( sed -n "${BASH_LINENO[0]}p" ${BASH_SOURCE[1]} ) =~ $reArg ]]; then
 
-    a=( $( eval echo "\"${BASH_REMATCH[3]//\"/}\"" ) )
+    local -a a=( $( eval echo "\"${BASH_REMATCH[3]//\"/}\"" ) )
 
   else
 
@@ -340,7 +358,7 @@ err::eval() {
 
   fi
 
-  [[ ${a[0],,} =~ $re ]] && sAction=${a[0],,} && i=1 || i=0
+  [[ ${a[0],,} =~ $reAct ]] && sAction=${a[0],,} && i=1 || i=0
 
   err::status ${a[$i]}; rs=$?
 
@@ -400,16 +418,19 @@ err::eval() {
   esac
 
   i=${a[@]:$i}
-  printf -- '%s >&2; err::status %s "%s"; %s; # \n' "${sMessage}${s}" "$rs" "${i//\;/}" "$sAction"
+  printf -- '%s >&2; err::status %s "%s"; %s; #' \
+            "${sMessage}${s}" "$rs" "${i//\;/}" "$sAction"
 
 }
 #******
-#****f* liberr/err::CommandNotFound
+#****p* liberr/err::CommandNotFound
 #  SYNOPSIS
 #    err::CommandNotFound <filename>
 #  DESCRIPTION
 #    return true if argument is not empty, exists and executable (## TODO test)
 #    designed to check the conditions in the function err::handler
+#  NOTES
+#    private method
 #  INPUTS
 #    filename - argument for executable file matching by searching the PATH
 #  RETURN VALUE
@@ -429,12 +450,14 @@ err::CommandNotFound() {
 
 }
 #******
-#****f* liberr/err::NoSuchFileOrDir
+#****p* liberr/err::NoSuchFileOrDir
 #  SYNOPSIS
 #    err::NoSuchFileOrDir <filename>
 #  DESCRIPTION
 #    return true if argument is non empty, exists, designed to check the
 #    conditions in the function err::handler
+#  NOTES
+#    private method
 #  ARGUMENTS
 #    <filename> - filesystem object for checking
 #  RETURN VALUE
@@ -453,12 +476,14 @@ err::NoSuchFileOrDir() {
 
 }
 #******
-#****f* liberr/err::InvalidVariable
+#****p* liberr/err::InvalidVariable
 #  SYNOPSIS
 #    err::InvalidVariable <variable>
 #  DESCRIPTION
 #    return true if argument is non empty, valid variable, designed to check the
 #    conditions in the function err::handler
+#  NOTES
+#    private method
 #  INPUTS
 #    <variable> - expected variable name
 #  RETURN VALUE
@@ -477,12 +502,14 @@ err::InvalidVariable() {
 
 }
 #******
-#****f* liberr/err::EmptyVariable
+#****p* liberr/err::EmptyVariable
 #  SYNOPSIS
 #    err::EmptyVariable <variable>
 #  DESCRIPTION
 #    return true if argument is non empty, valid variable
 #    designed to check the conditions in the function err::handler
+#  NOTES
+#    private method
 #  INPUTS
 #    variable - expected variable name
 #  RETURN VALUE
@@ -502,12 +529,14 @@ err::EmptyVariable() {
 
 }
 #******
-#****f* liberr/err::MissingArgument
+#****p* liberr/err::MissingArgument
 #  SYNOPSIS
 #    err::MissingArgument <argument>
 #  DESCRIPTION
 #    return true if argument is not empty
 #    designed to check the conditions in the function err::handler
+#  NOTES
+#    private method
 #  INPUTS
 #    argument - one argument
 #  RETURN VALUE
@@ -529,12 +558,14 @@ err::MissingArgument() {
 #******
 err::EmptyOrMissingArgument() { err::MissingArgument $*; }
 err::EmptyArgument()          { err::MissingArgument $*; }
-#****f* liberr/err::EmptyResult
+#****p* liberr/err::EmptyResult
 #  SYNOPSIS
 #    err::EmptyResult <argument>
 #  DESCRIPTION
 #    return true if argument is not empty
 #    designed to check the conditions in the function err::handler
+#  NOTES
+#    private method
 #  INPUTS
 #    <argument> - one argument
 #  RETURN VALUE
@@ -554,7 +585,7 @@ err::EmptyResult() {
 
 }
 #******
-#****f* liberr/err::handler
+#****p* liberr/err::handler
 #  SYNOPSIS
 #    err::handler <action> on <state> <argument>
 #  DESCRIPTION
@@ -562,6 +593,8 @@ err::EmptyResult() {
 #    arguments, and consists in a warning message, the function returns, or the
 #    end of the script with a certain return code. Messages may include a stack
 #    trace and printed to stderr
+#  NOTES
+#    private method
 #  INPUTS
 #    <action> - directly determines how the error handling. Possible actions:
 #     echo        - just prepare a message from the string argument to STDERR
@@ -596,12 +629,12 @@ err::EmptyResult() {
 #  EXAMPLE
 #    ## TODO improve tests
 #    err::handler warn on NoSuchFileOrDir /err.handler                          #? true
-#    echo+return on CommandNotFound notexist.return                             #? $_bashlyk_iErrorCommandNotFound
+#    errorify+echo on CommandNotFound notexist.return                           #? $_bashlyk_iErrorCommandNotFound
 #    warn on NoSuchFileOrDir /notexist.warn                                     #? true
-#    ECHO on NoSuchFileOrDir /notexist.echo                                     #? true
+#    show on NoSuchFileOrDir /notexist.echo                                     #? true
 #    $(throw on NoSuchFileOrDir /notexist.throw.child)                          #? $_bashlyk_iErrorNoSuchFileOrDir
-#    $(echo+exit on CommandNotFound notexist.exit.child)                        #? $_bashlyk_iErrorCommandNotFound
-#    $(RETURN on CommandNotFound notexist.exit.child || return)                 #? $_bashlyk_iErrorCommandNotFound
+#    $(exit+echo on CommandNotFound notexist.exit.child)                        #? $_bashlyk_iErrorCommandNotFound
+#    $(errorify on CommandNotFound notexist.exit.child || return)               #? $_bashlyk_iErrorCommandNotFound
 #    warn on CommandNotFound notexist nomoreexist                               #? true
 #  SOURCE
 err::handler() {
@@ -647,11 +680,13 @@ err::handler() {
 
 }
 #******
-#****f* liberr/err::__add_throw_to_command
+#****p* liberr/err::__add_throw_to_command
 #  SYNOPSIS
 #    err::__add_throw_to_command <command line>
 #  DESCRIPTION
 #    add controlled trap for errors of the <commandline>
+#  NOTES
+#    private method
 #  INPUTS
 #    <commandline> - source command line
 #  OUTPUT
@@ -666,14 +701,14 @@ err::__add_throw_to_command() {
 
   local s
 
-   s='_bashlyk_sLastError[$BASHPID]="command: $( udfTrim '${*/;/}' )\n output: '
+  s='_bashlyk_sLastError[$BASHPID]="command: $( udfTrim '${*/;/}' )\n output: '
   s+='{\n$('${*/;/}' 2>&1)\n}" && echo -n . || return $?;'
 
   echo $s
 
 }
 #******
-#****f* liberr/err::__convert_try_to_func
+#****p* liberr/err::__convert_try_to_func
 #  SYNOPSIS
 #    err::__convert_try_to_func
 #  DESCRIPTION
@@ -712,11 +747,13 @@ err::__convert_try_to_func() {
 
 }
 #******
-#****f* liberr/err::exception::message
+#****e* liberr/err::exception::message
 #  SYNOPSIS
 #    err::exception::message
 #  DESCRIPTION
 #    show last error status
+#  NOTES
+#    public method
 #  INPUTS
 #    used global variables $_bashlyk_{i,s}LastError
 #  OUTPUT

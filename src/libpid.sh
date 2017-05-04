@@ -1,5 +1,5 @@
 #
-# $Id: libpid.sh 755 2017-05-03 16:40:47+04:00 toor $
+# $Id: libpid.sh 757 2017-05-04 17:05:00+04:00 toor $
 #
 #****h* BASHLYK/libpid
 #  DESCRIPTION
@@ -86,7 +86,7 @@ declare -rg _bashlyk_exports_pid="                                             \
 #  SOURCE
 udfCheckStarted() {
 
-  RETURN on MissingArgument $* || return
+  errorify on MissingArgument $* || return
 
   local re="\\b${1}\\b"
 
@@ -181,12 +181,12 @@ udfStopProcess() {
 
   done
 
-  RETURN on MissingArgument $* || return
+  errorify on MissingArgument $* || return
 
   rc=$( _ iErrorNoSuchProcess )
 
-  RETURN on MissingArgument "${a[*]}" || a=( $( pgrep -d' ' ${1##*/} ) )
-  RETURN on MissingArgument "${a[*]}" || return $rc
+  errorify on MissingArgument "${a[*]}" || a=( $( pgrep -d' ' ${1##*/} ) )
+  errorify on MissingArgument "${a[*]}" || return $rc
 
   iStopped=0
   for (( i=0; i<${#a[*]}; i++ )) ; do
@@ -397,7 +397,7 @@ udfAddPid2Clean() {
 #  SOURCE
 udfAddFD2Clean() {
 
-  RETURN on MissingArgument $* || return
+  errorify on MissingArgument $* || return
 
   _bashlyk_afdClean[$BASHPID]+=" $*"
 
@@ -439,7 +439,7 @@ udfAddFD2Clean() {
 #  SOURCE
 udfAddFO2Clean() {
 
-  RETURN on MissingArgument $* || return
+  errorify on MissingArgument $* || return
 
   _bashlyk_afoClean[$BASHPID]+=" $*"
 

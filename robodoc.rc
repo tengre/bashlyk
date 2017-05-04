@@ -20,6 +20,7 @@ headertypes:
     V  "Versions"           robodoc.header.types 32
     L  "External libraries" robodoc.header.types 31
     G  "Global variables"   robodoc.header.types 30
+		A  "aliases"            robodoc.header.types 24
     e  "external function"  robodoc.header.types 16
     p  "internal function"  robodoc.header.types 08
 

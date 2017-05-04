@@ -1,5 +1,5 @@
 #
-# $Id: liblog.sh 755 2017-05-03 16:40:47+04:00 toor $
+# $Id: liblog.sh 757 2017-05-04 17:05:00+04:00 toor $
 #
 #****h* BASHLYK/liblog
 #  DESCRIPTION
@@ -397,7 +397,7 @@ udfSetLog() {
 #  SOURCE
 udfDebug() {
 
-  RETURN on MissingArgument $* || return
+  errorify on MissingArgument $* || return
 
   if [[ $1 =~ ^[0-9]+$ ]]; then
 

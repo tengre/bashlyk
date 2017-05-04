@@ -1,5 +1,5 @@
 #
-# $Id: libstd.sh 755 2017-05-03 16:40:47+04:00 toor $
+# $Id: libstd.sh 757 2017-05-04 17:05:00+04:00 toor $
 #
 #****h* BASHLYK/libstd
 #  DESCRIPTION
@@ -169,7 +169,7 @@ udfIsValidVariable() {
 
   [[ $* =~ ^[_a-zA-Z][_a-zA-Z0-9]*$ ]] && return 0
 
-  RETURN on MissingArgument $* || return
+  errorify on MissingArgument $* || return
 
   return $_bashlyk_iErrorInvalidVariable
 
@@ -566,7 +566,7 @@ udfMakeTempV() {
 #  SOURCE
 udfPrepareByType() {
 
-  RETURN on MissingArgument $1 || return
+  errorify on MissingArgument $1 || return
 
   [[ "$1" =~ ^[_a-zA-Z][_a-zA-Z0-9]*(\[.*\])?$ ]] || on error return InvalidVariable $1
 
@@ -617,7 +617,7 @@ udfPrepareByType() {
 #  SOURCE
 _(){
 
-  RETURN on MissingArgument $1 || return
+  errorify on MissingArgument $1 || return
 
   if (( $# > 1 )); then
 
@@ -632,12 +632,12 @@ _(){
 
         if [[ -n "${1%=*}" ]]; then
 
-          RETURN on InvalidVariable ${1%=*} || return
+          errorify on InvalidVariable ${1%=*} || return
           eval "export ${1%=*}=\$$( udfPrepareByType "_bashlyk_${1##*=}" )"
 
         else
 
-          RETURN on InvalidVariable $( udfPrepareByType "${1##*=}" ) || return
+          errorify on InvalidVariable $( udfPrepareByType "${1##*=}" ) || return
           eval "export $( udfPrepareByType "${1##*=}" )=\$$( udfPrepareByType "_bashlyk_${1##*=}" )"
 
         fi
@@ -723,8 +723,8 @@ udfGetPathMd5() {
 
   local pathSrc="$( exec -c pwd )" pathDst s IFS=$' \t\n'
 
-  RETURN on MissingArgument $@ || return
-  RETURN on NoSuchFileOrDir "$@" || return
+  errorify on MissingArgument $@ || return
+  errorify on NoSuchFileOrDir "$@" || return
 
   cd "$@" 2>/dev/null || on error warn+return NotPermitted $@
 
@@ -764,7 +764,7 @@ udfGetPathMd5() {
 #  SOURCE
 udfXml() {
 
-  RETURN on MissingArgument $1 || return
+  errorify on MissingArgument $1 || return
 
   local IFS=$' \t\n' s
 
@@ -894,7 +894,7 @@ udfGetFreeFD() {
 #  SOURCE
 udfIsHash() {
 
-  RETURN on InvalidVariable $1 || return
+  errorify on InvalidVariable $1 || return
 
   [[ $( declare -pA $1 2>/dev/null ) =~ ^declare.*-A ]] \
     && return 0 || return $( _ iErrorInvalidHash )

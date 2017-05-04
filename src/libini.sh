@@ -1,5 +1,5 @@
 #
-# $Id: libini.sh 755 2017-05-03 16:40:47+04:00 toor $
+# $Id: libini.sh 757 2017-05-04 17:05:00+04:00 toor $
 #
 #****h* BASHLYK/libini
 #  DESCRIPTION
@@ -664,7 +664,7 @@ INI::__section.getArray() {
 #  SOURCE
 INI::get() {
 
-  RETURN on MissingArgument $* || return
+  errorify on MissingArgument $* || return
 
   local -a a
   local IFS o k s="$*" v
@@ -837,7 +837,7 @@ INI::keys() {
 #  SOURCE
 INI::set() {
 
-  RETURN on MissingArgument $* || return
+  errorify on MissingArgument $* || return
 
   local iKeyWidth o k s v
 
@@ -1043,8 +1043,8 @@ INI::save() {
 #  SOURCE
 INI::read() {
 
-  RETURN on MissingArgument $1 || return
-  RETURN on NoSuchFileOrDir $1 || return
+  errorify on MissingArgument $1 || return
+  errorify on NoSuchFileOrDir $1 || return
 
   local bActiveSection bIgnore csv fn i iKeyWidth reComment reKeyVal reSection
   local reValidSections s
@@ -1326,7 +1326,7 @@ INI::load() {
 
   else
 
-    RETURN on NoSuchFileOrDir $1 || return
+    errorify on NoSuchFileOrDir $1 || return
 
   fi
 
@@ -1563,7 +1563,7 @@ INI::getopt() {
     ;;
 
     *)
-      RETURN on MissingArgument "$*" || return
+      errorify on MissingArgument "$*" || return
       return $( _ iErrorInvalidArgument )
     ;;
 
@@ -1572,7 +1572,7 @@ INI::getopt() {
   o=${FUNCNAME[0]%%.*}
   eval "o=\${_h${o^^}[__cli__]}"
 
-  RETURN on EmptyVariable o || return $( _ iErrorNotAvailable )
+  errorify on EmptyVariable o || return $( _ iErrorNotAvailable )
 
   ${o}.get [${s}]${k}
 

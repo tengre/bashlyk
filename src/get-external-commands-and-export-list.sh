@@ -1,6 +1,6 @@
 #!/bin/bash
 #
-#$Id: get-external-commands-and-export-list.sh 651 2016-12-31 15:05:23+04:00 toor $
+#$Id: get-external-commands-and-export-list.sh 757 2017-05-04 17:05:00+04:00 toor $
 #
 . bashlyk
 #
@@ -31,7 +31,7 @@ udfMain() {
 
   printf -- "\n\nexport list:\n------------\n"
 
-  grep -P '^(udf|_).*\(\)' $fn | cut -f 1 -d'(' | sort | uniq | xargs
+  grep -P '^(\S+).?\(\)' $fn | cut -f 1 -d'(' | sort | uniq | xargs
   printf -- "\n\n"
 
 }
