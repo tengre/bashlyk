@@ -1,5 +1,5 @@
 #
-# $Id: libpid.sh 757 2017-05-04 17:05:00+04:00 toor $
+# $Id: libpid.sh 758 2017-05-07 01:22:26+04:00 toor $
 #
 #****h* BASHLYK/libpid
 #  DESCRIPTION
@@ -46,7 +46,7 @@
 
 declare -rg _bashlyk_externals_pid="                                           \
                                                                                \
-    head kill mkdir pgrep rm rmdir sleep                                       \
+    flock head kill mkdir pgrep rm rmdir sleep                                 \
                                                                                \
 "
 

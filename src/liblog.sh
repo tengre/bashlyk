@@ -1,5 +1,5 @@
 #
-# $Id: liblog.sh 757 2017-05-04 17:05:00+04:00 toor $
+# $Id: liblog.sh 758 2017-05-07 01:22:25+04:00 toor $
 #
 #****h* BASHLYK/liblog
 #  DESCRIPTION
@@ -28,7 +28,6 @@
 #  SOURCE
 [[ -s ${_bashlyk_pathLib}/liberr.sh ]] && . "${_bashlyk_pathLib}/liberr.sh"
 [[ -s ${_bashlyk_pathLib}/libstd.sh ]] && . "${_bashlyk_pathLib}/libstd.sh"
-[[ -s ${_bashlyk_pathLib}/libmsg.sh ]] && . "${_bashlyk_pathLib}/libmsg.sh"
 #******
 #****G* liblog/Global variables
 #  DESCRIPTION
@@ -314,13 +313,13 @@ udfSetLogSocket() {
     exec >>$fnSock 2>&1
 
     _bashlyk_fnLogSock=$fnSock
-     udfAddFO2Clean $fnSock
+    udfAddFO2Clean $fnSock
 
-     return 0
+    return 0
 
   else
 
-    udfWarn "Warn: Socket $fnSock not created..."
+    on error warn NotExistNotCreated Socket $fnSock not created..
 
     exec >>$_bashlyk_fnLog 2>&1
 

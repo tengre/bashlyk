@@ -1,5 +1,5 @@
 #
-# $Id: liberr.sh 757 2017-05-04 17:08:09+04:00 toor $
+# $Id: liberr.sh 758 2017-05-07 01:22:25+04:00 toor $
 #
 #****h* BASHLYK/liberr
 #  DESCRIPTION
@@ -406,13 +406,13 @@ err::eval() {
            echo) sAction=': ';        sMessage="echo  Warn: ";;
     echo+return) sAction='return $?'; sMessage="echo Error: ";;
       echo+exit) sAction='exit $?';   sMessage="echo Error: ";;
-           warn) sAction=': ';        sMessage="udfWarn  Warn: ";;
-    warn+return) sAction='return $?'; sMessage="udfWarn Error: ";;
-      warn+exit) sAction='exit $?';   sMessage="udfWarn Error: ";;
+           warn) sAction=': ';        sMessage="msg::warn  Warn: ";;
+    warn+return) sAction='return $?'; sMessage="msg::warn Error: ";;
+      warn+exit) sAction='exit $?';   sMessage="msg::warn Error: ";;
     exit|return) sAction="${sAction,,} \$?"; sMessage=": ";;
               *)
                  sAction='exit $?'
-                 sMessage='err::stacktrace | udfWarn - Error: '
+                 sMessage='err::stacktrace | msg::warn - Error: '
           ;;
 
   esac
