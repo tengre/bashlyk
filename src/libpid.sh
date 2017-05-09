@@ -1,5 +1,5 @@
 #
-# $Id: libpid.sh 758 2017-05-07 01:22:26+04:00 toor $
+# $Id: libpid.sh 759 2017-05-10 00:06:46+04:00 toor $
 #
 #****h* BASHLYK/libpid
 #  DESCRIPTION
@@ -52,15 +52,14 @@ declare -rg _bashlyk_externals_pid="                                           \
 
 declare -rg _bashlyk_exports_pid="                                             \
                                                                                \
-    udfAddFD2Clean udfAddFile2Clean udfAddFO2Clean udfAddFObj2Clean            \
-    udfAddJob2Clean udfAddPath2Clean udfAddPid2Clean udfCheckStarted           \
-    udfCleanQueue udfExitIfAlreadyStarted udfOnTrap udfSetPid udfStopProcess   \
+    pid::clean::onexit::fd pid::clean::onexit::file pid::clean::onexit::proc   \
+    pid::status pid::exitIfAlreadyStarted pid::trap pid::file pid::stop        \
                                                                                \
 "
 #******
-#****f* libpid/udfCheckStarted
+#****f* libpid/pid::status
 #  SYNOPSIS
-#    udfCheckStarted <PID> <args>
+#    pid::status <PID> <args>
 #  DESCRIPTION
 #    Compare the PID of the process with a command line pattern which must
 #    contain the process name
@@ -77,14 +76,14 @@ declare -rg _bashlyk_exports_pid="                                             \
 #    (sleep 8)&                                                                 #-
 #    local pid=$!                                                               #-
 #    ps -p $pid -o pid= -o args=
-#    udfCheckStarted                                                            #? $_bashlyk_iErrorMissingArgument
-#    udfCheckStarted $pid sleep 8                                               #? true
-#    udfCheckStarted $pid sleep 88                                              #? $_bashlyk_iErrorNoSuchProcess
-#    udfCheckStarted $$ $0                                                      #? $_bashlyk_iErrorCurrentProcess
-#    udfCheckStarted notvalid $0                                                #? $_bashlyk_iErrorInvalidArgument
+#    pid::status                                                                #? $_bashlyk_iErrorMissingArgument
+#    pid::status $pid sleep 8                                                   #? true
+#    pid::status $pid sleep 88                                                  #? $_bashlyk_iErrorNoSuchProcess
+#    pid::status $$ $0                                                          #? $_bashlyk_iErrorCurrentProcess
+#    pid::status notvalid $0                                                    #? $_bashlyk_iErrorInvalidArgument
 
 #  SOURCE
-udfCheckStarted() {
+pid::status() {
 
   errorify on MissingArgument $* || return
 
@@ -107,9 +106,9 @@ udfCheckStarted() {
   fi
 }
 #******
-#****f* libpid/udfStopProcess
+#****f* libpid/pid::stop
 #  SYNOPSIS
-#    udfStopProcess [pid=PID[,PID,..]] [childs] <command-line>
+#    pid::stop [pid=PID[,PID,..]] [childs] <command-line>
 #  DESCRIPTION
 #    Stop the processes associated with the specified command line which must
 #    contain the process name. Options allow you to manage the list of processes
@@ -145,19 +144,19 @@ udfCheckStarted() {
 #    ($cmd1 400)&                                                               #-
 #    pid=$!
 #    ## TODO wait for cmd1 starting
-#    udfStopProcess                                                             #? $_bashlyk_iErrorMissingArgument
-#    udfStopProcess pid=$pid                                                    #? $_bashlyk_iErrorMissingArgument
-#    udfStopProcess childs                                                      #? $_bashlyk_iErrorMissingArgument
-#    udfStopProcess pid=$pid $cmd1 88                                           #? $_bashlyk_iErrorNoSuchProcess
-#    udfStopProcess $cmd1 88                                                    #? $_bashlyk_iErrorNoSuchProcess
-#    udfStopProcess pid=$$ $0                                                   #? $_bashlyk_iErrorCurrentProcess
-#    udfStopProcess pid=invalid $0                                              #? $_bashlyk_iErrorInvalidArgument
-#    udfStopProcess childs pid=$pid $cmd1 400                                   #? true
-#    udfStopProcess childs pid=$a $cmd1 800                                     #? true
-#    udfStopProcess childs pid=$a $cmd1 600                                     #? $_bashlyk_iErrorNotChildProcess
-#    udfStopProcess $cmd1                                                       #? true
+#    pid::stop                                                                  #? $_bashlyk_iErrorMissingArgument
+#    pid::stop pid=$pid                                                         #? $_bashlyk_iErrorMissingArgument
+#    pid::stop childs                                                           #? $_bashlyk_iErrorMissingArgument
+#    pid::stop pid=$pid $cmd1 88                                                #? $_bashlyk_iErrorNoSuchProcess
+#    pid::stop $cmd1 88                                                         #? $_bashlyk_iErrorNoSuchProcess
+#    pid::stop pid=$$ $0                                                        #? $_bashlyk_iErrorCurrentProcess
+#    pid::stop pid=invalid $0                                                   #? $_bashlyk_iErrorInvalidArgument
+#    pid::stop childs pid=$pid $cmd1 400                                        #? true
+#    pid::stop childs pid=$a $cmd1 800                                          #? true
+#    pid::stop childs pid=$a $cmd1 600                                          #? $_bashlyk_iErrorNotChildProcess
+#    pid::stop $cmd1                                                            #? true
 #  SOURCE
-udfStopProcess() {
+pid::stop() {
 
   local bChild i iStopped pid rc re s
   local -a a
@@ -251,9 +250,9 @@ udfStopProcess() {
 
 }
 #******
-#****f* libpid/udfSetPid
+#****f* libpid/pid::file
 #  SYNOPSIS
-#    udfSetPid
+#    pid::file
 #  DESCRIPTION
 #    Protection against re-run the script with the given arguments. PID file is
 #    created when this script is not already running. If the script has
@@ -266,17 +265,17 @@ udfStopProcess() {
 #  EXAMPLE
 #    local cmd fmt='#!/bin/bash\n%s . bashlyk\n%s || exit $?\n%s\n'             #-
 #    udfMakeTemp cmd                                                            #? true
-#    printf -- "$fmt" '_bashlyk_log=nouse' 'udfSetPid' 'sleep 8' | tee $cmd
+#    printf -- "$fmt" '_bashlyk_log=nouse' 'pid::file' 'sleep 8' | tee $cmd
 #    chmod +x $cmd                                                              #? true
 #    ($cmd)&                                                                    #? true
 #    sleep 0.5                                                                  #-
 #    ( $cmd || false )                                                          #? false
-#    udfSetPid                                                                  #? true
+#    pid::file                                                                  #? true
 #    test -f $_bashlyk_fnPid                                                    #? true
 #    head -n 1 $_bashlyk_fnPid >| grep -w $$                                    #? true
 #    rm -f $_bashlyk_fnPid
 #  SOURCE
-udfSetPid() {
+pid::file() {
 
   local fnPid pid
 
@@ -301,7 +300,7 @@ udfSetPid() {
 
   if eval "flock -n $fd"; then
 
-    if udfCheckStarted "$pid" $( _ s0 ) $( _ sArg ); then
+    if pid::status "$pid" $( _ s0 ) $( _ sArg ); then
 
       on error echo+return AlreadyStarted $pid
 
@@ -310,8 +309,8 @@ udfSetPid() {
     if printf -- "%s\n%s\n" "$$" "$0 $( _ sArg )" > $fnPid; then
 
       _ fnPid $fnPid
-      udfAddFO2Clean $fnPid
-      udfAddFD2Clean $fd
+      pid::clean::onexit::file $fnPid
+      pid::clean::onexit::fd $fd
 
     else
 
@@ -321,7 +320,7 @@ udfSetPid() {
 
   else
 
-    if udfCheckStarted "$pid" $( _ s0 ) $( _ sArg ); then
+    if pid::status "$pid" $( _ s0 ) $( _ sArg ); then
 
       on error echo+return AlreadyStarted $pid
 
@@ -337,11 +336,11 @@ udfSetPid() {
 
 }
 #******
-#****f* libpid/udfExitIfAlreadyStarted
+#****f* libpid/pid::exitIfAlreadyStarted
 #  SYNOPSIS
-#    udfExitIfAlreadyStarted
+#    pid::exitIfAlreadyStarted
 #  DESCRIPTION
-#    Alias-wrapper for udfSetPid with extended behavior:
+#    Alias-wrapper for pid::file with extended behavior:
 #    If command line process already exist then
 #    this current process with identical command line stopped
 #    else created pid file and current process don`t stopped.
@@ -350,19 +349,19 @@ udfSetPid() {
 #                         started, current process stopped
 #    NotExistNotCreated - PID file don't created, current process stopped
 #  EXAMPLE
-#    udfExitIfAlreadyStarted                                                    #? true
+#    pid::exitIfAlreadyStarted                                                  #? true
 #    ## TODO проверка кодов возврата
 #  SOURCE
-udfExitIfAlreadyStarted() {
+pid::exitIfAlreadyStarted() {
 
-  udfSetPid || exit $?
+  pid::file || exit $?
 
 }
 #******
 udfAddJob2Clean() { return 0; }
-#****f* libpid/udfAddPid2Clean
+#****f* libpid/pid::clean::onexit::proc
 #  SYNOPSIS
-#    udfAddPid2Clean args
+#    pid::clean::onexit::proc args
 #  DESCRIPTION
 #    Добавляет идентификаторы запущенных процессов к списку очистки при
 #    завершении текущего процесса.
@@ -370,44 +369,44 @@ udfAddJob2Clean() { return 0; }
 #    args - идентификаторы процессов
 #  EXAMPLE
 #    sleep 99 &
-#    udfAddPid2Clean $!
+#    pid::clean::onexit::proc $!
 #    test "${_bashlyk_apidClean[$BASHPID]}" -eq "$!"                            #? true
 #    ps -p $! -o pid= >| grep -w $!                                             #? true
-#    echo $(udfAddPid2Clean $!; echo "$BASHPID : $! ")
+#    echo $(pid::clean::onexit::proc $!; echo "$BASHPID : $! ")
 #    ps -p $! -o pid= >| grep -w $!                                             #? false
 #
 #  SOURCE
-udfAddPid2Clean() {
+pid::clean::onexit::proc() {
 
   [[ $1 ]] || return 0
 
   _bashlyk_apidClean[$BASHPID]+=" $*"
 
-  trap "udfOnTrap" EXIT INT TERM
+  trap "pid::trap" EXIT INT TERM
 
 }
 #******
-#****f* libpid/udfAddFD2Clean
+#****f* libpid/pid::clean::onexit::fd
 #  SYNOPSIS
-#    udfAddFD2Clean <args>
+#    pid::clean::onexit::fd <args>
 #  DESCRIPTION
 #    add list of filedescriptors for cleaning on exit
 #  ARGUMENTS
 #    <args> - file descriptors
 #  SOURCE
-udfAddFD2Clean() {
+pid::clean::onexit::fd() {
 
   errorify on MissingArgument $* || return
 
   _bashlyk_afdClean[$BASHPID]+=" $*"
 
-  trap "udfOnTrap" EXIT INT TERM
+  trap "pid::trap" EXIT INT TERM
 
 }
 #******
-#****f* libpid/udfAddFO2Clean
+#****f* libpid/pid::clean::onexit::file
 #  SYNOPSIS
-#    udfAddFO2Clean <args>
+#    pid::clean::onexit::file <args>
 #  DESCRIPTION
 #    add list of filesystem objects for cleaning on exit
 #  INPUTS
@@ -416,44 +415,40 @@ udfAddFD2Clean() {
 #    local a fnTemp1 fnTemp2 pathTemp1 pathTemp2 s=$RANDOM
 #    udfMakeTemp fnTemp1 keep=true suffix=.${s}1
 #    test -f $fnTemp1
-#    echo $(udfAddFO2Clean $fnTemp1 )
+#    echo $(pid::clean::onexit::file $fnTemp1 )
 #    ls -l ${TMPDIR}/*.${s}1 2>/dev/null >| grep ".*\.${s}1"                    #? false
 #    echo $(udfMakeTemp fnTemp2 suffix=.${s}2)
 #    ls -l ${TMPDIR}/*.${s}2 2>/dev/null >| grep ".*\.${s}2"                    #? false
 #    echo $(udfMakeTemp fnTemp2 suffix=.${s}3 keep=true)
 #    ls -l ${TMPDIR}/*.${s}3 2>/dev/null >| grep ".*\.${s}3"                    #? true
 #    a=$(ls -1 ${TMPDIR}/*.${s}3)
-#    echo $(udfAddFO2Clean $a )
+#    echo $(pid::clean::onexit::file $a )
 #    ls -l ${TMPDIR}/*.${s}3 2>/dev/null >| grep ".*\.${s}3"                    #? false
 #    udfMakeTemp pathTemp1 keep=true suffix=.${s}1 type=dir
 #    test -d $pathTemp1
-#    echo $(udfAddFO2Clean $pathTemp1 )
+#    echo $(pid::clean::onexit::file $pathTemp1 )
 #    ls -1ld ${TMPDIR}/*.${s}1 2>/dev/null >| grep ".*\.${s}1"                  #? false
 #    echo $(udfMakeTemp pathTemp2 suffix=.${s}2 type=dir)
 #    ls -1ld ${TMPDIR}/*.${s}2 2>/dev/null >| grep ".*\.${s}2"                  #? false
 #    echo $(udfMakeTemp pathTemp2 suffix=.${s}3 keep=true type=dir)
 #    ls -1ld ${TMPDIR}/*.${s}3 2>/dev/null >| grep ".*\.${s}3"                  #? true
 #    a=$(ls -1ld ${TMPDIR}/*.${s}3)
-#    echo $(udfAddFO2Clean $a )
+#    echo $(pid::clean::onexit::file $a )
 #    ls -1ld ${TMPDIR}/*.${s}3 2>/dev/null >| grep ".*\.${s}3"                  #? false
 #  SOURCE
-udfAddFO2Clean() {
+pid::clean::onexit::file() {
 
   errorify on MissingArgument $* || return
 
   _bashlyk_afoClean[$BASHPID]+=" $*"
 
-  trap "udfOnTrap" EXIT INT TERM
+  trap "pid::trap" EXIT INT TERM
 
 }
 #******
-udfCleanQueue()    { udfAddFO2Clean $@; }
-udfAddFObj2Clean() { udfAddFO2Clean $@; }
-udfAddFile2Clean() { udfAddFO2Clean $@; }
-udfAddPath2Clean() { udfAddFO2Clean $@; }
-#****f* libpid/udfOnTrap
+#****f* libpid/pid::trap
 #  SYNOPSIS
-#    udfOnTrap
+#    pid::trap
 #  DESCRIPTION
 #    The cleaning procedure at the end of the calling script.
 #    Suitable for trap command call.
@@ -475,18 +470,18 @@ udfAddPath2Clean() { udfAddFO2Clean $@; }
 #    test -d $path
 #    ps -p $pid -o pid= >| grep -w $pid
 #    ls /proc/$$/fd >| grep -w $fd
-#    udfAddFD2Clean $fd
-#    udfAddPid2Clean $pid
-#    udfAddFO2Clean $fn1
-#    udfAddFO2Clean $path
-#    udfAddFO2Clean $pipe
-#    udfOnTrap
+#    pid::clean::onexit::fd $fd
+#    pid::clean::onexit::proc $pid
+#    pid::clean::onexit::file $fn1
+#    pid::clean::onexit::file $path
+#    pid::clean::onexit::file $pipe
+#    pid::trap
 #    ls /proc/$$/fd >| grep -w $fd                                              #? false
 #    ps -p $pid -o pid= >| grep -w $pid                                         #? false
 #    test -f $fn1                                                               #? false
 #    test -d $path                                                              #? false
 #  SOURCE
-udfOnTrap() {
+pid::trap() {
 
   local i IFS=$' \t\n' re s
   local -a a
@@ -503,7 +498,7 @@ udfOnTrap() {
 
         if ! kill -${s} ${a[i]} >/dev/null 2>&1; then
 
-          udfSetLastError NotPermitted "${a[i]}"
+          err::status NotPermitted "${a[i]}"
           sleep 0.1
 
         fi
@@ -528,10 +523,10 @@ udfOnTrap() {
 
   done
 
-  if [[ -n "${_bashlyk_pidLogSock}" ]]; then
+  if [[ $_bashlyk_pidLogSock ]]; then
 
     exec >/dev/null 2>&1
-    wait ${_bashlyk_pidLogSock}
+    wait $_bashlyk_pidLogSock
 
   fi
 

@@ -1,5 +1,5 @@
 #
-# $Id: libini.sh 757 2017-05-04 17:05:00+04:00 toor $
+# $Id: libini.sh 759 2017-05-10 00:06:46+04:00 toor $
 #
 #****h* BASHLYK/libini
 #  DESCRIPTION
@@ -937,7 +937,7 @@ INI::show() {
 #  EXAMPLE
 #    local fn
 #    udfMakeTemp fn
-#    udfAddFO2Clean ${fn}.bak
+#    pid::clean::onexit::file ${fn}.bak
 #    INI tSave
 #    tSave.__section.select section
 #    tSave.__section.set key "is value"
@@ -1224,8 +1224,8 @@ INI::read() {
 #    EOFini                                                                     #-
 #    iniLoad="${iniMain%/*}/child.${iniMain##*/}"                               #-
 #    iniSave="${iniMain%/*}/write.${iniMain##*/}"                               #-
-#    udfAddFO2Clean $iniLoad                                                    #-
-#    udfAddFO2Clean $iniSave                                                    #-
+#    pid::clean::onexit::file $iniLoad                                          #-
+#    pid::clean::onexit::file $iniSave                                          #-
 #    cat <<-'EOFiniChild' > $iniLoad                                            #-
 #    section  =  global                                                         #-
 #    file     =  child                                                          #-
