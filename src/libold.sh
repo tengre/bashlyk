@@ -1,5 +1,5 @@
 #
-# $Id: libold.sh 759 2017-05-10 00:06:46+04:00 toor $
+# $Id: libold.sh 760 2017-05-10 00:17:19+04:00 toor $
 #
 #****h* BASHLYK/libold
 #  DESCRIPTION
@@ -46,6 +46,7 @@ declare -rg _bashlyk_externals_old="                                           \
     mv pwd rm sed sort touch tr true uniq xargs                                \
     chgrp chmod chown echo expr md5sum mkdir mkfifo mktemp|tempfile rm touch   \
     grep logname mail pgrep rm stat write notify-send|kdialog|zenity|xmessage  \
+    flock head kill pgrep rmdir sleep                                          \
                                                                                \
 "
 declare -rg _bashlyk_exports_old="                                             \
@@ -67,6 +68,9 @@ declare -rg _bashlyk_exports_old="                                             \
     udfWSpace2Alias udfXml                                                     \
     udfEcho udfGetXSessionProperties udfMail udfMessage udfNotify2X            \
     udfNotifyCommand udfWarn                                                   \
+    udfAddFD2Clean udfAddFile2Clean udfAddFO2Clean udfAddFObj2Clean            \
+    udfAddJob2Clean udfAddPath2Clean udfAddPid2Clean udfCheckStarted           \
+    udfCleanQueue udfExitIfAlreadyStarted udfOnTrap udfSetPid udfStopProcess   \
                                                                                \
 "
 #******
@@ -4304,67 +4308,7 @@ udfNotifyCommand() {
 
 }
 #******
-#
-# $Id: libold.sh 759 2017-05-10 00:06:46+04:00 toor $
-#
-#****h* BASHLYK/libpid
-#  DESCRIPTION
-#    A set of functions for process control from shell scripts:
-#    * create a PID file
-#    * protection against restarting
-#    * stop some processes of the specified command
-#  USES
-#    libstd
-#  AUTHOR
-#    Damir Sh. Yakupov <yds@bk.ru>
-#******
-#***iV* libpid/BASH compatibility
-#  DESCRIPTION
-#    Compatibility checked by bashlyk (BASH version 4.xx or more required)
-#    $_BASHLYK_LIBPID provides protection against re-using of this module
-#  SOURCE
-[ -n "$_BASHLYK_LIBPID" ] && return 0 || _BASHLYK_LIBPID=1
-[ -n "$_BASHLYK" ] || . bashlyk || eval '                                      \
-                                                                               \
-    echo "[!] bashlyk loader required for ${0}, abort.."; exit 255             \
-                                                                               \
-'
-#******
-#****L* libpid/Used libraries
-# DESCRIPTION
-#   Loading external libraries
-# SOURCE
-[[ -s ${_bashlyk_pathLib}/liberr.sh ]] && . "${_bashlyk_pathLib}/liberr.sh"
-[[ -s ${_bashlyk_pathLib}/libstd.sh ]] && . "${_bashlyk_pathLib}/libstd.sh"
-#******
-#****G* libpid/Global Variables
-#  DESCRIPTION
-#    Global variables of the library
-#  SOURCE
-#: ${_bashlyk_fnPid:=}
-#: ${_bashlyk_fnSock:=}
-#: ${_bashlyk_afoClean:=}
-#: ${_bashlyk_afdClean:=}
-#: ${_bashlyk_ajobClean:=}
-#: ${_bashlyk_apidClean:=}
-#: ${_bashlyk_pidLogSock:=}
-: ${_bashlyk_s0:=${0##*/}}
-
-declare -rg _bashlyk_externals_pid="                                           \
-                                                                               \
-    flock head kill mkdir pgrep rm rmdir sleep                                 \
-                                                                               \
-"
-
-declare -rg _bashlyk_exports_pid="                                             \
-                                                                               \
-    udfAddFD2Clean udfAddFile2Clean udfAddFO2Clean udfAddFObj2Clean            \
-    udfAddJob2Clean udfAddPath2Clean udfAddPid2Clean udfCheckStarted           \
-    udfCleanQueue udfExitIfAlreadyStarted udfOnTrap udfSetPid udfStopProcess   \
-                                                                               \
-"
-#******
-#****f* libpid/udfCheckStarted
+#****f* libold/udfCheckStarted
 #  SYNOPSIS
 #    udfCheckStarted <PID> <args>
 #  DESCRIPTION
@@ -4413,7 +4357,7 @@ udfCheckStarted() {
   fi
 }
 #******
-#****f* libpid/udfStopProcess
+#****f* libold/udfStopProcess
 #  SYNOPSIS
 #    udfStopProcess [pid=PID[,PID,..]] [childs] <command-line>
 #  DESCRIPTION
@@ -4557,7 +4501,7 @@ udfStopProcess() {
 
 }
 #******
-#****f* libpid/udfSetPid
+#****f* libold/udfSetPid
 #  SYNOPSIS
 #    udfSetPid
 #  DESCRIPTION
@@ -4643,7 +4587,7 @@ udfSetPid() {
 
 }
 #******
-#****f* libpid/udfExitIfAlreadyStarted
+#****f* libold/udfExitIfAlreadyStarted
 #  SYNOPSIS
 #    udfExitIfAlreadyStarted
 #  DESCRIPTION
@@ -4666,7 +4610,7 @@ udfExitIfAlreadyStarted() {
 }
 #******
 udfAddJob2Clean() { return 0; }
-#****f* libpid/udfAddPid2Clean
+#****f* libold/udfAddPid2Clean
 #  SYNOPSIS
 #    udfAddPid2Clean args
 #  DESCRIPTION
@@ -4693,7 +4637,7 @@ udfAddPid2Clean() {
 
 }
 #******
-#****f* libpid/udfAddFD2Clean
+#****f* libold/udfAddFD2Clean
 #  SYNOPSIS
 #    udfAddFD2Clean <args>
 #  DESCRIPTION
@@ -4711,7 +4655,7 @@ udfAddFD2Clean() {
 
 }
 #******
-#****f* libpid/udfAddFO2Clean
+#****f* libold/udfAddFO2Clean
 #  SYNOPSIS
 #    udfAddFO2Clean <args>
 #  DESCRIPTION
@@ -4757,7 +4701,7 @@ udfCleanQueue()    { udfAddFO2Clean $@; }
 udfAddFObj2Clean() { udfAddFO2Clean $@; }
 udfAddFile2Clean() { udfAddFO2Clean $@; }
 udfAddPath2Clean() { udfAddFO2Clean $@; }
-#****f* libpid/udfOnTrap
+#****f* libold/udfOnTrap
 #  SYNOPSIS
 #    udfOnTrap
 #  DESCRIPTION
