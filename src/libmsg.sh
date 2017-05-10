@@ -1,5 +1,5 @@
 #
-# $Id: libmsg.sh 758 2017-05-07 01:22:25+04:00 toor $
+# $Id: libmsg.sh 762 2017-05-10 17:31:29+04:00 toor $
 #
 #****h* BASHLYK/libmsg
 #  DESCRIPTION
@@ -19,7 +19,7 @@
 #    $_BASHLYK_LIBMSG provides protection against re-using of this module
 #  SOURCE
 [ -n "$_BASHLYK_LIBMSG" ] && return 0 || _BASHLYK_LIBMSG=1
-[ -n "$_BASHLYK" ] || . bashlyk || eval '                                      \
+[ -n "$_BASHLYK" ] || . ${_bashlyk_pathLib}/bashlyk || eval '                  \
                                                                                \
     echo "[!] bashlyk loader required for ${0}, abort.."; exit 255             \
                                                                                \

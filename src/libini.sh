@@ -1,5 +1,5 @@
 #
-# $Id: libini.sh 761 2017-05-10 10:31:26+04:00 toor $
+# $Id: libini.sh 762 2017-05-10 17:31:28+04:00 toor $
 #
 #****h* BASHLYK/libini
 #  DESCRIPTION
@@ -75,7 +75,7 @@
 #    $_BASHLYK_LIBINI provides protection against re-using of this module
 #  SOURCE
 [ -n "$_BASHLYK_LIBINI" ] && return 0 || _BASHLYK_LIBINI=1
-[ -n "$_BASHLYK" ] || . bashlyk || eval '                                      \
+[ -n "$_BASHLYK" ] || . ${_bashlyk_pathLib}/bashlyk || eval '                  \
                                                                                \
     echo "[!] bashlyk loader required for ${0}, abort.."; exit 255             \
                                                                                \

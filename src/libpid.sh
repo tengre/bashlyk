@@ -1,5 +1,5 @@
 #
-# $Id: libpid.sh 761 2017-05-10 10:31:26+04:00 toor $
+# $Id: libpid.sh 762 2017-05-10 17:31:29+04:00 toor $
 #
 #****h* BASHLYK/libpid
 #  DESCRIPTION
@@ -18,7 +18,7 @@
 #    $_BASHLYK_LIBPID provides protection against re-using of this module
 #  SOURCE
 [ -n "$_BASHLYK_LIBPID" ] && return 0 || _BASHLYK_LIBPID=1
-[ -n "$_BASHLYK" ] || . bashlyk || eval '                                      \
+[ -n "$_BASHLYK" ] || . ${_bashlyk_pathLib}/bashlyk || eval '                  \
                                                                                \
     echo "[!] bashlyk loader required for ${0}, abort.."; exit 255             \
                                                                                \

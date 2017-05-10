@@ -1,5 +1,5 @@
 #
-# $Id: libstd.sh 761 2017-05-10 10:31:26+04:00 toor $
+# $Id: libstd.sh 762 2017-05-10 17:31:29+04:00 toor $
 #
 #****h* BASHLYK/libstd
 #  DESCRIPTION
@@ -15,7 +15,7 @@
 #    $_BASHLYK_LIBSTD provides protection against re-using of this module
 #  SOURCE
 [ -n "$_BASHLYK_LIBSTD" ] && return 0 || _BASHLYK_LIBSTD=1
-[ -n "$_BASHLYK" ] || . bashlyk || eval '                                      \
+[ -n "$_BASHLYK" ] || . ${_bashlyk_pathLib}/bashlyk || eval '                  \
                                                                                \
     echo "[!] bashlyk loader required for ${0}, abort.."; exit 255             \
                                                                                \
@@ -941,4 +941,54 @@ udfTrim() {
 #    udfCat < $fn | grep -E '^[[:space:]][0-9]{1,5}$'                           #? true
 #  SOURCE
 udfCat() { while IFS= read -t 32 || [[ $REPLY ]]; do echo "$REPLY"; done; }
+#******
+#****f* libstd/udfDateR
+#  SYNOPSIS
+#    udfDateR
+#  DESCRIPTION
+#    show 'date -R' like output
+#  EXAMPLE
+#    udfDateR >| grep -P "^\S{3}, \d{2} \S{3} \d{4} \d{2}:\d{2}:\d{2} .\d{4}$"  #? true
+#  SOURCE
+if (( _bashlyk_ShellVersion > 4002000 )); then
+
+  udfDateR() { LC_ALL=C printf -- '%(%a, %d %b %Y %T %z)T\n' '-1'; }
+
+else
+
+  udfDateR() { exec -c date -R; }
+
+fi
+#******
+#****f* libstd/udfUptime
+#  SYNOPSIS
+#    udfUptime
+#  DESCRIPTION
+#    show uptime value in the seconds
+#  EXAMPLE
+#    udfUptime >| grep "^[[:digit:]]*$"                                         #? true
+#  SOURCE
+if (( _bashlyk_ShellVersion > 4002000 )); then
+
+  udfUptime() { echo $(( $(printf '%(%s)T' '-1') - $(printf '%(%s)T' '-2') )); }
+
+else
+
+  readonly _bashlyk_iStartTimeStamp=$( exec -c date "+%s" )
+
+  udfUptime() { echo $(( $(exec -c date "+%s") - _bashlyk_iStartTimeStamp )); }
+
+fi
+#******
+#****f* libstd/udfFinally
+#  SYNOPSIS
+#    udfFinally <text>
+#  DESCRIPTION
+#    show uptime with input text
+#  INPUTS
+#    <text> - prefix text before " uptime <number> sec"
+#  EXAMPLE
+#    udfFinally $RANDOM >| grep "^[[:digit:]]* uptime [[:digit:]]* sec$"        #? true
+#  SOURCE
+udfFinally() { echo "$@ uptime $( udfUptime ) sec"; }
 #******

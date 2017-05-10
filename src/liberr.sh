@@ -1,5 +1,5 @@
 #
-# $Id: liberr.sh 761 2017-05-10 10:31:26+04:00 toor $
+# $Id: liberr.sh 762 2017-05-10 17:31:28+04:00 toor $
 #
 #****h* BASHLYK/liberr
 #  DESCRIPTION
@@ -15,7 +15,7 @@
 #    $_BASHLYK_LIBERR provides protection against re-using of this module
 #  SOURCE
 [ -n "$_BASHLYK_LIBERR" ] && return 0 || _BASHLYK_LIBERR=1
-[ -n "$_BASHLYK" ] || . bashlyk || eval '                                      \
+[ -n "$_BASHLYK" ] || . ${_bashlyk_pathLib}/bashlyk || eval '                  \
                                                                                \
     echo "[!] bashlyk loader required for ${0}, abort.."; exit 255             \
                                                                                \
@@ -48,8 +48,8 @@ declare -rg _bashlyk_aRequiredCmd_err="rm sed"
 declare -rg _bashlyk_methods_err="                                             \
                                                                                \
     err::{__add_throw_to_command,CommandNotFound,__convert_try_to_func,        \
-    EmptyArgument,EmptyResult,EmptyVariable,eval,exception::message,handler,   \
-    InvalidVariable,MissingArgument,NoSuchFileOrDir,stacktrace,status,         \
+    EmptyArgument,EmptyResult,EmptyVariable,eval,exception::message,debug,     \
+    handler,InvalidVariable,MissingArgument,NoSuchFileOrDir,stacktrace,status, \
     status::show}                                                              \
 "
 
@@ -795,6 +795,47 @@ err::exception::message() {
   [[ $msg ]] && printf -- "${msg}\n"
 
   return $rc
+
+}
+#******
+#****f* liberr/err::debug
+#  SYNOPSIS
+#    err::debug <level> <message>
+#  DESCRIPTION
+#    show a <message> on stderr if the <level> is equal or less than the
+#    $DEBUGLEVEL value otherwise return code 1
+#  INPUTS
+#    <level>   - decimal number of the debug level ( 0 for wrong argument)
+#    <message> - debug message
+#  OUTPUT
+#    show a <message> on stderr
+#  RETURN VALUE
+#    0               - <level> equal or less than $DEBUGLEVEL value
+#    1               - <level> more than $DEBUGLEVEL value
+#    MissingArgument - no arguments
+#  EXAMPLE
+#    DEBUGLEVEL=0
+#    err::debug                                                                 #? $_bashlyk_iErrorMissingArgument
+#    err::debug 0 echo level 0                                                  #? true
+#    err::debug 1 silence level 0                                               #? 1
+#    DEBUGLEVEL=5
+#    err::debug 0 echo level 5                                                  #? true
+#    err::debug 6 echo 5                                                        #? 1
+#    err::debug default level test '(0)'                                        #? true
+#  SOURCE
+err::debug() {
+
+  errorify on MissingArgument $* || return
+
+  if [[ $1 =~ ^[0-9]+$ ]]; then
+
+    (( ${DEBUGLEVEL:=0} >= $1 )) && shift || return 1
+
+  fi
+
+  [[ $* ]] && echo "$*" >&2
+
+  return 0
 
 }
 #******

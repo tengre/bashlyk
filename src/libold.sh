@@ -1,5 +1,5 @@
 #
-# $Id: libold.sh 760 2017-05-10 00:17:19+04:00 toor $
+# $Id: libold.sh 762 2017-05-10 17:31:29+04:00 toor $
 #
 #****h* BASHLYK/libold
 #  DESCRIPTION
@@ -4784,6 +4784,47 @@ udfOnTrap() {
     wait ${_bashlyk_pidLogSock}
 
   fi
+
+}
+#******
+#****f* liblold/udfDebug
+#  SYNOPSIS
+#    udfDebug <level> <message>
+#  DESCRIPTION
+#    show a <message> on stderr if the <level> is equal or less than the
+#    $DEBUGLEVEL value otherwise return code 1
+#  INPUTS
+#    <level>   - decimal number of the debug level ( 0 for wrong argument)
+#    <message> - debug message
+#  OUTPUT
+#    show a <message> on stderr
+#  RETURN VALUE
+#    0               - <level> equal or less than $DEBUGLEVEL value
+#    1               - <level> more than $DEBUGLEVEL value
+#    MissingArgument - no arguments
+#  EXAMPLE
+#    DEBUGLEVEL=0
+#    udfDebug                                                                   #? $_bashlyk_iErrorMissingArgument
+#    udfDebug 0 echo level 0                                                    #? true
+#    udfDebug 1 silence level 0                                                 #? 1
+#    DEBUGLEVEL=5
+#    udfDebug 0 echo level 5                                                    #? true
+#    udfDebug 6 echo 5                                                          #? 1
+#    udfDebug default level test '(0)'                                          #? true
+#  SOURCE
+udfDebug() {
+
+  errorify on MissingArgument $* || return
+
+  if [[ $1 =~ ^[0-9]+$ ]]; then
+
+    (( ${DEBUGLEVEL:=0} >= $1 )) && shift || return 1
+
+  fi
+
+  [[ $* ]] && echo "$*" >&2
+
+  return 0
 
 }
 #******

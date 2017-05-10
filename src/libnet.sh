@@ -1,5 +1,5 @@
 #
-# $Id: libnet.sh 757 2017-05-04 17:05:00+04:00 toor $
+# $Id: libnet.sh 762 2017-05-10 17:31:29+04:00 toor $
 #
 #****h* BASHLYK/libnet
 #  DESCRIPTION
@@ -15,7 +15,7 @@
 #    $_BASHLYK_LIBNET provides protection against re-using of this module
 #  SOURCE
 [ -n "$_BASHLYK_LIBNET" ] && return 0 || _BASHLYK_LIBNET=1
-[ -n "$_BASHLYK" ] || . bashlyk || eval '                                      \
+[ -n "$_BASHLYK" ] || . ${_bashlyk_pathLib}/bashlyk || eval '                  \
                                                                                \
     echo "[!] bashlyk loader required for ${0}, abort.."; exit 255             \
                                                                                \
