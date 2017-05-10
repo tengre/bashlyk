@@ -1,5 +1,5 @@
 #
-# $Id: liblog.sh 759 2017-05-10 00:06:46+04:00 toor $
+# $Id: liblog.sh 761 2017-05-10 10:31:26+04:00 toor $
 #
 #****h* BASHLYK/liblog
 #  DESCRIPTION
@@ -131,7 +131,7 @@ udfLogger() {
 
   mkdir -p "$_bashlyk_pathLog" || on error throw NotExistNotCreated $_bashlyk_pathLog
 
-  pid::clean::onexit::file $_bashlyk_pathLog
+  pid::onExit::unlink $_bashlyk_pathLog
 
   case "${bSysLog}${bUseLog}" in
 
@@ -313,7 +313,7 @@ udfSetLogSocket() {
     exec >>$fnSock 2>&1
 
     _bashlyk_fnLogSock=$fnSock
-    pid::clean::onexit::file $fnSock
+    pid::onExit::unlink $fnSock
 
     return 0
 

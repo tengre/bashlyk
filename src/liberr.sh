@@ -1,5 +1,5 @@
 #
-# $Id: liberr.sh 758 2017-05-07 01:22:25+04:00 toor $
+# $Id: liberr.sh 761 2017-05-10 10:31:26+04:00 toor $
 #
 #****h* BASHLYK/liberr
 #  DESCRIPTION
@@ -98,7 +98,7 @@ _bashlyk_iErrorIncompatibleVersion=169
 _bashlyk_iErrorTryBlockException=168
 _bashlyk_iErrorNotAvailable=166
 _bashlyk_iErrorNotDetected=0
-
+_bashlyk_iErrorSuccess=0
 _bashlyk_hError[$_bashlyk_iErrorUnknown]="unknown (unexpected) error"
 _bashlyk_hError[$_bashlyk_iErrorMissingArgument]="empty or missing argument"
 _bashlyk_hError[$_bashlyk_iErrorInvalidArgument]="invalid argument"

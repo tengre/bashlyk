@@ -1,5 +1,5 @@
 #
-# $Id: libstd.sh 759 2017-05-10 00:06:46+04:00 toor $
+# $Id: libstd.sh 761 2017-05-10 10:31:26+04:00 toor $
 #
 #****h* BASHLYK/libstd
 #  DESCRIPTION
@@ -363,7 +363,7 @@ udfMakeTemp() {
 
     [[ ${!1} ]] || on error EmptyResult $1
 
-    [[ $* =~ keep=false || ! $* =~ keep=true ]] && pid::clean::onexit::file ${!1}
+    [[ $* =~ keep=false || ! $* =~ keep=true ]] && pid::onExit::unlink ${!1}
 
     return 0
 
@@ -481,7 +481,7 @@ udfMakeTemp() {
 
   fi
 
-  [[ $* =~ keep=false ]] && pid::clean::onexit::file $s
+  [[ $* =~ keep=false ]] && pid::onExit::unlink $s
 
   [[ $s ]] || return $( _ iErrorEmptyResult )
 
@@ -515,7 +515,7 @@ udfMakeTemp() {
 #    ls $foTemp >| grep "prefi"                                                 #? true
 #    udfMakeTempV foTemp dir                                                    #? true
 #    ls -ld $foTemp >| grep "^drwx------.*${foTemp}$"                           #? true
-#    echo $(pid::clean::onexit::file $foTemp)
+#    echo $(pid::onExit::unlink $foTemp)
 #    test -d $foTemp                                                            #? false
 #  SOURCE
 udfMakeTempV() {
@@ -711,10 +711,10 @@ udfGetMd5() {
 #    echo "digest test 1" > ${path}/testfile1                                   #-
 #    echo "digest test 2" > ${path}/testfile2                                   #-
 #    echo "digest test 3" > ${path}/testfile3                                   #-
-#    pid::clean::onexit::file ${path}/testfile1
-#    pid::clean::onexit::file ${path}/testfile2
-#    pid::clean::onexit::file ${path}/testfile3
-#    pid::clean::onexit::file ${path}
+#    pid::onExit::unlink ${path}/testfile1
+#    pid::onExit::unlink ${path}/testfile2
+#    pid::onExit::unlink ${path}/testfile3
+#    pid::onExit::unlink ${path}
 #    udfGetPathMd5 $path >| grep ^[[:xdigit:]]*.*testfile.$                     #? true
 #    udfGetPathMd5                                                              #? ${_bashlyk_iErrorMissingArgument}
 #    udfGetPathMd5 /notexist/path                                               #? ${_bashlyk_iErrorNoSuchFileOrDir}

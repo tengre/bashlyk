@@ -1,5 +1,5 @@
 #
-# $Id: libpid.sh 759 2017-05-10 00:06:46+04:00 toor $
+# $Id: libpid.sh 761 2017-05-10 10:31:26+04:00 toor $
 #
 #****h* BASHLYK/libpid
 #  DESCRIPTION
@@ -52,25 +52,30 @@ declare -rg _bashlyk_externals_pid="                                           \
 
 declare -rg _bashlyk_exports_pid="                                             \
                                                                                \
-    pid::clean::onexit::fd pid::clean::onexit::file pid::clean::onexit::proc   \
-    pid::status pid::exitIfAlreadyStarted pid::trap pid::file pid::stop        \
+    pid::{onExit::close,onExit::unlink,onExit::stop,status,onStarted::exit,    \
+    trap,file,stop}                                                            \
                                                                                \
 "
 #******
-#****f* libpid/pid::status
+#****e* libpid/pid::status
 #  SYNOPSIS
-#    pid::status <PID> <args>
+#    pid::status <PID> <pattern>
 #  DESCRIPTION
-#    Compare the PID of the process with a command line pattern which must
-#    contain the process name
+#    Compare the <PID> with a command line <pattern> which must contain the
+#    process name
+#  NOTES
+#    public
 #  ARGUMENTS
-#    <PID>  - process id
-#    <args> - command line pattern with process name
-#  ERRORS
-#    NoSuchProcess   - Process for the specified command line is not detected.
-#    CurrentProcess  - The process for this command line is identical to the
-#                      PID of the current process
-#    InvalidArgument - PID is not number
+#    <PID>     - process id
+#    <pattern> - command line pattern with process name
+#  RETURN VALUE
+#    Success         - a process with a <PID> and a name that satisfies the
+#                      <pattern> exists and it is not the current process.
+#    NoSuchProcess   - a process with a <PID> and a name that satisfies the
+#                      <pattern> not found.
+#    CurrentProcess  - a process with a <PID> and a name that satisfies the
+#                      <pattern> identical to the PID of the current process.
+#    InvalidArgument - <PID> is not number
 #    MissingArgument - no arguments
 #  EXAMPLE
 #    (sleep 8)&                                                                 #-
@@ -81,17 +86,18 @@ declare -rg _bashlyk_exports_pid="                                             \
 #    pid::status $pid sleep 88                                                  #? $_bashlyk_iErrorNoSuchProcess
 #    pid::status $$ $0                                                          #? $_bashlyk_iErrorCurrentProcess
 #    pid::status notvalid $0                                                    #? $_bashlyk_iErrorInvalidArgument
+#    pid::status 999999 $0                                                      #? $_bashlyk_iErrorInvalidArgument
 
 #  SOURCE
 pid::status() {
 
   errorify on MissingArgument $* || return
+  udfIsNumber $1 && (( $1 < 65536 )) || on error return InvalidArgument $1
 
   local re="\\b${1}\\b"
 
-  udfIsNumber $1 || return $( _ iErrorInvalidArgument )
+  (( $$ == $1 )) && return $_bashlyk_iErrorCurrentProcess
 
-  [[ "$$" == "$1" ]] && return $( _ iErrorCurrentProcess )
 
   shift
 
@@ -101,18 +107,20 @@ pid::status() {
 
   else
 
-    return $( _ iErrorNoSuchProcess )
+    return $_bashlyk_iErrorNoSuchProcess
 
   fi
 }
 #******
-#****f* libpid/pid::stop
+#****e* libpid/pid::stop
 #  SYNOPSIS
 #    pid::stop [pid=PID[,PID,..]] [childs] <command-line>
 #  DESCRIPTION
 #    Stop the processes associated with the specified command line which must
 #    contain the process name. Options allow you to manage the list of processes
 #    to stop. The process of the script itself is excluded
+#  NOTES
+#    public
 #  ARGUMENTS
 #    pid=PID[,..]   - comma separated list of PID. Only these processes will be
 #                     stopped if they are associated with the command line
@@ -182,7 +190,7 @@ pid::stop() {
 
   errorify on MissingArgument $* || return
 
-  rc=$( _ iErrorNoSuchProcess )
+  rc=$_bashlyk_iErrorNoSuchProcess
 
   errorify on MissingArgument "${a[*]}" || a=( $( pgrep -d' ' ${1##*/} ) )
   errorify on MissingArgument "${a[*]}" || return $rc
@@ -194,14 +202,14 @@ pid::stop() {
 
     if ! udfIsNumber $pid; then
 
-      rc=$( _ iErrorInvalidArgument )
+      rc=$_bashlyk_iErrorInvalidArgument
       continue
 
     fi
 
     if (( pid == $$ )); then
 
-      rc=$( _ iErrorCurrentProcess )
+      rc=$_bashlyk_iErrorCurrentProcess
       continue
 
     fi
@@ -210,7 +218,7 @@ pid::stop() {
 
     if [[ $bChild && ! "$( pgrep -P $$ )" =~ $re ]]; then
 
-      rc=$( _ iErrorNotChildProcess )
+      rc=$_bashlyk_iErrorNotChildProcess
       continue
 
     fi
@@ -227,7 +235,7 @@ pid::stop() {
 
         else
 
-          rc=$( _ iErrorNotPermitted )
+          rc=$_bashlyk_iErrorNotPermitted
 
         fi
 
@@ -250,7 +258,7 @@ pid::stop() {
 
 }
 #******
-#****f* libpid/pid::file
+#****e* libpid/pid::file
 #  SYNOPSIS
 #    pid::file
 #  DESCRIPTION
@@ -258,6 +266,8 @@ pid::stop() {
 #    created when this script is not already running. If the script has
 #    arguments, the PID file is created with the name of a MD5-hash this command
 #    line, or it is derived from the name of the script.
+#  NOTES
+#    public
 #  ERRORS
 #    AlreadyStarted     - process of command line already started
 #    AlreadyLocked      - PID file locked by flock
@@ -292,7 +302,8 @@ pid::file() {
   mkdir -p "${fnPid%/*}" || on error echo+return NotExistNotCreated ${fnPid%/*}
 
   fd=$( udfGetFreeFD )
-  udfThrowOnEmptyVariable fd
+
+  throw on EmptyVariable fd
 
   eval "exec $fd>>${fnPid}"
 
@@ -309,8 +320,8 @@ pid::file() {
     if printf -- "%s\n%s\n" "$$" "$0 $( _ sArg )" > $fnPid; then
 
       _ fnPid $fnPid
-      pid::clean::onexit::file $fnPid
-      pid::clean::onexit::fd $fd
+      pid::onExit::unlink $fnPid
+      pid::onExit::close  $fd
 
     else
 
@@ -336,49 +347,51 @@ pid::file() {
 
 }
 #******
-#****f* libpid/pid::exitIfAlreadyStarted
+#****e* libpid/pid::onStarted::exit
 #  SYNOPSIS
-#    pid::exitIfAlreadyStarted
+#    pid::onStarted::exit
 #  DESCRIPTION
 #    Alias-wrapper for pid::file with extended behavior:
 #    If command line process already exist then
 #    this current process with identical command line stopped
 #    else created pid file and current process don`t stopped.
+#  NOTES
+#    public
 #  ERRORS
 #    AlreadyStarted     - PID file exist and command line process already
 #                         started, current process stopped
 #    NotExistNotCreated - PID file don't created, current process stopped
 #  EXAMPLE
-#    pid::exitIfAlreadyStarted                                                  #? true
+#    pid::onStarted::exit                                                       #? true
 #    ## TODO проверка кодов возврата
 #  SOURCE
-pid::exitIfAlreadyStarted() {
+pid::onStarted::exit() {
 
-  pid::file || exit $?
+  pid::file || exit
 
 }
 #******
-udfAddJob2Clean() { return 0; }
-#****f* libpid/pid::clean::onexit::proc
+#****e* libpid/pid::onExit::stop
 #  SYNOPSIS
-#    pid::clean::onexit::proc args
+#    pid::onExit::stop <PID(s)>
 #  DESCRIPTION
-#    Добавляет идентификаторы запущенных процессов к списку очистки при
-#    завершении текущего процесса.
+#    Adds <PID(s)> to the cleanup list when the current process is terminated.
+#  NOTES
+#    public
 #  INPUTS
-#    args - идентификаторы процессов
+#    <PID(s)> - whitespace separated PID list
 #  EXAMPLE
 #    sleep 99 &
-#    pid::clean::onexit::proc $!
+#    pid::onExit::stop $!
 #    test "${_bashlyk_apidClean[$BASHPID]}" -eq "$!"                            #? true
 #    ps -p $! -o pid= >| grep -w $!                                             #? true
-#    echo $(pid::clean::onexit::proc $!; echo "$BASHPID : $! ")
+#    echo $(pid::onExit::stop $!; echo "$BASHPID : $! ")
 #    ps -p $! -o pid= >| grep -w $!                                             #? false
 #
 #  SOURCE
-pid::clean::onexit::proc() {
+pid::onExit::stop() {
 
-  [[ $1 ]] || return 0
+  errorify on MissingArgument $* || return 0
 
   _bashlyk_apidClean[$BASHPID]+=" $*"
 
@@ -386,15 +399,17 @@ pid::clean::onexit::proc() {
 
 }
 #******
-#****f* libpid/pid::clean::onexit::fd
+#****e* libpid/pid::onExit::close
 #  SYNOPSIS
-#    pid::clean::onexit::fd <args>
+#    pid::onExit::close <FILEDESCRIPTOR(s)>
 #  DESCRIPTION
-#    add list of filedescriptors for cleaning on exit
+#    add list of <FILEDESCRIPTOR(s)> for close on exit
+#  NOTES
+#    public
 #  ARGUMENTS
-#    <args> - file descriptors
+#    <FILEDESCRIPTOR(s)> - whitespace separated file descriptors list
 #  SOURCE
-pid::clean::onexit::fd() {
+pid::onExit::close() {
 
   errorify on MissingArgument $* || return
 
@@ -404,49 +419,52 @@ pid::clean::onexit::fd() {
 
 }
 #******
-#****f* libpid/pid::clean::onexit::file
+#****e* libpid/pid::onExit::unlink
 #  SYNOPSIS
-#    pid::clean::onexit::file <args>
+#    pid::onExit::unlink <file(s)>
 #  DESCRIPTION
-#    add list of filesystem objects for cleaning on exit
+#    add list of filesystem objects for removing on exit
+#  NOTES
+#    public
 #  INPUTS
-#    args - files or directories for cleaning on exit
+#    <file(s)> - whitespace separated files and/or directories list
 #  EXAMPLE
 #    local a fnTemp1 fnTemp2 pathTemp1 pathTemp2 s=$RANDOM
 #    udfMakeTemp fnTemp1 keep=true suffix=.${s}1
 #    test -f $fnTemp1
-#    echo $(pid::clean::onexit::file $fnTemp1 )
+#    echo $(pid::onExit::unlink $fnTemp1 )
 #    ls -l ${TMPDIR}/*.${s}1 2>/dev/null >| grep ".*\.${s}1"                    #? false
 #    echo $(udfMakeTemp fnTemp2 suffix=.${s}2)
 #    ls -l ${TMPDIR}/*.${s}2 2>/dev/null >| grep ".*\.${s}2"                    #? false
 #    echo $(udfMakeTemp fnTemp2 suffix=.${s}3 keep=true)
 #    ls -l ${TMPDIR}/*.${s}3 2>/dev/null >| grep ".*\.${s}3"                    #? true
 #    a=$(ls -1 ${TMPDIR}/*.${s}3)
-#    echo $(pid::clean::onexit::file $a )
+#    echo $(pid::onExit::unlink $a )
 #    ls -l ${TMPDIR}/*.${s}3 2>/dev/null >| grep ".*\.${s}3"                    #? false
 #    udfMakeTemp pathTemp1 keep=true suffix=.${s}1 type=dir
 #    test -d $pathTemp1
-#    echo $(pid::clean::onexit::file $pathTemp1 )
+#    echo $(pid::onExit::unlink $pathTemp1 )
 #    ls -1ld ${TMPDIR}/*.${s}1 2>/dev/null >| grep ".*\.${s}1"                  #? false
 #    echo $(udfMakeTemp pathTemp2 suffix=.${s}2 type=dir)
 #    ls -1ld ${TMPDIR}/*.${s}2 2>/dev/null >| grep ".*\.${s}2"                  #? false
 #    echo $(udfMakeTemp pathTemp2 suffix=.${s}3 keep=true type=dir)
 #    ls -1ld ${TMPDIR}/*.${s}3 2>/dev/null >| grep ".*\.${s}3"                  #? true
 #    a=$(ls -1ld ${TMPDIR}/*.${s}3)
-#    echo $(pid::clean::onexit::file $a )
+#    echo $(pid::onExit::unlink $a )
 #    ls -1ld ${TMPDIR}/*.${s}3 2>/dev/null >| grep ".*\.${s}3"                  #? false
+#    ##TODO names with whitespaces
 #  SOURCE
-pid::clean::onexit::file() {
+pid::onExit::unlink() {
 
   errorify on MissingArgument $* || return
 
-  _bashlyk_afoClean[$BASHPID]+=" $*"
+  _bashlyk_afoClean[$BASHPID]+=" $@"
 
   trap "pid::trap" EXIT INT TERM
 
 }
 #******
-#****f* libpid/pid::trap
+#****e* libpid/pid::trap
 #  SYNOPSIS
 #    pid::trap
 #  DESCRIPTION
@@ -456,6 +474,8 @@ pid::clean::onexit::file() {
 #    closure of open file descriptors listed in the corresponding global
 #    variables. All processes must be related and descended from the working
 #    script process. Closes the socket script log if it was used.
+#  NOTES
+#    public
 #  EXAMPLE
 #    local fd fn1 fn2 path pid pipe
 #    udfMakeTemp fn1
@@ -470,11 +490,11 @@ pid::clean::onexit::file() {
 #    test -d $path
 #    ps -p $pid -o pid= >| grep -w $pid
 #    ls /proc/$$/fd >| grep -w $fd
-#    pid::clean::onexit::fd $fd
-#    pid::clean::onexit::proc $pid
-#    pid::clean::onexit::file $fn1
-#    pid::clean::onexit::file $path
-#    pid::clean::onexit::file $pipe
+#    pid::onExit::close $fd
+#    pid::onExit::stop $pid
+#    pid::onExit::unlink $fn1
+#    pid::onExit::unlink $path
+#    pid::onExit::unlink $pipe
 #    pid::trap
 #    ls /proc/$$/fd >| grep -w $fd                                              #? false
 #    ps -p $pid -o pid= >| grep -w $pid                                         #? false
