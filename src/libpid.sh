@@ -1,5 +1,5 @@
 #
-# $Id: libpid.sh 762 2017-05-10 17:31:29+04:00 toor $
+# $Id: libpid.sh 763 2017-05-11 11:45:30+04:00 toor $
 #
 #****h* BASHLYK/libpid
 #  DESCRIPTION
@@ -391,7 +391,7 @@ pid::onStarted::exit() {
 #  SOURCE
 pid::onExit::stop() {
 
-  errorify on MissingArgument $* || return 0
+  [[ $* ]] || return $_bashlyk_iErrorMissingArgument
 
   _bashlyk_apidClean[$BASHPID]+=" $*"
 
@@ -411,7 +411,7 @@ pid::onExit::stop() {
 #  SOURCE
 pid::onExit::close() {
 
-  errorify on MissingArgument $* || return
+  [[ $* ]] || return $_bashlyk_iErrorMissingArgument
 
   _bashlyk_afdClean[$BASHPID]+=" $*"
 
@@ -456,7 +456,7 @@ pid::onExit::close() {
 #  SOURCE
 pid::onExit::unlink() {
 
-  errorify on MissingArgument $* || return
+  [[ $* ]] || return $_bashlyk_iErrorMissingArgument
 
   _bashlyk_afoClean[$BASHPID]+=" $@"
 

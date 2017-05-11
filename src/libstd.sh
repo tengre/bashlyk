@@ -1,5 +1,5 @@
 #
-# $Id: libstd.sh 762 2017-05-10 17:31:29+04:00 toor $
+# $Id: libstd.sh 763 2017-05-11 11:40:00+04:00 toor $
 #
 #****h* BASHLYK/libstd
 #  DESCRIPTION
@@ -26,6 +26,7 @@
 #   Loading external libraries
 # SOURCE
 [[ -s ${_bashlyk_pathLib}/liberr.sh ]] && . "${_bashlyk_pathLib}/liberr.sh"
+[[ -s ${_bashlyk_pathLib}/libpid.sh ]] && . "${_bashlyk_pathLib}/libpid.sh"
 [[ -s ${_bashlyk_pathLib}/libmsg.sh ]] && . "${_bashlyk_pathLib}/libmsg.sh"
 #******
 #****v* libstd/Global Variables
@@ -169,7 +170,7 @@ udfIsValidVariable() {
 
   [[ $* =~ ^[_a-zA-Z][_a-zA-Z0-9]*$ ]] && return 0
 
-  errorify on MissingArgument $* || return
+  [[ $* ]] || return $_bashlyk_iErrorMissingArgument
 
   return $_bashlyk_iErrorInvalidVariable
 
