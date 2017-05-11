@@ -1,5 +1,5 @@
 #
-# $Id: libnet.sh 762 2017-05-10 17:31:29+04:00 toor $
+# $Id: libnet.sh 764 2017-05-11 17:28:10+04:00 toor $
 #
 #****h* BASHLYK/libnet
 #  DESCRIPTION
@@ -321,7 +321,7 @@ net::ipv4.range() {
 
   done
 
-  s="$( udfTrim "$s" )"
+  s="$( std::trim "$s" )"
   eval "echo ${s// /.}"
 
   errorify on EmptyResult $s

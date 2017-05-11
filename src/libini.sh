@@ -1,5 +1,5 @@
 #
-# $Id: libini.sh 762 2017-05-10 17:31:28+04:00 toor $
+# $Id: libini.sh 764 2017-05-11 17:28:10+04:00 toor $
 #
 #****h* BASHLYK/libini
 #  DESCRIPTION
@@ -171,7 +171,7 @@ INI() {
   declare -Ag -- _h${o^^}="([__settings__]=_h${o^^}_settings)"
   declare -ag -- _a${o^^}="()"
 
-  udfMakeTemp fn path="${TMPDIR}/${USER}/bashlyk" prefix='ini.' suffix=".${o}"
+  std::temp fn path="${TMPDIR}/${USER}/bashlyk" prefix='ini.' suffix=".${o}"
 
   for s in $_bashlyk_methods_ini; do
 
@@ -245,7 +245,7 @@ INI::__section.byindex() {
 
   local i o=${FUNCNAME[0]%%.*} s
 
-  udfIsNumber $1 && i=$1 || i=@
+  std::isNumber $1 && i=$1 || i=@
 
   [[ $i == @ ]] && s='#' || s=''
 
@@ -425,7 +425,7 @@ INI::__section.show() {
 
     iC=$( ${o}.__section.get _bashlyk_raw_num )
 
-    if udfIsNumber $iC && (( iC > 0 )); then
+    if std::isNumber $iC && (( iC > 0 )); then
 
       for (( k=0; k < $iC; k++ )); do
 
@@ -438,11 +438,11 @@ INI::__section.show() {
       local bQuote iKeyWidth iPad v
 
       iKeyWidth=$( ${o}.__section.get _bashlyk_key_width )
-      udfIsNumber $iKeyWidth || iKeyWidth=''
+      std::isNumber $iKeyWidth || iKeyWidth=''
 
       iPad=$( ${o}.settings iPadding )
 
-      udfIsNumber $iPad || iPad=4
+      std::isNumber $iPad || iPad=4
 
       if [[ $( ${o}.settings.shellmode ) =~ ^(true|yes|1)$ ]]; then
 
@@ -460,7 +460,7 @@ INI::__section.show() {
         for k in \"\${!$id[@]}\"; do                                           \
           if [[ ! \$k =~ ^_bashlyk_ ]]; then                                   \
             v=\${$id[\$k]};                                                    \
-            [[ \$bQuote ]] && v=\$( udfQuoteIfNeeded \$v );                    \
+            [[ \$bQuote ]] && v=\$( std::lazyquote \$v );                      \
             printf -- '%${iPad}s%${iKeyWidth}s%${iPad}s=%${iPad}s%s\n'         \
               \"\" \"\$k\" \"\" \"\"  \"\$v\";                                 \
           fi                                                                   \
@@ -513,7 +513,7 @@ INI::__section.setRawData() {
 
   o=${FUNCNAME[0]%%.*}
 
-  shift && s="$( udfTrim "$*" )"
+  shift && s="$( std::trim "$*" )"
 
   case "$c" in
 
@@ -526,7 +526,7 @@ INI::__section.setRawData() {
     -|+)
 
        i=$( ${o}.__section.get _bashlyk_raw_num )
-       udfIsNumber $i || i=0
+       std::isNumber $i || i=0
        ${o}.__section.set "_bashlyk_raw_incr=${i}" "$s"
        : $(( i++ ))
        ${o}.__section.set '_bashlyk_raw_num' $i
@@ -582,7 +582,7 @@ INI::__section.getArray() {
   o=${FUNCNAME[0]%%.*}
   ${o}.__section.select $*
   id=$( ${o}.__section.id $* )
-  udfIsHash $id || on error $(_ onError) InvalidHash $id
+  std::isHash $id || on error $(_ onError) InvalidHash $id
 
   sU=$( ${o}.__section.get _bashlyk_raw_mode )
 
@@ -601,7 +601,7 @@ INI::__section.getArray() {
   else
 
     iC=$( ${o}.__section.get _bashlyk_raw_num )
-    if udfIsNumber $iC && (( iC )); then
+    if std::isNumber $iC && (( iC )); then
 
       eval "                                                                   \
                                                                                \
@@ -703,7 +703,7 @@ INI::get() {
   else
 
     ${o}.__section.select $s
-    ${o}.__section.get $( udfTrim "$k" )
+    ${o}.__section.get $( std::trim "$k" )
 
   fi
 
@@ -853,11 +853,11 @@ INI::set() {
 
   fi
 
-  k="$( udfTrim "${s##*]}" )"
-  s="$( udfTrim "${s%]*}"  )"
+  k="$( std::trim "${s##*]}" )"
+  s="$( std::trim "${s%]*}"  )"
 
   [[ $s == $k ]] && s=__global__
-  [[ ${s/[/}  ]] && s=$( udfTrim "${s/[/}" ) || s=__global__
+  [[ ${s/[/}  ]] && s=$( std::trim "${s/[/}" ) || s=__global__
 
   o=${FUNCNAME[0]%%.*}
 
@@ -874,7 +874,7 @@ INI::set() {
     [[ $k =~ $( ${o}.settings reKey ) ]] || on error IniExtraCharInKey "$k"
 
     iKeyWidth=$( ${o}.__section.get _bashlyk_key_width )
-    udfIsNumber $iKeyWidth || iKeyWidth=0
+    std::isNumber $iKeyWidth || iKeyWidth=0
 
     (( ${#k} > iKeyWidth )) && ${o}.__section.set _bashlyk_key_width ${#k}
     ${o}.__section.set "$k" "$v"
@@ -936,7 +936,7 @@ INI::show() {
 #    NotExistNotCreated - the target file is not created
 #  EXAMPLE
 #    local fn
-#    udfMakeTemp fn
+#    std::temp fn
 #    pid::onExit::unlink ${fn}.bak
 #    INI tSave
 #    tSave.__section.select section
@@ -975,7 +975,7 @@ INI::save() {
 
   {
 
-    printf -- "${fmtComment//%COMMENT%/$c}" "$( udfDateR )" "$( _ sUser )"
+    printf -- "${fmtComment//%COMMENT%/$c}" "$( std::dateR )" "$( _ sUser )"
     ${o}.show
 
   } > $fn
@@ -995,7 +995,7 @@ INI::save() {
 #    NotPermitted    - owner of the input file differ than owner of the process
 #  EXAMPLE
 #   local ini s S                                                               #-
-#   udfMakeTemp ini suffix=".ini"                                               #-
+#   std::temp ini suffix=".ini"                                               #-
 #    cat <<'EOFini' > ${ini}                                                    #-
 #    key              = on the global unnamed section                           #-
 #    key.with.dot     = with dot                                                #-
@@ -1076,7 +1076,7 @@ INI::read() {
 
   ${o}.__section.select
   iKeyWidth=$( ${o}.__section.get _bashlyk_key_width )
-  udfIsNumber $iKeyWidth || iKeyWidth=0
+  std::isNumber $iKeyWidth || iKeyWidth=0
 
   while read -t 4; do
 
@@ -1109,14 +1109,14 @@ INI::read() {
       ${o}.__section.select $s
       i=0
       iKeyWidth=$( ${o}.__section.get _bashlyk_key_width )
-      udfIsNumber $iKeyWidth || iKeyWidth=0
+      std::isNumber $iKeyWidth || iKeyWidth=0
 
       case "${hRawMode[$s]}" in
 
         -) ;;
 
         +) i=$( ${o}.__section.get _bashlyk_raw_num )
-           udfIsNumber $i || ${o}.__section.set _bashlyk_raw_num ${i:=0}
+           std::isNumber $i || ${o}.__section.set _bashlyk_raw_num ${i:=0}
            ;;
 
         =) ${o}.__section.set _bashlyk_raw_mode "=";;
@@ -1193,7 +1193,7 @@ INI::read() {
 #    MissingArgument - parameters and sections are not selected
 #  EXAMPLE
 #   local iniMain iniLoad iniSave                                               #-
-#   udfMakeTemp -v iniMain suffix=.ini                                          #-
+#   std::temp -v iniMain suffix=.ini                                          #-
 #   GLOBIGNORE="*:?"                                                            #-
 #    cat <<-'EOFini' > $iniMain                                                 #-
 #    section  =  global                                                         #-
@@ -1295,8 +1295,8 @@ INI::load() {
 
     local s sSection
 
-    sSection=$( udfTrim ${1:-__global__} )
-    s="$( udfTrim "${2//,[, ]/,}" )"
+    sSection=$( std::trim ${1:-__global__} )
+    s="$( std::trim "${2//,[, ]/,}" )"
 
     if [[ $s =~ ^[=+\-]$ ]]; then
 
@@ -1367,7 +1367,7 @@ INI::load() {
   eval "s=\${_h${o^^}[__cli__]}"
   if [[ $s ]]; then
 
-    udfMakeTemp ini
+    std::temp ini
 
     ${s}.save $ini
     ${o}.read $ini "$reValidSections"
@@ -1404,7 +1404,7 @@ INI::load() {
 #  EXAMPLE
 #    local ini
 #    _ sArg "-F CLI -E clear -H 'Hi!' -M test -U a.2 -U a.2 --acc a --acc b "   #-
-#    udfMakeTemp ini
+#    std::temp ini
 #    tLoad.save $ini                                                            #? true
 #    tLoad.free
 #    _ onError retwarn
@@ -1468,7 +1468,7 @@ INI::bind.cli() {
 
   done
 
-  udfMakeTemp fnErr
+  std::temp fnErr
   s="$(                                                                        \
                                                                                \
     LC_ALL=C getopt -u -o $sShort --long ${sLong%*,} -n $0 -- $(_ sArg)        \

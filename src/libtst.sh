@@ -1,5 +1,5 @@
 #
-# $Id: libtst.sh 752 2017-04-26 17:02:22+04:00 toor $
+# $Id: libtst.sh 764 2017-05-11 17:28:10+04:00 toor $
 #
 #****h* BASHLYK/libtst
 #  DESCRIPTION
@@ -43,11 +43,11 @@
 #__global.vars cli.arguments cli.shortname error.action msg.email.subject
 
 declare -rg _bashlyk_externals_tst=""
-declare -rg _bashlyk_exports_tst="udfTest"
+declare -rg _bashlyk_exports_tst="tst::test"
 #******
-#****f* libtst/udfTest
+#****f* libtst/tst::test
 #  SYNOPSIS
-#    udfTest args
+#    tst::test args
 #  DESCRIPTION
 #    ...
 #  INPUTS
@@ -57,12 +57,12 @@ declare -rg _bashlyk_exports_tst="udfTest"
 #  RETURN VALUE
 #    ...
 #  EXAMPLE
-#    udfTest                                                                    #? $_bashlyk_iErrorMissingArgument
-#    udfTest test                                                               #? true
+#    tst::test                                                                    #? $_bashlyk_iErrorMissingArgument
+#    tst::test test                                                               #? true
 #  SOURCE
-udfTest() {
+tst::test() {
 
-  udfOn MissingArgument $1 || return
+  errorify on MissingArgument $1 || return
 
   return 0
 

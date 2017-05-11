@@ -1,5 +1,5 @@
 #
-# $Id: libcnf.sh 761 2017-05-10 10:31:26+04:00 toor $
+# $Id: libcnf.sh 764 2017-05-11 17:28:10+04:00 toor $
 #
 #****h* BASHLYK/libcnf
 #  DESCRIPTION
@@ -64,7 +64,7 @@ declare -rg _bashlyk_exports_cnf="udfGetConfig udfSetConfig"
 #    a serialized CSV-string or an error code and message.
 #  EXAMPLE
 #    local b confChild confMain pid s s0
-#    udfMakeTemp confMain suffix=.conf
+#    std::temp confMain suffix=.conf
 #    confChild="${confMain%/*}/child.${confMain##*/}"                           #-
 #    pid::onExit::unlink $confChild                                             #-
 #    cat <<'EOFconf' > $confMain                                                #-
@@ -132,7 +132,7 @@ __getconfig() {
                                                                                \
     for k in \${!$id[@]}; do                                                   \
       [[ \$k =~ ^_bashlyk_ ]] && continue;                                     \
-      udfIsValidVariable \$k && s+=\$k=\"\${$id[\$k]}\"\;;                     \
+      std::isVariable \$k && s+=\$k=\"\${$id[\$k]}\"\;;                        \
     done;                                                                      \
                                                                                \
   "
@@ -170,7 +170,7 @@ __getconfig() {
 #                      the name
 #  EXAMPLE
 #    local b confChild confMain pid s s0
-#    udfMakeTemp confMain suffix=.conf
+#    std::temp confMain suffix=.conf
 #    confChild="${confMain%/*}/child.${confMain##*/}"                           #-
 #    pid::onExit::unlink $confChild                                             #-
 #    cat <<'EOFconf' > $confMain                                                #-
@@ -229,7 +229,7 @@ udfGetConfig() {
 #    InvalidArgument    - name contains the point at the beginning or at the end of
 #                         the name
 #  EXAMPLE
-#    udfMakeTemp conf suffix=.conf
+#    std::temp conf suffix=.conf
 #    udfSetConfig $conf "s0=$0;b=true;pid=$$;s=$(uname -a);1nvalid.key=invalid" #? true
 #    cat $conf >| grep "s0=$0\|b=true\|pid=$$\|s=\"$(uname -a)\""               #? true
 #    rm -f $conf

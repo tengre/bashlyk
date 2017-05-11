@@ -1,5 +1,5 @@
 #
-# $Id: libold.sh 762 2017-05-10 17:31:29+04:00 toor $
+# $Id: libold.sh 764 2017-05-11 17:28:10+04:00 toor $
 #
 #****h* BASHLYK/libold
 #  DESCRIPTION
@@ -19,6 +19,8 @@
                                                                                \
 '
 #******
+shopt -s expand_aliases
+alias try-every-line='udfTryEveryLine <<-catch-every-line'
 #****L* libold/Used libraries
 # DESCRIPTION
 #   Loading external libraries
@@ -2421,8 +2423,6 @@ udfThrow() {
 
 }
 #******
-shopt -s expand_aliases
-alias try-every-line="udfTryEveryLine <<-catch-every-line"
 #****f* libold/udfTryEveryLine
 #  SYNOPSIS
 #    try-every-line

@@ -1,5 +1,5 @@
 #
-# $Id: libpid.sh 763 2017-05-11 11:45:30+04:00 toor $
+# $Id: libpid.sh 764 2017-05-11 17:28:10+04:00 toor $
 #
 #****h* BASHLYK/libpid
 #  DESCRIPTION
@@ -92,7 +92,7 @@ declare -rg _bashlyk_exports_pid="                                             \
 pid::status() {
 
   errorify on MissingArgument $* || return
-  udfIsNumber $1 && (( $1 < 65536 )) || on error return InvalidArgument $1
+  std::isNumber $1 && (( $1 < 65536 )) || on error return InvalidArgument $1
 
   local re="\\b${1}\\b"
 
@@ -138,8 +138,8 @@ pid::status() {
 #    local a cmd1 cmd2 fmt1 fmt2 i pid                                          #-
 #    fmt1='#!/bin/bash\nread -t %s -N 0 </dev/zero\n'
 #    fmt2='#!/bin/bash\nfor i in 900 700 600 500; do\n%s %s &\ndone\n'
-#    udfMakeTemp cmd1
-#    udfMakeTemp cmd2
+#    std::temp cmd1
+#    std::temp cmd2
 #    printf -- "$fmt1" '$1' | tee $cmd1
 #    chmod +x $cmd1
 #    printf -- "$fmt2" "$cmd1" '$i' | tee $cmd2
@@ -200,7 +200,7 @@ pid::stop() {
 
     pid=${a[i]}
 
-    if ! udfIsNumber $pid; then
+    if ! std::isNumber $pid; then
 
       rc=$_bashlyk_iErrorInvalidArgument
       continue
@@ -274,7 +274,7 @@ pid::stop() {
 #    NotExistNotCreated - PID file don't created
 #  EXAMPLE
 #    local cmd fmt='#!/bin/bash\n%s . bashlyk\n%s || exit $?\n%s\n'             #-
-#    udfMakeTemp cmd                                                            #? true
+#    std::temp cmd                                                            #? true
 #    printf -- "$fmt" '_bashlyk_log=nouse' 'pid::file' 'sleep 8' | tee $cmd
 #    chmod +x $cmd                                                              #? true
 #    ($cmd)&                                                                    #? true
@@ -291,7 +291,7 @@ pid::file() {
 
   if [[ -n "$( _ sArg )" ]]; then
 
-    fnPid="$( _ pathRun )/$( udfGetMd5 $( _ s0 ) $( _ sArg ) ).pid"
+    fnPid="$( _ pathRun )/$( std::getMD5 $( _ s0 ) $( _ sArg ) ).pid"
 
   else
 
@@ -301,7 +301,7 @@ pid::file() {
 
   mkdir -p "${fnPid%/*}" || on error echo+return NotExistNotCreated ${fnPid%/*}
 
-  fd=$( udfGetFreeFD )
+  fd=$( std::getFreeFD )
 
   throw on EmptyVariable fd
 
@@ -430,24 +430,24 @@ pid::onExit::close() {
 #    <file(s)> - whitespace separated files and/or directories list
 #  EXAMPLE
 #    local a fnTemp1 fnTemp2 pathTemp1 pathTemp2 s=$RANDOM
-#    udfMakeTemp fnTemp1 keep=true suffix=.${s}1
+#    std::temp fnTemp1 keep=true suffix=.${s}1
 #    test -f $fnTemp1
 #    echo $(pid::onExit::unlink $fnTemp1 )
 #    ls -l ${TMPDIR}/*.${s}1 2>/dev/null >| grep ".*\.${s}1"                    #? false
-#    echo $(udfMakeTemp fnTemp2 suffix=.${s}2)
+#    echo $(std::temp fnTemp2 suffix=.${s}2)
 #    ls -l ${TMPDIR}/*.${s}2 2>/dev/null >| grep ".*\.${s}2"                    #? false
-#    echo $(udfMakeTemp fnTemp2 suffix=.${s}3 keep=true)
+#    echo $(std::temp fnTemp2 suffix=.${s}3 keep=true)
 #    ls -l ${TMPDIR}/*.${s}3 2>/dev/null >| grep ".*\.${s}3"                    #? true
 #    a=$(ls -1 ${TMPDIR}/*.${s}3)
 #    echo $(pid::onExit::unlink $a )
 #    ls -l ${TMPDIR}/*.${s}3 2>/dev/null >| grep ".*\.${s}3"                    #? false
-#    udfMakeTemp pathTemp1 keep=true suffix=.${s}1 type=dir
+#    std::temp pathTemp1 keep=true suffix=.${s}1 type=dir
 #    test -d $pathTemp1
 #    echo $(pid::onExit::unlink $pathTemp1 )
 #    ls -1ld ${TMPDIR}/*.${s}1 2>/dev/null >| grep ".*\.${s}1"                  #? false
-#    echo $(udfMakeTemp pathTemp2 suffix=.${s}2 type=dir)
+#    echo $(std::temp pathTemp2 suffix=.${s}2 type=dir)
 #    ls -1ld ${TMPDIR}/*.${s}2 2>/dev/null >| grep ".*\.${s}2"                  #? false
-#    echo $(udfMakeTemp pathTemp2 suffix=.${s}3 keep=true type=dir)
+#    echo $(std::temp pathTemp2 suffix=.${s}3 keep=true type=dir)
 #    ls -1ld ${TMPDIR}/*.${s}3 2>/dev/null >| grep ".*\.${s}3"                  #? true
 #    a=$(ls -1ld ${TMPDIR}/*.${s}3)
 #    echo $(pid::onExit::unlink $a )
@@ -478,11 +478,11 @@ pid::onExit::unlink() {
 #    public
 #  EXAMPLE
 #    local fd fn1 fn2 path pid pipe
-#    udfMakeTemp fn1
-#    udfMakeTemp fn2
-#    udfMakeTemp path type=dir
-#    udfMakeTemp pipe type=pipe
-#    fd=$( udfGetFreeFD )
+#    std::temp fn1
+#    std::temp fn2
+#    std::temp path type=dir
+#    std::temp pipe type=pipe
+#    fd=$( std::getFreeFD )
 #    eval "exec ${fd}>$fn2"
 #    (sleep 1024)&
 #    pid=$!
@@ -531,7 +531,7 @@ pid::trap() {
 
   for s in ${_bashlyk_afdClean[$BASHPID]}; do
 
-    udfIsNumber $s && eval "exec ${s}>&-"
+    std::isNumber $s && eval "exec ${s}>&-"
 
   done
 

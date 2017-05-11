@@ -1,5 +1,5 @@
 #
-# $Id: liblog.sh 762 2017-05-10 17:31:29+04:00 toor $
+# $Id: liblog.sh 764 2017-05-11 17:28:10+04:00 toor $
 #
 #****h* BASHLYK/liblog
 #  DESCRIPTION
@@ -294,7 +294,7 @@ log::init() {
 
   if [[ $_bashlyk_sArg ]]; then
 
-    fnSock="$(udfGetMd5 ${_bashlyk_s0} ${_bashlyk_sArg}).${$}.socket"
+    fnSock="$(std::getMD5 ${_bashlyk_s0} ${_bashlyk_sArg}).${$}.socket"
     fnSock="${_bashlyk_pathRun}/${fnSock}"
 
   else

@@ -1,5 +1,5 @@
 #
-# $Id: libmsg.sh 762 2017-05-10 17:31:29+04:00 toor $
+# $Id: libmsg.sh 764 2017-05-11 17:28:10+04:00 toor $
 #
 #****h* BASHLYK/libmsg
 #  DESCRIPTION
@@ -73,7 +73,7 @@ msg::echo() {
     shift
     [[ $1 ]] && printf -- "%s\n----\n" "$*"
 
-    udfCat -
+    std::cat -
 
   else
 
@@ -160,7 +160,7 @@ msg::mail() {
 
       *)
 
-         [[ -s "$*" ]] && udfCat < "$*" || echo "$*"
+         [[ -s "$*" ]] && std::cat < "$*" || echo "$*"
 
        ;;
 
@@ -195,7 +195,7 @@ msg::notify() {
 
   local fnTmp
 
-  udfMakeTemp fnTmp
+  std::temp fnTmp
 
   ## TODO limit input data for safety
   msg::echo $* > $fnTmp
@@ -206,7 +206,7 @@ msg::notify() {
 
     [[ $_bashlyk_sLogin ]] && write $_bashlyk_sLogin < $fnTmp
 
-  } || udfCat - < $fnTmp
+  } || std::cat - < $fnTmp
 
   rm -f $fnTmp
 
@@ -241,7 +241,7 @@ msg::notify2x() {
 
   local iTimeout=8 s IFS=$' \t\n'
 
-  [[ -s "$*" ]] && s="$( udfCat - < "$*" )" || s="$( printf -- "$*" )"
+  [[ -s "$*" ]] && s="$( std::cat - < "$*" )" || s="$( printf -- "$*" )"
 
   for cmd in notify-send kdialog zenity xmessage; do
 
@@ -370,7 +370,7 @@ msg::notifyTool() {
 
   local h t rc X IFS=$' \t\n'
 
-  udfIsNumber $4 && t=$4 || t=8
+  std::isNumber $4 && t=$4 || t=8
 
   [[ $( _ sXSessionProp ) ]] || msg::getXsessionProperties || return $?
 
@@ -388,7 +388,7 @@ msg::notifyTool() {
     if (( DEBUGLEVEL > 0 )); then
 
       ## save stderr for debugging
-      udfMakeTemp t keep=true prefix='msg.' suffix=".notify_command.${1}.err"
+      std::temp t keep=true prefix='msg.' suffix=".notify_command.${1}.err"
 
       eval "${h[$1]}" 2>$t
       rc=$?

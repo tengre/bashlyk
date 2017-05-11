@@ -1,5 +1,5 @@
 #
-# $Id: liberr.sh 762 2017-05-10 17:31:28+04:00 toor $
+# $Id: liberr.sh 764 2017-05-11 17:28:10+04:00 toor $
 #
 #****h* BASHLYK/liberr
 #  DESCRIPTION
@@ -498,7 +498,7 @@ err::NoSuchFileOrDir() {
 #  SOURCE
 err::InvalidVariable() {
 
-  [[ $* ]] && udfIsValidVariable "$*" || return $_bashlyk_iErrorInvalidVariable
+  [[ $* ]] && std::isVariable "$*" || return $_bashlyk_iErrorInvalidVariable
 
 }
 #******
@@ -525,7 +525,7 @@ err::InvalidVariable() {
 #  SOURCE
 err::EmptyVariable() {
 
-  [[ $1 ]] && udfIsValidVariable "$1" && [[ ${!1} ]] || return $_bashlyk_iErrorEmptyVariable
+  [[ $1 ]] && std::isVariable "$1" && [[ ${!1} ]] || return $_bashlyk_iErrorEmptyVariable
 
 }
 #******
@@ -695,13 +695,13 @@ err::handler() {
 #    private method, used for 'try ..catch' emulation
 #  EXAMPLE
 #    local s='command --with -a -- arguments' cmd='err::__add_throw_to_command'
-#    $cmd $s             >| md5sum | grep ^856f03be5778a30bb61dcd1e2e3fdcde.*-$ #? true
+#    $cmd $s             >| md5sum | grep ^1a9c3ca1f2423991321b3f2d9e04932a.*-$ #? true
 #  SOURCE
 err::__add_throw_to_command() {
 
   local s
 
-  s='_bashlyk_sLastError[$BASHPID]="command: $( udfTrim '${*/;/}' )\n output: '
+  s='_bashlyk_sLastError[$BASHPID]="command: $( std::trim '${*/;/}' )\n output: '
   s+='{\n$('${*/;/}' 2>&1)\n}" && echo -n . || return $?;'
 
   echo $s
@@ -725,7 +725,7 @@ err::__add_throw_to_command() {
 err::__convert_try_to_func() {
 
   local s
-  udfMakeTemp -v s
+  std::temp -v s
 
   while read -t 4; do
 
@@ -768,7 +768,7 @@ err::__convert_try_to_func() {
 #   err::exception::message                                                     #? $_bashlyk_iErrorNotNumber
 #   local s fn                                                                  #-
 #   error4test() { echo "${0##*/}: special error for testing"; return 210; };   #-
-#   udfMakeTemp fn                                                              #-
+#   std::temp fn                                                                #-
 #   cat <<-'EOFtry' > $fn                                                       #-
 #   try {                                                                       #-
 #     uname -a                                                                  #-
@@ -788,7 +788,7 @@ err::exception::message() {
 
   local msg=${_bashlyk_sLastError[$BASHPID]} rc=${_bashlyk_iLastError[$BASHPID]}
 
-  udfIsNumber $rc || return
+  std::isNumber $rc || return
 
   printf -- "\ntry block exception:\n~~~~~~~~~~~~~~~~~~~~\n status: %s\n" "$rc"
 
