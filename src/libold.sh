@@ -1,5 +1,5 @@
 #
-# $Id: libold.sh 764 2017-05-11 17:28:10+04:00 toor $
+# $Id: libold.sh 765 2017-05-23 16:58:48+04:00 toor $
 #
 #****h* BASHLYK/libold
 #  DESCRIPTION
@@ -19,8 +19,6 @@
                                                                                \
 '
 #******
-shopt -s expand_aliases
-alias try-every-line='udfTryEveryLine <<-catch-every-line'
 #****L* libold/Used libraries
 # DESCRIPTION
 #   Loading external libraries
@@ -41,39 +39,49 @@ alias try-every-line='udfTryEveryLine <<-catch-every-line'
 : ${HOSTNAME:=localhost}
 : ${_bashlyk_sLogin:=$( exec -c logname 2>/dev/null )}
 : ${_bashlyk_emailSubj:="${_bashlyk_sUser}@${HOSTNAME}::${0##*/}"}
+: ${_bashlyk_sUnnamedKeyword:=_bashlyk_unnamed_key_}
+: ${_bashlyk_fnLog:="${_bashlyk_pathLog}/${_bashlyk_s0}.log"}
+: ${_bashlyk_bUseSyslog:=0}
+: ${_bashlyk_bNotUseLog:=1}
+: ${_bashlyk_sCond4Log:=redirect}
 
 declare -rg _bashlyk_externals_old="                                           \
                                                                                \
-    awk cat cut dirname false getopt grep mawk mkdir                           \
-    mv pwd rm sed sort touch tr true uniq xargs                                \
-    chgrp chmod chown echo expr md5sum mkdir mkfifo mktemp|tempfile rm touch   \
-    grep logname mail pgrep rm stat write notify-send|kdialog|zenity|xmessage  \
-    flock head kill pgrep rmdir sleep                                          \
+    awk cat chgrp chmod chown cut date dirname expr flock getopt grep logger   \
+    mawk md5sum mkdir mkfifo mktemp mv pgrep pwd rm rmdir sed sleep sort sudo  \
+    tempfile touch tr tty uniq xargs notify-send|kdialog|zenity|xmessage       \
                                                                                \
 "
 declare -rg _bashlyk_exports_old="                                             \
                                                                                \
-    _ARGUMENTS _fnLog _gete _getv _pathDat _s0 _set udfBashlykUnquote          \
-    udfCheckCsv udfCsvHash2Raw udfCsvKeys udfCsvKeys2Var udfCsvOrder           \
-    udfCsvOrder2Var udfExcludePairFromHash udfGetCsvSection                    \
-    udfGetCsvSection2Var udfGetIni udfGetIni2Var udfGetIniSection              \
-    udfGetIniSection2Var udfGetOpt udfGetOptHash udfIni udfIni2Csv             \
+    ERR::{__add_throw_to_command,__convert_try_to_func,exception.message}      \
+    udfAdd{FD,File,FO,FObj,Job,Path,Pid}2Clean                                 \
+    _ _ARGUMENTS _fnLog _gete _getv _pathDat _s0 _set udfAlias2WSpace          \
+    udfBashlykUnquote udfCat udfCheck4LogUse udfCheckCsv udfCheckStarted       \
+    udfCleanQueue udfCommandNotFound udfCsvHash2Raw udfCsvKeys udfCsvKeys2Var  \
+    udfCsvOrder udfCsvOrder2Var udfDateR udfDebug udfEcho udfEmptyArgument     \
+    udfEmptyOrMissingArgument udfEmptyResult udfEmptyVariable                  \
+    udfExcludePairFromHash udfExitIfAlreadyStarted udfFinally udfGetConfig     \
+    udfGetCsvSection udfGetCsvSection2Var udfGetFreeFD udfGetIni udfGetIni2Var \
+    udfGetIniSection udfGetIniSection2Var udfGetMd5 udfGetOpt udfGetOptHash    \
+    udfGetPathMd5 udfGetTimeInSec udfGetXSessionProperties udfIni udfIni2Csv   \
     udfIni2CsvVar udfIniChange udfIniGroup2Csv udfIniGroup2CsvVar              \
     udfIniGroupSection2Csv udfIniGroupSection2CsvVar udfIniSection2Csv         \
-    udfIniSection2CsvVar udfIniWrite udfLocalVarFromCSV udfOptions2Ini         \
-    udfPrepare2Exec udfReadIniSection udfReadIniSection2Var                    \
-    udfSelectEnumFromCsvHash udfSerialize udfSetOptHash udfSetVarFromCsv       \
-    udfSetVarFromIni udfShellExec                                              \
-    _  udfAlias2WSpace udfCat udfGetFreeFD udfGetMd5 udfGetPathMd5             \
-    udfGetTimeInSec udfIsHash udfIsNumber udfIsValidVariable udfMakeTemp       \
-    udfMakeTempV  udfPrepareByType udfQuoteIfNeeded udfShowVariable udfTrim    \
-    udfWSpace2Alias udfXml                                                     \
-    udfEcho udfGetXSessionProperties udfMail udfMessage udfNotify2X            \
-    udfNotifyCommand udfWarn                                                   \
-    udfAddFD2Clean udfAddFile2Clean udfAddFO2Clean udfAddFObj2Clean            \
-    udfAddJob2Clean udfAddPath2Clean udfAddPid2Clean udfCheckStarted           \
-    udfCleanQueue udfExitIfAlreadyStarted udfOnTrap udfSetPid udfStopProcess   \
-                                                                               \
+    udfIniSection2CsvVar udfIniWrite udfInvalidVariable udfIsHash              \
+    udfIsInteract udfIsNumber udfIsTerminal udfIsValidVariable                 \
+    udfLocalVarFromCSV udfLog udfLogger udfMail udfMakeTemp udfMakeTempV       \
+    udfMessage udfMissingArgument udfNoSuchFileOrDir udfNotify2X               \
+    udfNotifyCommand udfOn udfOnCommandNotFound udfOnEmptyOrMissingArgument    \
+    udfOnEmptyVariable udfOnError udfOnError1 udfOnError2 udfOnTrap            \
+    udfOptions2Ini udfPrepare2Exec udfPrepareByType udfQuoteIfNeeded           \
+    udfReadIniSection udfReadIniSection2Var udfSelectEnumFromCsvHash           \
+    udfSerialize udfSetConfig udfSetLastError udfSetLog udfSetLogSocket        \
+    udfSetOptHash udfSetPid udfSetVarFromCsv udfSetVarFromIni udfShellExec     \
+    udfShowVariable udfStackTrace udfStopProcess udfThrow                      \
+    udfThrowOnCommandNotFound udfThrowOnEmptyOrMissingArgument                 \
+    udfThrowOnEmptyVariable udfTimeStamp udfTrim udfUptime udfWarn             \
+    udfWarnOnCommandNotFound udfWarnOnEmptyOrMissingArgument                   \
+    udfWarnOnEmptyVariable udfWSpace2Alias udfXml                              \
 "
 #******
 #****f* libold/udfGetIniSection2Var
@@ -2423,76 +2431,6 @@ udfThrow() {
 
 }
 #******
-#****f* libold/udfTryEveryLine
-#  SYNOPSIS
-#    try-every-line
-#    <commands>
-#    ...
-#    catch-every-line
-#  DESCRIPTION
-#    evaluate every line on fly between try... and catch...
-#    expected that these lines are independent external commands.
-#    expected that these lines are independent external commands, the output of
-#    which is suppressed.
-#    Successful execution of the every command marked by the dot without
-#    linefeed, on error execution stopped and displayed description of the error
-#    and generated call stack
-#  EXAMPLE
-#    local fn s                                                                 #-
-#    fn=$(mktemp --suffix=.sh || tempfile -s test.sh)                           #? true
-#    s='Error: try block exception - internal line: 3, code: touch /not.*(168)'
-#    cat <<-EOF > $fn                                                           #-
-#     . bashlyk                                                                 #-
-#     try-every-line                                                            #-
-#      uname -a                                                                 #-
-#      date -R                                                                  #-
-#      touch /not-exist.$fn/file                                                #-
-#      true                                                                     #-
-#     catch-every-line                                                          #-
-#    EOF                                                                        #-
-#    chmod +x $fn
-#    bash -c $fn 2>&1 >| grep "$s"                                              #? true
-#    rm -f $fn
-#  SOURCE
-udfTryEveryLine() {
-
-  local b fn i s
-
-  b=true
-  i=0
-
-  udfMakeTemp fn
-
-  while read s; do
-
-    i=$((i+1))
-
-    [[ $s ]] || continue
-
-    eval "$s" >$fn 2>&1 && echo -n "." || {
-
-      _ iTryBlockLine $i
-      b=false
-      break
-
-    }
-
-  done
-
-  if ! $b; then
-
-    echo "?"
-    [[ -s $fn ]] && udfDebug 0 "Error: try block exception output: $(< $fn)"
-    eval $( udfOnError throw TryBlockException "internal line: ${i}, code: ${s}" )
-
-  else
-
-    echo "ok."
-
-  fi
-
-}
-#******
 #****f* libold/udfOn
 #  SYNOPSIS
 #    udfOn <error> [<action>] <args>
@@ -4336,7 +4274,7 @@ udfNotifyCommand() {
 #  SOURCE
 udfCheckStarted() {
 
-  errorify on MissingArgument $* || return
+  udfOn MissingArgument $* || return
 
   local re="\\b${1}\\b"
 
@@ -4431,12 +4369,12 @@ udfStopProcess() {
 
   done
 
-  errorify on MissingArgument $* || return
+  udfOn MissingArgument $* || return
 
   rc=$( _ iErrorNoSuchProcess )
 
-  errorify on MissingArgument "${a[*]}" || a=( $( pgrep -d' ' ${1##*/} ) )
-  errorify on MissingArgument "${a[*]}" || return $rc
+  udfOn MissingArgument "${a[*]}" || a=( $( pgrep -d' ' ${1##*/} ) )
+  udfOn MissingArgument "${a[*]}" || return $rc
 
   iStopped=0
   for (( i=0; i<${#a[*]}; i++ )) ; do
@@ -4647,7 +4585,7 @@ udfAddPid2Clean() {
 #  SOURCE
 udfAddFD2Clean() {
 
-  errorify on MissingArgument $* || return
+  udfOn MissingArgument $* || return
 
   _bashlyk_afdClean[$BASHPID]+=" $*"
 
@@ -4689,7 +4627,7 @@ udfAddFD2Clean() {
 #  SOURCE
 udfAddFO2Clean() {
 
-  errorify on MissingArgument $* || return
+  udfOn MissingArgument $* || return
 
   _bashlyk_afoClean[$BASHPID]+=" $*"
 
@@ -4787,7 +4725,487 @@ udfOnTrap() {
 
 }
 #******
-#****f* liblold/udfDebug
+#****f* libold/udfGetConfig
+#  SYNOPSIS
+#    udfGetConfig <file>
+#  DESCRIPTION
+#    Safely reading of the active configuration by using the INI library.
+#    configuration source can be a single file or a group of related files. For
+#    example, if <file> - is "a.b.c.conf" and it exists, sequentially read
+#    "conf", "c.conf", "b.c.conf", "a.b.c.conf" files, if they exist, too.
+#    Search  source of the configuration is done on the following criteria (in
+#    the absence of the full path):
+#      1. in the default directory,
+#      2. in the current directory
+#      3. in the system directory "/etc"
+#  NOTES
+#    The file name must not begin with a point or end with a point.
+#    configuration sources are ignored if they do not owned by the owner of the
+#    process or root.
+#  ARGUMENTS
+#    <file>     - source of the configuration
+#    <variable> - set only this list of the variables from the configuration
+#  ERRORS
+#    MissingArgument - no arguments
+#    NoSuchFileOrDir - configuration file is not found
+#    InvalidArgument - name contains the point at the beginning or at the end of
+#                      the name
+#  EXAMPLE
+#    local b confChild confMain pid s s0
+#    std::temp confMain suffix=.conf
+#    confChild="${confMain%/*}/child.${confMain##*/}"                           #-
+#    pid::onExit::unlink $confChild                                             #-
+#    cat <<'EOFconf' > $confMain                                                #-
+#                                                                               #-
+#    s0=$0                                                                      #-
+#    b=true                                                                     #-
+#    pid=$$                                                                     #-
+#    s="$(uname -a)"                                                            #-
+#                                                                               #-
+#    EOFconf                                                                    #-
+#    cat $confMain
+#    udfGetConfig $confMain                                                     #? true
+#    echo "$s0 $b $pid $s" >| grep "$0 true $$ $(uname -a)"                     #? true
+#    unset b pid s0 s
+#    cat <<'EOFchild' > $confChild                                              #-
+#                                                                               #-
+#    s0=bash                                                                    #-
+#    b=false                                                                    #-
+#    pid=$$                                                                     #-
+#    s="$(uname)"                                                               #-
+#    test=test                                                                  #-
+#                                                                               #-
+#    EOFchild                                                                   #-
+#    cat $confChild
+#    udfGetConfig $confChild pid,b,test                                         #? true
+#    echo "$b $pid $test" >| grep "false $$ test"                               #? true
+#    rm -f $confChild
+#    _ onError echo+return
+#    udfGetConfig $confChild s                                                  #? $_bashlyk_iErrorNoSuchFileOrDir
+#    udfGetConfig                                                               #? $_bashlyk_iErrorMissingArgument
+#  SOURCE
+udfGetConfig() {
+
+  local bashlyk_aconf_MROATHra bashlyk_conf_MROATHra bashlyk_s_MROATHra
+  local bashlyk_pathCnf_MROATHra="$_bashlyk_pathCnf" IFS=$' \t\n'
+
+  [[ -n $1 ]] || eval $( udfOnError return iErrorEmptyOrMissingArgument )
+
+  [[ "$1" == "${1##*/}" && -f "${bashlyk_pathCnf_MROATHra}/$1" ]] || bashlyk_pathCnf_MROATHra=
+  [[ "$1" == "${1##*/}" && -f "$1" ]] && bashlyk_pathCnf_MROATHra=$(pwd)
+  [[ "$1" != "${1##*/}" && -f "$1" ]] && bashlyk_pathCnf_MROATHra=$(dirname $1)
+
+  if [[ ! $bashlyk_pathCnf_MROATHra ]]; then
+
+    if [[ -f "/etc/${_bashlyk_pathPrefix}/$1" ]]; then
+
+      bashlyk_pathCnf_MROATHra="/etc/${_bashlyk_pathPrefix}"
+
+    else
+
+     eval $(udfOnError return iErrorNoSuchFileOrDir)
+
+    fi
+
+  fi
+
+  bashlyk_conf_MROATHra=
+  bashlyk_aconf_MROATHra=$(echo "${1##*/}" | awk 'BEGIN{FS="."} {for (i=NF;i>=1;i--) printf $i" "}')
+
+  for bashlyk_s_MROATHra in $bashlyk_aconf_MROATHra; do
+
+    [[ $bashlyk_s_MROATHra ]] || continue
+
+    if [[ $bashlyk_conf_MROATHra ]]; then
+
+      bashlyk_conf_MROATHra="${bashlyk_s_MROATHra}.${bashlyk_conf_MROATHra}"
+
+    else
+
+      bashlyk_conf_MROATHra="$bashlyk_s_MROATHra"
+
+    fi
+
+    if [[ -s "${bashlyk_pathCnf_MROATHra}/${bashlyk_conf_MROATHra}" ]]; then
+
+      . "${bashlyk_pathCnf_MROATHra}/${bashlyk_conf_MROATHra}"
+
+    fi
+
+  done
+
+  return 0
+
+}
+#******
+#****f* libold/udfSetConfig
+#  SYNOPSIS
+#    udfSetConfig <file> "<comma separated key=value pairs>;"
+#  DESCRIPTION
+#    Write to <file> string in the format "key = value" from a fields of the
+#    second argument "<CSV>;"
+#    In the case where the filename does not contain the path, it is saved in a
+#    default directory, or is saved using a full path.
+#  ARGUMENTS
+#    <file> - file name of the active configuration
+#    "<comma separated key=value pairs>;" - CSV-string, divided by ";", fields
+#             that contain the data of the form "key = value"
+#  NOTES
+#    It is important to take the arguments in double quotes, if they contain a
+#    whitespace or ';'
+#  ERRORS
+#    MissingArgument    - no arguments
+#    NotExistNotCreated - target file not created or updated
+#    InvalidArgument    - name contains the point at the beginning or at the end
+#                         of the name
+#  EXAMPLE
+#    std::temp conf suffix=.conf
+#    udfSetConfig $conf "s0=$0;b=true;pid=$$;s=$(uname -a);1nvalid.key=invalid" #? true
+#    cat $conf >| grep "s0=$0\|b=true\|pid=$$\|s=\"$(uname -a)\""               #? true
+#    rm -f $conf
+#  SOURCE
+udfSetConfig() {
+
+ local conf IFS=$' \t\n' pathCnf="$_bashlyk_pathCnf"
+
+ [[ -n "$1" && -n "$2" ]] || eval $( udfOnError return MissingArgument )
+
+ #
+ [[ "$1" != "${1##*/}" ]] && pathCnf="$( dirname $1 )"
+
+ mkdir -p "$pathCnf" || eval $(udfOnError return NotExistNotCreated '$pathCnf')
+
+ conf="${pathCnf}/${1##*/}"
+
+ [[ ${conf##*/} =~ ^\.|\.$ ]] && $( udfOnError InvalidArgument "${BASH_REMATCH[0]}" )
+
+ {
+  echo "# Created $(date -R) by $USER via $0 (pid $$)"
+  udfCheckCsv "$2" | tr ';' '\n'
+ } >> $conf 2>/dev/null
+
+ return 0
+
+}
+#******
+#****f* libold/udfLogger
+#  SYNOPSIS
+#    udfLogger <text>
+#  DESCRIPTION
+#    add <text> to log file with standart stamps if logging is setted
+#  INPUTS
+#    <text> - input text
+#  OUTPUT
+#    There are four possibilities:
+#     * stdout only
+#     * $_bashlyk_fnLog only
+#     * syslog by logger and stdout
+#     * syslog by logger and $_bashlyk_fnLog
+#  EXAMPLE
+#    local bInteract bNotUseLog bTerminal
+#    _ =bInteract
+#    _ =bNotUseLog
+#    _ =bTerminal
+#    local b=true fnExec reT reP s
+#    fnExec=$(mktemp --suffix=.sh || tempfile -s .test.sh)
+#    reT='[ADFJMNOS][abceglnoprtuyv]{2} [0-9]{2} [0-9]{2}:[0-9]{2}:[0-9]{2}'
+#    reP="[[:space:]]$HOSTNAME ${0##*/}\[[[:digit:]]{5}\]:[[:space:]].*"
+#    cat <<'EOF' > $fnExec                                                      #-
+#    local fnLog=$(mktemp --suffix=.log || tempfile -s .test.log)               #-
+#    _ fnLog $fnLog                                                             #-
+#    _ bInteract 0                                                              #-
+#    _ bNotUseLog 0                                                             #-
+#    _ bTerminal 0                                                              #-
+#    udfSetLogSocket                                                            #-
+#    _ fnLog                                                                    #-
+#    udfLogger test                                                             #-
+#    date                                                                       #-
+#    echo $_bashlyk_pidLogSock                                                  #-
+#    EOF                                                                        #-
+#    . $fnExec
+#    kill $_bashlyk_pidLogSock
+#    rm -f $_bashlyk_fnLogSock
+#    sleep 0.1
+#    while read -t9 s; do [[ $s =~ ^${reT}${reP}$ ]] || b=false; done < $fnLog  #-
+#    [[ $b == true ]]                                                           #? true
+#    rm -f $fnExec $fnLog
+#    _ bInteract "$bInteract"
+#    _ bNotUseLog "$bNotUseLog"
+#    _ bTerminal "$bTerminal"
+#  SOURCE
+udfLogger() {
+
+  local bSysLog bUseLog sTagLog IFS=$' \t\n'
+
+  bSysLog=0
+  bUseLog=0
+
+  sTagLog="${_bashlyk_s0}[$(printf -- "%05d" $$)]"
+
+  if [[ -z "$_bashlyk_bUseSyslog" || "$_bashlyk_bUseSyslog" -eq 0 ]]; then
+
+    bSysLog=0
+
+  else
+
+    bSysLog=1
+
+  fi
+
+  if [[ $_bashlyk_bNotUseLog ]]; then
+
+    (( $_bashlyk_bNotUseLog != 0 )) && bUseLog=0 || bUseLog=1
+
+  else
+
+    udfCheck4LogUse && bUseLog=1 || bUseLog=0
+
+  fi
+
+  mkdir -p "$_bashlyk_pathLog" \
+    || eval $( udfOnError throw NotExistNotCreated "${_bashlyk_pathLog}" )
+
+  udfAddFO2Clean $_bashlyk_pathLog
+
+  case "${bSysLog}${bUseLog}" in
+
+    00)
+        echo "$@"
+     ;;
+
+    01)
+        udfTimeStamp "$HOSTNAME $sTagLog: ${*//%/%%}" >> $_bashlyk_fnLog
+     ;;
+
+    10)
+        echo "$*"
+        logger -t "$sTagLog" "$*"
+     ;;
+
+    11)
+        udfTimeStamp "$HOSTNAME $sTagLog: ${*//%/%%}" >> $_bashlyk_fnLog
+        logger -t "$sTagLog" "$*"
+     ;;
+
+  esac
+
+}
+#******
+#****f* libold/udfLog
+#  SYNOPSIS
+#    udfLog [-] [<text>]
+#  DESCRIPTION
+#    Wrapper around udfLogger to support stream from standard input
+#  INPUTS
+#    -      - data is expected from standard input
+#    <text> - String (tag) for output.
+#             If there is a "-" as the first argument, then the string is
+#             considered a prefix (tag) for each line from the standard input.
+#  OUTPUT
+#   Depends on output parameters
+#  EXAMPLE
+#    # TODO improved test
+#    echo -n . | udfLog -                                  >| grep '^\.$'       #? true
+#    echo test | udfLog - tag                              >| grep '^tag test$' #? true
+#  SOURCE
+udfLog() {
+
+  local sTag s
+
+  if [[ "$1" == "-" ]]; then
+
+    shift
+    [[ $* ]] && sTag="$* "
+
+    while read s || [[ $s ]]; do [[ $s ]] && udfLogger "${sTag}${s}"; done
+
+  else
+
+    [[ $* ]] && udfLogger "$*"
+
+  fi
+
+}
+#******
+#****f* libold/udfIsInteract
+#  SYNOPSIS
+#    udfIsInteract
+#  DESCRIPTION
+#    Checking the operating mode of standard input and output devices
+#  RETURN VALUE
+#    0 - "non-interactive" mode, there is redirection of standard input and/or
+#         output
+#    1 - "interactive" mode, redirection of standard input and/or output is not
+#        detected
+#  EXAMPLE
+#    udfIsInteract                                                              #? true
+#    udfIsInteract                                                              #= false
+#  SOURCE
+udfIsInteract() {
+
+  [[ -t 1 && -t 0 && $TERM && "$TERM" != "dumb" ]] \
+    && _bashlyk_bInteract=1 || _bashlyk_bInteract=0
+
+  return $_bashlyk_bInteract
+
+}
+#******
+#****f* libold/udfIsTerminal
+#  SYNOPSIS
+#    udfIsTerminal
+#  DESCRIPTION
+#    Checking the presence of a control terminal
+#  RETURN VALUE
+#    0 - terminal not detected
+#    1 - terminal detected
+#  EXAMPLE
+#    udfIsTerminal                                                              #? false
+#    udfIsTerminal                                                              #= false
+#  SOURCE
+udfIsTerminal() {
+
+  tty > /dev/null 2>&1 && _bashlyk_bTerminal=1 || _bashlyk_bTerminal=0
+  return $_bashlyk_bTerminal
+
+}
+#******
+#****f* libold/udfCheck4LogUse
+#  SYNOPSIS
+#    udfCheck4LogUse
+#  DESCRIPTION
+#    Check the conditions for using the log file
+#  RETURN VALUE
+#    0 - save stdout and stderr to log file
+#    1 - logging do not required
+#  EXAMPLE
+#    _bashlyk_sCond4Log='redirect'
+#    udfCheck4LogUse                                                            #? true
+#    udfCheck4LogUse                                                            #= false
+#  SOURCE
+udfCheck4LogUse() {
+
+  udfIsTerminal
+  udfIsInteract
+
+  case ${_bashlyk_sCond4Log} in
+
+    redirect)
+              _bashlyk_bNotUseLog=$_bashlyk_bInteract ;;
+      noterm)
+              _bashlyk_bNotUseLog=$_bashlyk_bTerminal ;;
+           *)
+              _bashlyk_bNotUseLog=$_bashlyk_bInteract ;;
+  esac
+
+  return $_bashlyk_bNotUseLog
+
+}
+#******
+#****f* libold/udfSetLogSocket
+#  SYNOPSIS
+#    udfSetLogSocket
+#  DESCRIPTION
+#    Creating a named pipe for redirecting the output of stdout and stderr to a
+#     log file with automatic addition of standard stamps.
+#  ERRORS
+#     1                  - The socket is not created, but the output of the
+#                          stdout and the stderr is redirected to the log file
+#                          (without stamps)
+#     NotExistNotCreated - The socket directory does not exist and can not be
+#                          created
+#  EXAMPLE
+#    local fnLog=$(mktemp --suffix=.log || tempfile -s .test.log)
+#    _ fnLog $fnLog                                                             #? true
+#    udfSetLogSocket                                                            #? true
+#    ls -l $fnLog                                                               #? true
+#    rm -f $fnLog
+#  SOURCE
+udfSetLogSocket() {
+
+  local fnSock IFS=$' \t\n'
+
+  if [[ $_bashlyk_sArg ]]; then
+
+    fnSock="$(udfGetMd5 ${_bashlyk_s0} ${_bashlyk_sArg}).${$}.socket"
+    fnSock="${_bashlyk_pathRun}/${fnSock}"
+
+  else
+
+    fnSock="${_bashlyk_pathRun}/${_bashlyk_s0}.${$}.socket"
+
+  fi
+
+  mkdir -p ${_bashlyk_pathRun} \
+    || eval $( udfOnError retwarn NotExistNotCreated "${_bashlyk_pathRun}" )
+
+  [[ -a "$fnSock" ]] && rm -f $fnSock
+
+  if mkfifo -m 0600 $fnSock >/dev/null 2>&1; then
+
+    ( udfLog - < $fnSock )&
+    _bashlyk_pidLogSock=$!
+    exec >>$fnSock 2>&1
+
+    _bashlyk_fnLogSock=$fnSock
+     udfAddFO2Clean $fnSock
+
+     return 0
+
+  else
+
+    udfWarn "Warn: Socket $fnSock not created..."
+
+    exec >>$_bashlyk_fnLog 2>&1
+
+    _bashlyk_fnLogSock=$_bashlyk_fnLog
+
+    return 1
+
+  fi
+
+}
+#******
+#****f* libold/udfSetLog
+#  SYNOPSIS
+#    udfSetLog [<filename>]
+#  DESCRIPTION
+#    Wrapper around udfSetLogSocket to activate output redirection to the log
+#    file with error handling
+#  ERRORS
+#     NotExistNotCreated - log file can not be created, abort
+#  EXAMPLE
+#    local fnLog=$(mktemp --suffix=.log || tempfile -s .test.log)
+#    rm -f $fnLog
+#    udfSetLog $fnLog                                                           #? true
+#    ls -l $fnLog                                                               #? true
+#    rm -f $fnLog
+#  SOURCE
+udfSetLog() {
+
+  local IFS=$' \t\n'
+
+  case "$1" in
+          '') ;;
+    ${1##*/}) _bashlyk_fnLog="${_bashlyk_pathLog}/$1";;
+           *)
+              _bashlyk_fnLog="$1"
+              _bashlyk_pathLog=${_bashlyk_fnLog%/*}
+           ;;
+  esac
+
+  mkdir -p "$_bashlyk_pathLog" \
+    || eval $(udfOnError throw NotExistNotCreated "$_bashlyk_pathLog")
+
+  touch "$_bashlyk_fnLog" \
+    || eval $(udfOnError throw NotExistNotCreated "$_bashlyk_fnLog")
+
+  udfSetLogSocket
+
+  return 0
+
+}
+#******
+#****f* libold/udfDebug
 #  SYNOPSIS
 #    udfDebug <level> <message>
 #  DESCRIPTION
@@ -4814,7 +5232,7 @@ udfOnTrap() {
 #  SOURCE
 udfDebug() {
 
-  errorify on MissingArgument $* || return
+  udfOn MissingArgument $* || return
 
   if [[ $1 =~ ^[0-9]+$ ]]; then
 
@@ -4827,4 +5245,69 @@ udfDebug() {
   return 0
 
 }
+#******
+#****f* libold/udfTimeStamp
+#  SYNOPSIS
+#    udfTimeStamp <text>
+#  DESCRIPTION
+#    Show input <text> with time stamp in format 'Mar 28 10:03:40' (LC_ALL=C)
+#  INPUTS
+#    <text> - suffix to the header
+#  OUTPUT
+#    input <text> with time stamp in format 'Mar 28 10:03:40' (LC_ALL=C)
+#  EXAMPLE
+#    local re
+#    re='^[ADFJMNOS][abceglnoprtuyv]{2} [0-9]{2} [0-9]{2}:[0-9]{2}:[0-9]{2} AB$'
+#    udfTimeStamp AB >| grep -E "$re"                                           #? true
+#  SOURCE
+
+if (( _bashlyk_ShellVersion > 4002000 )); then
+
+udfTimeStamp() { LC_ALL=C printf -- '%(%b %d %H:%M:%S)T %s\n' '-1' "$*"; }
+
+udfDateR() { LC_ALL=C printf -- '%(%a, %d %b %Y %T %z)T\n' '-1'; }
+
+udfUptime() { echo $(( $(printf '%(%s)T' '-1') - $(printf '%(%s)T' '-2') )); }
+
+else
+
+readonly _bashlyk_iStartTimeStamp=$( exec -c date "+%s" )
+
+udfTimeStamp() { LC_ALL=C date "+%b %d %H:%M:%S $*"; }
+
+udfDateR() { exec -c date -R; }
+
+udfUptime() { echo $(( $(exec -c date "+%s") - _bashlyk_iStartTimeStamp )); }
+
+fi
+#******
+#****f* libold/udfDateR
+#  SYNOPSIS
+#    udfDateR
+#  DESCRIPTION
+#    show 'date -R' like output
+#  EXAMPLE
+#    udfDateR >| grep -P "^\S{3}, \d{2} \S{3} \d{4} \d{2}:\d{2}:\d{2} .\d{4}$"  #? true
+#  SOURCE
+#******
+#****f* libold/udfUptime
+#  SYNOPSIS
+#    udfUptime
+#  DESCRIPTION
+#    show uptime value in the seconds
+#  EXAMPLE
+#    udfUptime >| grep "^[[:digit:]]*$"                                         #? true
+#  SOURCE
+#******
+#****f* libold/udfFinally
+#  SYNOPSIS
+#    udfFinally <text>
+#  DESCRIPTION
+#    show uptime with input text
+#  INPUTS
+#    <text> - prefix text before " uptime <number> sec"
+#  EXAMPLE
+#    udfFinally $RANDOM >| grep "^[[:digit:]]* uptime [[:digit:]]* sec$"        #? true
+#  SOURCE
+udfFinally() { echo "$@ uptime $( udfUptime ) sec"; }
 #******
