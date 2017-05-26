@@ -1,5 +1,5 @@
 #
-# $Id: libstd.sh 764 2017-05-11 17:28:10+04:00 toor $
+# $Id: libstd.sh 766 2017-05-26 16:33:11+04:00 toor $
 #
 #****h* BASHLYK/libstd
 #  DESCRIPTION
@@ -50,9 +50,9 @@ declare -rg _bashlyk_aRequiredCmd_std="                                        \
 
 declare -rg _bashlyk_aExport_std="                                             \
                                                                                \
-    _ std::{acceptArrayItem,cat,finally,getFreeFD,getMD5,getMD5::list,         \
+    _ std::{acceptArrayItem,cat,finally,getFreeFD,getMD5,getMD5.list,          \
     getTimeInSec,isHash,isNumber,isVariable,lazyquote,showVariable,temp,trim,  \
-    whitespace::decode,whitespace::encode,xml}                                 \
+    whitespace.decode,whitespace.encode,xml}                                 \
                                                                                \
 "
 #******
@@ -203,9 +203,9 @@ std::lazyquote() {
 
 }
 #******
-#****f* libstd/std::whitespace::encode
+#****f* libstd/std::whitespace.encode
 #  SYNOPSIS
-#    std::whitespace::encode -|<arg>
+#    std::whitespace.encode -|<arg>
 #  DESCRIPTION
 #    The whitespace in the argument is replaced by the "magic" sequence of
 #    characters defined in the global variable $_bashlyk_sWSpaceAlias
@@ -216,12 +216,12 @@ std::lazyquote() {
 #   input data with replaced (masked) whitespaces by a special sequence of
 #   characters
 #  EXAMPLE
-#    a=($(std::whitespace::encode single argument expected ... ))
+#    a=($(std::whitespace.encode single argument expected ... ))
 #    echo ${#a[@]}                                                  >| grep ^1$ #? true
-#    a=($(echo single argument expected ... | std::whitespace::encode -))
+#    a=($(echo single argument expected ... | std::whitespace.encode -))
 #    echo ${#a[@]}                                                  >| grep ^1$ #? true
 #  SOURCE
-std::whitespace::encode() {
+std::whitespace.encode() {
 
   local s=$*
 
@@ -244,9 +244,9 @@ std::whitespace::encode() {
 
 }
 #******
-#****f* libstd/std::whitespace::decode
+#****f* libstd/std::whitespace.decode
 #  SYNOPSIS
-#    std::whitespace::decode -|<arg>
+#    std::whitespace.decode -|<arg>
 #  DESCRIPTION
 #    If the input contains a sequence of characters defined in the global
 #    variable $_bashlyk_WSpase2Alias, then they are replaced by a whitespace.
@@ -260,13 +260,13 @@ std::whitespace::encode() {
 #    local text s
 #    s="${_bashlyk_sWSpaceAlias}"
 #    text="many${s}arguments${s}expected${s}..."
-#    std::whitespace::decode $text
-#    a=($(std::whitespace::decode $text))
+#    std::whitespace.decode $text
+#    a=($(std::whitespace.decode $text))
 #    echo ${#a[@]}                                                  >| grep ^4$ #? true
-#    a=($(echo $text | std::whitespace::decode -))
+#    a=($(echo $text | std::whitespace.decode -))
 #    echo ${#a[@]}                                                  >| grep ^4$ #? true
 #  SOURCE
-std::whitespace::decode() {
+std::whitespace.decode() {
 
   local s=$*
 
@@ -363,7 +363,7 @@ std::temp() {
 
     [[ ${!1} ]] || on error EmptyResult $1
 
-    [[ $* =~ keep=false || ! $* =~ keep=true ]] && pid::onExit::unlink ${!1}
+    [[ $* =~ keep=false || ! $* =~ keep=true ]] && pid::onExit.unlink ${!1}
 
     return 0
 
@@ -481,7 +481,7 @@ std::temp() {
 
   fi
 
-  [[ $* =~ keep=false ]] && pid::onExit::unlink $s
+  [[ $* =~ keep=false ]] && pid::onExit.unlink $s
 
   [[ $s ]] || return $( _ iErrorEmptyResult )
 
@@ -637,9 +637,9 @@ std::getMD5() {
 
 }
 #******
-#****f* libstd/std::getMD5::list
+#****f* libstd/std::getMD5.list
 #  SYNOPSIS
-#    std::getMD5::list <path>
+#    std::getMD5.list <path>
 #  DESCRIPTION
 #   Get recursively MD5 digest of all the non-hidden files in the directory
 #   <path>
@@ -657,15 +657,15 @@ std::getMD5() {
 #    echo "digest test 1" > ${path}/testfile1                                   #-
 #    echo "digest test 2" > ${path}/testfile2                                   #-
 #    echo "digest test 3" > ${path}/testfile3                                   #-
-#    pid::onExit::unlink ${path}/testfile1
-#    pid::onExit::unlink ${path}/testfile2
-#    pid::onExit::unlink ${path}/testfile3
-#    pid::onExit::unlink ${path}
-#    std::getMD5::list $path >| grep ^[[:xdigit:]]*.*testfile.$                 #? true
-#    std::getMD5::list                                                          #? ${_bashlyk_iErrorMissingArgument}
-#    std::getMD5::list /notexist/path                                           #? ${_bashlyk_iErrorNoSuchFileOrDir}
+#    pid::onExit.unlink ${path}/testfile1
+#    pid::onExit.unlink ${path}/testfile2
+#    pid::onExit.unlink ${path}/testfile3
+#    pid::onExit.unlink ${path}
+#    std::getMD5.list $path >| grep ^[[:xdigit:]]*.*testfile.$                  #? true
+#    std::getMD5.list                                                           #? ${_bashlyk_iErrorMissingArgument}
+#    std::getMD5.list /notexist/path                                            #? ${_bashlyk_iErrorNoSuchFileOrDir}
 #  SOURCE
-std::getMD5::list() {
+std::getMD5.list() {
 
   local pathSrc="$( exec -c pwd )" pathDst s IFS=$' \t\n'
 
@@ -678,7 +678,7 @@ std::getMD5::list() {
 
   while read s; do
 
-    [[ -d $s ]] && std::getMD5::list $s
+    [[ -d $s ]] && std::getMD5.list $s
 
     md5sum "${pathDst}/${s}" 2>/dev/null
 
@@ -887,7 +887,17 @@ std::trim() {
 #    for s in $( seq 0 12 ); do printf -- '\t%s\n' "$RANDOM"; done > $fn        #-
 #    std::cat < $fn | grep -E '^[[:space:]][0-9]{1,5}$'                         #? true
 #  SOURCE
-std::cat() { while IFS= read -t 32 || [[ $REPLY ]]; do echo "$REPLY"; done; }
+std::cat() {
+
+  [[ $* ]] && echo "$*"
+
+  while IFS= read -t 32 || [[ $REPLY ]]; do
+
+    echo "$REPLY"
+
+  done
+
+}
 #******
 #****f* libstd/std::dateR
 #  SYNOPSIS

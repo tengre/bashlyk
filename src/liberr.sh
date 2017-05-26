@@ -1,5 +1,5 @@
 #
-# $Id: liberr.sh 764 2017-05-11 17:28:10+04:00 toor $
+# $Id: liberr.sh 766 2017-05-26 16:33:11+04:00 toor $
 #
 #****h* BASHLYK/liberr
 #  DESCRIPTION
@@ -48,14 +48,14 @@ declare -rg _bashlyk_aRequiredCmd_err="rm sed"
 declare -rg _bashlyk_methods_err="                                             \
                                                                                \
     err::{__add_throw_to_command,CommandNotFound,__convert_try_to_func,        \
-    EmptyArgument,EmptyResult,EmptyVariable,eval,exception::message,debug,     \
+    EmptyArgument,EmptyResult,EmptyVariable,eval,exception.message,debug,      \
     handler,InvalidVariable,MissingArgument,NoSuchFileOrDir,stacktrace,status, \
-    status::show}                                                              \
+    status.show}                                                               \
 "
 
 declare -rg _bashlyk_aExport_err="                                             \
                                                                                \
-    abort catch err::{exception::message,stacktrace,status} errorify           \
+    abort catch err::{exception.message,stacktrace,status} errorify            \
     errorify+echo errorify+warn exit+echo exit+warn on show throw try warn     \
                                                                                \
 "
@@ -135,9 +135,36 @@ _bashlyk_hError[$_bashlyk_iErrorNotDetected]="unknown (unexpected) error, maybe 
 [[ -s ${_bashlyk_pathLib}/libstd.sh ]] && . "${_bashlyk_pathLib}/libstd.sh"
 [[ -s ${_bashlyk_pathLib}/libmsg.sh ]] && . "${_bashlyk_pathLib}/libmsg.sh"
 #******
-#****p* liberr/err::status::show
+#****p* liberr/err::code
 #  SYNOPSIS
-#    err::status::show [<pid>]
+#    err::orr [0-254]
+#  DESCRIPTION
+#    return status from 0 to 254
+#  ARGUMENTS
+#    0-254 - status
+#  NOTES
+#    public method
+#  ERROR
+#    Unknown - first argument is non valid
+#  EXAMPLE
+#    err::code                                                                  #? $_bashlyk_iErrorUnknown
+#    err::code 0                                                                #? true
+#    err::code 123                                                              #? 123
+#    err::code 256                                                              #? $_bashlyk_iErrorUnknown
+#  SOURCE
+err::code() {
+
+  local i=$1
+
+  [[ $i =~ ^[0-9]+$ ]] && (( i < 255 )) || unset i
+
+  return ${i:-254}
+
+}
+#******
+#****p* liberr/err::status.show
+#  SYNOPSIS
+#    err::status.show [<pid>]
 #  DESCRIPTION
 #    Show last saved error state for process with <pid> or $BASHPID default
 #  INPUTS
@@ -150,11 +177,11 @@ _bashlyk_hError[$_bashlyk_iErrorNotDetected]="unknown (unexpected) error, maybe 
 #  EXAMPLE
 #    local pid=$BASHPID
 #    err::status iErrorInvalidVariable "12Invalid"                              #? $_bashlyk_iErrorInvalidVariable
-#    err::status::show                                                          #? $_bashlyk_iErrorInvalidVariable
-#    err::status::show invalid argument                                         #? $_bashlyk_iErrorInvalidVariable
-#    err::status::show $$                                                       #? $_bashlyk_iErrorInvalidVariable
+#    err::status.show                                                           #? $_bashlyk_iErrorInvalidVariable
+#    err::status.show invalid argument                                          #? $_bashlyk_iErrorInvalidVariable
+#    err::status.show $$                                                        #? $_bashlyk_iErrorInvalidVariable
 #  SOURCE
-err::status::show() {
+err::status.show() {
 
   local pid
 
@@ -212,11 +239,11 @@ err::status() {
 
     if [[ ${_bashlyk_iLastError[$BASHPID]} ]]; then
 
-      err::status::show $BASHPID
+      err::status.show $BASHPID
 
     elif [[ ${_bashlyk_iLastError[$$]} ]]; then
 
-      err::status::show $$
+      err::status.show $$
 
     fi
 
@@ -335,10 +362,13 @@ err::stacktrace() {
 #    command line, which can be performed using the eval <...>
 #  EXAMPLE
 #    false || on error warn NoSuchFileOrDir /notexist                           #? true
+#    _bashlyk_onError=debug
+#    false || on error exit NoSuchFileOrDir /notexist                           #? $_bashlyk_iErrorNoSuchFileOrDir
+#    ##_bashlyk_onError=echo
 #  SOURCE
 err::eval() {
 
-  local rc=$? rs
+  local rc=$? rs echo='echo' warn='msg::warn'
   local i IFS=$' \t\n' reAct reArg sAction=$_bashlyk_onError sMessage s
 
   reAct='^(echo|warn)$|^((echo|warn)[+])?(exit|return)$|^throw$'
@@ -393,22 +423,29 @@ err::eval() {
 
   fi
 
-  s=${s//\(/\\\(}; s=${s//\)/\\\)}; s=${s//\;/\\\;}
+  printf -v s "%q" "$s"
 
   if [[ "${FUNCNAME[1]}" == "main" || -z "${FUNCNAME[1]}" ]]; then
 
-    [[ $sAction =~ ^((echo|warn)\+)?return$ ]] && sAction="${sAction/return/exit}"
+    [[ $sAction =~ ^((echo|warn)\+)?return$ ]] && sAction=${sAction/return/exit}
+
+  fi
+
+  if [[ $_bashlyk_onError == debug ]]; then
+
+    echo='err::stacktrace | std::cat'
+    warn='err::stacktrace | msg::warn -'
 
   fi
 
   case "${sAction,,}" in
 
-           echo) sAction=': ';        sMessage="echo  Warn: ";;
-    echo+return) sAction='return $?'; sMessage="echo Error: ";;
-      echo+exit) sAction='exit $?';   sMessage="echo Error: ";;
-           warn) sAction=': ';        sMessage="msg::warn  Warn: ";;
-    warn+return) sAction='return $?'; sMessage="msg::warn Error: ";;
-      warn+exit) sAction='exit $?';   sMessage="msg::warn Error: ";;
+           echo) sAction=': ';        sMessage="$echo  Warn: ";;
+    echo+return) sAction='return $?'; sMessage="$echo Error: ";;
+      echo+exit) sAction='exit $?';   sMessage="$echo Error: ";;
+           warn) sAction=': ';        sMessage="$warn  Warn: ";;
+    warn+return) sAction='return $?'; sMessage="$warn Error: ";;
+      warn+exit) sAction='exit $?';   sMessage="$warn Error: ";;
     exit|return) sAction="${sAction,,} \$?"; sMessage=": ";;
               *)
                  sAction='exit $?'
@@ -418,6 +455,13 @@ err::eval() {
   esac
 
   i=${a[@]:$i}
+
+  if [[ $_bashlyk_onError == debug ]]; then
+
+    sAction=${sAction/exit/err::code}
+
+  fi
+
   printf -- '%s >&2; err::status %s "%s"; %s; #' \
             "${sMessage}${s}" "$rs" "${i//\;/}" "$sAction"
 
@@ -633,8 +677,8 @@ err::EmptyResult() {
 #    warn on NoSuchFileOrDir /notexist.warn                                     #? true
 #    show on NoSuchFileOrDir /notexist.echo                                     #? true
 #    $(throw on NoSuchFileOrDir /notexist.throw.child)                          #? $_bashlyk_iErrorNoSuchFileOrDir
-#    $(exit+echo on CommandNotFound notexist.exit.child)                        #? $_bashlyk_iErrorCommandNotFound
-#    $(errorify on CommandNotFound notexist.exit.child || return)               #? $_bashlyk_iErrorCommandNotFound
+#    $(exit+echo on CommandNotFound notexist.exit+echo.child)                   #? $_bashlyk_iErrorCommandNotFound
+#    $(errorify on CommandNotFound notexist.errorify.child || return)           #? $_bashlyk_iErrorCommandNotFound
 #    warn on CommandNotFound notexist nomoreexist                               #? true
 #  SOURCE
 err::handler() {
@@ -695,13 +739,13 @@ err::handler() {
 #    private method, used for 'try ..catch' emulation
 #  EXAMPLE
 #    local s='command --with -a -- arguments' cmd='err::__add_throw_to_command'
-#    $cmd $s             >| md5sum | grep ^1a9c3ca1f2423991321b3f2d9e04932a.*-$ #? true
+#    $cmd $s             >| md5sum | grep ^9491e10494aa59365481cd0418cedd9a.*-$ #? true
 #  SOURCE
 err::__add_throw_to_command() {
 
   local s
 
-  s='_bashlyk_sLastError[$BASHPID]="command: $( std::trim '${*/;/}' )\n output: '
+  s='_bashlyk_sLastError[$BASHPID]="command: $(std::trim '${*/;/}')\n output: '
   s+='{\n$('${*/;/}' 2>&1)\n}" && echo -n . || return $?;'
 
   echo $s
@@ -747,9 +791,9 @@ err::__convert_try_to_func() {
 
 }
 #******
-#****e* liberr/err::exception::message
+#****e* liberr/err::exception.message
 #  SYNOPSIS
-#    err::exception::message
+#    err::exception.message
 #  DESCRIPTION
 #    show last error status
 #  NOTES
@@ -763,9 +807,9 @@ err::__convert_try_to_func() {
 #    NotNumber       - _bashlyk_iLastError[$BASHPID] is not number
 #  EXAMPLE
 #   _bashlyk_iLastError[$BASHPID]=''
-#   err::exception::message                                                     #? $_bashlyk_iErrorMissingArgument
+#   err::exception.message                                                      #? $_bashlyk_iErrorMissingArgument
 #   _bashlyk_iLastError[$BASHPID]='not number'
-#   err::exception::message                                                     #? $_bashlyk_iErrorNotNumber
+#   err::exception.message                                                      #? $_bashlyk_iErrorNotNumber
 #   local s fn                                                                  #-
 #   error4test() { echo "${0##*/}: special error for testing"; return 210; };   #-
 #   std::temp fn                                                                #-
@@ -778,13 +822,13 @@ err::__convert_try_to_func() {
 #     true                                                                      #-
 #   } catch {                                                                   #-
 #                                                                               #-
-#     err::exception::message                                                   #-
+#     err::exception.message                                                    #-
 #                                                                               #-
 #   }                                                                           #-
 #   EOFtry                                                                      #-
 #  . $fn                  >| md5sum -| grep ^65128961dfcf8819e88831025ad5f1.*-$ #? true
 #  SOURCE
-err::exception::message() {
+err::exception.message() {
 
   local msg=${_bashlyk_sLastError[$BASHPID]} rc=${_bashlyk_iLastError[$BASHPID]}
 

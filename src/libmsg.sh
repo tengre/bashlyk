@@ -1,5 +1,5 @@
 #
-# $Id: libmsg.sh 764 2017-05-11 17:28:10+04:00 toor $
+# $Id: libmsg.sh 766 2017-05-26 16:33:11+04:00 toor $
 #
 #****h* BASHLYK/libmsg
 #  DESCRIPTION
@@ -49,8 +49,7 @@ declare -rg _bashlyk_externals_msg="                                           \
 
 declare -rg _bashlyk_exports_msg="                                             \
                                                                                \
-    msg::echo msg::getXsessionProperties msg::mail msg::notify msg::notify2x   \
-    msg::notifyTool msg::warn                                                  \
+    msg::{echo,getXsessionProperties,mail,notify,notify2x,notifyTool,warn}     \
                                                                                \
 "
 #******
@@ -73,7 +72,7 @@ msg::echo() {
     shift
     [[ $1 ]] && printf -- "%s\n----\n" "$*"
 
-    std::cat -
+    std::cat
 
   else
 

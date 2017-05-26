@@ -1,5 +1,5 @@
 #
-# $Id: libini.sh 764 2017-05-11 17:28:10+04:00 toor $
+# $Id: libini.sh 766 2017-05-26 16:33:11+04:00 toor $
 #
 #****h* BASHLYK/libini
 #  DESCRIPTION
@@ -40,8 +40,8 @@
 #    # CLI options.
 #    # [!] CLI options with the same name have higher priority
 #    ini.load $conf                                                            \
-#                  []mode,help                                                :\
-#               [dry]run                                                      :\
+#                  []mode,help                                                 \
+#               [dry]run                                                       \
 #            [source]=
 #
 #    # check value of the option 'run' from section 'dry'
@@ -115,8 +115,8 @@ declare -rg _bashlyk_externals_ini="                                           \
 
 declare -rg _bashlyk_exports_ini="                                             \
                                                                                \
-    INI get set keys show save read load bind.cli getopt                       \
-    settings settings.section.padding settings.shellmode free                  \
+    INI INI::{get,set,keys,show,save,read,load,bind.cli,getopt,settings,       \
+              settings.section.padding,settings.shellmode,free}                \
                                                                                \
 "
 _bashlyk_iErrorIniMissingMethod=111
@@ -178,7 +178,6 @@ INI() {
     f=$( declare -pf INI::${s} 2>/dev/null ) || on error throw IniMissingMethod "INI::${s} for $o"
 
     echo "${f/INI::$s/${o}.$s}" >> $fn || on error throw IniBadMethod "INI::$s for $o"
-    #eval "${f/INI::$s/${o}.$s}" || on error throw IniBadMethod "INI::$s for $o"
 
   done
 
@@ -937,7 +936,7 @@ INI::show() {
 #  EXAMPLE
 #    local fn
 #    std::temp fn
-#    pid::onExit::unlink ${fn}.bak
+#    pid::onExit.unlink ${fn}.bak
 #    INI tSave
 #    tSave.__section.select section
 #    tSave.__section.set key "is value"
@@ -1224,8 +1223,8 @@ INI::read() {
 #    EOFini                                                                     #-
 #    iniLoad="${iniMain%/*}/child.${iniMain##*/}"                               #-
 #    iniSave="${iniMain%/*}/write.${iniMain##*/}"                               #-
-#    pid::onExit::unlink $iniLoad                                               #-
-#    pid::onExit::unlink $iniSave                                               #-
+#    pid::onExit.unlink $iniLoad                                                #-
+#    pid::onExit.unlink $iniSave                                                #-
 #    cat <<-'EOFiniChild' > $iniLoad                                            #-
 #    section  =  global                                                         #-
 #    file     =  child                                                          #-

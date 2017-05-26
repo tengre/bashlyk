@@ -1,5 +1,5 @@
 #
-# $Id: liblog.sh 764 2017-05-11 17:28:10+04:00 toor $
+# $Id: liblog.sh 766 2017-05-26 16:33:11+04:00 toor $
 #
 #****h* BASHLYK/liblog
 #  DESCRIPTION
@@ -132,7 +132,7 @@ log::ger() {
 
   mkdir -p "$_bashlyk_pathLog" || on error throw NotExistNotCreated $_bashlyk_pathLog
 
-  pid::onExit::unlink $_bashlyk_pathLog
+  pid::onExit.unlink $_bashlyk_pathLog
 
   case "${bSysLog}${bUseLog}" in
 
@@ -314,7 +314,7 @@ log::init() {
     exec >>$fnSock 2>&1
 
     _bashlyk_fnLogSock=$fnSock
-    pid::onExit::unlink $fnSock
+    pid::onExit.unlink $fnSock
 
     return 0
 

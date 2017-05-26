@@ -1,5 +1,5 @@
 #
-# $Id: libpid.sh 764 2017-05-11 17:28:10+04:00 toor $
+# $Id: libpid.sh 766 2017-05-26 16:33:11+04:00 toor $
 #
 #****h* BASHLYK/libpid
 #  DESCRIPTION
@@ -52,8 +52,8 @@ declare -rg _bashlyk_externals_pid="                                           \
 
 declare -rg _bashlyk_exports_pid="                                             \
                                                                                \
-    pid::{onExit::close,onExit::unlink,onExit::stop,status,onStarted::exit,    \
-    trap,file,stop}                                                            \
+    pid::{onExit.close,onExit.unlink,onExit.stop,status,onStarted.exit,trap,   \
+          file,stop}                                                           \
                                                                                \
 "
 #******
@@ -274,7 +274,7 @@ pid::stop() {
 #    NotExistNotCreated - PID file don't created
 #  EXAMPLE
 #    local cmd fmt='#!/bin/bash\n%s . bashlyk\n%s || exit $?\n%s\n'             #-
-#    std::temp cmd                                                            #? true
+#    std::temp cmd                                                              #? true
 #    printf -- "$fmt" '_bashlyk_log=nouse' 'pid::file' 'sleep 8' | tee $cmd
 #    chmod +x $cmd                                                              #? true
 #    ($cmd)&                                                                    #? true
@@ -320,8 +320,8 @@ pid::file() {
     if printf -- "%s\n%s\n" "$$" "$0 $( _ sArg )" > $fnPid; then
 
       _ fnPid $fnPid
-      pid::onExit::unlink $fnPid
-      pid::onExit::close  $fd
+      pid::onExit.unlink $fnPid
+      pid::onExit.close  $fd
 
     else
 
@@ -347,9 +347,9 @@ pid::file() {
 
 }
 #******
-#****e* libpid/pid::onStarted::exit
+#****e* libpid/pid::onStarted.exit
 #  SYNOPSIS
-#    pid::onStarted::exit
+#    pid::onStarted.exit
 #  DESCRIPTION
 #    Alias-wrapper for pid::file with extended behavior:
 #    If command line process already exist then
@@ -362,18 +362,18 @@ pid::file() {
 #                         started, current process stopped
 #    NotExistNotCreated - PID file don't created, current process stopped
 #  EXAMPLE
-#    pid::onStarted::exit                                                       #? true
+#    pid::onStarted.exit                                                        #? true
 #    ## TODO проверка кодов возврата
 #  SOURCE
-pid::onStarted::exit() {
+pid::onStarted.exit() {
 
   pid::file || exit
 
 }
 #******
-#****e* libpid/pid::onExit::stop
+#****e* libpid/pid::onExit.stop
 #  SYNOPSIS
-#    pid::onExit::stop <PID(s)>
+#    pid::onExit.stop <PID(s)>
 #  DESCRIPTION
 #    Adds <PID(s)> to the cleanup list when the current process is terminated.
 #  NOTES
@@ -382,14 +382,14 @@ pid::onStarted::exit() {
 #    <PID(s)> - whitespace separated PID list
 #  EXAMPLE
 #    sleep 99 &
-#    pid::onExit::stop $!
+#    pid::onExit.stop $!
 #    test "${_bashlyk_apidClean[$BASHPID]}" -eq "$!"                            #? true
 #    ps -p $! -o pid= >| grep -w $!                                             #? true
-#    echo $(pid::onExit::stop $!; echo "$BASHPID : $! ")
+#    echo $(pid::onExit.stop $!; echo "$BASHPID : $! ")
 #    ps -p $! -o pid= >| grep -w $!                                             #? false
 #
 #  SOURCE
-pid::onExit::stop() {
+pid::onExit.stop() {
 
   [[ $* ]] || return $_bashlyk_iErrorMissingArgument
 
@@ -399,9 +399,9 @@ pid::onExit::stop() {
 
 }
 #******
-#****e* libpid/pid::onExit::close
+#****e* libpid/pid::onExit.close
 #  SYNOPSIS
-#    pid::onExit::close <FILEDESCRIPTOR(s)>
+#    pid::onExit.close <FILEDESCRIPTOR(s)>
 #  DESCRIPTION
 #    add list of <FILEDESCRIPTOR(s)> for close on exit
 #  NOTES
@@ -409,7 +409,7 @@ pid::onExit::stop() {
 #  ARGUMENTS
 #    <FILEDESCRIPTOR(s)> - whitespace separated file descriptors list
 #  SOURCE
-pid::onExit::close() {
+pid::onExit.close() {
 
   [[ $* ]] || return $_bashlyk_iErrorMissingArgument
 
@@ -419,9 +419,9 @@ pid::onExit::close() {
 
 }
 #******
-#****e* libpid/pid::onExit::unlink
+#****e* libpid/pid::onExit.unlink
 #  SYNOPSIS
-#    pid::onExit::unlink <file(s)>
+#    pid::onExit.unlink <file(s)>
 #  DESCRIPTION
 #    add list of filesystem objects for removing on exit
 #  NOTES
@@ -432,29 +432,29 @@ pid::onExit::close() {
 #    local a fnTemp1 fnTemp2 pathTemp1 pathTemp2 s=$RANDOM
 #    std::temp fnTemp1 keep=true suffix=.${s}1
 #    test -f $fnTemp1
-#    echo $(pid::onExit::unlink $fnTemp1 )
+#    echo $(pid::onExit.unlink $fnTemp1 )
 #    ls -l ${TMPDIR}/*.${s}1 2>/dev/null >| grep ".*\.${s}1"                    #? false
 #    echo $(std::temp fnTemp2 suffix=.${s}2)
 #    ls -l ${TMPDIR}/*.${s}2 2>/dev/null >| grep ".*\.${s}2"                    #? false
 #    echo $(std::temp fnTemp2 suffix=.${s}3 keep=true)
 #    ls -l ${TMPDIR}/*.${s}3 2>/dev/null >| grep ".*\.${s}3"                    #? true
 #    a=$(ls -1 ${TMPDIR}/*.${s}3)
-#    echo $(pid::onExit::unlink $a )
+#    echo $(pid::onExit.unlink $a )
 #    ls -l ${TMPDIR}/*.${s}3 2>/dev/null >| grep ".*\.${s}3"                    #? false
 #    std::temp pathTemp1 keep=true suffix=.${s}1 type=dir
 #    test -d $pathTemp1
-#    echo $(pid::onExit::unlink $pathTemp1 )
+#    echo $(pid::onExit.unlink $pathTemp1 )
 #    ls -1ld ${TMPDIR}/*.${s}1 2>/dev/null >| grep ".*\.${s}1"                  #? false
 #    echo $(std::temp pathTemp2 suffix=.${s}2 type=dir)
 #    ls -1ld ${TMPDIR}/*.${s}2 2>/dev/null >| grep ".*\.${s}2"                  #? false
 #    echo $(std::temp pathTemp2 suffix=.${s}3 keep=true type=dir)
 #    ls -1ld ${TMPDIR}/*.${s}3 2>/dev/null >| grep ".*\.${s}3"                  #? true
 #    a=$(ls -1ld ${TMPDIR}/*.${s}3)
-#    echo $(pid::onExit::unlink $a )
+#    echo $(pid::onExit.unlink $a )
 #    ls -1ld ${TMPDIR}/*.${s}3 2>/dev/null >| grep ".*\.${s}3"                  #? false
 #    ##TODO names with whitespaces
 #  SOURCE
-pid::onExit::unlink() {
+pid::onExit.unlink() {
 
   [[ $* ]] || return $_bashlyk_iErrorMissingArgument
 
@@ -490,11 +490,11 @@ pid::onExit::unlink() {
 #    test -d $path
 #    ps -p $pid -o pid= >| grep -w $pid
 #    ls /proc/$$/fd >| grep -w $fd
-#    pid::onExit::close $fd
-#    pid::onExit::stop $pid
-#    pid::onExit::unlink $fn1
-#    pid::onExit::unlink $path
-#    pid::onExit::unlink $pipe
+#    pid::onExit.close $fd
+#    pid::onExit.stop $pid
+#    pid::onExit.unlink $fn1
+#    pid::onExit.unlink $path
+#    pid::onExit.unlink $pipe
 #    pid::trap
 #    ls /proc/$$/fd >| grep -w $fd                                              #? false
 #    ps -p $pid -o pid= >| grep -w $pid                                         #? false
