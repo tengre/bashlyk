@@ -1,5 +1,5 @@
 #
-# $Id: libcnf.sh 737 2017-04-18 17:25:06+04:00 toor $
+# $Id: libcnf.sh 764 2017-05-11 17:28:10+04:00 toor $
 #
 #****h* BASHLYK/libcnf
 #  DESCRIPTION
@@ -64,9 +64,9 @@ declare -rg _bashlyk_exports_cnf="udfGetConfig udfSetConfig"
 #    a serialized CSV-string or an error code and message.
 #  EXAMPLE
 #    local b confChild confMain pid s s0
-#    udfMakeTemp confMain suffix=.conf
+#    std::temp confMain suffix=.conf
 #    confChild="${confMain%/*}/child.${confMain##*/}"                           #-
-#    udfAddFO2Clean $confChild                                                  #-
+#    pid::onExit::unlink $confChild                                             #-
 #    cat <<'EOFconf' > $confMain                                                #-
 #                                                                               #-
 #    s0=$0                                                                      #-
@@ -91,12 +91,14 @@ declare -rg _bashlyk_exports_cnf="udfGetConfig udfSetConfig"
 #    test=test                                                                  #-
 #                                                                               #-
 #    EOFchild                                                                   #-
+#    echo "cat start --"
 #    cat $confChild
+#    echo "cat stop  --"
+#    _ onError echo+return
 #    __getconfig $confChild b,pid >| grep 'pid=$$\|b=false\|;$'                 #? true
-#    rm -f $confChild                                                           #-
-#    _ onError return                                                           #-
-#    eval "$( __getconfig $confChild )"                                         #? $_bashlyk_iErrorNoSuchFileOrDir
-#    eval "$( __getconfig )"                                                    #? $_bashlyk_iErrorMissingArgument
+#    rm -f $confChild
+#    __getconfig $confChild  >| grep "err::status $( _ iErrorNoSuchFileOrDir )" #? true
+#    __getconfig             >| grep "err::status $( _ iErrorMissingArgument )" #? true
 #  SOURCE
 __getconfig() {
 
@@ -106,17 +108,19 @@ __getconfig() {
 
   if [[ ! $1 ]]; then
 
-    udfOnError return MissingArgument '1'
+    err::eval MissingArgument '1'
     return $(_ MissingArgument )
 
   fi
 
+  ## TODO temporary object source file do not removed!!!
   INI $o
   ${o}.settings.shellmode true
 
   if ! ${o}.load "$@"; then
 
-    udfOnError return ${_bashlyk_iLastError[$BASHPID]} "$1"
+    e="${_bashlyk_iLastError[$BASHPID]} $@"
+    err::eval $e
     return ${_bashlyk_iLastError[$BASHPID]}
 
   fi
@@ -128,7 +132,7 @@ __getconfig() {
                                                                                \
     for k in \${!$id[@]}; do                                                   \
       [[ \$k =~ ^_bashlyk_ ]] && continue;                                     \
-      udfIsValidVariable \$k && s+=\$k=\"\${$id[\$k]}\"\;;                     \
+      std::isVariable \$k && s+=\$k=\"\${$id[\$k]}\"\;;                        \
     done;                                                                      \
                                                                                \
   "
@@ -166,9 +170,9 @@ __getconfig() {
 #                      the name
 #  EXAMPLE
 #    local b confChild confMain pid s s0
-#    udfMakeTemp confMain suffix=.conf
+#    std::temp confMain suffix=.conf
 #    confChild="${confMain%/*}/child.${confMain##*/}"                           #-
-#    udfAddFO2Clean $confChild                                                  #-
+#    pid::onExit::unlink $confChild                                             #-
 #    cat <<'EOFconf' > $confMain                                                #-
 #                                                                               #-
 #    s0=$0                                                                      #-
@@ -194,6 +198,7 @@ __getconfig() {
 #    udfGetConfig $confChild pid,b,test                                         #? true
 #    echo "$b $pid $test" >| grep "false $$ test"                               #? true
 #    rm -f $confChild
+#    _ onError echo+return
 #    udfGetConfig $confChild s                                                  #? $_bashlyk_iErrorNoSuchFileOrDir
 #    udfGetConfig                                                               #? $_bashlyk_iErrorMissingArgument
 #  SOURCE
@@ -224,25 +229,21 @@ udfGetConfig() {
 #    InvalidArgument    - name contains the point at the beginning or at the end of
 #                         the name
 #  EXAMPLE
-#    udfMakeTemp conf suffix=.conf
+#    std::temp conf suffix=.conf
 #    udfSetConfig $conf "s0=$0;b=true;pid=$$;s=$(uname -a);1nvalid.key=invalid" #? true
 #    cat $conf >| grep "s0=$0\|b=true\|pid=$$\|s=\"$(uname -a)\""               #? true
 #    rm -f $conf
 #  SOURCE
 udfSetConfig() {
 
-  udfOn MissingArgument throw "$@"
+  throw on MissingArgument $@
 
   local conf path o s
 
   [[ "$1" != "${1##*/}" ]] && path="${1%/*}" || path="$( _ pathCnf )"
   conf="${path}/${1##*/}"
 
-  mkdir -p $path && touch $conf || eval $(
-
-    udfOnError throw NotExistNotCreated "$conf"
-
-  )
+  mkdir -p $path && touch $conf || on error throw NotExistNotCreated $conf
 
   o="${FUNCNAME[0]%%.*}_${RANDOM}${RANDOM}"
   INI $o

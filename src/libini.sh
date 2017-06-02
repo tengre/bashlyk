@@ -1,5 +1,5 @@
 #
-# $Id: libini.sh 740 2017-04-19 12:53:33+04:00 toor $
+# $Id: libini.sh 767 2017-06-02 12:08:07+04:00 toor $
 #
 #****h* BASHLYK/libini
 #  DESCRIPTION
@@ -31,6 +31,7 @@
 #    INI ini
 #
 #    # bind to ini object CLI options
+#    ## TODO detailed description required
 #    ini.bind.cli config{c}: source{s}:-- help{h} mode{m}: dry-run
 #
 #    # get value of the --config (-c) option
@@ -40,8 +41,8 @@
 #    # CLI options.
 #    # [!] CLI options with the same name have higher priority
 #    ini.load $conf                                                            \
-#                  []mode,help                                                :\
-#               [dry]run                                                      :\
+#                  []mode,help                                                 \
+#               [dry]run                                                       \
 #            [source]=
 #
 #    # check value of the option 'run' from section 'dry'
@@ -75,7 +76,7 @@
 #    $_BASHLYK_LIBINI provides protection against re-using of this module
 #  SOURCE
 [ -n "$_BASHLYK_LIBINI" ] && return 0 || _BASHLYK_LIBINI=1
-[ -n "$_BASHLYK" ] || . bashlyk || eval '                                      \
+[ -n "$_BASHLYK" ] || . ${_bashlyk_pathLib}/bashlyk || eval '                  \
                                                                                \
     echo "[!] bashlyk loader required for ${0}, abort.."; exit 255             \
                                                                                \
@@ -115,12 +116,12 @@ declare -rg _bashlyk_externals_ini="                                           \
 
 declare -rg _bashlyk_exports_ini="                                             \
                                                                                \
-    INI get set keys show save read load bind.cli getopt                       \
-    settings settings.section.padding settings.shellmode free                  \
+    INI INI::{get,set,keys,show,save,read,load,bind.cli,getopt,settings,       \
+              settings.section.padding,settings.shellmode,free}                \
                                                                                \
 "
 _bashlyk_iErrorIniMissingMethod=111
-_bashlyk_iErrorIniMissingMethod=110
+_bashlyk_iErrorIniBadMethod=110
 _bashlyk_iErrorIniExtraCharInKey=109
 _bashlyk_hError[$_bashlyk_iErrorIniMissingMethod]="instance failed - missing method"
 _bashlyk_hError[$_bashlyk_iErrorIniBadMethod]="instance failed - bad method"
@@ -151,9 +152,9 @@ _bashlyk_hError[$_bashlyk_iErrorIniExtraCharInKey]="extra character(s) in the ke
 #  SOURCE
 INI() {
 
-  local f s o=${1:-INI}
+  local f fn s o=${1:-INI}
 
-  udfOn InvalidVariable throw $o
+  throw on InvalidVariable $o
 
   declare -Ag -- _h${o^^}_settings='(                                          \
                                                                                \
@@ -171,22 +172,17 @@ INI() {
   declare -Ag -- _h${o^^}="([__settings__]=_h${o^^}_settings)"
   declare -ag -- _a${o^^}="()"
 
+  std::temp fn path="${TMPDIR}/${USER}/bashlyk" prefix='ini.' suffix=".${o}"
+
   for s in $_bashlyk_methods_ini; do
 
-    f=$( declare -pf INI::${s} 2>/dev/null ) || eval $(                        \
-                                                                               \
-      udfOnError throw IniMissingMethod "INI::${s} for $o"                     \
-                                                                               \
-    )
+    f=$( declare -pf INI::${s} 2>/dev/null ) || on error throw IniMissingMethod "INI::${s} for $o"
 
-    eval "${f/INI::$s/${o}.$s}" || eval $(                                     \
-                                                                               \
-      udfOnError throw IniBadMethod "INI::$s for $o"                           \
-                                                                               \
-    )
+    echo "${f/INI::$s/${o}.$s}" >> $fn || on error throw IniBadMethod "INI::$s for $o"
 
   done
 
+  source $fn || on error throw InvalidArgument "$fn"
   return 0
 
 }
@@ -249,7 +245,7 @@ INI::__section.byindex() {
 
   local i o=${FUNCNAME[0]%%.*} s
 
-  udfIsNumber $1 && i=$1 || i=@
+  std::isNumber $1 && i=$1 || i=@
 
   [[ $i == @ ]] && s='#' || s=''
 
@@ -429,7 +425,7 @@ INI::__section.show() {
 
     iC=$( ${o}.__section.get _bashlyk_raw_num )
 
-    if udfIsNumber $iC && (( iC > 0 )); then
+    if std::isNumber $iC && (( iC > 0 )); then
 
       for (( k=0; k < $iC; k++ )); do
 
@@ -442,11 +438,11 @@ INI::__section.show() {
       local bQuote iKeyWidth iPad v
 
       iKeyWidth=$( ${o}.__section.get _bashlyk_key_width )
-      udfIsNumber $iKeyWidth || iKeyWidth=''
+      std::isNumber $iKeyWidth || iKeyWidth=''
 
       iPad=$( ${o}.settings iPadding )
 
-      udfIsNumber $iPad || iPad=4
+      std::isNumber $iPad || iPad=4
 
       if [[ $( ${o}.settings.shellmode ) =~ ^(true|yes|1)$ ]]; then
 
@@ -464,7 +460,7 @@ INI::__section.show() {
         for k in \"\${!$id[@]}\"; do                                           \
           if [[ ! \$k =~ ^_bashlyk_ ]]; then                                   \
             v=\${$id[\$k]};                                                    \
-            [[ \$bQuote ]] && v=\$( udfQuoteIfNeeded \$v );                    \
+            [[ \$bQuote ]] && v=\$( std::lazyquote \$v );                      \
             printf -- '%${iPad}s%${iKeyWidth}s%${iPad}s=%${iPad}s%s\n'         \
               \"\" \"\$k\" \"\" \"\"  \"\$v\";                                 \
           fi                                                                   \
@@ -517,7 +513,7 @@ INI::__section.setRawData() {
 
   o=${FUNCNAME[0]%%.*}
 
-  shift && s="$( udfTrim "$*" )"
+  shift && s="$( std::trim "$*" )"
 
   case "$c" in
 
@@ -530,7 +526,7 @@ INI::__section.setRawData() {
     -|+)
 
        i=$( ${o}.__section.get _bashlyk_raw_num )
-       udfIsNumber $i || i=0
+       std::isNumber $i || i=0
        ${o}.__section.set "_bashlyk_raw_incr=${i}" "$s"
        : $(( i++ ))
        ${o}.__section.set '_bashlyk_raw_num' $i
@@ -586,7 +582,7 @@ INI::__section.getArray() {
   o=${FUNCNAME[0]%%.*}
   ${o}.__section.select $*
   id=$( ${o}.__section.id $* )
-  udfIsHash $id || eval $( udfOnError InvalidHash '$id' )
+  std::isHash $id || on error $(_ onError) InvalidHash $id
 
   sU=$( ${o}.__section.get _bashlyk_raw_mode )
 
@@ -605,7 +601,7 @@ INI::__section.getArray() {
   else
 
     iC=$( ${o}.__section.get _bashlyk_raw_num )
-    if udfIsNumber $iC && (( iC )); then
+    if std::isNumber $iC && (( iC )); then
 
       eval "                                                                   \
                                                                                \
@@ -668,7 +664,7 @@ INI::__section.getArray() {
 #  SOURCE
 INI::get() {
 
-  udfOn MissingArgument $* || return $?
+  errorify on MissingArgument $* || return
 
   local -a a
   local IFS o k s="$*" v
@@ -695,7 +691,7 @@ INI::get() {
       ;;
 
     *)
-      eval $( udfOnError retwarn InvalidArgument "$*" )
+      on error warn+return InvalidArgument "$*"
       ;;
 
   esac
@@ -707,7 +703,7 @@ INI::get() {
   else
 
     ${o}.__section.select $s
-    ${o}.__section.get $( udfTrim "$k" )
+    ${o}.__section.get $( std::trim "$k" )
 
   fi
 
@@ -767,7 +763,7 @@ INI::keys() {
     ;;
 
     *)
-      eval $( udfOnError retwarn InvalidArgument "$*" )
+      on error warn+return InvalidArgument "$*"
     ;;
 
   esac
@@ -815,6 +811,7 @@ INI::keys() {
 #                      or 'key = value'
 #  EXAMPLE
 #    INI tSet
+#    tSet.set                                                                   #? $_bashlyk_iErrorMissingArgument
 #    tSet.set [section]key = is value
 #    tSet.set key = is unnamed section
 #    tSet.set key with spaces = is unnamed section
@@ -840,7 +837,7 @@ INI::keys() {
 #  SOURCE
 INI::set() {
 
-  udfOn MissingArgument $* || return $?
+  errorify on MissingArgument $* || return
 
   local iKeyWidth o k s v
 
@@ -852,15 +849,15 @@ INI::set() {
 
   else
 
-    eval $( udfOnError InvalidArgument "$*" )
+    on error InvalidArgument "$*"
 
   fi
 
-  k="$( udfTrim "${s##*]}" )"
-  s="$( udfTrim "${s%]*}"  )"
+  k="$( std::trim "${s##*]}" )"
+  s="$( std::trim "${s%]*}"  )"
 
   [[ $s == $k ]] && s=__global__
-  [[ ${s/[/}  ]] && s=$( udfTrim "${s/[/}" ) || s=__global__
+  [[ ${s/[/}  ]] && s=$( std::trim "${s/[/}" ) || s=__global__
 
   o=${FUNCNAME[0]%%.*}
 
@@ -874,10 +871,10 @@ INI::set() {
 
   else
 
-    [[ $k =~ $( ${o}.settings reKey ) ]] || eval $( udfOnError IniExtraCharInKey "$k" )
+    [[ $k =~ $( ${o}.settings reKey ) ]] || on error IniExtraCharInKey "$k"
 
     iKeyWidth=$( ${o}.__section.get _bashlyk_key_width )
-    udfIsNumber $iKeyWidth || iKeyWidth=0
+    std::isNumber $iKeyWidth || iKeyWidth=0
 
     (( ${#k} > iKeyWidth )) && ${o}.__section.set _bashlyk_key_width ${#k}
     ${o}.__section.set "$k" "$v"
@@ -939,8 +936,8 @@ INI::show() {
 #    NotExistNotCreated - the target file is not created
 #  EXAMPLE
 #    local fn
-#    udfMakeTemp fn
-#    udfAddFO2Clean ${fn}.bak
+#    std::temp fn
+#    pid::onExit.unlink ${fn}.bak
 #    INI tSave
 #    tSave.__section.select section
 #    tSave.__section.set key "is value"
@@ -961,7 +958,7 @@ INI::show() {
 #  SOURCE
 INI::save() {
 
-  udfOn MissingArgument throw "$1"
+  throw on MissingArgument $1
 
   local c fmtComment fn o
 
@@ -974,15 +971,11 @@ INI::save() {
 
   [[ -s $fn ]] && mv -f $fn ${fn}.bak
 
-  mkdir -p ${fn%/*} && touch $fn || eval $(                                    \
-                                                                               \
-    udfOnError throw NotExistNotCreated "${fn%/*}"                             \
-                                                                               \
-  )
+  mkdir -p ${fn%/*} && touch $fn || on error throw NotExistNotCreated ${fn%/*}
 
   {
 
-    printf -- "${fmtComment//%COMMENT%/$c}" "$( udfDateR )" "$( _ sUser )"
+    printf -- "${fmtComment//%COMMENT%/$c}" "$( std::dateR )" "$( _ sUser )"
     ${o}.show
 
   } > $fn
@@ -1002,7 +995,7 @@ INI::save() {
 #    NotPermitted    - owner of the input file differ than owner of the process
 #  EXAMPLE
 #   local ini s S                                                               #-
-#   udfMakeTemp ini suffix=".ini"                                               #-
+#   std::temp ini suffix=".ini"                                               #-
 #    cat <<'EOFini' > ${ini}                                                    #-
 #    key              = on the global unnamed section                           #-
 #    key.with.dot     = with dot                                                #-
@@ -1050,7 +1043,8 @@ INI::save() {
 #  SOURCE
 INI::read() {
 
-  udfOn NoSuchFileOrDir $1 || return
+  errorify on MissingArgument $1 || return
+  errorify on NoSuchFileOrDir $1 || return
 
   local bActiveSection bIgnore csv fn i iKeyWidth reComment reKeyVal reSection
   local reValidSections s
@@ -1072,7 +1066,7 @@ INI::read() {
   ## TODO permit hi uid ?
   if [[ ! $( exec -c stat -c %u $fn ) =~ ^($UID|0)$ ]]; then
 
-    eval $( udfOnError NotPermitted "$1 owned by $( stat -c %U $fn )" )
+    on error NotPermitted $1 owned by $( stat -c %U $fn )
 
   fi
 
@@ -1082,7 +1076,7 @@ INI::read() {
 
   ${o}.__section.select
   iKeyWidth=$( ${o}.__section.get _bashlyk_key_width )
-  udfIsNumber $iKeyWidth || iKeyWidth=0
+  std::isNumber $iKeyWidth || iKeyWidth=0
 
   while read -t 4; do
 
@@ -1115,14 +1109,14 @@ INI::read() {
       ${o}.__section.select $s
       i=0
       iKeyWidth=$( ${o}.__section.get _bashlyk_key_width )
-      udfIsNumber $iKeyWidth || iKeyWidth=0
+      std::isNumber $iKeyWidth || iKeyWidth=0
 
       case "${hRawMode[$s]}" in
 
         -) ;;
 
         +) i=$( ${o}.__section.get _bashlyk_raw_num )
-           udfIsNumber $i || ${o}.__section.set _bashlyk_raw_num ${i:=0}
+           std::isNumber $i || ${o}.__section.set _bashlyk_raw_num ${i:=0}
            ;;
 
         =) ${o}.__section.set _bashlyk_raw_mode "=";;
@@ -1199,7 +1193,7 @@ INI::read() {
 #    MissingArgument - parameters and sections are not selected
 #  EXAMPLE
 #   local iniMain iniLoad iniSave                                               #-
-#   udfMakeTemp -v iniMain suffix=.ini                                          #-
+#   std::temp -v iniMain suffix=.ini                                          #-
 #   GLOBIGNORE="*:?"                                                            #-
 #    cat <<-'EOFini' > $iniMain                                                 #-
 #    section  =  global                                                         #-
@@ -1230,8 +1224,8 @@ INI::read() {
 #    EOFini                                                                     #-
 #    iniLoad="${iniMain%/*}/child.${iniMain##*/}"                               #-
 #    iniSave="${iniMain%/*}/write.${iniMain##*/}"                               #-
-#    udfAddFO2Clean $iniLoad                                                    #-
-#    udfAddFO2Clean $iniSave                                                    #-
+#    pid::onExit.unlink $iniLoad                                                #-
+#    pid::onExit.unlink $iniSave                                                #-
 #    cat <<-'EOFiniChild' > $iniLoad                                            #-
 #    section  =  global                                                         #-
 #    file     =  child                                                          #-
@@ -1282,7 +1276,7 @@ INI::read() {
 #  SOURCE
 INI::load() {
 
-  [[ ${1##*/} =~ ^\.|\.$ ]] && eval $( udfOnError InvalidArgument "$1" )
+  [[ ${1##*/} =~ ^\.|\.$ ]] && on error InvalidArgument "${BASH_REMATCH[0]}"
 
   local -a a
   local -A h hKeyValue hRawMode
@@ -1301,8 +1295,8 @@ INI::load() {
 
     local s sSection
 
-    sSection=$( udfTrim ${1:-__global__} )
-    s="$( udfTrim "${2//,[, ]/,}" )"
+    sSection=$( std::trim ${1:-__global__} )
+    s="$( std::trim "${2//,[, ]/,}" )"
 
     if [[ $s =~ ^[=+\-]$ ]]; then
 
@@ -1332,7 +1326,7 @@ INI::load() {
 
   else
 
-    udfOn NoSuchFileOrDir $1 || return $?
+    errorify on NoSuchFileOrDir $1 || return
 
   fi
 
@@ -1373,7 +1367,7 @@ INI::load() {
   eval "s=\${_h${o^^}[__cli__]}"
   if [[ $s ]]; then
 
-    udfMakeTemp ini
+    std::temp ini
 
     ${s}.save $ini
     ${o}.read $ini "$reValidSections"
@@ -1386,6 +1380,7 @@ INI::load() {
 
 }
 #******
+## TODO raw section description required
 #****e* libini/INI::bind.cli
 #  SYNOPSIS
 #    INI::bind.cli [<section>-]<option long name>{<short name>}[:[:=+]] ...
@@ -1410,7 +1405,7 @@ INI::load() {
 #  EXAMPLE
 #    local ini
 #    _ sArg "-F CLI -E clear -H 'Hi!' -M test -U a.2 -U a.2 --acc a --acc b "   #-
-#    udfMakeTemp ini
+#    std::temp ini
 #    tLoad.save $ini                                                            #? true
 #    tLoad.free
 #    _ onError retwarn
@@ -1455,7 +1450,7 @@ INI::bind.cli() {
 
     else
 
-      eval $( udfOnError InvalidArgument "$s - format error" )
+      on error InvalidArgument $s - format error
 
     fi
 
@@ -1474,7 +1469,7 @@ INI::bind.cli() {
 
   done
 
-  udfMakeTemp fnErr
+  std::temp fnErr
   s="$(                                                                        \
                                                                                \
     LC_ALL=C getopt -u -o $sShort --long ${sLong%*,} -n $0 -- $(_ sArg)        \
@@ -1505,12 +1500,12 @@ INI::bind.cli() {
       [[ ${h[unrecognized]} ]] && s+="${h[unrecognized]%*,}"
 
       unset h
-      eval $( udfOnError InvalidOption "${s%*,} (command line:  $( _ sArg ))" )
+      on error warn+return InvalidOption "${s%*,} (command line:  $( _ sArg ))"
 
     ;;
 
     *)
-      eval $( udfOnError InvalidOption "internal fail - $( < $fnErr )" )
+      on error InvalidOption "internal fail - $( < $fnErr )"
     ;;
 
   esac
@@ -1569,7 +1564,7 @@ INI::getopt() {
     ;;
 
     *)
-      udfOn MissingArgument "$*" || return $?
+      errorify on MissingArgument "$*" || return
       return $( _ iErrorInvalidArgument )
     ;;
 
@@ -1578,7 +1573,7 @@ INI::getopt() {
   o=${FUNCNAME[0]%%.*}
   eval "o=\${_h${o^^}[__cli__]}"
 
-  udfOn EmptyVariable o || return $( _ iErrorNotAvailable )
+  errorify on EmptyVariable o || return $( _ iErrorNotAvailable )
 
   ${o}.get [${s}]${k}
 

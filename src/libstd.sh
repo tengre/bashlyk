@@ -1,5 +1,5 @@
 #
-# $Id: libstd.sh 728 2017-04-12 16:09:55+04:00 toor $
+# $Id: libstd.sh 767 2017-06-02 12:08:07+04:00 toor $
 #
 #****h* BASHLYK/libstd
 #  DESCRIPTION
@@ -15,7 +15,7 @@
 #    $_BASHLYK_LIBSTD provides protection against re-using of this module
 #  SOURCE
 [ -n "$_BASHLYK_LIBSTD" ] && return 0 || _BASHLYK_LIBSTD=1
-[ -n "$_BASHLYK" ] || . bashlyk || eval '                                      \
+[ -n "$_BASHLYK" ] || . ${_bashlyk_pathLib}/bashlyk || eval '                  \
                                                                                \
     echo "[!] bashlyk loader required for ${0}, abort.."; exit 255             \
                                                                                \
@@ -26,6 +26,7 @@
 #   Loading external libraries
 # SOURCE
 [[ -s ${_bashlyk_pathLib}/liberr.sh ]] && . "${_bashlyk_pathLib}/liberr.sh"
+[[ -s ${_bashlyk_pathLib}/libpid.sh ]] && . "${_bashlyk_pathLib}/libpid.sh"
 [[ -s ${_bashlyk_pathLib}/libmsg.sh ]] && . "${_bashlyk_pathLib}/libmsg.sh"
 #******
 #****v* libstd/Global Variables
@@ -49,16 +50,15 @@ declare -rg _bashlyk_aRequiredCmd_std="                                        \
 
 declare -rg _bashlyk_aExport_std="                                             \
                                                                                \
-    _  udfAlias2WSpace udfCat udfGetFreeFD udfGetMd5 udfGetPathMd5             \
-    udfGetTimeInSec udfIsHash udfIsNumber udfIsValidVariable udfMakeTemp       \
-    udfMakeTempV  udfPrepareByType udfQuoteIfNeeded udfShowVariable udfTrim    \
-    udfWSpace2Alias udfXml                                                     \
+    _ std::{acceptArrayItem,cat,finally,getFreeFD,getMD5,getMD5.list,          \
+    getTimeInSec,isHash,isNumber,isVariable,lazyquote,showVariable,temp,trim,  \
+    whitespace.decode,whitespace.encode,xml}                                 \
                                                                                \
 "
 #******
-#****f* libstd/udfIsNumber
+#****f* libstd/std::isNumber
 #  SYNOPSIS
-#    udfIsNumber <number> [<tag>]
+#    std::isNumber <number> [<tag>]
 #  DESCRIPTION
 #    Checking the argument that it is a natural number
 #    The argument is considered a number if it contains decimal digits and can
@@ -74,16 +74,16 @@ declare -rg _bashlyk_aExport_std="                                             \
 #    NotNumber       - argument is not natural number
 #    MissingArgument - no arguments
 #  EXAMPLE
-#    udfIsNumber 12                                                             #? true
-#    udfIsNumber 34k k                                                          #? true
-#    udfIsNumber 67M kMGT                                                       #? true
-#    udfIsNumber 89G G                                                          #? true
-#    udfIsNumber 12,34                                                          #? $_bashlyk_iErrorNotNumber
-#    udfIsNumber 12T                                                            #? $_bashlyk_iErrorNotNumber
-#    udfIsNumber 1O2                                                            #? $_bashlyk_iErrorNotNumber
-#    udfIsNumber                                                                #? $_bashlyk_iErrorMissingArgument
+#    std::isNumber 12                                                           #? true
+#    std::isNumber 34k k                                                        #? true
+#    std::isNumber 67M kMGT                                                     #? true
+#    std::isNumber 89G G                                                        #? true
+#    std::isNumber 12,34                                                        #? $_bashlyk_iErrorNotNumber
+#    std::isNumber 12T                                                          #? $_bashlyk_iErrorNotNumber
+#    std::isNumber 1O2                                                          #? $_bashlyk_iErrorNotNumber
+#    std::isNumber                                                              #? $_bashlyk_iErrorMissingArgument
 #  SOURCE
-udfIsNumber() {
+std::isNumber() {
 
   local s
 
@@ -91,15 +91,15 @@ udfIsNumber() {
 
   [[ $1 =~ ^[0-9]+${s}$ ]] && return 0
 
-  udfOn MissingArgument $1 || return $?
+  [[ $1 ]] || return $_bashlyk_iErrorMissingArgument
 
   return $_bashlyk_iErrorNotNumber
 
 }
 #******
-#****f* libstd/udfShowVariable
+#****f* libstd/std::showVariable
 #  SYNOPSIS
-#    udfShowVariable <var>[,|;| ]...
+#    std::showVariable <var>[,|;| ]...
 #  DESCRIPTION
 #    Listing the values of the arguments if they are variable names. It is
 #    possible to separate the names of variables by the signs ',' and ';',
@@ -118,35 +118,35 @@ udfIsNumber() {
 #    execution capability
 #  EXAMPLE
 #    local s='text' b='true' i=2015 a='true 2015 text'
-#    udfShowVariable a,b';' i s 1w >| md5sum - | grep ^72f4ca740b23dcec5a82.*-$ #? true
+#    std::showVariable a,b';' i s 1w >| md5sum - | grep ^72f4ca740b23dcec5a.*-$ #? true
 #  SOURCE
-udfShowVariable() {
+std::showVariable() {
 
-  local bashlyk_udfShowVariable_a bashlyk_udfShowVariable_s IFS=$'\t\n ,;'
+  local bashlyk_std_showVariable_a bashlyk_std_showVariable_s IFS=$'\t\n ,;'
 
-  for bashlyk_udfShowVariable_s in $*; do
+  for bashlyk_std_showVariable_s in $*; do
 
-    if udfIsValidVariable $bashlyk_udfShowVariable_s; then
+    if std::isVariable $bashlyk_std_showVariable_s; then
 
-      bashlyk_udfShowVariable_a+="\t${bashlyk_udfShowVariable_s}=${!bashlyk_udfShowVariable_s}\n"
+      bashlyk_std_showVariable_a+="\t${bashlyk_std_showVariable_s}=${!bashlyk_std_showVariable_s}\n"
 
     else
 
-      bashlyk_udfShowVariable_a+=": Variable name \"${bashlyk_udfShowVariable_s}\" is not valid!\n"
+      bashlyk_std_showVariable_a+=": Variable name \"${bashlyk_std_showVariable_s}\" is not valid!\n"
 
     fi
 
   done
 
-  echo -e ": Variable listing>\n${bashlyk_udfShowVariable_a}"
+  echo -e ": Variable listing>\n${bashlyk_std_showVariable_a}"
 
   return 0
 
 }
 #******
-#****f* libstd/udfIsValidVariable
+#****f* libstd/std::isVariable
 #  SYNOPSIS
-#    udfIsValidVariable <arg>
+#    std::isVariable <arg>
 #  DESCRIPTION
 #    Validate <arg> as variable name
 #  INPUTS
@@ -156,28 +156,28 @@ udfShowVariable() {
 #    MissingArgument - no arguments
 #    InvalidVariable - is not valid variable name
 #  EXAMPLE
-#    udfIsValidVariable                                                         #? $_bashlyk_iErrorMissingArgument
-#    udfIsValidVariable "12w"                                                   #? $_bashlyk_iErrorInvalidVariable
-#    udfIsValidVariable "a"                                                     #? true
-#    udfIsValidVariable "k1"                                                    #? true
-#    udfIsValidVariable "&w1"                                                   #? $_bashlyk_iErrorInvalidVariable
-#    udfIsValidVariable "#k12s"                                                 #? $_bashlyk_iErrorInvalidVariable
-#    udfIsValidVariable ":v1"                                                   #? $_bashlyk_iErrorInvalidVariable
-#    udfIsValidVariable "a1-b"                                                  #? $_bashlyk_iErrorInvalidVariable
+#    std::isVariable                                                            #? $_bashlyk_iErrorMissingArgument
+#    std::isVariable "12w"                                                      #? $_bashlyk_iErrorInvalidVariable
+#    std::isVariable "a"                                                        #? true
+#    std::isVariable "k1"                                                       #? true
+#    std::isVariable "&w1"                                                      #? $_bashlyk_iErrorInvalidVariable
+#    std::isVariable "#k12s"                                                    #? $_bashlyk_iErrorInvalidVariable
+#    std::isVariable ":v1"                                                      #? $_bashlyk_iErrorInvalidVariable
+#    std::isVariable "a1-b"                                                     #? $_bashlyk_iErrorInvalidVariable
 #  SOURCE
-udfIsValidVariable() {
+std::isVariable() {
 
-  [[ "$1" =~ ^[_a-zA-Z][_a-zA-Z0-9]*$ ]] && return 0
+  [[ $* =~ ^[_a-zA-Z][_a-zA-Z0-9]*$ ]] && return 0
 
-  udfOn MissingArgument $1 || return
+  [[ $* ]] || return $_bashlyk_iErrorMissingArgument
 
   return $_bashlyk_iErrorInvalidVariable
 
 }
 #******
-#****f* libstd/udfQuoteIfNeeded
+#****f* libstd/std::lazyquote
 #  SYNOPSIS
-#    udfQuoteIfNeeded <arg>
+#    std::lazyquote <arg>
 #  DESCRIPTION
 #    Argument with whitespaces is doublequoted
 #  INPUTS
@@ -185,11 +185,11 @@ udfIsValidVariable() {
 #  OUTPUT
 #    doublequoted input with whitespaces
 #  EXAMPLE
-#    udfQuoteIfNeeded                                                           #? $_bashlyk_iErrorMissingArgument
-#    udfQuoteIfNeeded "word"                                 >| grep '^word$'   #? true
-#    udfQuoteIfNeeded two words                              >| grep '^\".*\"$' #? true
+#    std::lazyquote                                                             #? $_bashlyk_iErrorMissingArgument
+#    std::lazyquote "word"                                 >| grep '^word$'     #? true
+#    std::lazyquote two words                              >| grep '^\".*\"$'   #? true
 #  SOURCE
-udfQuoteIfNeeded() {
+std::lazyquote() {
 
   if [[ "$*" =~ [[:space:]] && ! "$*" =~ ^\".*\"$ ]]; then
 
@@ -203,9 +203,9 @@ udfQuoteIfNeeded() {
 
 }
 #******
-#****f* libstd/udfWSpace2Alias
+#****f* libstd/std::whitespace.encode
 #  SYNOPSIS
-#    udfWSpace2Alias -|<arg>
+#    std::whitespace.encode -|<arg>
 #  DESCRIPTION
 #    The whitespace in the argument is replaced by the "magic" sequence of
 #    characters defined in the global variable $_bashlyk_sWSpaceAlias
@@ -216,12 +216,12 @@ udfQuoteIfNeeded() {
 #   input data with replaced (masked) whitespaces by a special sequence of
 #   characters
 #  EXAMPLE
-#    a=($(udfWSpace2Alias single argument expected ... ))
+#    a=($(std::whitespace.encode single argument expected ... ))
 #    echo ${#a[@]}                                                  >| grep ^1$ #? true
-#    a=($(echo single argument expected ... | udfWSpace2Alias -))
+#    a=($(echo single argument expected ... | std::whitespace.encode -))
 #    echo ${#a[@]}                                                  >| grep ^1$ #? true
 #  SOURCE
-udfWSpace2Alias() {
+std::whitespace.encode() {
 
   local s=$*
 
@@ -244,9 +244,9 @@ udfWSpace2Alias() {
 
 }
 #******
-#****f* libstd/udfAlias2WSpace
+#****f* libstd/std::whitespace.decode
 #  SYNOPSIS
-#    udfAlias2WSpace -|<arg>
+#    std::whitespace.decode -|<arg>
 #  DESCRIPTION
 #    If the input contains a sequence of characters defined in the global
 #    variable $_bashlyk_WSpase2Alias, then they are replaced by a whitespace.
@@ -260,13 +260,13 @@ udfWSpace2Alias() {
 #    local text s
 #    s="${_bashlyk_sWSpaceAlias}"
 #    text="many${s}arguments${s}expected${s}..."
-#    udfAlias2WSpace $text
-#    a=($(udfAlias2WSpace $text))
+#    std::whitespace.decode $text
+#    a=($(std::whitespace.decode $text))
 #    echo ${#a[@]}                                                  >| grep ^4$ #? true
-#    a=($(echo $text | udfAlias2WSpace -))
+#    a=($(echo $text | std::whitespace.decode -))
 #    echo ${#a[@]}                                                  >| grep ^4$ #? true
 #  SOURCE
-udfAlias2WSpace() {
+std::whitespace.decode() {
 
   local s=$*
 
@@ -282,15 +282,15 @@ udfAlias2WSpace() {
     ;;
 
     *)
-       udfQuoteIfNeeded "${s//${_bashlyk_sWSpaceAlias}/ }"
+       std::lazyquote "${s//${_bashlyk_sWSpaceAlias}/ }"
     ;;
 
   esac
 }
 #******
-#****f* libstd/udfMakeTemp
+#****f* libstd/std::temp
 #  SYNOPSIS
-#    udfMakeTemp [ [-v] <valid variable> ] <named options>...
+#    std::temp [ [-v] <valid variable> ] <named options>...
 #  DESCRIPTION
 #    make temporary file object - file, pipe or directory
 #  INPUTS
@@ -322,48 +322,48 @@ udfAlias2WSpace() {
 #    ## TODO improve tests
 #    local foTemp s=$RANDOM
 #    _ onError return
-#    udfMakeTemp foTemp path=/tmp prefix=pre. suffix=.${s}1                     #? true
+#    std::temp foTemp path=/tmp prefix=pre. suffix=.${s}1                       #? true
 #    ls -1 /tmp/pre.*.${s}1 2>/dev/null >| grep "/tmp/pre\..*\.${s}1"           #? true
 #    rm -f $foTemp
-#    udfMakeTemp foTemp path=/tmp type=dir mode=0751 suffix=.${s}2              #? true
+#    std::temp foTemp path=/tmp type=dir mode=0751 suffix=.${s}2                #? true
 #    ls -ld $foTemp 2>/dev/null >| grep "^drwxr-x--x.*${s}2$"                   #? true
 #    rmdir $foTemp
-#    foTemp=$(udfMakeTemp prefix=pre. suffix=.${s}3)
+#    foTemp=$(std::temp prefix=pre. suffix=.${s}3)
 #    ls -1 $foTemp 2>/dev/null >| grep "pre\..*\.${s}3$"                        #? true
 #    rm -f $foTemp
-#    foTemp=$(udfMakeTemp prefix=pre. suffix=.${s}4 keep=false)                 #? true
+#    foTemp=$(std::temp prefix=pre. suffix=.${s}4 keep=false)                   #? true
 #    echo $foTemp >| grep "${TMPDIR}/pre\..*\.${s}4"                            #? true
 #    test -f $foTemp                                                            #? false
 #    rm -f $foTemp
-#    $(udfMakeTemp foTemp path=/tmp prefix=pre. suffix=.${s}5 keep=true)
+#    $(std::temp foTemp path=/tmp prefix=pre. suffix=.${s}5 keep=true)
 #    ls -1 /tmp/pre.*.${s}5 2>/dev/null >| grep "/tmp/pre\..*\.${s}5"           #? true
 #    rm -f /tmp/pre.*.${s}5
-#    $(udfMakeTemp foTemp path=/tmp prefix=pre. suffix=.${s}6)
+#    $(std::temp foTemp path=/tmp prefix=pre. suffix=.${s}6)
 #    ls -1 /tmp/pre.*.${s}6 2>/dev/null >| grep "/tmp/pre\..*\.${s}6"           #? false
 #    unset foTemp
-#    foTemp=$(udfMakeTemp)                                                      #? true
+#    foTemp=$(std::temp)                                                        #? true
 #    ls -1l $foTemp 2>/dev/null                                                 #? true
 #    test -f $foTemp                                                            #? true
 #    rm -f $foTemp
-#    udfMakeTemp foTemp type=pipe                                               #? true
+#    std::temp foTemp type=pipe                                                 #? true
 #    test -p $foTemp                                                            #? true
 #    rm -f $foTemp
-#    udfMakeTemp invalid+variable                                               #? ${_bashlyk_iErrorInvalidVariable}
-#    udfMakeTemp path=/proc                                                     #? ${_bashlyk_iErrorNotExistNotCreated}
+#    std::temp invalid+variable                                                 #? ${_bashlyk_iErrorInvalidVariable}
+#    std::temp path=/proc                                                       #? ${_bashlyk_iErrorNotExistNotCreated}
 #  SOURCE
-udfMakeTemp() {
+std::temp() {
 
-  if [[ "$1" == "-v" ]] || udfIsValidVariable $1; then
+  if [[ "$1" == "-v" ]] || std::isVariable $1; then
 
     [[ "$1" == "-v" ]] && shift
 
-    udfIsValidVariable $1 || eval $( udfOnError InvalidVariable "$1" )
+    std::isVariable $1 || on error InvalidVariable $1
 
-    eval 'export $1="$( shift; udfMakeTemp stdout-mode ${@//keep=false/} )"'
+    eval 'export $1="$( shift; std::temp stdout-mode ${@//keep=false/} )"'
 
-    [[ ${!1} ]] || eval $( udfOnError EmptyResult "$1" )
+    [[ ${!1} ]] || on error EmptyResult $1
 
-    [[ $* =~ keep=false || ! $* =~ keep=true ]] && udfAddFO2Clean ${!1}
+    [[ $* =~ keep=false || ! $* =~ keep=true ]] && pid::onExit.unlink ${!1}
 
     return 0
 
@@ -393,11 +393,11 @@ udfMakeTemp() {
 
                 if [[ $1 == $s ]]; then
 
-      		  udfIsValidVariable $1 || eval $(udfOnError InvalidVariable $s)
+      		  std::isVariable $1 || on error InvalidVariable $s
 
                 fi
 
-      	        if udfIsNumber "$2" && [[ -z "$3" ]] ; then
+      	        if std::isNumber "$2" && [[ -z "$3" ]] ; then
 
       		  # compatibility with ancient version
       		  octMode="$2"
@@ -428,7 +428,7 @@ udfMakeTemp() {
 
   fi
 
-  mkdir -p $path || eval $( udfOnError NotExistNotCreated "$path" )
+  mkdir -p $path || on error NotExistNotCreated "$path"
 
   case "$cmd" in
 
@@ -442,7 +442,7 @@ udfMakeTemp() {
 
     mktemp)
 
-      s=$( mktemp --tmpdir=${path} $optDir --suffix=${sSuffix} "${sPrefix:0:5}XXXXXXXX" )
+      s=$( mktemp --tmpdir="$path" $optDir --suffix="$sSuffix" "${sPrefix:0:5}XXXXXXXX" )
 
     ;;
 
@@ -467,7 +467,7 @@ udfMakeTemp() {
 
   [[ $octMode ]] && chmod $octMode $s
 
-  ## TODO обработка ошибок
+  ## TODO error handling
   if (( $UID == 0 )); then
 
     [[ $sUser  ]] && chown $sUser  $s
@@ -477,11 +477,11 @@ udfMakeTemp() {
 
   if ! [[ -f "$s" || -p "$s" || -d "$s" ]]; then
 
-    eval $( udfOnError NotExistNotCreated $s )
+    on error NotExistNotCreated $s
 
   fi
 
-  [[ $* =~ keep=false ]] && udfAddFO2Clean $s
+  [[ $* =~ keep=false ]] && pid::onExit.unlink $s
 
   [[ $s ]] || return $( _ iErrorEmptyResult )
 
@@ -489,63 +489,9 @@ udfMakeTemp() {
 
 }
 #******
-#****f* libstd/udfMakeTempV
+#****f* libstd/std::acceptArrayItem
 #  SYNOPSIS
-#    udfMakeTempV <var> [file|dir|keep|keepf[ile*]|keepd[ir]] [<prefix>]
-#  DESCRIPTION
-#    Create a temporary file or directory with automatic removal upon completion
-#    of the script, the object name assigned to the variable.
-#    Obsolete - replaced by a udfMakeTemp
-#  INPUTS
-#    <var>      - the output assigned to the <variable> (as bash printf)
-#                 option -v can be omitted, variable must be correct and this
-#                 options must be first
-#    file       - create file
-#    dir        - create directory
-#    keep[file] - create file, keep after done
-#    keepdir    - create directory, keep after done
-#    prefix     - prefix for name (5 letters)
-#  ERRORS
-#    NotExistNotCreated - temporary file system object is not created
-#    InvalidVariable    - used invalid variable name
-#    EmptyResult        - name for temporary object missing
-#  EXAMPLE
-#    local foTemp
-#    udfMakeTempV foTemp file prefix                                            #? true
-#    ls $foTemp >| grep "prefi"                                                 #? true
-#    udfMakeTempV foTemp dir                                                    #? true
-#    ls -ld $foTemp >| grep "^drwx------.*${foTemp}$"                           #? true
-#    echo $(udfAddFO2Clean $foTemp)
-#    test -d $foTemp                                                            #? false
-#  SOURCE
-udfMakeTempV() {
-
-  udfOn MissingArgument throw $1 || return $?
-
-  local sKeep sType sPrefix IFS=$' \t\n'
-
-  udfIsValidVariable $1 || eval $( udfOnError throw InvalidVariable "$1" )
-
-  [[ $3 ]] && sPrefix="prefix=$3"
-
-  case $2 in
-
-            dir) sType="type=dir" ; sKeep="keep=false" ;;
-           file) sType="type=file"; sKeep="keep=false" ;;
-    keep|keepf*) sType="type=file"; sKeep="keep=true"  ;;
-         keepd*) sType="type=dir" ; sKeep="keep=true"  ;;
-             '') sType="type=file"; sKeep="keep=false" ;;
-              *) sPrefix="prefix=$2";;
-
-  esac
-
-  udfMakeTemp $1 $sType $sKeep $sPrefix
-
-}
-#******
-#****f* libstd/udfPrepareByType
-#  SYNOPSIS
-#    udfPrepareByType <arg>
+#    std::acceptArrayItem <arg>
 #  DESCRIPTION
 #    present argument 'Array[item]' as '{Array[item]}'
 #  INPUTS
@@ -557,19 +503,18 @@ udfMakeTempV() {
 #    InvalidVariable - не валидный идентификатор
 #  EXAMPLE
 #    _bashlyk_onError=return
-#    udfPrepareByType                                                           #? $_bashlyk_iErrorMissingArgument
-#    udfPrepareByType 12a                                                       #? $_bashlyk_iErrorInvalidVariable
-#    udfPrepareByType 12a[te]                                                   #? $_bashlyk_iErrorInvalidVariable
-## TODO - do not worked    udfPrepareByType a12[]                               #? $_bashlyk_iErrorInvalidVariable
-#    udfPrepareByType _a >| grep '^_a$'                                         #? true
-#    udfPrepareByType _a[1234] >| grep '^\{_a\[1234\]\}$'                       #? true
+#    std::acceptArrayItem                                                       #? $_bashlyk_iErrorMissingArgument
+#    std::acceptArrayItem 12a                                                   #? $_bashlyk_iErrorInvalidVariable
+#    std::acceptArrayItem 12a[te]                                               #? $_bashlyk_iErrorInvalidVariable
+## TODO - do not worked    std::acceptArrayItem a12[]                           #? $_bashlyk_iErrorInvalidVariable
+#    std::acceptArrayItem _a >| grep '^_a$'                                     #? true
+#    std::acceptArrayItem _a[1234] >| grep '^\{_a\[1234\]\}$'                   #? true
 #  SOURCE
-udfPrepareByType() {
+std::acceptArrayItem() {
 
-  [[ $1 ]] || eval $( udfOnError return MissingArgument )
+  errorify on MissingArgument $1 || return
 
-  [[ "$1" =~ ^[_a-zA-Z][_a-zA-Z0-9]*(\[.*\])?$ ]] \
-    || eval $( udfOnError return InvalidVariable '$1' )
+  [[ "$1" =~ ^[_a-zA-Z][_a-zA-Z0-9]*(\[.*\])?$ ]] || on error return InvalidVariable $1
 
   [[ "$1" =~ ^[_a-zA-Z][_a-zA-Z0-9]*\[.*\]$ ]] && echo "{$1}" || echo "$1"
 
@@ -618,7 +563,7 @@ udfPrepareByType() {
 #  SOURCE
 _(){
 
-  udfOn MissingArgument $1 || return $?
+  errorify on MissingArgument $1 || return
 
   if (( $# > 1 )); then
 
@@ -633,19 +578,19 @@ _(){
 
         if [[ -n "${1%=*}" ]]; then
 
-          udfOn InvalidVariable ${1%=*} || return
-          eval "export ${1%=*}=\$$( udfPrepareByType "_bashlyk_${1##*=}" )"
+          errorify on InvalidVariable ${1%=*} || return
+          eval "export ${1%=*}=\$$( std::acceptArrayItem "_bashlyk_${1##*=}" )"
 
         else
 
-          udfOn InvalidVariable $( udfPrepareByType "${1##*=}" ) || return
-          eval "export $( udfPrepareByType "${1##*=}" )=\$$( udfPrepareByType "_bashlyk_${1##*=}" )"
+          errorify on InvalidVariable $( std::acceptArrayItem "${1##*=}" ) || return
+          eval "export $( std::acceptArrayItem "${1##*=}" )=\$$( std::acceptArrayItem "_bashlyk_${1##*=}" )"
 
         fi
 
       ;;
 
-        *) eval "echo \$$( udfPrepareByType "_bashlyk_${1}" )";;
+        *) eval "echo \$$( std::acceptArrayItem "_bashlyk_${1}" )";;
 
     esac
 
@@ -655,9 +600,9 @@ _(){
 
 }
 #******
-#****f* libstd/udfGetMd5
+#****f* libstd/std::getMD5
 #  SYNOPSIS
-#    udfGetMd5 [-]|--file <filename>|<args>
+#    std::getMD5 [-]|--file <filename>|<args>
 #  DESCRIPTION
 #   make MD5 digest for input data
 #  INPUTS
@@ -670,19 +615,19 @@ _(){
 #    EmptyResult - no digest
 #  EXAMPLE
 #    local fn
-#    udfMakeTemp fn
+#    std::temp fn
 #    echo test > $fn                                                            #-
-#    echo test | udfGetMd5 -      >| grep -w 'd8e8fca2dc0f896fd7cb4cb0031ba249' #? true
-#    udfGetMd5 --file "$fn"       >| grep -w 'd8e8fca2dc0f896fd7cb4cb0031ba249' #? true
-#    udfGetMd5 test               >| grep -w 'd8e8fca2dc0f896fd7cb4cb0031ba249' #? true
+#    echo test | std::getMD5 -    >| grep -w 'd8e8fca2dc0f896fd7cb4cb0031ba249' #? true
+#    std::getMD5 --file "$fn"     >| grep -w 'd8e8fca2dc0f896fd7cb4cb0031ba249' #? true
+#    std::getMD5 test             >| grep -w 'd8e8fca2dc0f896fd7cb4cb0031ba249' #? true
 #  SOURCE
-udfGetMd5() {
+std::getMD5() {
 
   local s
 
   case "$1" in
 
-         -)                s="$( exec -c md5sum - < <( udfCat ) )";;
+         -)                s="$( exec -c md5sum - < <( std::cat ) )";;
     --file) [[ -f $2 ]] && s="$( exec -c md5sum "$2" )"           ;;
          *) [[    $* ]] && s="$( exec -c md5sum - <<< "$*" )"     ;;
 
@@ -692,9 +637,9 @@ udfGetMd5() {
 
 }
 #******
-#****f* libstd/udfGetPathMd5
+#****f* libstd/std::getMD5.list
 #  SYNOPSIS
-#    udfGetPathMd5 <path>
+#    std::getMD5.list <path>
 #  DESCRIPTION
 #   Get recursively MD5 digest of all the non-hidden files in the directory
 #   <path>
@@ -708,45 +653,46 @@ udfGetMd5() {
 #    NoSuchFileOrDir - path not found
 #    NotPermitted    - not permissible
 #  EXAMPLE
-#    local path=$(udfMakeTemp type=dir)
+#    local path=$(std::temp type=dir)
 #    echo "digest test 1" > ${path}/testfile1                                   #-
 #    echo "digest test 2" > ${path}/testfile2                                   #-
 #    echo "digest test 3" > ${path}/testfile3                                   #-
-#    udfAddFO2Clean ${path}/testfile1
-#    udfAddFO2Clean ${path}/testfile2
-#    udfAddFO2Clean ${path}/testfile3
-#    udfAddFO2Clean ${path}
-#    udfGetPathMd5 $path >| grep ^[[:xdigit:]]*.*testfile.$                     #? true
-#    udfGetPathMd5                                                              #? ${_bashlyk_iErrorMissingArgument}
-#    udfGetPathMd5 /notexist/path                                               #? ${_bashlyk_iErrorNoSuchFileOrDir}
+#    pid::onExit.unlink ${path}/testfile1
+#    pid::onExit.unlink ${path}/testfile2
+#    pid::onExit.unlink ${path}/testfile3
+#    pid::onExit.unlink ${path}
+#    std::getMD5.list $path >| grep ^[[:xdigit:]]*.*testfile.$                  #? true
+#    std::getMD5.list                                                           #? ${_bashlyk_iErrorMissingArgument}
+#    std::getMD5.list /notexist/path                                            #? ${_bashlyk_iErrorNoSuchFileOrDir}
 #  SOURCE
-udfGetPathMd5() {
+std::getMD5.list() {
 
   local pathSrc="$( exec -c pwd )" pathDst s IFS=$' \t\n'
 
-  udfOn NoSuchFileOrDir "$@" || return $?
+  errorify on MissingArgument $@ || return
+  errorify on NoSuchFileOrDir "$@" || return
 
-  cd "$@" 2>/dev/null || eval $( udfOnError retwarn NotPermitted '$@' )
+  cd "$@" 2>/dev/null || on error warn+return NotPermitted $@
 
   pathDst="$( exec -c pwd )"
 
   while read s; do
 
-    [[ -d $s ]] && udfGetPathMd5 $s
+    [[ -d $s ]] && std::getMD5.list $s
 
     md5sum "${pathDst}/${s}" 2>/dev/null
 
   done< <(eval "ls -1drt * 2>/dev/null")
 
-  cd "$pathSrc" || eval $( udfOnError retwarn NotPermitted '$@' )
+  cd "$pathSrc" || on error warn+return NotPermitted $@
 
   return 0
 
 }
 #******
-#****f* libstd/udfXml
+#****f* libstd/std::xml
 #  SYNOPSIS
-#    udfXml tag [property] data
+#    std::xml tag [property] data
 #  DESCRIPTION
 #    Generate XML code to stdout
 #  INPUTS
@@ -760,23 +706,24 @@ udfGetPathMd5() {
 #  EXAMPLE
 #    local sTag='date TO="+0400" TZ="MSK"' sContent='Mon, 22 Apr 2013 15:55:50'
 #    local sXml='<date TO="+0400" TZ="MSK">Mon, 22 Apr 2013 15:55:50</date>'
-#    udfXml "$sTag" "$sContent" >| grep "^${sXml}$"                             #? true
+#    std::xml "$sTag" "$sContent" >| grep "^${sXml}$"                           #? true
 #  SOURCE
-udfXml() {
+std::xml() {
 
-  udfOn MissingArgument $1 || return $?
+  errorify on MissingArgument $1 || return
 
-  local IFS=$' \t\n' s
+  local IFS=$' \t\n'
+  local -a a=( $1 )
 
-  s=($1)
   shift
-  echo "<${s[*]}>${*}</${s[0]}>"
+
+  echo "<${a[*]}>${*}</${a[0]}>"
 
 }
 #******
-#****f* libstd/udfGetTimeInSec
+#****f* libstd/std::getTimeInSec
 #  SYNOPSIS
-#    udfGetTimeInSec [-v <var>] <number>[sec|min|hour|...]
+#    std::getTimeInSec [-v <var>] <number>[sec|min|hour|...]
 #  DESCRIPTION
 #    get a time value in the seconds from a string in the human-readable format
 #  OPTIONS
@@ -789,29 +736,29 @@ udfXml() {
 #    EmptyResult     - no result
 #  EXAMPLE
 #    local v s=${RANDOM:0:2} #-
-#    udfGetTimeInSec                                                            #? $_bashlyk_iErrorInvalidArgument
-#    udfGetTimeInSec SeventenFourSec                                            #? $_bashlyk_iErrorInvalidArgument
-#    udfGetTimeInSec 59seconds >| grep -w 59                                    #? true
-#    udfGetTimeInSec -v v ${s}minutes                                           #? true
+#    std::getTimeInSec                                                          #? $_bashlyk_iErrorInvalidArgument
+#    std::getTimeInSec SeventenFourSec                                          #? $_bashlyk_iErrorInvalidArgument
+#    std::getTimeInSec 59seconds >| grep -w 59                                  #? true
+#    std::getTimeInSec -v v ${s}minutes                                         #? true
 #    echo $v >| grep -w $(( s * 60 ))                                           #? true
-#    udfGetTimeInSec -v 123s                                                    #? $_bashlyk_iErrorInvalidVariable
-#    udfGetTimeInSec -v -v                                                      #? $_bashlyk_iErrorInvalidVariable
-#    udfGetTimeInSec -v v -v v                                                  #? $_bashlyk_iErrorInvalidArgument
-#    udfGetTimeInSec $RANDOM                                                    #? true
+#    std::getTimeInSec -v 123s                                                  #? $_bashlyk_iErrorInvalidVariable
+#    std::getTimeInSec -v -v                                                    #? $_bashlyk_iErrorInvalidVariable
+#    std::getTimeInSec -v v -v v                                                #? $_bashlyk_iErrorInvalidArgument
+#    std::getTimeInSec $RANDOM                                                  #? true
 #  SOURCE
-udfGetTimeInSec() {
+std::getTimeInSec() {
 
   if [[ "$1" == "-v" ]]; then
 
-    udfIsValidVariable "$2" || eval $( udfOnError InvalidVariable "$2" )
+    std::isVariable "$2" || on error InvalidVariable $2
 
     [[ "$3" == "-v" ]] \
-      && eval $( udfOnError InvalidArgument "$3 - number with time suffix expected" )
+      && on error InvalidArgument "$3 - number with time suffix expected"
 
-    eval 'export $2="$( udfGetTimeInSec $3 )"'
+    eval 'export $2="$( std::getTimeInSec $3 )"'
 
-    [[ ${!2} ]] || eval 'export $2="$( udfGetTimeInSec $4 )"'
-    [[ ${!2} ]] || eval $( udfOnError EmptyResult "$2" )
+    [[ ${!2} ]] || eval 'export $2="$( std::getTimeInSec $4 )"'
+    [[ ${!2} ]] || on error EmptyResult $2
 
     return $?
 
@@ -819,7 +766,7 @@ udfGetTimeInSec() {
 
   local i=${1%%[[:alpha:]]*}
 
-  udfIsNumber $i || eval $( udfOnError InvalidArgument "$i - number expected" )
+  std::isNumber $i || on error InvalidArgument "$i - number expected"
 
   case ${1##*[[:digit:]]} in
 
@@ -831,7 +778,7 @@ udfGetTimeInSec() {
            months|month|mon) echo $(( i*3600*24*30 ));;
                years|year|y) echo $(( i*3600*24*365 ));;
                           *) echo ""
-                             eval $( udfOnError InvalidArgument "$1 - number with time suffix expected" )
+                             on error InvalidArgument "$1 - number with time suffix expected"
                           ;;
 
   esac
@@ -840,9 +787,9 @@ udfGetTimeInSec() {
 
 }
 #******
-#****f* libstd/udfGetFreeFD
+#****f* libstd/std::getFreeFD
 #  SYNOPSIS
-#    udfGetFreeFD
+#    std::getFreeFD
 #  DESCRIPTION
 #    get unused filedescriptor
 #  OUTPUT
@@ -850,9 +797,9 @@ udfGetTimeInSec() {
 #  TODO
 #    race possible
 #  EXAMPLE
-#    udfGetFreeFD | grep -P "^\d+$"                                             #? true
+#    std::getFreeFD | grep -P "^\d+$"                                           #? true
 #  SOURCE
-udfGetFreeFD() {
+std::getFreeFD() {
 
   local i=0 iMax=$( ulimit -n )
 
@@ -875,9 +822,9 @@ udfGetFreeFD() {
 
 }
 #******
-#****f* libstd/udfIsHash
+#****f* libstd/std::isHash
 #  SYNOPSIS
-#    udfIsHash <variable>
+#    std::isHash <variable>
 #  DESCRIPTION
 #    treated a variable as global associative array
 #  ARGUMENTS
@@ -888,22 +835,22 @@ udfGetFreeFD() {
 #    Success         - argument is name of the associative array
 #  EXAMPLE
 #    declare -Ag -- hh='()' s5
-#    udfIsHash 5s                                                               #? $_bashlyk_iErrorInvalidVariable
-#    udfIsHash s5                                                               #? $_bashlyk_iErrorInvalidHash
-#    udfIsHash hh                                                               #? true
+#    std::isHash 5s                                                             #? $_bashlyk_iErrorInvalidVariable
+#    std::isHash s5                                                             #? $_bashlyk_iErrorInvalidHash
+#    std::isHash hh                                                             #? true
 #  SOURCE
-udfIsHash() {
+std::isHash() {
 
-  udfOn InvalidVariable $1 || return $?
+  errorify on InvalidVariable $1 || return
 
   [[ $( declare -pA $1 2>/dev/null ) =~ ^declare.*-A ]] \
     && return 0 || return $( _ iErrorInvalidHash )
 
 }
 #******
-#****f* libstd/udfTrim
+#****f* libstd/std::trim
 #  SYNOPSIS
-#    udfTrim <arg>
+#    std::trim <arg>
 #  DESCRIPTION
 #    remove leading and trailing spaces
 #  ARGUMENTS
@@ -912,12 +859,12 @@ udfIsHash() {
 #    show input without leading and trailing spaces
 #  EXAMPLE
 #    local s=" a  b c  "
-#    udfTrim "$s" >| grep "^a  b c$"                                            #? true
-#    udfTrim  $s  >| grep "^a b c$"                                             #? true
-#    udfTrim      >| grep ^$                                                    #? true
-#    udfTrim '  ' >| grep ^$                                                    #? true
+#    std::trim "$s" >| grep "^a  b c$"                                          #? true
+#    std::trim  $s  >| grep "^a b c$"                                           #? true
+#    std::trim      >| grep ^$                                                  #? true
+#    std::trim '  ' >| grep ^$                                                  #? true
 #  SOURCE
-udfTrim() {
+std::trim() {
 
   local s="$*"
 
@@ -927,18 +874,78 @@ udfTrim() {
 
 }
 #******
-#****f* libstd/udfCat
+#****f* libstd/std::cat
 #  SYNOPSIS
-#    udfCat
+#    std::cat
 #  DESCRIPTION
 #    show input by line
 #  OUTPUT
 #    show input by line
 #  EXAMPLE
 #    local s fn
-#    udfMakeTemp -v fn
+#    std::temp -v fn
 #    for s in $( seq 0 12 ); do printf -- '\t%s\n' "$RANDOM"; done > $fn        #-
-#    udfCat < $fn | grep -E '^[[:space:]][0-9]{1,5}$'                           #? true
+#    std::cat < $fn | grep -E '^[[:space:]][0-9]{1,5}$'                         #? true
 #  SOURCE
-udfCat() { while IFS= read -t 32 || [[ $REPLY ]]; do echo "$REPLY"; done; }
+std::cat() {
+
+  [[ $* ]] && echo "$*"
+
+  while IFS= read -t 32 || [[ $REPLY ]]; do
+
+    echo "$REPLY"
+
+  done
+
+}
+#******
+#****f* libstd/std::dateR
+#  SYNOPSIS
+#    std::dateR
+#  DESCRIPTION
+#    show 'date -R' like output
+#  EXAMPLE
+#    std::dateR >| grep -P "^\S{3}, \d{2} \S{3} \d{4} \d{2}:\d{2}:\d{2} .\d{4}$"  #? true
+#  SOURCE
+if (( _bashlyk_ShellVersion > 4002000 )); then
+
+  std::dateR() { LC_ALL=C printf -- '%(%a, %d %b %Y %T %z)T\n' '-1'; }
+
+else
+
+  std::dateR() { exec -c date -R; }
+
+fi
+#******
+#****f* libstd/std::uptime
+#  SYNOPSIS
+#    std::uptime
+#  DESCRIPTION
+#    show uptime value in the seconds
+#  EXAMPLE
+#    std::uptime >| grep "^[[:digit:]]*$"                                         #? true
+#  SOURCE
+if (( _bashlyk_ShellVersion > 4002000 )); then
+
+  std::uptime() { echo $(( $(printf '%(%s)T' '-1') - $(printf '%(%s)T' '-2') )); }
+
+else
+
+  readonly _bashlyk_iStartTimeStamp=$( exec -c date "+%s" )
+
+  std::uptime() { echo $(( $(exec -c date "+%s") - _bashlyk_iStartTimeStamp )); }
+
+fi
+#******
+#****f* libstd/std::finally
+#  SYNOPSIS
+#    std::finally <text>
+#  DESCRIPTION
+#    show uptime with input text
+#  INPUTS
+#    <text> - prefix text before " uptime <number> sec"
+#  EXAMPLE
+#    std::finally $RANDOM >| grep "^[[:digit:]]* uptime [[:digit:]]* sec$"      #? true
+#  SOURCE
+std::finally() { echo "$@ uptime $( std::uptime ) sec"; }
 #******

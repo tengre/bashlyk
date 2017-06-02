@@ -17,23 +17,36 @@ set -e
 # for details, see http://www.debian.org/doc/debian-policy/ or
 # the debian-policy package
 
+ cmd=/usr/bin/bashlyk
+path=/usr/share/bashlyk
 
 case "$1" in
-    configure)
-     [ -f /usr/share/bashlyk/testunit.sh ] && chmod +x /usr/share/bashlyk/testunit.sh
-     if [ -x /usr/bin/bashlyk ]; then
+
+  configure)
+
+    [ -f ${path}/testunit.sh ] && chmod +x ${path}/testunit.sh
+
+    if [ -x $cmd ]; then
+
+      ln -sf $cmd ${path}/bashlyk || true
+
       echo "BASHLYK library tests:"
       bashlyk --bashlyk-test
+
      fi
+
     ;;
 
-    abort-upgrade|abort-remove|abort-deconfigure)
+  abort-upgrade|abort-remove|abort-deconfigure)
     ;;
 
-    *)
-        echo "postinst called with unknown argument \`$1'" >&2
-        exit 1
+  *)
+
+      echo "postinst called with unknown argument \`$1'" >&2
+      exit 1
+
     ;;
+
 esac
 
 # dh_installdeb will replace this with shell code automatically

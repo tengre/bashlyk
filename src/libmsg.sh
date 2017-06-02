@@ -1,5 +1,5 @@
 #
-# $Id: libmsg.sh 732 2017-04-12 18:45:18+04:00 toor $
+# $Id: libmsg.sh 766 2017-05-26 16:33:11+04:00 toor $
 #
 #****h* BASHLYK/libmsg
 #  DESCRIPTION
@@ -19,7 +19,7 @@
 #    $_BASHLYK_LIBMSG provides protection against re-using of this module
 #  SOURCE
 [ -n "$_BASHLYK_LIBMSG" ] && return 0 || _BASHLYK_LIBMSG=1
-[ -n "$_BASHLYK" ] || . bashlyk || eval '                                      \
+[ -n "$_BASHLYK" ] || . ${_bashlyk_pathLib}/bashlyk || eval '                  \
                                                                                \
     echo "[!] bashlyk loader required for ${0}, abort.."; exit 255             \
                                                                                \
@@ -49,31 +49,30 @@ declare -rg _bashlyk_externals_msg="                                           \
 
 declare -rg _bashlyk_exports_msg="                                             \
                                                                                \
-    udfEcho udfGetXSessionProperties udfMail udfMessage udfNotify2X            \
-    udfNotifyCommand udfWarn                                                   \
+    msg::{echo,getXsessionProperties,mail,notify,notify2x,notifyTool,warn}     \
                                                                                \
 "
 #******
-#****f* libmsg/udfEcho
+#****f* libmsg/msg::echo
 #  SYNOPSIS
-#    udfEcho [-] <text>
+#    msg::echo [-] <text>
 #  DESCRIPTION
 #    Build a message from arguments and standard input
 #  INPUTS
 #    -      - data is read from standard input
 #    <text> - is used as a header for a stream from standard input
 #  EXAMPLE
-#    udfEcho 'test' >| grep -w 'test'                                           #? true
-#    echo body | udfEcho - subject >| md5sum - | grep ^472002e8a20e4cf6d78e.*-$ #? true
+#    msg::echo 'test'                >| grep -w 'test'                          #? true
+#    echo body | msg::echo - subject >| md5sum | grep ^472002e8a20e4cf6d78e.*-$ #? true
 #  SOURCE
-udfEcho() {
+msg::echo() {
 
   if [[ "$1" == "-" ]]; then
 
     shift
     [[ $1 ]] && printf -- "%s\n----\n" "$*"
 
-    udfCat -
+    std::cat
 
   else
 
@@ -83,9 +82,9 @@ udfEcho() {
 
 }
 #******
-#****f* libmsg/udfWarn
+#****f* libmsg/msg::warn
 #  SYNOPSIS
-#    udfWarn [-] <text>
+#    msg::warn [-] <text>
 #  DESCRIPTION
 #    Show input message or data from special variable. In the case of
 #    non-interactive execution  message is sent notification system.
@@ -97,29 +96,29 @@ udfEcho() {
 #   show input message or value of ${_bashlyk_sLastError[$BASHPID]}
 #  EXAMPLE
 #    # TODO требуется более точная проверка
-#    _bashlyk_sLastError[$BASHPID]="udfWarn testing .."
+#    _bashlyk_sLastError[$BASHPID]="msg::warn testing .."
 #    local bNotUseLog=$_bashlyk_bNotUseLog
 #    _bashlyk_bNotUseLog=1
-#    udfWarn                                                                    #? true
+#    msg::warn                                                                  #? true
 #    _bashlyk_bNotUseLog=0
-#    date | udfWarn - "bashlyk::libmsg::udfWarn testing (non-interactive mode)" #? true
+#    date | msg::warn - "bashlyk::msg::warn testing (non-interactive mode)"     #? true
 #    _bashlyk_bNotUseLog=1
-#    date | udfWarn - "udfWarn test int"                                        #? true
+#    date | msg::warn - "msg::warn test int"                                    #? true
 #    _bashlyk_bNotUseLog=$bNotUseLog
 #  SOURCE
-udfWarn() {
+msg::warn() {
 
   local s IFS=$' \t\n'
 
   [[ $* ]] && s="$*" || s="${_bashlyk_sLastError[$BASHPID]}"
 
-  [[ "$_bashlyk_bNotUseLog" != "0" ]] && udfEcho $s || udfMessage $s
+  [[ "$_bashlyk_bNotUseLog" != "0" ]] && msg::echo $s || msg::notify $s
 
 }
 #******
-#****f* libmsg/udfMail
+#****f* libmsg/msg::mail
 #  SYNOPSIS
-#    udfMail [[-] <arg>]
+#    msg::mail [[-] <arg>]
 #  DESCRIPTION
 #    Send <text> as email
 #  INPUTS
@@ -131,19 +130,19 @@ udfWarn() {
 #    MissingArgument - no arguments
 #    CommandNotFound - 'mail' command not found
 #  EXAMPLE
-#    echo "notification testing" | udfMail - "bashlyk::libmsg::udfMail"
+#    echo "notification testing" | msg::mail - "bashlyk::msg::mail"
 #    [ $? -eq $(_ iErrorCommandNotFound) -o $? -eq 0 ] && true                  #? true
-#    udfMail -
+#    msg::mail -
 #    [ $? -eq $(_ iErrorCommandNotFound) -o $? -eq 0 ] && true                  #? true
 ##   see user (or aliased) mailbox for result checking
 #  SOURCE
-udfMail() {
+msg::mail() {
 
-  udfOn MissingArgument $1 || return $?
+  errorify on MissingArgument $* || return
+  errorify on CommandNotFound mail || return
 
   local sTo=$_bashlyk_sLogin IFS=$' \t\n'
 
-  udfOn CommandNotFound mail || return
 
   : ${sTo:=$_bashlyk_sUser}
   : ${sTo:=postmaster}
@@ -154,13 +153,13 @@ udfMail() {
 
       -)
 
-         shift && udfEcho ${*:-empty message}
+         shift && msg::echo ${*:-empty message}
 
        ;;
 
       *)
 
-         [[ -s "$*" ]] && udfCat < "$*" || echo "$*"
+         [[ -s "$*" ]] && std::cat < "$*" || echo "$*"
 
        ;;
 
@@ -172,9 +171,9 @@ udfMail() {
 
 }
 #******
-#****f* libmsg/udfMessage
+#****f* libmsg/msg::notify
 #  SYNOPSIS
-#    udfMessage [-] <text>
+#    msg::notify [-] <text>
 #  DESCRIPTION
 #    Send the message to the active user of the local X-Window desktop or the
 #    process owner using one of the available methods:
@@ -187,26 +186,26 @@ udfMail() {
 #  ERRORS
 #    MissingArgument - no input data
 #  EXAMPLE
-#    local sBody="notification testing" sSubj="bashlyk::libmsg::udfMessage"
-#    echo "$sBody" | udfMessage - "$sSubj"                                      #? true
+#    local sBody="notification testing" sSubj="bashlyk::msg::notify"
+#    echo "$sBody" | msg::notify - "$sSubj"                                     #? true
 #    [[ $rc -eq 0 ]] && sleep 1.5
 #  SOURCE
-udfMessage() {
+msg::notify() {
 
   local fnTmp
 
-  udfMakeTemp fnTmp
+  std::temp fnTmp
 
   ## TODO limit input data for safety
-  udfEcho $* > $fnTmp
+  msg::echo $* > $fnTmp
 
   [[ -s $fnTmp ]] || return $_bashlyk_MissingArgument
 
-  udfNotify2X $fnTmp || udfMail $fnTmp || {
+  msg::notify2x $fnTmp || msg::mail $fnTmp || {
 
     [[ $_bashlyk_sLogin ]] && write $_bashlyk_sLogin < $fnTmp
 
-  } || udfCat - < $fnTmp
+  } || std::cat - < $fnTmp
 
   rm -f $fnTmp
 
@@ -214,9 +213,9 @@ udfMessage() {
 
 }
 #******
-#****f* libmsg/udfNotify2X
+#****f* libmsg/msg::notify2x
 #  SYNOPSIS
-#    udfNotify2X <arg>
+#    msg::notify2x <arg>
 #  DESCRIPTION
 #    Sending message through notification services based on X-Window
 #  INPUTS
@@ -229,23 +228,23 @@ udfMessage() {
 #    XsessionNotFound - X-Session not found
 #    NotPermitted     - not permitted
 #  EXAMPLE
-#    local sBody="notification testing" sSubj="bashlyk::libmsg::udfNotify2X" rc
-#    udfNotify2X "${sSubj}\n----\n${sBody}\n"
+#    local sBody="notification testing" sSubj="bashlyk::msg::notify2x" rc
+#    msg::notify2x "${sSubj}\n----\n${sBody}\n"
 #    rc=$?
 #    echo $rc >| grep "$(_ iErrorNotPermitted)\|$(_ iErrorXsessionNotFound)\|0" #? true
 #    [[ $rc -eq 0 ]] && sleep 1.5
 #  SOURCE
-udfNotify2X() {
+msg::notify2x() {
 
-  udfOn MissingArgument $1 || return $?
+  errorify on MissingArgument $* || return
 
   local iTimeout=8 s IFS=$' \t\n'
 
-  [[ -s "$*" ]] && s="$( udfCat - < "$*" )" || s="$( printf -- "$*" )"
+  [[ -s "$*" ]] && s="$( std::cat - < "$*" )" || s="$( printf -- "$*" )"
 
   for cmd in notify-send kdialog zenity xmessage; do
 
-    udfNotifyCommand $cmd "$(_ emailSubj)" "$s" "$iTimeout" && break
+    msg::notifyTool $cmd "$(_ emailSubj)" "$s" "$iTimeout" && break
 
   done
 
@@ -253,9 +252,9 @@ udfNotify2X() {
 
 }
 #******
-#****f* libmsg/udfGetXSessionProperties
+#****f* libmsg/msg::getXsessionProperties
 #  SYNOPSIS
-#    udfGetXSessionProperties
+#    msg::getXsessionProperties
 #  DESCRIPTION
 #    Get some environment global variables from first local X-Window session
 #  ERRORS
@@ -265,9 +264,9 @@ udfNotify2X() {
 #    NotPermitted     - not permitted
 #    ## TODO improve test
 #  EXAMPLE
-#    udfGetXSessionProperties || echo "X-Session error ($?)"
+#    msg::getXsessionProperties || echo "X-Session error ($?)"
 #  SOURCE
-udfGetXSessionProperties() {
+msg::getXsessionProperties() {
 
   local a pid s sB sD sX sudo user userX IFS=$' \t\n'
   local -A h
@@ -324,9 +323,9 @@ udfGetXSessionProperties() {
 
 }
 #******
-#****f* libmsg/udfNotifyCommand
+#****f* libmsg/msg::notifyTool
 #  SYNOPSIS
-#    udfNotifyCommand <command> <title> <text> <timeout>
+#    msg::notifyTool <command> <title> <text> <timeout>
 #  DESCRIPTION
 #    Sending messages through notification services based on X-Window
 #  INPUTS
@@ -344,35 +343,35 @@ udfGetXSessionProperties() {
 #    CommandNotFound - no commands were found to send the message to the active
 #                      X-Window session
 #  EXAMPLE
-#    local title="bashlyk::libmsg::udfNotifyCommand" body="notification testing"
+#    local title="bashlyk::msg::notifyTool" body="notification testing"
 #    local rc
 #    DEBUGLEVEL=$(( DEBUGLEVEL + 1 ))
-#    udfNotifyCommand notify-send $title "$body" 8
+#    msg::notifyTool notify-send $title "$body" 8
 #    rc=$?
 #    echo $? >| grep "$(_ iErrorCommandNotFound)\|0"                            #? true
 #    [[ $rc -eq 0 ]] && sleep 2
-#    udfNotifyCommand kdialog     $title "$body" 8
+#    msg::notifyTool kdialog     $title "$body" 8
 #    rc=$?
 #    echo $? >| grep "$(_ iErrorCommandNotFound)\|0"                            #? true
 #    [[ $rc -eq 0 ]] && sleep 2
-#    udfNotifyCommand zenity      $title "$body" 2
+#    msg::notifyTool zenity      $title "$body" 2
 #    rc=$?
 #    echo $? >| grep "$(_ iErrorCommandNotFound)\|0"                            #? true
 #    [[ $rc -eq 0 ]] && sleep 2
-#    udfNotifyCommand xmessage    $title "$body" 4
+#    msg::notifyTool xmessage    $title "$body" 4
 #    rc=$?
 #    echo $? >| grep "$(_ iErrorCommandNotFound)\|0"                            #? true
 #    DEBUGLEVEL=$(( DEBUGLEVEL - 1 ))
 #  SOURCE
-udfNotifyCommand() {
+msg::notifyTool() {
 
-  udfOn MissingArgument $4 || return $?
+  errorify on MissingArgument $* || return
 
   local h t rc X IFS=$' \t\n'
 
-  udfIsNumber $4 && t=$4 || t=8
+  std::isNumber $4 && t=$4 || t=8
 
-  [[ $( _ sXSessionProp ) ]] || udfGetXSessionProperties || return $?
+  [[ $( _ sXSessionProp ) ]] || msg::getXsessionProperties || return $?
 
   X=$( _ sXSessionProp )
   #
@@ -388,7 +387,7 @@ udfNotifyCommand() {
     if (( DEBUGLEVEL > 0 )); then
 
       ## save stderr for debugging
-      udfMakeTemp t keep=true prefix='msg.' suffix=".notify_command.${1}.err"
+      std::temp t keep=true prefix='msg.' suffix=".notify_command.${1}.err"
 
       eval "${h[$1]}" 2>$t
       rc=$?
@@ -407,8 +406,8 @@ udfNotifyCommand() {
 
   else
 
-    rc=$( _ iErrorCommandNotFound )
-    udfSetLastError $rc "$1"
+    err::status CommandNotFound "$1"
+    rc=$?
 
   fi
 

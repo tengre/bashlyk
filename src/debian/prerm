@@ -16,19 +16,27 @@ set -e
 # for details, see http://www.debian.org/doc/debian-policy/ or
 # the debian-policy package
 
+path=/usr/share/bashlyk
 
 case "$1" in
-    remove|upgrade|deconfigure)
-     [ -x /usr/share/bashlyk/testunit.sh ] && chmod -x /usr/share/bashlyk/testunit.sh
+
+  remove|upgrade|deconfigure)
+
+     rm -f ${path}/bashlyk
+     [ -x ${path}/testunit.sh ] && chmod -x ${path}/testunit.sh
+
     ;;
 
-    failed-upgrade)
+  failed-upgrade)
     ;;
 
-    *)
-        echo "prerm called with unknown argument \`$1'" >&2
-        exit 1
+  *)
+
+      echo "prerm called with unknown argument \`$1'" >&2
+      exit 1
+
     ;;
+
 esac
 
 # dh_installdeb will replace this with shell code automatically

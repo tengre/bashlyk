@@ -1,12 +1,12 @@
 #!/bin/bash
 #
-# $Id: bashlyk 734 2017-04-13 12:09:09+04:00 toor $
+# $Id: bashlyk 766 2017-06-02 11:32:46+04:00 toor $
 #
 #****h* BASHLYK/bashlyk
 #  DESCRIPTION
-#    bashlyk - загрузчик BASHLYK-библиотек. Готовит структуру служебных
-#    каталогов и файлов, определяет интерактивность запущенного сценария,
-#    позволяет выполнить тестовый модуль библиотек
+#    Loader for BASHLYK-libraries. Prepares the structure of the necessary
+#    directories and files, determines the interactivity of the running script,
+#    allows you to run the library test module
 #  AUTHOR
 #    Damir Sh. Yakupov <yds@bk.ru>
 #******
@@ -26,7 +26,7 @@
 #    global variables of the library
 #  SOURCE
 [[ -s "/etc/bashlyk/bashlyk.conf" ]] && . /etc/bashlyk/bashlyk.conf
-: ${_bashlyk_aLib:="old,err,csv,std,ini,pid,net,log,msg,cnf"}
+: ${_bashlyk_aLib:="ini,std,err,pid,net,log,msg"}
 : ${_bashlyk_pathLib:="/usr/share/bashlyk"}
 : ${_bashlyk_s0:=${0##*/}}
 : ${_bashlyk_sArg:="$@"}
@@ -47,20 +47,21 @@
     )                                                                          \
 }
 #******
-#****f* bashlyk/udfInit
+#****f* bashlyk/bashlyk::init
 #  SYNOPSIS
-#    udfInit
+#    bashlyk::init
 #  DESCRIPTION
-#    Подготовка к запуску сценария, определение условий его работы (каталоги
-#    расположения создаваемых файлов, наличие терминала, перенаправления и т.п.)
-#    Если запуск выполняется от "root", то каталоги располагаются глобально,
-#    согласно стандарта FHS, иначе - в каталогах согласно XDG Base Directory
-#    Specification.
-#    В случае, если не удалось определить владельца процесса или отсутствует
-#    домашний каталог, то иерархия объектов сценария создаются в глобальном
-#    временном каталоге, обычно /tmp
+#    Preparing to run the script, determine the conditions of its operation
+#    (directories of the location of the created files, the presence of a
+#    terminal, redirection, etc.)
+#    If the startup is performed from "root", then the directories are located
+#    globally, according to the FHS standard, otherwise - in the directories
+#    according to the XDG Base Directory Specification.
+#    In the event that it was not possible to determine the owner of the process
+#    or if there is no home directory, the hierarchy of script objects is
+#    created in the global temporary directory $ TMPDIR
 #  SOURCE
-udfInit() {
+bashlyk::init() {
 
   local pathCnf pathRoot pathRun pathLog pathDat sHome IFS=$' \t\n'
 
@@ -157,19 +158,19 @@ udfInit() {
 
 }
 #******
-#****f* bashlyk/udfMain
+#****f* bashlyk/bashlyk::main
 #  SYNOPSIS
-#    udfMain
+#    bashlyk::main
 #  DESCRIPTION
-#    Инициализация, подключение модулей, запуск процесса протоколирования
-#    в случае наличия перенаправления стандартных устройств или потери терминала
-#    в зависимости от значения $_bashlyk_sCond4Log ("noterm" по умолчанию).
+#    Initialization, loading libraries, starting the logging process if there is
+#    a redirection of standard devices or loss of the terminal depending on the
+#    value of $_bashlyk_sCond4Log ("noterm" by default).
 #  SOURCE
-udfMain() {
+bashlyk::main() {
 
   local cmd fn s IFS=$' \t\n'
 
-  udfInit
+  bashlyk::init
 
   if [[ "$_bashlyk_sMode" == "test" ]]; then
 
@@ -204,15 +205,15 @@ udfMain() {
 
   esac
 
-  [[ "$_bashlyk_bNotUseLog" != "0" ]] || udfSetLog
+  [[ "$_bashlyk_bNotUseLog" != "0" ]] || log::file
 
   return 0
 
 }
 #******
-#****** bashlyk/Main section
+#****** bashlyk/Entry Point
 #  DESCRIPTION
-#    Вызов udfMain - подключение системы BASHLYK к сценарию
+#    loader entry point
 #  SOURCE
-udfMain
+bashlyk::main
 #******
