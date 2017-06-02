@@ -1,3 +1,147 @@
+Fri, 02 Jun 2017 16:12:43 +0400
+	New upstream release
+	Version 1.91
+
+- significantly redesigned library functions naming - err,pid,msg,log,std
+  libraries added similar functions with {err,pid,msg,log,std}:: prefix, old
+  functions moved to libold for compatibility
+- libcnf deprecated, early libcnf functions moved to libold
+- INI changes:
+  - INI::load - simplified representation of arguments, improved code
+  - INI constructor - for instances created files of the methods for stack trace
+
+details
+
+libini.sh:
+- INI::save:
+  - fixed test - clean temporary *.bak file
+- INI::load:
+  - updated dependence test
+  - parse arguments without ':' splitter
+  - added internal function-macros INI::load::parse
+  - unset INI::load::parse after using
+- fixed typo duplicate init of the var _bashlyk_iErrorIniMissingMethod
+
+liberr.sh:
+- added iErrorNotDetected state for success code
+- error state (and details) TryBoxException renamed to TryBlockException
+- added new err::* functions set, old udf* functions moved to libold
+- actions {exit,ret}echo and {exit,ret}warn renamed to {echo,warn}+{exit,return}
+- udfOn replaced by err::handler with aliases:
+  show,warn,abort,throw,exit+{echo,warn},errorify{,+echo,+warn}
+- used regex for main function handling
+- udfOnError replaced by err::eval (alias 'on error'):
+  - updated <action> description of the robodoc section
+  - add warns for the unexpected error code
+  - improved arguments handling
+  - used array for input data parsing
+  - replace quote substs with printf '%q'
+  - for _bashlyk_onError=debug mode 'exit' command replaced by err::orr and
+    added stack trace output
+  - updated for use msg::warn instead udfWarn
+- added err::{CommandNotFound,NoSuchFileOrDir,InvalidVariable,EmptyVariable,
+  MissingArgument,EmptyResult,stacktrace} - advanced analogues of the
+  handlers from the old liberr functions
+- udfSetLastError replaced by err::status, fixed local var declaration
+- added and adopted try..catch (aliases) from old liberr:
+  - err::__add_throw_to_command
+  - err::__convert_try_to_func
+  - err::exception.message
+- used special robodoc section for aliases
+- updated exported methods and external command lists
+- added 'NOTES' tag for robodoc sections
+- updated libraries for new aliases from liberr
+- added fake error state Success (for robodoc sections)
+- udfDebug moved from liblog.sh with name err::debug
+- added new helper function err:orr - return setted status
+
+libold.sh:
+- removed udfTryEveryLine as deprecated
+- udfTimeStamp:
+  - duplicate any % from arguments
+  - new bug - time stamp sometimes breaks from the output of the 'date'
+- updated udfLogger for use new behavior of the udfTimeStamp
+
+bashlyk{,.conf}:
+- libold deprecated library
+- removed libcnf from default list of libraries
+- udfSetLog call replaced by log::file
+- updated robodoc sections
+- udfInit renamed to bashlyk::init
+- udfMain renamed to bashlyk::main
+
+libnet.sh:
+- updated aliases robodoc section
+
+robodoc.rc:
+- added 'aliases' (A) header type
+- added to ignore list *.deprecated
+
+get-external-commands-and-export-list.sh:
+- search all functions (remove 'udf' pattern)
+
+libpid.sh:
+udfCheckStarted replaced by pid::status:
+ - improved tests and robodoc section
+ - The allowable maximum <PID> value is checked
+ - added helper functions pid::status.show
+- udfStopProcess replaced by pid::stop
+- udfSetPid replaced by pid::file
+- udfExitIfAlreadyStarted replaced by pid::onStarted.exit
+- udfAddPid2Clean replaced by pid::onExit.stop
+- udfAddFD2Clean replaced by pid::onExit.close
+- udfAdd{File,Path,..}2Clean replaced by pid::onExit.unlink
+- added 'flock' to external command list
+- add NOTES and flags external/private for robodoc sections
+
+libmsg.sh:
+- renamed functions:
+  - udfEcho to msg::echo
+  - udfWarn to msg::warn
+  - udfMail to msg::mail
+  - udfMessage to msg::notify
+  - udfNotify2X to msg::notify2x
+  - udfGetXSessionProperties to msg::getXsessionProperties
+  - udfNotifyCommand to msg::notifyTool
+
+liblog.sh:
+- udfWarn (libmsg) replaced by 'on error' (liberr)
+- direct import from libmsg not required now
+- function renamed from
+  udf{Log,SetLog,Logger,SetLOgSocket,IsInteract,Check4LogUse,IsTerminal}
+  to log::{add,file,ger,init,interactivity,necessity,terminality}
+  udfTimeStamp to log::stamp
+- udf{Uptime,Finally,DateR} moved to libstd.sh
+- log::stamp:
+  - duplicate any % from arguments
+  - improved test
+- updated log::ger for use new behavior of the log::stamp
+
+libstd.sh:
+- for basic function udfIsValidVariable  unusable liberr calls
+- added preloading libpid
+- renamed functions
+  from
+  udf{PrepareByType,Cat,DateR,Finally,GetFreeFD,GetMd5,GetPathMd5,
+  GetTimeInSec,IsHash,IsNumber,IsValidVariable,QuoteIfNeeded,
+  ShowVariable,MakeTemp,Trim,Uptime,WSpace2Alias,Alias2WSpace,Xml}
+  to
+  std::{acceptArrayItem,cat,dateR,finally,getFreeFD,getMD5,getMD5::list,
+  getTimeInSec,isHash,isNumber,isVariable,lazyquote,showVariable,temp,
+  trim,uptime,whitespace::decode,whitespace::encode,xml}
+- std::cat changed for the arguments handling
+
+debian/{prerm,postinst}:
+- remove/create link for bashlyk to the /usr/share/bashlyk
+
+libcnf.sh (deprecated status):
+- __getconfig - improved robodoc
+- used new err::* functions for testing from liberr
+- __getconfig:
+  - improved tests
+  - fixed bug - for err:eval required non positional variables
+
+
 Thu, 13 Apr 2017 16:13:37 +0400
 	New upstream release
 	Version 1.90
