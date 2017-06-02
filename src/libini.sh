@@ -1,5 +1,5 @@
 #
-# $Id: libini.sh 766 2017-05-26 16:33:11+04:00 toor $
+# $Id: libini.sh 767 2017-06-02 12:08:07+04:00 toor $
 #
 #****h* BASHLYK/libini
 #  DESCRIPTION
@@ -31,6 +31,7 @@
 #    INI ini
 #
 #    # bind to ini object CLI options
+#    ## TODO detailed description required
 #    ini.bind.cli config{c}: source{s}:-- help{h} mode{m}: dry-run
 #
 #    # get value of the --config (-c) option
@@ -1379,6 +1380,7 @@ INI::load() {
 
 }
 #******
+## TODO raw section description required
 #****e* libini/INI::bind.cli
 #  SYNOPSIS
 #    INI::bind.cli [<section>-]<option long name>{<short name>}[:[:=+]] ...

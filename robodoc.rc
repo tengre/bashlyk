@@ -12,6 +12,7 @@ options:
     --syntaxcolors_enable quotes,squotes,line_comments,keywords,non_alpha
 ignore files:
     .svn
+    *.deprecated
     *~
     debian
     autom4te.cache

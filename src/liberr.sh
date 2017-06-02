@@ -1,11 +1,11 @@
 #
-# $Id: liberr.sh 766 2017-05-26 16:33:11+04:00 toor $
+# $Id: liberr.sh 767 2017-06-02 12:08:07+04:00 toor $
 #
 #****h* BASHLYK/liberr
 #  DESCRIPTION
 #    a set of functions to handle errors
 #  USES
-#    std msg
+#    libstd libmsg
 #  AUTHOR
 #    Damir Sh. Yakupov <yds@bk.ru>
 #******
@@ -49,8 +49,8 @@ declare -rg _bashlyk_methods_err="                                             \
                                                                                \
     err::{__add_throw_to_command,CommandNotFound,__convert_try_to_func,        \
     EmptyArgument,EmptyResult,EmptyVariable,eval,exception.message,debug,      \
-    handler,InvalidVariable,MissingArgument,NoSuchFileOrDir,stacktrace,status, \
-    status.show}                                                               \
+    handler,InvalidVariable,MissingArgument,NoSuchFileOrDir,orr,stacktrace,    \
+    status,status.show}                                                        \
 "
 
 declare -rg _bashlyk_aExport_err="                                             \
@@ -135,7 +135,7 @@ _bashlyk_hError[$_bashlyk_iErrorNotDetected]="unknown (unexpected) error, maybe 
 [[ -s ${_bashlyk_pathLib}/libstd.sh ]] && . "${_bashlyk_pathLib}/libstd.sh"
 [[ -s ${_bashlyk_pathLib}/libmsg.sh ]] && . "${_bashlyk_pathLib}/libmsg.sh"
 #******
-#****p* liberr/err::code
+#****p* liberr/err::orr
 #  SYNOPSIS
 #    err::orr [0-254]
 #  DESCRIPTION
@@ -147,18 +147,18 @@ _bashlyk_hError[$_bashlyk_iErrorNotDetected]="unknown (unexpected) error, maybe 
 #  ERROR
 #    Unknown - first argument is non valid
 #  EXAMPLE
-#    err::code                                                                  #? $_bashlyk_iErrorUnknown
-#    err::code 0                                                                #? true
-#    err::code 123                                                              #? 123
-#    err::code 256                                                              #? $_bashlyk_iErrorUnknown
+#    err::orr                                                                   #? $_bashlyk_iErrorUnknown
+#    err::orr 0                                                                 #? true
+#    err::orr 123                                                               #? 123
+#    err::orr 256                                                               #? $_bashlyk_iErrorUnknown
 #  SOURCE
-err::code() {
+err::orr() {
 
   local i=$1
 
   [[ $i =~ ^[0-9]+$ ]] && (( i < 255 )) || unset i
 
-  return ${i:-254}
+  return ${i:-$_bashlyk_iErrorUnknown}
 
 }
 #******
@@ -458,7 +458,7 @@ err::eval() {
 
   if [[ $_bashlyk_onError == debug ]]; then
 
-    sAction=${sAction/exit/err::code}
+    sAction=${sAction/exit/err::orr}
 
   fi
 

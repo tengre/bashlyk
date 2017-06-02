@@ -1,5 +1,5 @@
 #
-# $Id: libstd.sh 766 2017-05-26 16:33:11+04:00 toor $
+# $Id: libstd.sh 767 2017-06-02 12:08:07+04:00 toor $
 #
 #****h* BASHLYK/libstd
 #  DESCRIPTION
@@ -467,7 +467,7 @@ std::temp() {
 
   [[ $octMode ]] && chmod $octMode $s
 
-  ## TODO обработка ошибок
+  ## TODO error handling
   if (( $UID == 0 )); then
 
     [[ $sUser  ]] && chown $sUser  $s
