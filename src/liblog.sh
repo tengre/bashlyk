@@ -1,5 +1,5 @@
 #
-# $Id: liblog.sh 766 2017-05-26 16:33:11+04:00 toor $
+# $Id: liblog.sh 768 2017-06-02 14:29:30+04:00 toor $
 #
 #****h* BASHLYK/liblog
 #  DESCRIPTION
@@ -88,6 +88,7 @@ declare -rg _bashlyk_aExport_log="                                             \
 #    log::ger test                                                              #-
 #    date                                                                       #-
 #    echo $_bashlyk_pidLogSock                                                  #-
+#    echo '%d'                                                                  #-
 #    EOF                                                                        #-
 #    . $fnExec
 #    kill $_bashlyk_pidLogSock
@@ -141,7 +142,7 @@ log::ger() {
      ;;
 
     01)
-        log::stamp "$HOSTNAME $sTagLog: ${*//%/%%}" >> $_bashlyk_fnLog
+        log::stamp "$HOSTNAME $sTagLog: $*" >> $_bashlyk_fnLog
      ;;
 
     10)
@@ -150,7 +151,7 @@ log::ger() {
      ;;
 
     11)
-        log::stamp "$HOSTNAME $sTagLog: ${*//%/%%}" >> $_bashlyk_fnLog
+        log::stamp "$HOSTNAME $sTagLog: $*" >> $_bashlyk_fnLog
         logger -t "$sTagLog" "$*"
      ;;
 
@@ -394,7 +395,7 @@ if (( _bashlyk_ShellVersion > 4002000 )); then
 
 else
 
-  log::stamp() { LC_ALL=C date "+%b %d %H:%M:%S $*"; }
+  log::stamp() { LC_ALL=C date "+%b %d %H:%M:%S ${*//%/%%}"; }
 
 fi
 #******

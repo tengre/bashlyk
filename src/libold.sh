@@ -1,5 +1,5 @@
 #
-# $Id: libold.sh 765 2017-05-23 16:58:48+04:00 toor $
+# $Id: libold.sh 768 2017-06-02 14:40:27+04:00 toor $
 #
 #****h* BASHLYK/libold
 #  DESCRIPTION
@@ -4901,6 +4901,8 @@ udfSetConfig() {
 #     * $_bashlyk_fnLog only
 #     * syslog by logger and stdout
 #     * syslog by logger and $_bashlyk_fnLog
+#  BUGS
+#    The time stamp sometimes breaks from the output of the 'date'
 #  EXAMPLE
 #    local bInteract bNotUseLog bTerminal
 #    _ =bInteract
@@ -4919,7 +4921,8 @@ udfSetConfig() {
 #    udfSetLogSocket                                                            #-
 #    _ fnLog                                                                    #-
 #    udfLogger test                                                             #-
-#    date                                                                       #-
+#    # date break pid in the stamp                                              #-
+#    uname -a                                                                   #-
 #    echo $_bashlyk_pidLogSock                                                  #-
 #    EOF                                                                        #-
 #    . $fnExec
@@ -4928,6 +4931,7 @@ udfSetConfig() {
 #    sleep 0.1
 #    while read -t9 s; do [[ $s =~ ^${reT}${reP}$ ]] || b=false; done < $fnLog  #-
 #    [[ $b == true ]]                                                           #? true
+#    cat $fnLog
 #    rm -f $fnExec $fnLog
 #    _ bInteract "$bInteract"
 #    _ bNotUseLog "$bNotUseLog"
@@ -4974,7 +4978,7 @@ udfLogger() {
      ;;
 
     01)
-        udfTimeStamp "$HOSTNAME $sTagLog: ${*//%/%%}" >> $_bashlyk_fnLog
+        udfTimeStamp "$HOSTNAME $sTagLog: $*" >> $_bashlyk_fnLog
      ;;
 
     10)
@@ -5256,30 +5260,19 @@ udfDebug() {
 #  OUTPUT
 #    input <text> with time stamp in format 'Mar 28 10:03:40' (LC_ALL=C)
 #  EXAMPLE
-#    local re
-#    re='^[ADFJMNOS][abceglnoprtuyv]{2} [0-9]{2} [0-9]{2}:[0-9]{2}:[0-9]{2} AB$'
-#    udfTimeStamp AB >| grep -E "$re"                                           #? true
+#    local r
+#    r='^[ADFJMNOS][abceglnoprtuyv]{2} [0-9]{2} [0-9]{2}:[0-9]{2}:[0-9]{2} A%B$'
+#    udfTimeStamp A%B >| grep -E "$r"                                           #? true
 #  SOURCE
-
-if (( _bashlyk_ShellVersion > 4002000 )); then
-
-udfTimeStamp() { LC_ALL=C printf -- '%(%b %d %H:%M:%S)T %s\n' '-1' "$*"; }
-
-udfDateR() { LC_ALL=C printf -- '%(%a, %d %b %Y %T %z)T\n' '-1'; }
-
-udfUptime() { echo $(( $(printf '%(%s)T' '-1') - $(printf '%(%s)T' '-2') )); }
-
-else
 
 readonly _bashlyk_iStartTimeStamp=$( exec -c date "+%s" )
 
-udfTimeStamp() { LC_ALL=C date "+%b %d %H:%M:%S $*"; }
+udfTimeStamp() { LC_ALL=C date "+%b %d %H:%M:%S ${*//%/%%}"; }
 
-udfDateR() { exec -c date -R; }
+udfDateR()     { exec -c date -R; }
 
-udfUptime() { echo $(( $(exec -c date "+%s") - _bashlyk_iStartTimeStamp )); }
+udfUptime()    { echo $(( $(exec -c date "+%s") - _bashlyk_iStartTimeStamp )); }
 
-fi
 #******
 #****f* libold/udfDateR
 #  SYNOPSIS
