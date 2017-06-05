@@ -19,6 +19,8 @@ set -e
 
  cmd=/usr/bin/bashlyk
 path=/usr/share/bashlyk
+DPKG=/var/lib/dpkg/status
+CONF=/etc/bashlyk/bashlyk.conf
 
 case "$1" in
 
@@ -33,7 +35,22 @@ case "$1" in
       echo "BASHLYK library tests:"
       bashlyk --bashlyk-test
 
-     fi
+    fi
+
+    if [ -s "$DPKG" -a -s "$CONF" ]; then
+
+      if grep -Po '^Depends:.*bashlyk.\(.*?1.8..*?\)' $DPKG >/dev/null 2>&1
+      then
+
+        if ! grep '_bashlyk_aLib=.*old.*' $CONF >/dev/null 2>&1; then
+
+          sed -i -re "s/shlyk_aLib=\"(.*)\"\}$/shlyk_aLib=\"\1,old\"\}/g" $CONF
+
+        fi
+
+      fi
+
+    fi
 
     ;;
 
