@@ -1,5 +1,5 @@
 #
-# $Id: libini.sh 767 2017-06-02 12:08:07+04:00 toor $
+# $Id: libini.sh 772 2017-06-05 16:27:07+04:00 toor $
 #
 #****h* BASHLYK/libini
 #  DESCRIPTION
@@ -1167,6 +1167,7 @@ INI::read() {
 
 }
 #******
+## TODO well known places of the configuration don't worked..
 #****e* libini/INI::load
 #  SYNOPSIS
 #    INI::load <file> <section>:(<options>|<raw mode>) ...

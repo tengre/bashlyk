@@ -1,5 +1,5 @@
 #
-# $Id: liberr.sh 767 2017-06-02 12:08:07+04:00 toor $
+# $Id: liberr.sh 772 2017-06-05 16:21:39+04:00 toor $
 #
 #****h* BASHLYK/liberr
 #  DESCRIPTION
@@ -310,6 +310,7 @@ err::stacktrace() {
 
 }
 #******
+## TODO Incomplete list of arguments is not handled correctly
 #****p* liberr/err::eval
 #  SYNOPSIS
 #    err::eval [<action>] [<state>] [<message>]
