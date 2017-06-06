@@ -1,5 +1,5 @@
 #
-# $Id: libini.sh 772 2017-06-05 16:27:07+04:00 toor $
+# $Id: libini.sh 773 2017-06-06 12:45:30+04:00 toor $
 #
 #****h* BASHLYK/libini
 #  DESCRIPTION
@@ -1194,7 +1194,7 @@ INI::read() {
 #    MissingArgument - parameters and sections are not selected
 #  EXAMPLE
 #   local iniMain iniLoad iniSave                                               #-
-#   std::temp -v iniMain suffix=.ini                                          #-
+#   std::temp -v iniMain suffix=.ini                                            #-
 #   GLOBIGNORE="*:?"                                                            #-
 #    cat <<-'EOFini' > $iniMain                                                 #-
 #    section  =  global                                                         #-

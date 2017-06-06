@@ -1,6 +1,6 @@
 #!/bin/bash
 #
-# $Id: bashlyk 766 2017-06-02 11:32:46+04:00 toor $
+# $Id: bashlyk 773 2017-06-06 12:45:30+04:00 toor $
 #
 #****h* BASHLYK/bashlyk
 #  DESCRIPTION
@@ -46,6 +46,7 @@
            "${BASH_VERSINFO[2]}"                                               \
     )                                                                          \
 }
+declare -rg _bashlyk_PWD=${PWD:=$(pwd)}
 #******
 #****f* bashlyk/bashlyk::init
 #  SYNOPSIS

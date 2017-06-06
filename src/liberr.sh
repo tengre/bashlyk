@@ -1,5 +1,5 @@
 #
-# $Id: liberr.sh 772 2017-06-05 16:21:39+04:00 toor $
+# $Id: liberr.sh 773 2017-06-06 17:21:22+04:00 toor $
 #
 #****h* BASHLYK/liberr
 #  DESCRIPTION
@@ -300,9 +300,10 @@ err::stacktrace() {
               "$s" "$i"                                                        \
               "${BASH_SOURCE[$i+1]}" "${BASH_LINENO[$i]}" "${FUNCNAME[$i]}"    \
               "$s" "$i"                                                        \
-              "$( sed -n "${BASH_LINENO[$i]}p" ${BASH_SOURCE[$i+1]} )"
+              "$( err::sourcecode $((i+1)) )"
 
     s+=" "
+              #"$( sed -n "${BASH_LINENO[$i]}p" ${BASH_SOURCE[$i+1]} )"
 
   done
 
@@ -310,6 +311,25 @@ err::stacktrace() {
 
 }
 #******
+err::sourcecode() {
+
+  local fn i=$1
+
+  [[ $i =~ ^[0-9]+ ]] || i=1
+
+  if [[ -s ${BASH_SOURCE[i+1]} ]]; then
+
+    fn=${BASH_SOURCE[i+1]}
+
+  else
+
+    fn=${_bashlyk_PWD}/${BASH_SOURCE[i+1]##*/}
+
+  fi
+
+  [[ -s $fn ]] && sed -n "${BASH_LINENO[i]}p" $fn || return $_bashlyk_iErrorNoSuchFileOrDir
+
+}
 ## TODO Incomplete list of arguments is not handled correctly
 #****p* liberr/err::eval
 #  SYNOPSIS
@@ -369,23 +389,19 @@ err::stacktrace() {
 #  SOURCE
 err::eval() {
 
-  local rc=$? rs echo='echo' warn='msg::warn'
+  local rc=$? rs echo='echo' warn='msg::warn' fn
   local i IFS=$' \t\n' reAct reArg sAction=$_bashlyk_onError sMessage s
 
   reAct='^(echo|warn)$|^((echo|warn)[+])?(exit|return)$|^throw$'
   reArg='((on|\$\(.?err::eval.?\)).error|err::eval)[[:space:]]*?([^\>]*)[[:space:]]*?[\>\|]?'
 
-  ## TODO try use FUNCNAME or save after?
-
-  if [[ $( sed -n "${BASH_LINENO[0]}p" ${BASH_SOURCE[1]} ) =~ $reArg ]]; then
+  if [[ "$( err::sourcecode )" =~ $reArg ]]; then
 
     local -a a=( $( eval echo "\"${BASH_REMATCH[3]//\"/}\"" ) )
 
   else
 
-    echo "invalid arguments for error handling, abort..."
-    err::stacktrace
-    exit $( _ iErrorInvalidArgument )
+    echo "echo \"$fn - invalid arguments for error handling, abort...\"; exit $( _ iErrorInvalidArgument );"
 
   fi
 
