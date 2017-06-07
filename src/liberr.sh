@@ -1,5 +1,5 @@
 #
-# $Id: liberr.sh 773 2017-06-06 17:21:22+04:00 toor $
+# $Id: liberr.sh 774 2017-06-07 15:09:08+04:00 toor $
 #
 #****h* BASHLYK/liberr
 #  DESCRIPTION
@@ -50,12 +50,12 @@ declare -rg _bashlyk_methods_err="                                             \
     err::{__add_throw_to_command,CommandNotFound,__convert_try_to_func,        \
     EmptyArgument,EmptyResult,EmptyVariable,eval,exception.message,debug,      \
     handler,InvalidVariable,MissingArgument,NoSuchFileOrDir,orr,stacktrace,    \
-    status,status.show}                                                        \
+    status,status.show,sourcecode}                                             \
 "
 
 declare -rg _bashlyk_aExport_err="                                             \
                                                                                \
-    abort catch err::{exception.message,stacktrace,status} errorify            \
+    abort catch err::{exception.message,stacktrace,status,sourcecode} errorify \
     errorify+echo errorify+warn exit+echo exit+warn on show throw try warn     \
                                                                                \
 "
@@ -64,6 +64,7 @@ declare -rg _bashlyk_aExport_err="                                             \
 
 # Error states definition
 #
+_bashlyk_iError=255
 _bashlyk_iErrorUnknown=254
 _bashlyk_iErrorUnexpected=254
 _bashlyk_iErrorEmptyOrMissingArgument=253
@@ -137,28 +138,39 @@ _bashlyk_hError[$_bashlyk_iErrorNotDetected]="unknown (unexpected) error, maybe 
 #******
 #****p* liberr/err::orr
 #  SYNOPSIS
-#    err::orr [0-254]
+#    err::orr [<arg>]
 #  DESCRIPTION
-#    return status from 0 to 254
+#    return status from 0 to 255 (default 255)
 #  ARGUMENTS
-#    0-254 - status
+#    arg - expected 0-254
 #  NOTES
 #    public method
 #  ERROR
-#    Unknown - first argument is non valid
+#    255 - first argument is not valid
 #  EXAMPLE
-#    err::orr                                                                   #? $_bashlyk_iErrorUnknown
+#    err::orr                                                                   #? 255
 #    err::orr 0                                                                 #? true
 #    err::orr 123                                                               #? 123
-#    err::orr 256                                                               #? $_bashlyk_iErrorUnknown
+#    err::orr 256                                                               #? 255
 #  SOURCE
 err::orr() {
 
-  local i=$1
+  local i
 
-  [[ $i =~ ^[0-9]+$ ]] && (( i < 255 )) || unset i
+  if [[ $1 =~ ^[0-9]+$ ]]; then
 
-  return ${i:-$_bashlyk_iErrorUnknown}
+    i=$1
+
+  else
+
+    eval "i=\"\$_bashlyk_iError${1}\""
+    [[ $i ]] || eval "i=\"\$_bashlyk_${1}\""
+
+  fi
+
+  [[ $i =~ ^[0-9]+$ ]] && (( i < 256 )) || i=255
+
+  return $i
 
 }
 #******
@@ -251,22 +263,14 @@ err::status() {
 
   fi
 
-  local i
+  err::orr $1
 
-  if [[ $1 =~ ^[0-9]+$ ]]; then
+  local i=$?
 
-    i=$1
-
-  else
-
-    eval "i=\$_bashlyk_iError${1}"
-    [[ $i ]] || eval "i=\$_bashlyk_${1}"
-
-  fi
-
-  [[ $i =~ ^[0-9]+$ ]] && (( $i < 255 )) && shift || i=$_bashlyk_iErrorUnknown
+  (( i == 255 )) && i=$_bashlyk_iErrorUnknown || shift
 
   _bashlyk_iLastError[$BASHPID]=$i
+
   [[ $* ]] && _bashlyk_sLastError[$BASHPID]="$*"
 
   return $i
@@ -283,7 +287,7 @@ err::status() {
 #  OUTPUT
 #    BASH Stack Trace
 #  EXAMPLE
-#    err::stacktrace
+#    err::stacktrace                     >| grep '1: code err::stacktrace_test' #? true
 #  SOURCE
 err::stacktrace() {
 
@@ -300,10 +304,9 @@ err::stacktrace() {
               "$s" "$i"                                                        \
               "${BASH_SOURCE[$i+1]}" "${BASH_LINENO[$i]}" "${FUNCNAME[$i]}"    \
               "$s" "$i"                                                        \
-              "$( err::sourcecode $((i+1)) )"
+              "$( err::sourcecode $i )"
 
     s+=" "
-              #"$( sed -n "${BASH_LINENO[$i]}p" ${BASH_SOURCE[$i+1]} )"
 
   done
 
@@ -311,11 +314,23 @@ err::stacktrace() {
 
 }
 #******
+#****e* liberr/err::sourcecode
+#  SYNOPSIS
+#    err::sourcecode [<level>]
+#  DESCRIPTION
+#    get source code line for selected stack level ( 0 default )
+#  NOTES
+#    public method
+#  OUTPUT
+#    source code line
+#  EXAMPLE
+#    err::sourcecode                             >| grep ^err::sourcecode_test$ #? true
+#  SOURCE
 err::sourcecode() {
 
-  local fn i=$1
+  local fn i
 
-  [[ $i =~ ^[0-9]+ ]] || i=1
+  [[ $1 =~ ^[0-9]+ ]] && i=$(( $1 + 1 )) || i=1
 
   if [[ -s ${BASH_SOURCE[i+1]} ]]; then
 
@@ -330,6 +345,7 @@ err::sourcecode() {
   [[ -s $fn ]] && sed -n "${BASH_LINENO[i]}p" $fn || return $_bashlyk_iErrorNoSuchFileOrDir
 
 }
+#******
 ## TODO Incomplete list of arguments is not handled correctly
 #****p* liberr/err::eval
 #  SYNOPSIS
@@ -385,7 +401,11 @@ err::sourcecode() {
 #    false || on error warn NoSuchFileOrDir /notexist                           #? true
 #    _bashlyk_onError=debug
 #    false || on error exit NoSuchFileOrDir /notexist                           #? $_bashlyk_iErrorNoSuchFileOrDir
-#    ##_bashlyk_onError=echo
+#    #_bashlyk_onError=echo
+#    err::orr 166 || on error echo                                              #? true
+#    err::orr 11 || on error 123                                                #? 123
+#    err::orr 123 || on error bla-bla bla                                       #? 123
+#    err::orr 123 || on error                                                   #? 123
 #  SOURCE
 err::eval() {
 
@@ -407,11 +427,13 @@ err::eval() {
 
   [[ ${a[0],,} =~ $reAct ]] && sAction=${a[0],,} && i=1 || i=0
 
-  err::status ${a[$i]}; rs=$?
+  [[ ${a[$i]} ]] || a[$i]=$rc
 
-  if [[ $rs == $_bashlyk_iErrorUnknown ]]; then
+  err::orr ${a[$i]}; rs=$?
 
-    s="(bad error code applied, i try to use the previous..): "
+  if (( rs >= $_bashlyk_iErrorUnknown )); then
+
+    s="(may be previous..) "
 
     if [[ ${_bashlyk_hError[$rc]} ]]; then
 
@@ -420,6 +442,7 @@ err::eval() {
 
     else
 
+      (( rs == 255 )) && rs=$rc
       s+="${a[@]:$i} .. ($rc)"
 
     fi

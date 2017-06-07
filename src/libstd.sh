@@ -1,5 +1,5 @@
 #
-# $Id: libstd.sh 767 2017-06-02 12:08:07+04:00 toor $
+# $Id: libstd.sh 774 2017-06-07 12:26:16+04:00 toor $
 #
 #****h* BASHLYK/libstd
 #  DESCRIPTION
@@ -52,7 +52,7 @@ declare -rg _bashlyk_aExport_std="                                             \
                                                                                \
     _ std::{acceptArrayItem,cat,finally,getFreeFD,getMD5,getMD5.list,          \
     getTimeInSec,isHash,isNumber,isVariable,lazyquote,showVariable,temp,trim,  \
-    whitespace.decode,whitespace.encode,xml}                                 \
+    whitespace.decode,whitespace.encode,xml}                                   \
                                                                                \
 "
 #******
