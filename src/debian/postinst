@@ -19,7 +19,6 @@ set -e
 
  cmd=/usr/bin/bashlyk
 path=/usr/share/bashlyk
-DPKG=/var/lib/dpkg/status
 CONF=/etc/bashlyk/bashlyk.conf
 
 case "$1" in
@@ -37,7 +36,7 @@ case "$1" in
 
     fi
 
-    if [ -s "$DPKG" -a -s "$CONF" ]; then
+    if [ -s "$CONF" ]; then
 
       if dpkg-query -W -f='${Depends}\n' | grep -Po 'bashlyk.\(.*?1\.[0-8].*?\)'
       then
