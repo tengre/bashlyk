@@ -39,7 +39,7 @@ case "$1" in
 
     if [ -s "$DPKG" -a -s "$CONF" ]; then
 
-      if grep -Po '^Depends:.*bashlyk.\(.*?1.8..*?\)' $DPKG >/dev/null 2>&1
+      if dpkg-query -W -f='${Depends}\n' | grep -Po 'bashlyk.\(.*?1\.[0-8].*?\)'
       then
 
         if ! grep '_bashlyk_aLib=.*old.*' $CONF >/dev/null 2>&1; then
@@ -48,7 +48,7 @@ case "$1" in
 
         fi
 
-      fi
+      fi >/dev/null 2>&1
 
     fi
 
