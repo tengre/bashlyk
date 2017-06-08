@@ -1,5 +1,5 @@
 #
-# $Id: liberr.sh 774 2017-06-07 15:09:08+04:00 toor $
+# $Id: liberr.sh 777 2017-06-08 10:55:53+04:00 toor $
 #
 #****h* BASHLYK/liberr
 #  DESCRIPTION
@@ -234,10 +234,8 @@ err::status.show() {
 #    Unknown         - first argument is non valid
 #    1-255           - valid value of first argument
 #  EXAMPLE
-#    local pid=$BASHPID
-#    err::status
 #    err::status                                                                #? $_bashlyk_iErrorInvalidVariable
-#    err::status non valid argument                                             #? $_bashlyk_iErrorUnknown
+#    err::status invalid argument                                               #? $_bashlyk_iErrorUnknown
 #    err::status 555                                                            #? $_bashlyk_iErrorUnexpected
 #    err::status AlreadyStarted "$$"                                            #? $_bashlyk_iErrorAlreadyStarted
 #    err::status iErrorInvalidVariable 12Invalid test                           #? $_bashlyk_iErrorInvalidVariable
