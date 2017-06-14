@@ -1,5 +1,5 @@
 #
-# $Id: libstd.sh 774 2017-06-07 12:26:16+04:00 toor $
+# $Id: libstd.sh 778 2017-06-14 17:13:37+04:00 toor $
 #
 #****h* BASHLYK/libstd
 #  DESCRIPTION
@@ -69,8 +69,7 @@ declare -rg _bashlyk_aExport_std="                                             \
 #    <tag>    - a set of characters, one of which is permissible after the
 #    digits to indicate a characteristic of a number, for example, of order.
 #    (The register does not matter)
-#  RETURN VALUE
-#    0               - argument is a natural number
+#  ERRORS
 #    NotNumber       - argument is not natural number
 #    MissingArgument - no arguments
 #  EXAMPLE
@@ -94,6 +93,37 @@ std::isNumber() {
   [[ $1 ]] || return $_bashlyk_iErrorMissingArgument
 
   return $_bashlyk_iErrorNotNumber
+
+}
+#******
+#****f* libstd/std::isDecimal
+#  SYNOPSIS
+#    std::isDecimal <decimal number>
+#  DESCRIPTION
+#    Checking the argument that it is a decimal number
+#    The argument is considered a number if it contains decimal digits and can
+#    have a dot
+#  INPUTS
+#    <decimal number> - input data
+#  ERRORS
+#    NotDecimal      - argument is not decimal number
+#    MissingArgument - no arguments
+#  EXAMPLE
+#    std::isDecimal 12                                                          #? true
+#    std::isDecimal +34.0                                                       #? true
+#    std::isDecimal -67.0                                                       #? true
+#    std::isDecimal .89                                                         #? $_bashlyk_iErrorNotDecimal
+#    std::isDecimal 12.34                                                       #? true
+#    std::isDecimal 12,34                                                       #? $_bashlyk_iErrorNotDecimal
+#    std::isDecimal 12T                                                         #? $_bashlyk_iErrorNotDecimal
+#    std::isDecimal 1O02.0O                                                     #? $_bashlyk_iErrorNotDecimal
+#    std::isDecimal                                                             #? $_bashlyk_iErrorMissingArgument
+#  SOURCE
+std::isDecimal() {
+
+  [[ $1 =~ ^[+-]?[0-9]+(\.[0-9]+)?$ ]] && return 0
+
+  [[ $1 ]] && return $_bashlyk_iErrorNotDecimal || return $_bashlyk_iErrorMissingArgument
 
 }
 #******
@@ -349,6 +379,7 @@ std::whitespace.decode() {
 #    test -p $foTemp                                                            #? true
 #    rm -f $foTemp
 #    std::temp invalid+variable                                                 #? ${_bashlyk_iErrorInvalidVariable}
+#    err::status
 #    std::temp path=/proc                                                       #? ${_bashlyk_iErrorNotExistNotCreated}
 #  SOURCE
 std::temp() {
@@ -357,11 +388,12 @@ std::temp() {
 
     [[ "$1" == "-v" ]] && shift
 
-    std::isVariable $1 || on error InvalidVariable $1
+    e=$1
+    std::isVariable $1 || on error InvalidVariable $e
 
     eval 'export $1="$( shift; std::temp stdout-mode ${@//keep=false/} )"'
 
-    [[ ${!1} ]] || on error EmptyResult $1
+    [[ ${!1} ]] || on error EmptyResult $e
 
     [[ $* =~ keep=false || ! $* =~ keep=true ]] && pid::onExit.unlink ${!1}
 
@@ -393,18 +425,19 @@ std::temp() {
 
                 if [[ $1 == $s ]]; then
 
-      		  std::isVariable $1 || on error InvalidVariable $s
+                  e=$1
+                  std::isVariable $1 || on error InvalidVariable $e
 
                 fi
 
-      	        if std::isNumber "$2" && [[ -z "$3" ]] ; then
+                if std::isNumber "$2" && [[ -z "$3" ]] ; then
 
-      		  # compatibility with ancient version
-      		  octMode="$2"
-      		  sPrefix="$1"
+                  # compatibility with ancient version
+                  octMode="$2"
+                  sPrefix="$1"
 
-      	        fi
-      	     ;;
+                fi
+             ;;
     esac
 
   done
@@ -505,6 +538,7 @@ std::temp() {
 #    _bashlyk_onError=return
 #    std::acceptArrayItem                                                       #? $_bashlyk_iErrorMissingArgument
 #    std::acceptArrayItem 12a                                                   #? $_bashlyk_iErrorInvalidVariable
+#    err::status
 #    std::acceptArrayItem 12a[te]                                               #? $_bashlyk_iErrorInvalidVariable
 ## TODO - do not worked    std::acceptArrayItem a12[]                           #? $_bashlyk_iErrorInvalidVariable
 #    std::acceptArrayItem _a >| grep '^_a$'                                     #? true
@@ -514,7 +548,9 @@ std::acceptArrayItem() {
 
   errorify on MissingArgument $1 || return
 
-  [[ "$1" =~ ^[_a-zA-Z][_a-zA-Z0-9]*(\[.*\])?$ ]] || on error return InvalidVariable $1
+  e="$1"
+
+  [[ "$1" =~ ^[_a-zA-Z][_a-zA-Z0-9]*(\[.*\])?$ ]] || on error return InvalidVariable $e
 
   [[ "$1" =~ ^[_a-zA-Z][_a-zA-Z0-9]*\[.*\]$ ]] && echo "{$1}" || echo "$1"
 
@@ -672,7 +708,8 @@ std::getMD5.list() {
   errorify on MissingArgument $@ || return
   errorify on NoSuchFileOrDir "$@" || return
 
-  cd "$@" 2>/dev/null || on error warn+return NotPermitted $@
+  e="$@"
+  cd "$@" 2>/dev/null || on error warn+return NotPermitted $e
 
   pathDst="$( exec -c pwd )"
 
@@ -684,7 +721,7 @@ std::getMD5.list() {
 
   done< <(eval "ls -1drt * 2>/dev/null")
 
-  cd "$pathSrc" || on error warn+return NotPermitted $@
+  cd "$pathSrc" || on error warn+return NotPermitted $e
 
   return 0
 
@@ -750,15 +787,18 @@ std::getTimeInSec() {
 
   if [[ "$1" == "-v" ]]; then
 
-    std::isVariable "$2" || on error InvalidVariable $2
+    e="$2"
+    std::isVariable "$2" || on error InvalidVariable $e
 
+    e="$3"
     [[ "$3" == "-v" ]] \
-      && on error InvalidArgument "$3 - number with time suffix expected"
+      && on error InvalidArgument "$e - number with time suffix expected"
 
     eval 'export $2="$( std::getTimeInSec $3 )"'
 
     [[ ${!2} ]] || eval 'export $2="$( std::getTimeInSec $4 )"'
-    [[ ${!2} ]] || on error EmptyResult $2
+    e="$2"
+    [[ ${!2} ]] || on error EmptyResult $e
 
     return $?
 
@@ -766,7 +806,8 @@ std::getTimeInSec() {
 
   local i=${1%%[[:alpha:]]*}
 
-  std::isNumber $i || on error InvalidArgument "$i - number expected"
+  e=$i
+  std::isNumber $i || on error InvalidArgument $e
 
   case ${1##*[[:digit:]]} in
 
@@ -778,7 +819,8 @@ std::getTimeInSec() {
            months|month|mon) echo $(( i*3600*24*30 ));;
                years|year|y) echo $(( i*3600*24*365 ));;
                           *) echo ""
-                             on error InvalidArgument "$1 - number with time suffix expected"
+                             e=$1
+                             on error InvalidArgument "$e - number with time suffix expected"
                           ;;
 
   esac

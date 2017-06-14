@@ -1,5 +1,5 @@
 #
-# $Id: libini.sh 773 2017-06-06 12:45:30+04:00 toor $
+# $Id: libini.sh 778 2017-06-14 17:13:37+04:00 toor $
 #
 #****h* BASHLYK/libini
 #  DESCRIPTION
@@ -658,6 +658,7 @@ INI::__section.getArray() {
 #    tGet.__section.set _bashlyk_raw_uniq=a1 "is raw value No.1"
 #    tGet.__section.set _bashlyk_raw_uniq=b2 "is raw value No.2"
 #    tGet.__section.set _bashlyk_raw_uniq=a1 "is raw value No.3"
+#    tGet.get [a][b]                                                            #? $_bashlyk_iErrorInvalidArgument
 #    tGet.get [accumu] >| md5sum | grep ^9cb6e155955235c701959b4253d7417b.*-$   #? true
 #    tGet.get [unique] >| md5sum | grep ^9c964b5b47f6dcc62be09c5de82a6d4e.*-$   #? true
 #    tGet.free
@@ -691,7 +692,7 @@ INI::get() {
       ;;
 
     *)
-      on error warn+return InvalidArgument "$*"
+      e="$s" && on error warn+return InvalidArgument $e
       ;;
 
   esac
@@ -763,7 +764,7 @@ INI::keys() {
     ;;
 
     *)
-      on error warn+return InvalidArgument "$*"
+      on error warn+return InvalidArgument "${a[@]}"
     ;;
 
   esac
@@ -832,7 +833,9 @@ INI::keys() {
 #    _ onError return
 #    INI InvalidInput
 #    InvalidInput.set Thu, 30 Jun 2016 08:55:36 +0400                           #? $_bashlyk_iErrorInvalidArgument
+#    err::status
 #    InvalidInput.set [section] Thu, 30 Jun 2016 08:55:36 +0400                 #? $_bashlyk_iErrorInvalidArgument
+#    err::status
 #    InvalidInput.free
 #  SOURCE
 INI::set() {
@@ -849,7 +852,7 @@ INI::set() {
 
   else
 
-    on error InvalidArgument "$*"
+  e="$*" && on error InvalidArgument "$e"
 
   fi
 
@@ -1066,7 +1069,7 @@ INI::read() {
   ## TODO permit hi uid ?
   if [[ ! $( exec -c stat -c %u $fn ) =~ ^($UID|0)$ ]]; then
 
-    on error NotPermitted $1 owned by $( stat -c %U $fn )
+    e=$1 && on error NotPermitted $e owned by $( stat -c %U $fn )
 
   fi
 

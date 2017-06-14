@@ -1,5 +1,5 @@
 #
-# $Id: liberr.sh 777 2017-06-08 10:55:53+04:00 toor $
+# $Id: liberr.sh 778 2017-06-14 17:13:37+04:00 toor $
 #
 #****h* BASHLYK/liberr
 #  DESCRIPTION
@@ -85,6 +85,8 @@ _bashlyk_iErrorInvalidFunction=199
 _bashlyk_iErrorInvalidHash=198
 _bashlyk_iErrorEmptyVariable=197
 _bashlyk_iErrorNotNumber=196
+_bashlyk_iErrorNotInteger=195
+_bashlyk_iErrorNotDecimal=194
 _bashlyk_iErrorNotExistNotCreated=190
 _bashlyk_iErrorNoSuchFileOrDir=185
 _bashlyk_iErrorNoSuchProcess=184
@@ -114,6 +116,8 @@ _bashlyk_hError[$_bashlyk_iErrorInvalidVariable]="invalid variable"
 _bashlyk_hError[$_bashlyk_iErrorInvalidFunction]="invalid function"
 _bashlyk_hError[$_bashlyk_iErrorInvalidHash]="invalid hash"
 _bashlyk_hError[$_bashlyk_iErrorNotNumber]="not number"
+_bashlyk_hError[$_bashlyk_iErrorNotInteger]="not integer"
+_bashlyk_hError[$_bashlyk_iErrorNotDecimal]="not decimal number"
 _bashlyk_hError[$_bashlyk_iErrorNotExistNotCreated]="not exist and not created"
 _bashlyk_hError[$_bashlyk_iErrorNoSuchFileOrDir]="no such file or directory"
 _bashlyk_hError[$_bashlyk_iErrorNoSuchProcess]="no such process"
@@ -725,9 +729,9 @@ err::handler() {
   local re='^(echo|warn)$|^((echo|warn)[+])?(exit|return)$|^throw$' i=0 j=0 s
   ## TODO add reAction and reState for safely arguments parsing
 
-  [[ $1 =~ $re ]] && shift || on error throw InvalidArgument "1 - $1"
-  [[ $1 == on  ]] && shift || on error throw InvalidArgument "2 - $1"
-  [[ $1        ]] && shift || on error throw MissingArgument "3 - $1"
+  [[ $1 =~ $re ]] && shift || on error throw InvalidArgument "${aErrHandler[0]:-first argument}"
+  [[ $1 == on  ]] && shift || on error throw InvalidArgument "${aErrHandler[1]:-second argument}"
+  [[ $1        ]] && shift || on error throw MissingArgument "${aErrHandler[2]:-third argument}"
 
   if ! declare -pf err::${aErrHandler[2]} >/dev/null 2>&1; then
 
