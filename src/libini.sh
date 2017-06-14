@@ -1,5 +1,5 @@
 #
-# $Id: libini.sh 778 2017-06-14 17:13:37+04:00 toor $
+# $Id: libini.sh 779 2017-06-15 01:04:54+04:00 toor $
 #
 #****h* BASHLYK/libini
 #  DESCRIPTION
@@ -692,7 +692,7 @@ INI::get() {
       ;;
 
     *)
-      e="$s" && on error warn+return InvalidArgument $e
+      on error warn+return InvalidArgument $*
       ;;
 
   esac
@@ -852,7 +852,7 @@ INI::set() {
 
   else
 
-  e="$*" && on error InvalidArgument "$e"
+  on error InvalidArgument $*
 
   fi
 
@@ -1069,7 +1069,7 @@ INI::read() {
   ## TODO permit hi uid ?
   if [[ ! $( exec -c stat -c %u $fn ) =~ ^($UID|0)$ ]]; then
 
-    e=$1 && on error NotPermitted $e owned by $( stat -c %U $fn )
+    on error NotPermitted $1 owned by $( stat -c %U $fn )
 
   fi
 

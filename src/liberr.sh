@@ -1,5 +1,5 @@
 #
-# $Id: liberr.sh 778 2017-06-14 17:13:37+04:00 toor $
+# $Id: liberr.sh 779 2017-06-15 01:04:54+04:00 toor $
 #
 #****h* BASHLYK/liberr
 #  DESCRIPTION
@@ -27,7 +27,7 @@ shopt -s expand_aliases
 #    usable aliases for exported functions
 #  SOURCE
 alias           try='try()'
-alias            on='eval $( err::eval )'
+alias            on='eval $( err::eval "$@" )'
 alias          show='err::handler echo'
 alias          warn='err::handler warn'
 alias         abort='err::handler exit'
@@ -415,7 +415,7 @@ err::eval() {
   local i IFS=$' \t\n' reAct reArg sAction=$_bashlyk_onError sMessage s
 
   reAct='^(echo|warn)$|^((echo|warn)[+])?(exit|return)$|^throw$'
-  reArg='((on|\$\(.?err::eval.?\)).error|err::eval)[[:space:]]*?([^\>]*)[[:space:]]*?[\>\|]?'
+  reArg='((on|\$\(.?err::eval.\"\$\@\".?\)).error|err::eval)[[:space:]]*?([^\>]*)[[:space:]]*?[\>\|]?'
 
   if [[ "$( err::sourcecode )" =~ $reArg ]]; then
 
@@ -729,9 +729,9 @@ err::handler() {
   local re='^(echo|warn)$|^((echo|warn)[+])?(exit|return)$|^throw$' i=0 j=0 s
   ## TODO add reAction and reState for safely arguments parsing
 
-  [[ $1 =~ $re ]] && shift || on error throw InvalidArgument "${aErrHandler[0]:-first argument}"
-  [[ $1 == on  ]] && shift || on error throw InvalidArgument "${aErrHandler[1]:-second argument}"
-  [[ $1        ]] && shift || on error throw MissingArgument "${aErrHandler[2]:-third argument}"
+  [[ $1 =~ $re ]] && shift || on error throw InvalidArgument "${1:-first argument}"
+  [[ $1 == on  ]] && shift || on error throw InvalidArgument "${1:-second argument}"
+  [[ $1        ]] && shift || on error throw MissingArgument "${1:-third argument}"
 
   if ! declare -pf err::${aErrHandler[2]} >/dev/null 2>&1; then
 

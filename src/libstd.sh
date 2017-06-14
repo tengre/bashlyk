@@ -1,5 +1,5 @@
 #
-# $Id: libstd.sh 778 2017-06-14 17:13:37+04:00 toor $
+# $Id: libstd.sh 779 2017-06-15 01:04:54+04:00 toor $
 #
 #****h* BASHLYK/libstd
 #  DESCRIPTION
@@ -381,6 +381,7 @@ std::whitespace.decode() {
 #    std::temp invalid+variable                                                 #? ${_bashlyk_iErrorInvalidVariable}
 #    err::status
 #    std::temp path=/proc                                                       #? ${_bashlyk_iErrorNotExistNotCreated}
+#    err::status
 #  SOURCE
 std::temp() {
 
@@ -388,12 +389,11 @@ std::temp() {
 
     [[ "$1" == "-v" ]] && shift
 
-    e=$1
-    std::isVariable $1 || on error InvalidVariable $e
+    std::isVariable $1 || on error InvalidVariable $1
 
     eval 'export $1="$( shift; std::temp stdout-mode ${@//keep=false/} )"'
 
-    [[ ${!1} ]] || on error EmptyResult $e
+    [[ ${!1} ]] || on error EmptyResult $1
 
     [[ $* =~ keep=false || ! $* =~ keep=true ]] && pid::onExit.unlink ${!1}
 
@@ -425,8 +425,7 @@ std::temp() {
 
                 if [[ $1 == $s ]]; then
 
-                  e=$1
-                  std::isVariable $1 || on error InvalidVariable $e
+                  std::isVariable $1 || on error InvalidVariable $1
 
                 fi
 
@@ -548,9 +547,7 @@ std::acceptArrayItem() {
 
   errorify on MissingArgument $1 || return
 
-  e="$1"
-
-  [[ "$1" =~ ^[_a-zA-Z][_a-zA-Z0-9]*(\[.*\])?$ ]] || on error return InvalidVariable $e
+  [[ "$1" =~ ^[_a-zA-Z][_a-zA-Z0-9]*(\[.*\])?$ ]] || on error return InvalidVariable $1
 
   [[ "$1" =~ ^[_a-zA-Z][_a-zA-Z0-9]*\[.*\]$ ]] && echo "{$1}" || echo "$1"
 
@@ -699,7 +696,9 @@ std::getMD5() {
 #    pid::onExit.unlink ${path}
 #    std::getMD5.list $path >| grep ^[[:xdigit:]]*.*testfile.$                  #? true
 #    std::getMD5.list                                                           #? ${_bashlyk_iErrorMissingArgument}
+#    err::status
 #    std::getMD5.list /notexist/path                                            #? ${_bashlyk_iErrorNoSuchFileOrDir}
+#    err::status
 #  SOURCE
 std::getMD5.list() {
 
@@ -708,8 +707,7 @@ std::getMD5.list() {
   errorify on MissingArgument $@ || return
   errorify on NoSuchFileOrDir "$@" || return
 
-  e="$@"
-  cd "$@" 2>/dev/null || on error warn+return NotPermitted $e
+  cd "$@" 2>/dev/null || on error warn+return NotPermitted $@
 
   pathDst="$( exec -c pwd )"
 
@@ -721,7 +719,7 @@ std::getMD5.list() {
 
   done< <(eval "ls -1drt * 2>/dev/null")
 
-  cd "$pathSrc" || on error warn+return NotPermitted $e
+  cd "$pathSrc" || on error warn+return NotPermitted $pathSrc
 
   return 0
 
@@ -774,31 +772,33 @@ std::xml() {
 #  EXAMPLE
 #    local v s=${RANDOM:0:2} #-
 #    std::getTimeInSec                                                          #? $_bashlyk_iErrorInvalidArgument
+#    err::status
 #    std::getTimeInSec SeventenFourSec                                          #? $_bashlyk_iErrorInvalidArgument
+#    err::status
 #    std::getTimeInSec 59seconds >| grep -w 59                                  #? true
 #    std::getTimeInSec -v v ${s}minutes                                         #? true
 #    echo $v >| grep -w $(( s * 60 ))                                           #? true
 #    std::getTimeInSec -v 123s                                                  #? $_bashlyk_iErrorInvalidVariable
+#    err::status
 #    std::getTimeInSec -v -v                                                    #? $_bashlyk_iErrorInvalidVariable
+#    err::status
 #    std::getTimeInSec -v v -v v                                                #? $_bashlyk_iErrorInvalidArgument
+#    err::status
 #    std::getTimeInSec $RANDOM                                                  #? true
 #  SOURCE
 std::getTimeInSec() {
 
   if [[ "$1" == "-v" ]]; then
 
-    e="$2"
-    std::isVariable "$2" || on error InvalidVariable $e
+    std::isVariable "$2" || on error InvalidVariable $2
 
-    e="$3"
     [[ "$3" == "-v" ]] \
-      && on error InvalidArgument "$e - number with time suffix expected"
+      && on error InvalidArgument "$3 - number with time suffix expected"
 
     eval 'export $2="$( std::getTimeInSec $3 )"'
 
     [[ ${!2} ]] || eval 'export $2="$( std::getTimeInSec $4 )"'
-    e="$2"
-    [[ ${!2} ]] || on error EmptyResult $e
+    [[ ${!2} ]] || on error EmptyResult $2
 
     return $?
 
@@ -806,8 +806,7 @@ std::getTimeInSec() {
 
   local i=${1%%[[:alpha:]]*}
 
-  e=$i
-  std::isNumber $i || on error InvalidArgument $e
+  std::isNumber $i || on error InvalidArgument ${1%%[[:alpha:]]*}
 
   case ${1##*[[:digit:]]} in
 
@@ -819,8 +818,7 @@ std::getTimeInSec() {
            months|month|mon) echo $(( i*3600*24*30 ));;
                years|year|y) echo $(( i*3600*24*365 ));;
                           *) echo ""
-                             e=$1
-                             on error InvalidArgument "$e - number with time suffix expected"
+                             on error InvalidArgument "$1 - number with time suffix expected"
                           ;;
 
   esac
@@ -878,7 +876,9 @@ std::getFreeFD() {
 #  EXAMPLE
 #    declare -Ag -- hh='()' s5
 #    std::isHash 5s                                                             #? $_bashlyk_iErrorInvalidVariable
+#    err::status
 #    std::isHash s5                                                             #? $_bashlyk_iErrorInvalidHash
+#    err::status
 #    std::isHash hh                                                             #? true
 #  SOURCE
 std::isHash() {

@@ -1,5 +1,5 @@
 #
-# $Id: libpid.sh 778 2017-06-14 17:13:37+04:00 toor $
+# $Id: libpid.sh 779 2017-06-15 01:04:54+04:00 toor $
 #
 #****h* BASHLYK/libpid
 #  DESCRIPTION
@@ -95,14 +95,11 @@ pid::status() {
 
   errorify on MissingArgument $* || return
 
-  e=$1
-
-  std::isNumber $1 && (( $1 < 65536 )) || on error return InvalidArgument $e
+  std::isNumber $1 && (( $1 < 65536 )) || on error return InvalidArgument $1
 
   local re="\\b${1}\\b"
 
   (( $$ == $1 )) && return $_bashlyk_iErrorCurrentProcess
-
 
   shift
 
