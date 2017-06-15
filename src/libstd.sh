@@ -1,5 +1,5 @@
 #
-# $Id: libstd.sh 779 2017-06-15 01:04:54+04:00 toor $
+# $Id: libstd.sh 780 2017-06-15 16:50:05+04:00 toor $
 #
 #****h* BASHLYK/libstd
 #  DESCRIPTION
@@ -379,7 +379,7 @@ std::whitespace.decode() {
 #    test -p $foTemp                                                            #? true
 #    rm -f $foTemp
 #    std::temp invalid+variable                                                 #? ${_bashlyk_iErrorInvalidVariable}
-#    err::status
+#    err::status    >| grep -P '^invalid variable - invalid\+variable \(\d+\)$' #? true
 #    std::temp path=/proc                                                       #? ${_bashlyk_iErrorNotExistNotCreated}
 #    err::status
 #  SOURCE
@@ -401,9 +401,10 @@ std::temp() {
 
   fi
 
-  local bPipe cmd IFS octMode optDir path s sGroup sPrefix sSuffix sUser
+  local bPipe cmd fnErr IFS octMode optDir path s sGroup sPrefix sSuffix sUser
 
   cmd=direct
+  fnErr=${TMPDIR:-/tmp}/${RANDOM}${RANDOM}${RANDOM}${USER}${$}
   IFS=$' \t\n'
 
   for s in $*; do
@@ -429,7 +430,7 @@ std::temp() {
 
                 fi
 
-                if std::isNumber "$2" && [[ -z "$3" ]] ; then
+                if std::isNumber "$2" && [[ ! $3 ]] ; then
 
                   # compatibility with ancient version
                   octMode="$2"
@@ -462,6 +463,8 @@ std::temp() {
 
   mkdir -p $path || on error NotExistNotCreated "$path"
 
+  pid::onExit.unlink $fnErr
+
   case "$cmd" in
 
     direct)
@@ -474,7 +477,7 @@ std::temp() {
 
     mktemp)
 
-      s=$( mktemp --tmpdir="$path" $optDir --suffix="$sSuffix" "${sPrefix:0:5}XXXXXXXX" )
+      s=$( LC_ALL=C mktemp --tmpdir="$path" $optDir --suffix="$sSuffix" "${sPrefix:0:5}XXXXXXXX" )
 
     ;;
 
@@ -483,11 +486,11 @@ std::temp() {
       [[ $sPrefix ]] && sPrefix="-p ${sPrefix:0:5}"
       [[ $sSuffix ]] && sSuffix="-s $sSuffix"
 
-      s=$( tempfile -d $path $sPrefix $sSuffix )
+      s=$( LC_ALL=C tempfile -d $path $sPrefix $sSuffix )
 
     ;;
 
-  esac
+  esac >$fnErr 2>&1
 
   if [[ $bPipe ]]; then
 
@@ -495,7 +498,7 @@ std::temp() {
     mkfifo $s
     : ${octMode:=0600}
 
-  fi >&2
+  fi >>$fnErr 2>&1
 
   [[ $octMode ]] && chmod $octMode $s
 
@@ -505,11 +508,11 @@ std::temp() {
     [[ $sUser  ]] && chown $sUser  $s
     [[ $sGroup ]] && chgrp $sGroup $s
 
-  fi >&2
+  fi >>$fnErr 2>&1
 
   if ! [[ -f "$s" || -p "$s" || -d "$s" ]]; then
 
-    on error NotExistNotCreated $s
+    on error NotExistNotCreated $s $(< $fnErr)
 
   fi
 

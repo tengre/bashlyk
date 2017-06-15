@@ -1,4 +1,4 @@
-# $Id: TODO 778 2017-06-14 17:13:37+04:00 toor $
+# $Id: TODO 780 2017-06-15 16:50:05+04:00 toor $
 + liblog.sh: не проходит тест udfWarn без терминала (в не интерактивном режиме)
 + libini.sh: при тесте с другими модулями в ini файлах оказывается вывод других
   тестовых блоков (решено в версии 1.57)
@@ -116,6 +116,9 @@ Fri, 06 Mar 2015 12:44:00 +0400
 - #170214 - std - for 'udfMakeTemp -v var' in the eval block are autoclean not worked
 - #170614 - std - add std::settings (decimal point & etc)
 - #170615 - std - std::isNumber add support for decimal numbers or add std::isDecimal
+- #170616 - std - move temp tools init to the bashlyk
+- #170617 - std - rewrite testunit engine
+
 
 
 

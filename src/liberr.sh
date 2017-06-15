@@ -1,5 +1,5 @@
 #
-# $Id: liberr.sh 779 2017-06-15 01:04:54+04:00 toor $
+# $Id: liberr.sh 780 2017-06-15 16:50:05+04:00 toor $
 #
 #****h* BASHLYK/liberr
 #  DESCRIPTION
@@ -27,16 +27,16 @@ shopt -s expand_aliases
 #    usable aliases for exported functions
 #  SOURCE
 alias           try='try()'
-alias            on='eval $( err::eval "$@" )'
-alias          show='err::handler echo'
-alias          warn='err::handler warn'
-alias         abort='err::handler exit'
-alias         throw='err::handler throw'
-alias      errorify='err::handler return'
-alias     exit+echo='err::handler echo+exit'
-alias     exit+warn='err::handler warn+exit'
-alias errorify+echo='err::handler echo+return'
-alias errorify+warn='err::handler warn+return'
+alias            on='eval $( err::generate "$@" )'
+alias          show='err::postfix echo'
+alias          warn='err::postfix warn'
+alias         abort='err::postfix exit'
+alias         throw='err::postfix throw'
+alias      errorify='err::postfix return'
+alias     exit+echo='err::postfix echo+exit'
+alias     exit+warn='err::postfix warn+exit'
+alias errorify+echo='err::postfix echo+return'
+alias errorify+warn='err::postfix warn+return'
 alias         catch='; eval "$( err::__convert_try_to_func )" ||'
 #******
 #****G* liberr/Global Variables
@@ -49,8 +49,8 @@ declare -rg _bashlyk_methods_err="                                             \
                                                                                \
     err::{__add_throw_to_command,CommandNotFound,__convert_try_to_func,        \
     EmptyArgument,EmptyResult,EmptyVariable,eval,exception.message,debug,      \
-    handler,InvalidVariable,MissingArgument,NoSuchFileOrDir,orr,stacktrace,    \
-    status,status.show,sourcecode}                                             \
+    __generate,generate,InvalidVariable,MissingArgument,NoSuchFileOrDir,orr,   \
+    stacktrace,status,status.show,sourcecode}                                  \
 "
 
 declare -rg _bashlyk_aExport_err="                                             \
@@ -59,6 +59,10 @@ declare -rg _bashlyk_aExport_err="                                             \
     errorify+echo errorify+warn exit+echo exit+warn on show throw try warn     \
                                                                                \
 "
+
+declare -rg _bashlyk_err_reAct='^(echo|warn)$|^((echo|warn)[+])?(exit|return)$|^throw$'
+declare -rg _bashlyk_err_reArg='((on|\$\(.?err::generate.\"\$\@\".?\)).error|err::generate)[[:space:]]*?([^\>]*)[[:space:]]*?[\>\|]?'
+
 : ${_bashlyk_onError:=throw}
 #
 
@@ -348,15 +352,89 @@ err::sourcecode() {
 
 }
 #******
-## TODO Incomplete list of arguments is not handled correctly
-#****p* liberr/err::eval
+#****e* liberr/err::generate
 #  SYNOPSIS
-#    err::eval [<action>] [<state>] [<message>]
+#    err::generate [<action>] [<state>] [<message>]
 #  DESCRIPTION
-#    Flexible error handling. Processing is controlled by global variables or
-#    arguments, and consists in a warning message, the function returns, or the
-#    end of the script with a certain return code. Messages may include a stack
-#    trace and printed to stderr
+#    Generate code for flexible error handling, which depends on the global
+#    variable or arguments. Possible to combine with each other the following
+#    types of code:
+#        * Output the warning message
+#        * Function termination with error code
+#        * Completion of the script with error code
+#        * Call stack trace
+#    The generated code is intended for execution by the eval utility
+#  NOTES
+#    public method
+#  INPUTS
+#    <action> - directly determines how the error handling. Possible actions:
+#
+#     echo        - just prepare a message from the string argument to STDERR
+#     warn        - prepare a message from the string argument for transmission
+#                   to the notification system
+#     return      - set return from the function. In the global context - the
+#                   end of the script (exit)
+#     echo+return - the combined action of 'echo'+'return', however, if the code
+#                   is not within the function, it is only the transfer of
+#                   messages from a string of arguments to STDERR
+#     warn+return - the combined action of 'warn'+'return', however, if the code
+#                   is not within the function, it is only the transfer of
+#                   messages from a string of arguments to the notification
+#                   system
+#     exit        - set unconditional completion of the script
+#     echo+exit   - the same as 'exit', but with the transfer of messages from a
+#                   string of arguments to STDERR
+#     warn+exit   - the same as 'echo+exit', but with the transfer of messages
+#                   to the notification system
+#     throw       - the same as 'warn+exit', but with the transfer of messages
+#                   and the call stack to the notification system
+#
+#    If an action is not specified, it uses stored in the global variable
+#    $_bashlyk_onError action. If it is not valid, then use action 'throw'
+#
+#    <state> - number or predefined name as 'iError<Name>' or '<Name>' by which
+#              one can get the error code from the global variable
+#              $_bashlyk_iError<..> and its description from global hash
+#              $_bashlyk_hError
+#              If the error code is not specified, it is set to the return code
+#              of the last executed command. In the end, the resulting numeric
+#              code initializes a global variable $_bashlyk_iLastError[$BASHPID]
+#
+#    <message> - An error detail, such as the file name. When specifying a
+#                message, you should keep in mind that the error table
+#                ($_bashlyk_hError) has already prepared the descriptions.
+#  OUTPUT
+#    command line, which can be performed using the eval <...>
+#  EXAMPLE
+#    false || on error warn NoSuchFileOrDir /notexist                           #? true
+#    _bashlyk_onError=debug
+#    false || on error exit NoSuchFileOrDir /notexist                           #? $_bashlyk_iErrorNoSuchFileOrDir
+#    #_bashlyk_onError=echo
+#    err::orr 166 || on error echo                                              #? true
+#    err::orr  11 || on error 123                                               #? 123
+#    err::orr 123 || on error bla-bla bla                                       #? 123
+#    err::orr 123 || on error                                                   #? 123
+#  SOURCE
+err::generate() {
+
+  local bashlyk_err_gen_rc=$?
+
+  if [[ ! "$( err::sourcecode )" =~ $_bashlyk_err_reArg ]]; then
+
+    echo "echo \"$@ - invalid arguments for error handling, abort...\"; exit $_bashlyk_iErrorInvalidArgument;"
+
+  fi
+
+  err::__generate $bashlyk_err_gen_rc $(eval echo "\"${BASH_REMATCH[3]//\"/}\"")
+
+}
+#******
+#****p* liberr/err::__generate
+#  SYNOPSIS
+#    err::__generate [<action>] [<state>] [<message>]
+#  DESCRIPTION
+#    The internal part of the function err::generate for protecting variables in
+#    arguments from local variables of this functions when calling the "eval"
 #  NOTES
 #    private method
 #  INPUTS
@@ -400,34 +478,28 @@ err::sourcecode() {
 #  OUTPUT
 #    command line, which can be performed using the eval <...>
 #  EXAMPLE
-#    false || on error warn NoSuchFileOrDir /notexist                           #? true
+#    local cmd fn
+#    cmd='err::__generate 1 warn NoSuchFileOrDir /notexist'
+#     fn=$(mktemp || tempfile)
 #    _bashlyk_onError=debug
-#    false || on error exit NoSuchFileOrDir /notexist                           #? $_bashlyk_iErrorNoSuchFileOrDir
-#    #_bashlyk_onError=echo
-#    err::orr 166 || on error echo                                              #? true
-#    err::orr 11 || on error 123                                                #? 123
-#    err::orr 123 || on error bla-bla bla                                       #? 123
-#    err::orr 123 || on error                                                   #? 123
+#    $cmd >| md5sum - | grep ^d69f98b3bb2565835a0514d0d10b6325.*-$              #? true
+#    _bashlyk_onError=echo
+#    $cmd >| md5sum - | grep ^40a6f58056bc424b1a3d361b7fca8c78.*-$              #? true
 #  SOURCE
-err::eval() {
+err::__generate() {
 
-  local rc=$? rs echo='echo' warn='msg::warn' fn
-  local i IFS=$' \t\n' reAct reArg sAction=$_bashlyk_onError sMessage s
-
-  reAct='^(echo|warn)$|^((echo|warn)[+])?(exit|return)$|^throw$'
-  reArg='((on|\$\(.?err::eval.\"\$\@\".?\)).error|err::eval)[[:space:]]*?([^\>]*)[[:space:]]*?[\>\|]?'
-
-  if [[ "$( err::sourcecode )" =~ $reArg ]]; then
-
-    local -a a=( $( eval echo "\"${BASH_REMATCH[3]//\"/}\"" ) )
-
-  else
-
-    echo "echo \"$fn - invalid arguments for error handling, abort...\"; exit $( _ iErrorInvalidArgument );"
-
-  fi
-
-  [[ ${a[0],,} =~ $reAct ]] && sAction=${a[0],,} && i=1 || i=0
+  local i IFS sAction sMessage s rc rs fn echo warn
+  local -a a
+  #
+  std::isNumber $1 && rc=$1 && shift || rc=$_bashlyk_iErrorUnknown
+  #
+        a=( $* )
+      IFS=$' \t\n'
+     echo='echo'
+     warn='msg::warn'
+  sAction=$_bashlyk_onError
+  #
+  [[ ${a[0],,} =~ $_bashlyk_err_reAct ]] && sAction=${a[0],,} && i=1 || i=0
 
   [[ ${a[$i]} ]] || a[$i]=$rc
 
@@ -514,7 +586,7 @@ err::eval() {
 #    err::CommandNotFound <filename>
 #  DESCRIPTION
 #    return true if argument is not empty, exists and executable (## TODO test)
-#    designed to check the conditions in the function err::handler
+#    designed to check the conditions in the function err::postfix
 #  NOTES
 #    private method
 #  INPUTS
@@ -541,7 +613,7 @@ err::CommandNotFound() {
 #    err::NoSuchFileOrDir <filename>
 #  DESCRIPTION
 #    return true if argument is non empty, exists, designed to check the
-#    conditions in the function err::handler
+#    conditions in the function err::postfix
 #  NOTES
 #    private method
 #  ARGUMENTS
@@ -567,7 +639,7 @@ err::NoSuchFileOrDir() {
 #    err::InvalidVariable <variable>
 #  DESCRIPTION
 #    return true if argument is non empty, valid variable, designed to check the
-#    conditions in the function err::handler
+#    conditions in the function err::postfix
 #  NOTES
 #    private method
 #  INPUTS
@@ -593,7 +665,7 @@ err::InvalidVariable() {
 #    err::EmptyVariable <variable>
 #  DESCRIPTION
 #    return true if argument is non empty, valid variable
-#    designed to check the conditions in the function err::handler
+#    designed to check the conditions in the function err::postfix
 #  NOTES
 #    private method
 #  INPUTS
@@ -620,7 +692,7 @@ err::EmptyVariable() {
 #    err::MissingArgument <argument>
 #  DESCRIPTION
 #    return true if argument is not empty
-#    designed to check the conditions in the function err::handler
+#    designed to check the conditions in the function err::postfix
 #  NOTES
 #    private method
 #  INPUTS
@@ -649,7 +721,7 @@ err::EmptyArgument()          { err::MissingArgument $*; }
 #    err::EmptyResult <argument>
 #  DESCRIPTION
 #    return true if argument is not empty
-#    designed to check the conditions in the function err::handler
+#    designed to check the conditions in the function err::postfix
 #  NOTES
 #    private method
 #  INPUTS
@@ -671,9 +743,9 @@ err::EmptyResult() {
 
 }
 #******
-#****p* liberr/err::handler
+#****p* liberr/err::postfix
 #  SYNOPSIS
-#    err::handler <action> on <state> <argument>
+#    err::postfix <action> on <state> <argument>
 #  DESCRIPTION
 #    Flexible error handling. Processing is controlled by global variables or
 #    arguments, and consists in a warning message, the function returns, or the
@@ -714,7 +786,7 @@ err::EmptyResult() {
 #    see on error ...
 #  EXAMPLE
 #    ## TODO improve tests
-#    err::handler warn on NoSuchFileOrDir /err.handler                          #? true
+#    err::postfix warn on NoSuchFileOrDir /err.handler                          #? true
 #    errorify+echo on CommandNotFound notexist.return                           #? $_bashlyk_iErrorCommandNotFound
 #    warn on NoSuchFileOrDir /notexist.warn                                     #? true
 #    show on NoSuchFileOrDir /notexist.echo                                     #? true
@@ -723,7 +795,7 @@ err::EmptyResult() {
 #    $(errorify on CommandNotFound notexist.errorify.child || return)           #? $_bashlyk_iErrorCommandNotFound
 #    warn on CommandNotFound notexist nomoreexist                               #? true
 #  SOURCE
-err::handler() {
+err::postfix() {
 
   local -a aErrHandler=( $* )
   local re='^(echo|warn)$|^((echo|warn)[+])?(exit|return)$|^throw$' i=0 j=0 s
