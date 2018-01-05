@@ -1,5 +1,5 @@
 #
-# $Id: liberr.sh 782 2018-01-05 18:13:42+04:00 toor $
+# $Id: liberr.sh 784 2018-01-05 23:00:29+04:00 toor $
 #
 #****h* BASHLYK/liberr
 #  DESCRIPTION
@@ -478,9 +478,8 @@ err::generate() {
 #  OUTPUT
 #    command line, which can be performed using the eval <...>
 #  EXAMPLE
-#    local cmd fn
+#    local cmd
 #    cmd='err::__generate 1 warn NoSuchFileOrDir /notexist'
-#     fn=$(mktemp || tempfile)
 #    _bashlyk_onError=debug
 #    $cmd >| md5sum - | grep ^d69f98b3bb2565835a0514d0d10b6325.*-$              #? true
 #    _bashlyk_onError=echo
