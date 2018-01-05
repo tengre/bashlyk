@@ -1,5 +1,5 @@
 #
-# $Id: libold.sh 768 2017-06-02 14:40:27+04:00 toor $
+# $Id: libold.sh 783 2018-01-05 21:24:49+04:00 toor $
 #
 #****h* BASHLYK/libold
 #  DESCRIPTION
@@ -4752,9 +4752,9 @@ udfOnTrap() {
 #                      the name
 #  EXAMPLE
 #    local b confChild confMain pid s s0
-#    std::temp confMain suffix=.conf
+#    udfMakeTemp confMain suffix=.conf
 #    confChild="${confMain%/*}/child.${confMain##*/}"                           #-
-#    pid::onExit::unlink $confChild                                             #-
+#    udfAddFile2Clean $confChild                                                #-
 #    cat <<'EOFconf' > $confMain                                                #-
 #                                                                               #-
 #    s0=$0                                                                      #-
