@@ -1,5 +1,5 @@
 #
-# $Id: liberr.sh 780 2017-06-15 16:50:05+04:00 toor $
+# $Id: liberr.sh 782 2018-01-05 18:13:42+04:00 toor $
 #
 #****h* BASHLYK/liberr
 #  DESCRIPTION
@@ -786,11 +786,15 @@ err::EmptyResult() {
 #    see on error ...
 #  EXAMPLE
 #    ## TODO improve tests
+#    local fn1 fn2
+#    std::temp fn1
+#    std::temp fn2
 #    err::postfix warn on NoSuchFileOrDir /err.handler                          #? true
 #    errorify+echo on CommandNotFound notexist.return                           #? $_bashlyk_iErrorCommandNotFound
 #    warn on NoSuchFileOrDir /notexist.warn                                     #? true
-#    show on NoSuchFileOrDir /notexist.echo                                     #? true
-#    $(throw on NoSuchFileOrDir /notexist.throw.child)                          #? $_bashlyk_iErrorNoSuchFileOrDir
+#    $(throw on NoSuchFileOrDir "$fn1" "$fn2")                                  #? true
+#    errorify on NoSuchFileOrDir "/notexist.echo" "/notexist.warn"              #? $_bashlyk_iErrorNoSuchFileOrDir
+#    $(throw on NoSuchFileOrDir "/notexist.throw.child")                        #? $_bashlyk_iErrorNoSuchFileOrDir
 #    $(exit+echo on CommandNotFound notexist.exit+echo.child)                   #? $_bashlyk_iErrorCommandNotFound
 #    $(errorify on CommandNotFound notexist.errorify.child || return)           #? $_bashlyk_iErrorCommandNotFound
 #    warn on CommandNotFound notexist nomoreexist                               #? true

@@ -1,5 +1,5 @@
 #
-# $Id: libmsg.sh 766 2017-05-26 16:33:11+04:00 toor $
+# $Id: libmsg.sh 782 2018-01-05 18:13:42+04:00 toor $
 #
 #****h* BASHLYK/libmsg
 #  DESCRIPTION
@@ -205,7 +205,9 @@ msg::notify() {
 
     [[ $_bashlyk_sLogin ]] && write $_bashlyk_sLogin < $fnTmp
 
-  } || std::cat - < $fnTmp
+  }
+
+  log::interactivity || std::cat - < $fnTmp
 
   rm -f $fnTmp
 
