@@ -1,5 +1,5 @@
 #
-# $Id: testunit.awk 651 2016-12-31 15:05:29+04:00 toor $
+# $Id: testunit.awk 785 2018-02-04 10:37:41+04:00 toor $
 #
 
 BEGIN {
@@ -42,6 +42,15 @@ BEGIN {
   print "}"
   print f
   b = 2
+
+}
+
+/^#stdout << (.*)$/ {
+
+  sub("#stdout << ", "")
+  print "testunitEmbed=\"${TMPDIR}/${RANDOM}${RANDOM}."$0"\""
+  print "cat << "$0" > $testunitEmbed"
+  next
 
 }
 

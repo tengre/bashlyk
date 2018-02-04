@@ -1,5 +1,5 @@
 #
-# $Id: libini.sh 779 2017-06-15 01:04:54+04:00 toor $
+# $Id: libini.sh 785 2018-02-04 10:37:41+04:00 toor $
 #
 #****h* BASHLYK/libini
 #  DESCRIPTION
@@ -365,17 +365,38 @@ INI::__section.select() {
 #    INI tSShow
 #    tSShow.__section.select tSect
 #    tSShow.__section.set key "is value"
-#    tSShow.__section.show tSect >| md5sum | grep ^39277799012588d417f0ef8e.*-$ #? true
+#
+#stdout << 'tSect'
+#                                                                               #-
+#                                                                               #-
+#[ tSect ]                                                                      #-
+#                                                                               #-
+#    key    =    is value                                                       #-
+#tSect                                                                          #-
+#    tSShow.__section.show tSect >| diff -wu - $testunitEmbed                   #? true
 #    tSShow.__section.select
+#stdout << 'unnamedsection'
+#                                                                               #-
+#    key    =    unnamed section                                                #-
+#unnamedsection                                                                 #-
 #    tSShow.__section.set key "unnamed section"
-#    tSShow.__section.show >| md5sum | grep ^12790719e0b9d1f73db7a950368df8.*-$ #? true
+#    tSShow.__section.show >| diff -wu - $testunitEmbed                         #? true
 #    tSShow.free
 #    INI tSShow2
 #    tSShow2.settings.shellmode true
 #    tSShow2.set [ tSect2 ] keyFirst   = is first value
 #    tSShow2.set [ tSect2 ] keySecond  = is second value
 #    tSShow2.set [ tSect2 ] keyOneWord = is_one_world_value
-#    tSShow2.__section.show tSect2 >| md5sum | grep ^648e93c0ed92724db16782.*-$ #? true
+#stdout << tSect2
+#                                                                               #-
+#                                                                               #-
+#[ tSect2 ]                                                                     #-
+#                                                                               #-
+#keyOneWord=is_one_world_value                                                  #-
+#  keyFirst="is first value"                                                    #-
+# keySecond="is second value"                                                   #-
+#tSect2                                                                         #-
+#    tSShow2.__section.show tSect2 >| diff -wu - $testunitEmbed                 #? true
 #    tSShow2.free
 #    INI tCheckSpaces
 #    ## TODO tests checking
@@ -504,8 +525,25 @@ INI::__section.show() {
 #    tSRawData.__section.setRawData "+" "save all 1"
 #    tSRawData.__section.setRawData "+" "save all 2"
 #    tSRawData.__section.setRawData "+" "save all 1"
-#    tSRawData.show >| md5sum - | grep ^1ec72eb6334d7eb29d45ffd7b01fccd2.*-$    #? true
-#    tSRawData.free
+#stdout << tSRawData
+#                                                                               #-
+#                                                                               #-
+#                                                                               #-
+#[ unique_values ]                                                              #-
+#                                                                               #-
+#save only unique 2                                                             #-
+#save only unique 1                                                             #-
+#                                                                               #-
+#                                                                               #-
+#[ accumulated_values ]                                                         #-
+#                                                                               #-
+#save all 1                                                                     #-
+#save all 2                                                                     #-
+#save all 1                                                                     #-
+#                                                                               #-
+#tSRawData                                                                      #-
+#    tSRawData.show >| diff -wu - $testunitEmbed                                #? true
+#    tSRawData.free                                                             #? true
 #  SOURCE
 INI::__section.setRawData() {
 
@@ -570,7 +608,8 @@ INI::__section.setRawData() {
 #    tGA.__section.set '_bashlyk_raw_uniq=a1' "is raw value No.1"
 #    tGA.__section.set '_bashlyk_raw_uniq=b2' "is raw value No.2"
 #    tGA.__section.set '_bashlyk_raw_uniq=a1' "is raw value No.3"
-#    tGA.__section.getArray sect1 >| md5sum - | grep ^9cb6e1559552.*3d7417b.*-$ #? true
+#    tGA.__section.getArray sect1
+##>| md5sum - | grep ^9cb6e1559552.*3d7417b.*-$ #? true
 #    tGA.__section.getArray sect2 >| md5sum - | grep ^9c964b5b47f6.*82a6d4e.*-$ #? true
 #    tGA.free
 #  SOURCE
