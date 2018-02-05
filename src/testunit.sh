@@ -1,5 +1,5 @@
 #
-# $Id: testunit.sh 785 2018-02-04 10:37:41+04:00 toor $
+# $Id: testunit.sh 786 2018-02-05 22:01:37+04:00 toor $
 #
 #****h* BASHLYK/testunit
 #  DESCRIPTION
@@ -32,6 +32,9 @@
 
   fi
   export TMPDIR
+  testunitEmbedA="${TMPDIR}/testunit.embedded.a.${RANDOM}${RANDOM}"
+  testunitEmbedB="${TMPDIR}/testunit.embedded.b.${RANDOM}${RANDOM}"
+
 #****f* testunit/udfTestUnitMsg
 #  SYNOPSIS
 #    udfTestUnitMsg
@@ -129,6 +132,7 @@ udfMain() {
 
   fi
 
+  rm -f $testunitEmbedA $testunitEmbedB
 }
 #******
 

@@ -1,5 +1,5 @@
 #
-# $Id: libmsg.sh 782 2018-01-05 18:13:42+04:00 toor $
+# $Id: libmsg.sh 786 2018-02-05 22:01:37+04:00 toor $
 #
 #****h* BASHLYK/libmsg
 #  DESCRIPTION
@@ -62,8 +62,14 @@ declare -rg _bashlyk_exports_msg="                                             \
 #    -      - data is read from standard input
 #    <text> - is used as a header for a stream from standard input
 #  EXAMPLE
-#    msg::echo 'test'                >| grep -w 'test'                          #? true
-#    echo body | msg::echo - subject >| md5sum | grep ^472002e8a20e4cf6d78e.*-$ #? true
+#    msg::echo 'test' | {{{
+#test
+#}}}
+#    msg::echo - subject <<< body | {{{
+#subject
+#----
+#body
+#}}}
 #  SOURCE
 msg::echo() {
 

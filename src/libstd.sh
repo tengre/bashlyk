@@ -1,5 +1,5 @@
 #
-# $Id: libstd.sh 780 2017-06-15 16:50:05+04:00 toor $
+# $Id: libstd.sh 786 2018-02-05 22:01:37+04:00 toor $
 #
 #****h* BASHLYK/libstd
 #  DESCRIPTION
@@ -148,7 +148,15 @@ std::isDecimal() {
 #    execution capability
 #  EXAMPLE
 #    local s='text' b='true' i=2015 a='true 2015 text'
-#    std::showVariable a,b';' i s 1w >| md5sum - | grep ^72f4ca740b23dcec5a.*-$ #? true
+#    std::showVariable a,b';' i s 1w | {{{
+#: Variable listing>
+#        a=true 2015 text
+#        b=true
+#        i=2015
+#        s=text
+#: Variable name "1w" is not valid!
+#
+#}}}
 #  SOURCE
 std::showVariable() {
 

@@ -1,5 +1,5 @@
 #
-# $Id: testunit.awk 785 2018-02-04 10:37:41+04:00 toor $
+# $Id: testunit.awk 786 2018-02-05 22:01:37+04:00 toor $
 #
 
 BEGIN {
@@ -7,7 +7,7 @@ BEGIN {
   FS = "\n"
   b = 2
   f = ""
-
+  bEmbed = 0
 }
 
 
@@ -45,14 +45,27 @@ BEGIN {
 
 }
 
-/^#stdout << (.*)$/ {
+/\| {{{$/ {
 
-  sub("#stdout << ", "")
-  print "testunitEmbed=\"${TMPDIR}/${RANDOM}${RANDOM}."$0"\""
-  print "cat << "$0" > $testunitEmbed"
+  bEmbed = 1
+  sub(/\| {{{$/, "")
+  sub(/^#/, "")
+  print $0" > $testunitEmbedB"
+  print "cat << '--EOF--' > $testunitEmbedA"
   next
 
 }
+
+/^#}}}$/ {
+
+  bEmbed = 0
+  print "--EOF--"
+  print "cat $testunitEmbedB >> $_bashlyk_TestUnit_fnLog 2>\&1"
+  print "diff -wu $testunitEmbedA $testunitEmbedB >> $_bashlyk_TestUnit_fnLog 2>\&1; udfTestUnitMsg true"
+  next
+
+}
+
 
 $1=$1 {
 
@@ -80,7 +93,11 @@ $1=$1 {
 
         } else {
 
-          $0 = $0" >> $_bashlyk_TestUnit_fnLog 2>&1"
+          if ( bEmbed == 0 ) {
+
+            $0 = $0" >> $_bashlyk_TestUnit_fnLog 2>&1"
+
+          }
 
         }
 
