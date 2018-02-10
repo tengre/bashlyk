@@ -1,5 +1,5 @@
 #
-# $Id: liberr.sh 784 2018-01-05 23:00:29+04:00 toor $
+# $Id: liberr.sh 786 2018-02-05 22:01:36+04:00 toor $
 #
 #****h* BASHLYK/liberr
 #  DESCRIPTION
@@ -481,9 +481,13 @@ err::generate() {
 #    local cmd
 #    cmd='err::__generate 1 warn NoSuchFileOrDir /notexist'
 #    _bashlyk_onError=debug
-#    $cmd >| md5sum - | grep ^d69f98b3bb2565835a0514d0d10b6325.*-$              #? true
+#    $cmd | {{{
+#err::stacktrace | msg::warn -  Warn: no\ such\ file\ or\ directory\ -\ /notexist\ ..\ \(185\) >&2; err::status 185 "/notexist"; : ; #
+#}}}
 #    _bashlyk_onError=echo
-#    $cmd >| md5sum - | grep ^40a6f58056bc424b1a3d361b7fca8c78.*-$              #? true
+#    $cmd | {{{
+#msg::warn  Warn: no\ such\ file\ or\ directory\ -\ /notexist\ ..\ \(185\) >&2; err::status 185 "/notexist"; : ; #
+#}}}
 #  SOURCE
 err::__generate() {
 
@@ -856,7 +860,9 @@ err::postfix() {
 #    private method, used for 'try ..catch' emulation
 #  EXAMPLE
 #    local s='command --with -a -- arguments' cmd='err::__add_throw_to_command'
-#    $cmd $s             >| md5sum | grep ^9491e10494aa59365481cd0418cedd9a.*-$ #? true
+#    $cmd $s | {{{
+#_bashlyk_sLastError[$BASHPID]="command: $(std::trim command --with -a -- arguments)\n output: {\n$(command --with -a -- arguments 2>&1)\n}" && echo -n . || return $?;
+#}}}
 #  SOURCE
 err::__add_throw_to_command() {
 
@@ -943,7 +949,17 @@ err::__convert_try_to_func() {
 #                                                                               #-
 #   }                                                                           #-
 #   EOFtry                                                                      #-
-#  . $fn                  >| md5sum -| grep ^65128961dfcf8819e88831025ad5f1.*-$ #? true
+#  . $fn | {{{
+#... fail..(210)
+#
+#try block exception:
+#~~~~~~~~~~~~~~~~~~~~
+# status: 210
+#command: error4test
+# output: {
+#testunit.sh: special error for testing
+#}
+#}}}
 #  SOURCE
 err::exception.message() {
 

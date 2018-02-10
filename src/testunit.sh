@@ -1,5 +1,5 @@
 #
-# $Id: testunit.sh 724 2017-04-06 17:29:28+04:00 toor $
+# $Id: testunit.sh 786 2018-02-05 22:01:37+04:00 toor $
 #
 #****h* BASHLYK/testunit
 #  DESCRIPTION
@@ -18,6 +18,23 @@
 : ${_bashlyk_TestUnit_iCount:=0}
 : ${_bashlyk_TestUnit_fnTmp:=$( mktemp 2>/dev/null || tempfile || echo "/tmp/${RANDOM}${RANDOM}" )}
 #******
+  if   [[ -w /dev/shm ]]; then
+
+    TMPDIR=/dev/shm
+
+  elif [[ -w /run/shm ]]; then
+
+    TMPDIR=/run/shm
+
+  else
+
+    TMPDIR=/tmp
+
+  fi
+  export TMPDIR
+  testunitEmbedA="${TMPDIR}/testunit.embedded.a.${RANDOM}${RANDOM}"
+  testunitEmbedB="${TMPDIR}/testunit.embedded.b.${RANDOM}${RANDOM}"
+
 #****f* testunit/udfTestUnitMsg
 #  SYNOPSIS
 #    udfTestUnitMsg
@@ -115,6 +132,7 @@ udfMain() {
 
   fi
 
+  rm -f $testunitEmbedA $testunitEmbedB
 }
 #******
 

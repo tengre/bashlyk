@@ -1,5 +1,5 @@
 #
-# $Id: libini.sh 779 2017-06-15 01:04:54+04:00 toor $
+# $Id: libini.sh 786 2018-02-05 22:01:37+04:00 toor $
 #
 #****h* BASHLYK/libini
 #  DESCRIPTION
@@ -365,17 +365,34 @@ INI::__section.select() {
 #    INI tSShow
 #    tSShow.__section.select tSect
 #    tSShow.__section.set key "is value"
-#    tSShow.__section.show tSect >| md5sum | grep ^39277799012588d417f0ef8e.*-$ #? true
+#    tSShow.__section.show tSect | {{{
+#
+#
+#[ tSect ]
+#
+#    key    =    is value
+#}}}
 #    tSShow.__section.select
 #    tSShow.__section.set key "unnamed section"
-#    tSShow.__section.show >| md5sum | grep ^12790719e0b9d1f73db7a950368df8.*-$ #? true
+#    tSShow.__section.show | {{{
+#
+#    key    =    unnamed section
+#}}}
 #    tSShow.free
 #    INI tSShow2
 #    tSShow2.settings.shellmode true
 #    tSShow2.set [ tSect2 ] keyFirst   = is first value
 #    tSShow2.set [ tSect2 ] keySecond  = is second value
 #    tSShow2.set [ tSect2 ] keyOneWord = is_one_world_value
-#    tSShow2.__section.show tSect2 >| md5sum | grep ^648e93c0ed92724db16782.*-$ #? true
+#    tSShow2.__section.show tSect2 | {{{
+#
+#
+#[ tSect2 ]
+#
+#keyOneWord=is_one_world_value
+#  keyFirst="is first value"
+# keySecond="is second value"
+#}}}
 #    tSShow2.free
 #    INI tCheckSpaces
 #    ## TODO tests checking
@@ -504,7 +521,23 @@ INI::__section.show() {
 #    tSRawData.__section.setRawData "+" "save all 1"
 #    tSRawData.__section.setRawData "+" "save all 2"
 #    tSRawData.__section.setRawData "+" "save all 1"
-#    tSRawData.show >| md5sum - | grep ^1ec72eb6334d7eb29d45ffd7b01fccd2.*-$    #? true
+#    tSRawData.show | {{{
+#
+#
+#
+#[ unique_values ]
+#
+#save only unique 2
+#save only unique 1
+#
+#
+#[ accumulated_values ]
+#
+#save all 1
+#save all 2
+#save all 1
+#
+#}}}
 #    tSRawData.free
 #  SOURCE
 INI::__section.setRawData() {
@@ -559,6 +592,7 @@ INI::__section.setRawData() {
 #  ERRORS
 #    MissingArgument - arguments not found
 #  EXAMPLE
+#    local -a a
 #    INI tGA
 #    tGA.__section.select sect1
 #    tGA.__section.set _bashlyk_raw_num 3
@@ -570,8 +604,12 @@ INI::__section.setRawData() {
 #    tGA.__section.set '_bashlyk_raw_uniq=a1' "is raw value No.1"
 #    tGA.__section.set '_bashlyk_raw_uniq=b2' "is raw value No.2"
 #    tGA.__section.set '_bashlyk_raw_uniq=a1' "is raw value No.3"
-#    tGA.__section.getArray sect1 >| md5sum - | grep ^9cb6e1559552.*3d7417b.*-$ #? true
-#    tGA.__section.getArray sect2 >| md5sum - | grep ^9c964b5b47f6.*82a6d4e.*-$ #? true
+#    eval "$(tGA.__section.getArray sect1)"
+#    echo "3 item expected"
+#    (( ${#a[@]} == 3 ))                                                        #? true
+#    eval "$(tGA.__section.getArray sect2)"
+#    echo "2 item expected"
+#    (( ${#a[@]} == 2 ))                                                        #? true
 #    tGA.free
 #  SOURCE
 INI::__section.getArray() {
@@ -640,6 +678,7 @@ INI::__section.getArray() {
 #    MissingArgument - arguments not found
 #    InvalidArgument - expected like a '[section]key', '[]key' or 'key'
 #  EXAMPLE
+#    local -a a
 #    INI tGet
 #    tGet.__section.select
 #    tGet.__section.set key "is unnamed section"
@@ -659,8 +698,12 @@ INI::__section.getArray() {
 #    tGet.__section.set _bashlyk_raw_uniq=b2 "is raw value No.2"
 #    tGet.__section.set _bashlyk_raw_uniq=a1 "is raw value No.3"
 #    tGet.get [a][b]                                                            #? $_bashlyk_iErrorInvalidArgument
-#    tGet.get [accumu] >| md5sum | grep ^9cb6e155955235c701959b4253d7417b.*-$   #? true
-#    tGet.get [unique] >| md5sum | grep ^9c964b5b47f6dcc62be09c5de82a6d4e.*-$   #? true
+#    eval "$(tGet.get [accumu])"
+#    echo "3 item expected"
+#    (( ${#a[@]} == 3 ))                                                        #? true
+#    eval "$(tGet.get [unique])"
+#    echo "2 item expected"
+#    (( ${#a[@]} == 2 ))                                                        #? true
 #    tGet.free
 #  SOURCE
 INI::get() {
@@ -737,8 +780,18 @@ INI::get() {
 #    tKeys.set  [section3] -= save value No.1
 #    tKeys.set  [section4] = save unique value No.2
 #    tKeys.set  [section4] = save unique value No.1
-#    tKeys.keys >| md5sum - | grep ^bcfcd2f2d13115c731e46c1bebfd21bf.*$         #? true
-#    tKeys.keys [section1] >| md5sum - | grep ^22e3ec00d3439034aea5476664d52.*$ #? true
+#    tKeys.keys | tr ',' '\n' | sort | {{{
+#
+#keyA
+#keyB
+#key with spaces
+#}}}
+#    tKeys.keys [section1] | tr ',' '\n' | sort | {{{
+#
+#key1
+#key2
+#key with spaces
+#}}}
 #    tKeys.keys [section2] >| grep ^+$                                          #? true
 #    tKeys.keys [section3] >| grep ^-$                                          #? true
 #    tKeys.keys [section4] >| grep ^=$                                          #? true
@@ -811,6 +864,7 @@ INI::keys() {
 #    InvalidArgument - expected like a '[section]key = value', '[]key = value'
 #                      or 'key = value'
 #  EXAMPLE
+#    local -a a
 #    INI tSet
 #    tSet.set                                                                   #? $_bashlyk_iErrorMissingArgument
 #    tSet.set [section]key = is value
@@ -827,8 +881,17 @@ INI::keys() {
 #    tSet.set [section2]=save unique value No.1
 #    tSet.set [section2] =  save unique value No.2
 #    tSet.set [section2] =   save unique value No.1
-#    tSet.get [section2] >| md5sum | grep ^8c6e9c4833a07c3d451eacbef0813534.*-$ #? true
-#    tSet.get [section1] >| md5sum | grep ^9cb6e155955235c701959b4253d7417b.*-$ #? true
+#    eval "$(tSet.get [section2])"
+#    for s in "${a[@]}"; do echo $s; done | sort | {{{
+#save unique value No.1
+#save unique value No.2
+#}}}
+#    eval "$(tSet.get [section1])"
+#    for s in "${a[@]}"; do echo $s; done | sort | {{{
+#is raw value No.1
+#is raw value No.2
+#is raw value No.3
+#}}}
 #    tSet.free
 #    _ onError return
 #    INI InvalidInput
@@ -902,7 +965,21 @@ INI::set() {
 #    tShow.__section.select
 #    tShow.__section.set key "unnamed section"
 #    tShow.set [section with spaces] key with spaces = value with spaces
-#    tShow.show        >| md5sum - | grep ^ea41a8a4d178df401850fbc701fbba58.*-$ #? true
+#    tShow.show | {{{
+#
+#    key    =    unnamed section
+#
+#
+#[ tShow ]
+#
+#    key    =    is value
+#
+#
+#[ section with spaces ]
+#
+#    key with spaces    =    value with spaces
+#
+#}}}
 #    tShow.free
 #  SOURCE
 INI::show() {
@@ -948,7 +1025,16 @@ INI::show() {
 #    tSave.__section.set key "unnamed section"
 #    tSave.save $fn
 #    tSave.free
-#    tail -n +4 $fn    >| md5sum - | grep ^ec11a98eb5eff761999bb604cae70d70.*-$ #? true
+#    tail -n +4 $fn | {{{
+#
+#    key    =    unnamed section
+#
+#
+#[ section ]
+#
+#    key    =    is value
+#
+#}}}
 #    INI tComments
 #    ## TODO globs
 #    tComments.settings chComment = \# this is comment';'
@@ -997,8 +1083,8 @@ INI::save() {
 #    NoSuchFileOrDir - input file not exist
 #    NotPermitted    - owner of the input file differ than owner of the process
 #  EXAMPLE
-#   local ini s S                                                               #-
-#   std::temp ini suffix=".ini"                                               #-
+#   local ini s S
+#   std::temp ini suffix=".ini"
 #    cat <<'EOFini' > ${ini}                                                    #-
 #    key              = on the global unnamed section                           #-
 #    key.with.dot     = with dot                                                #-
@@ -1041,7 +1127,53 @@ INI::save() {
 #   tRead.read                                                                  #? $_bashlyk_iErrorMissingArgument
 #   tRead.read /not/exist/file.$$.ini                                           #? $_bashlyk_iErrorNoSuchFileOrDir
 #   tRead.read $ini                                                             #? true
-#   tRead.show         >| md5sum - | grep ^f01c7775fb8969d7ee07ea39015356c4.*-$ #? true
+#   tRead.show | {{{
+#
+#                 key    =    on the global unnamed section
+#    key::with::colon    =    with colon
+#        key.with.dot    =    with dot
+#
+#
+#[ section with punct (!#%^&*+=|?$) and spaces: "Foo Bar" <user@host.domain> ]
+#
+#                key    =    $(date -R)
+#                 iZ    =
+#                 iY    =    25
+#                 iX    =    80
+#                  b    =    false
+#        multi equal    =    value with equal ( = ), more = stop.
+#    key with spaces    =    value with spaces
+#
+#
+#[ exec ]:
+#
+#TZ=UTC date -R --date='@12345678'
+#sUname="$(uname -a)"
+#if [[ $HOSTNAME ]]; then
+#  export HOSTNAME=$(hostname)
+#fi
+#
+#:[ exec ]
+#
+#
+#[ replace ]
+#
+#           key    =    in the base mode
+#        key in    =    the base mode
+#    key in the    =    base mode
+#
+#
+#[ section with raw data ]
+#
+#
+#
+#[ unify ]
+#
+#           key    =    in the base mode
+#        key in    =    the base mode
+#    key in the    =    base mode
+#
+#}}}
 #   tRead.free
 #  SOURCE
 INI::read() {
@@ -1275,7 +1407,61 @@ INI::read() {
 #   ## TODO add more tests
 #   tLoad.load $iniLoad []file,main,child [exec]- [main]hint, msg, cnt [replace]- [unify]= [acc]+ #? true
 #   tLoad.save $iniSave                                                         #? true
-#   tLoad.show         >| md5sum -| grep ^9d20121502695508ff37c79f94b6ca16.*-$  #? true
+#   tLoad.show | {{{
+#
+#     file    =    child
+#     main    =    false
+#    child    =    true
+#
+#
+#[ exec ]:
+#
+#TZ=UTC date -R --date='@12345679'
+#sUname="$(uname)"
+#if [[ $HOSTNAME ]]; then
+#export HOSTNAME=$(hostname -f)
+#fi
+#echo $sUname
+#
+#:[ exec ]
+#
+#
+#[ main ]
+#
+#       msg    =    child file
+#       cnt    =    80
+#      hint    =    $(date "+%s") more = equals =
+#    iXo Xo    =    19
+#
+#
+#[ replace ]
+#
+#after replacing
+#
+#
+#[ unify ]
+#
+#*.lit
+#*.bak
+#*.xxx
+#*.tmp
+#
+#
+#[ acc ]
+#
+#*.bak
+#*.tmp
+#*.bak
+#*.tmp
+#*.com
+#*.exe
+#*.jpg
+#*.png
+#*.mp3
+#*.dll
+#*.asp
+#
+#}}}
 ##    tLoad.free
 #  SOURCE
 INI::load() {
@@ -1416,9 +1602,61 @@ INI::load() {
 #    INI tCLI
 #    tCLI.bind.cli                                                              #? $_bashlyk_iErrorInvalidOption
 #    tCLI.bind.cli file{F}: exec{E}:- main-hint{H}: main-msg{M}: unify{U}:=     #? $_bashlyk_iErrorInvalidOption
-#    tCLI.bind.cli file{F}: exec{E}:- main-hint{H}: main-msg{M}: unify{U}:= acc:+                      #? true
+#    tCLI.bind.cli file{F}: exec{E}:- main-hint{H}: main-msg{M}: unify{U}:= acc:+            #? true
 #    tCLI.load $ini []file,main,child [exec]- [main]hint,msg,cnt [replace]- [unify]= [acc]+  #? true
-#    tCLI.show         >| md5sum - | grep ^264dd527123fc976df435cda9785dd3c.*-$ #? true
+#    tCLI.show | {{{
+#
+#     file    =    CLI
+#     main    =    false
+#    child    =    true
+#
+#
+#[ exec ]:
+#
+#clear
+#
+#:[ exec ]
+#
+#
+#[ main ]
+#
+#       msg    =    test
+#       cnt    =    80
+#      hint    =    'Hi!'
+#    iXo Xo    =    19
+#
+#
+#[ replace ]
+#
+#after replacing
+#
+#
+#[ unify ]
+#
+#*.lit
+#*.bak
+#*.xxx
+#a.2
+#*.tmp
+#
+#
+#[ acc ]
+#
+#*.bak
+#*.tmp
+#*.bak
+#*.tmp
+#*.com
+#*.exe
+#*.jpg
+#*.png
+#*.mp3
+#*.dll
+#*.asp
+#a
+#b
+#
+#}}}
 #    tCLI.free
 #  SOURCE
 INI::bind.cli() {
