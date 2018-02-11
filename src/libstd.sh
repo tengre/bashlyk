@@ -1,5 +1,5 @@
 #
-# $Id: libstd.sh 786 2018-02-05 22:01:37+04:00 toor $
+# $Id: libstd.sh 788 2018-02-12 01:30:48+04:00 toor $
 #
 #****h* BASHLYK/libstd
 #  DESCRIPTION
@@ -224,8 +224,8 @@ std::isVariable() {
 #    doublequoted input with whitespaces
 #  EXAMPLE
 #    std::lazyquote                                                             #? $_bashlyk_iErrorMissingArgument
-#    std::lazyquote "word"                                 >| grep '^word$'     #? true
-#    std::lazyquote two words                              >| grep '^\".*\"$'   #? true
+#    std::lazyquote "word"                                   | {{ '^word$'   }}
+#    std::lazyquote two words                                | {{ '^\".*\"$' }}
 #  SOURCE
 std::lazyquote() {
 
@@ -255,9 +255,9 @@ std::lazyquote() {
 #   characters
 #  EXAMPLE
 #    a=($(std::whitespace.encode single argument expected ... ))
-#    echo ${#a[@]}                                                  >| grep ^1$ #? true
+#    echo ${#a[@]}                                                  | {{ ^1$ }}
 #    a=($(echo single argument expected ... | std::whitespace.encode -))
-#    echo ${#a[@]}                                                  >| grep ^1$ #? true
+#    echo ${#a[@]}                                                  | {{ ^1$ }}
 #  SOURCE
 std::whitespace.encode() {
 
@@ -300,9 +300,9 @@ std::whitespace.encode() {
 #    text="many${s}arguments${s}expected${s}..."
 #    std::whitespace.decode $text
 #    a=($(std::whitespace.decode $text))
-#    echo ${#a[@]}                                                  >| grep ^4$ #? true
+#    echo ${#a[@]}                                                  | {{ ^4$ }}
 #    a=($(echo $text | std::whitespace.decode -))
-#    echo ${#a[@]}                                                  >| grep ^4$ #? true
+#    echo ${#a[@]}                                                  | {{ ^4$ }}
 #  SOURCE
 std::whitespace.decode() {
 
@@ -361,23 +361,23 @@ std::whitespace.decode() {
 #    local foTemp s=$RANDOM
 #    _ onError return
 #    std::temp foTemp path=/tmp prefix=pre. suffix=.${s}1                       #? true
-#    ls -1 /tmp/pre.*.${s}1 2>/dev/null >| grep "/tmp/pre\..*\.${s}1"           #? true
+#    ls -1 /tmp/pre.*.${s}1 2>/dev/null           | {{ "/tmp/pre\..*\.${s}1" }}
 #    rm -f $foTemp
 #    std::temp foTemp path=/tmp type=dir mode=0751 suffix=.${s}2                #? true
-#    ls -ld $foTemp 2>/dev/null >| grep "^drwxr-x--x.*${s}2$"                   #? true
+#    ls -ld $foTemp 2>/dev/null                   | {{ "^drwxr-x--x.*${s}2$" }}
 #    rmdir $foTemp
 #    foTemp=$(std::temp prefix=pre. suffix=.${s}3)
-#    ls -1 $foTemp 2>/dev/null >| grep "pre\..*\.${s}3$"                        #? true
+#    ls -1 $foTemp 2>/dev/null                    | {{ "pre\..*\.${s}3$"     }}
 #    rm -f $foTemp
 #    foTemp=$(std::temp prefix=pre. suffix=.${s}4 keep=false)                   #? true
-#    echo $foTemp >| grep "${TMPDIR}/pre\..*\.${s}4"                            #? true
+#    echo $foTemp                            | {{ "${TMPDIR}/pre\..*\.${s}4" }}
 #    test -f $foTemp                                                            #? false
 #    rm -f $foTemp
 #    $(std::temp foTemp path=/tmp prefix=pre. suffix=.${s}5 keep=true)
-#    ls -1 /tmp/pre.*.${s}5 2>/dev/null >| grep "/tmp/pre\..*\.${s}5"           #? true
+#    ls -1 /tmp/pre.*.${s}5 2>/dev/null           | {{ "/tmp/pre\..*\.${s}5" }}
 #    rm -f /tmp/pre.*.${s}5
 #    $(std::temp foTemp path=/tmp prefix=pre. suffix=.${s}6)
-#    ls -1 /tmp/pre.*.${s}6 2>/dev/null >| grep "/tmp/pre\..*\.${s}6"           #? false
+#    ls -1 /tmp/pre.*.${s}6 2>/dev/null           | {{ "/tmp/pre\..*\.${s}6" }}!
 #    unset foTemp
 #    foTemp=$(std::temp)                                                        #? true
 #    ls -1l $foTemp 2>/dev/null                                                 #? true
@@ -387,7 +387,7 @@ std::whitespace.decode() {
 #    test -p $foTemp                                                            #? true
 #    rm -f $foTemp
 #    std::temp invalid+variable                                                 #? ${_bashlyk_iErrorInvalidVariable}
-#    err::status    >| grep -P '^invalid variable - invalid\+variable \(\d+\)$' #? true
+#    err::status     | {{ -P '^invalid variable - invalid\+variable \(\d+\)$' }}
 #    std::temp path=/proc                                                       #? ${_bashlyk_iErrorNotExistNotCreated}
 #    err::status
 #  SOURCE
@@ -551,8 +551,8 @@ std::temp() {
 #    err::status
 #    std::acceptArrayItem 12a[te]                                               #? $_bashlyk_iErrorInvalidVariable
 ## TODO - do not worked    std::acceptArrayItem a12[]                           #? $_bashlyk_iErrorInvalidVariable
-#    std::acceptArrayItem _a >| grep '^_a$'                                     #? true
-#    std::acceptArrayItem _a[1234] >| grep '^\{_a\[1234\]\}$'                   #? true
+#    std::acceptArrayItem _a                         | {{ '^_a$'             }}
+#    std::acceptArrayItem _a[1234]                   | {{ '^\{_a\[1234\]\}$' }}
 #  SOURCE
 std::acceptArrayItem() {
 
@@ -588,22 +588,22 @@ std::acceptArrayItem() {
 #  EXAMPLE
 #    local sS sWSpaceAlias pid=$BASHPID k=key1 v=val1
 #    _ k=sWSpaceAlias
-#    echo "$k" >| grep "^${_bashlyk_sWSpaceAlias}$"                             #? true
+#    echo "$k"                             | {{ "^${_bashlyk_sWSpaceAlias}$" }}
 #    _ sS=sWSpaceAlias
-#    echo "$sS" >| grep "^${_bashlyk_sWSpaceAlias}$"                            #? true
+#    echo "$sS"                            | {{ "^${_bashlyk_sWSpaceAlias}$" }}
 #    _ =sWSpaceAlias
-#    echo "$sWSpaceAlias" >| grep "^${_bashlyk_sWSpaceAlias}$"                  #? true
-#    _ sWSpaceAlias >| grep "^${_bashlyk_sWSpaceAlias}$"                        #? true
+#    echo "$sWSpaceAlias"                  | {{ "^${_bashlyk_sWSpaceAlias}$" }}
+#    _ sWSpaceAlias                        | {{ "^${_bashlyk_sWSpaceAlias}$" }}
 #    _ sWSpaceAlias _-_
-#    _ sWSpaceAlias >| grep "^_-_$"                                             #? true
+#    _ sWSpaceAlias                        | {{ "^_-_$"                      }}
 #    _ sWSpaceAlias ""
-#    _ sWSpaceAlias >| grep "^$"                                                #? true
+#    _ sWSpaceAlias                        | {{ "^$"                         }}
 #    _ sWSpaceAlias "two words"
-#    _ sWSpaceAlias >| grep "^two words$"                                       #? true
+#    _ sWSpaceAlias                        | {{ "^two words$"                }}
 #    _ sWSpaceAlias "$sWSpaceAlias"
 #    _ sWSpaceAlias
 #    _ sLastError[$pid] "_ sLastError settings test"                            #? true
-#    _ sLastError[$pid] >| grep "^_ sLastError settings test$"                  #? true
+#    _ sLastError[$pid]                    | {{"^_ sLastError settings test$"}}
 #  SOURCE
 _(){
 
@@ -661,9 +661,9 @@ _(){
 #    local fn
 #    std::temp fn
 #    echo test > $fn                                                            #-
-#    echo test | std::getMD5 -    >| grep -w 'd8e8fca2dc0f896fd7cb4cb0031ba249' #? true
-#    std::getMD5 --file "$fn"     >| grep -w 'd8e8fca2dc0f896fd7cb4cb0031ba249' #? true
-#    std::getMD5 test             >| grep -w 'd8e8fca2dc0f896fd7cb4cb0031ba249' #? true
+#    echo test | std::getMD5 -    | {{ -w 'd8e8fca2dc0f896fd7cb4cb0031ba249' }}
+#    std::getMD5 --file "$fn"     | {{ -w 'd8e8fca2dc0f896fd7cb4cb0031ba249' }}
+#    std::getMD5 test             | {{ -w 'd8e8fca2dc0f896fd7cb4cb0031ba249' }}
 #  SOURCE
 std::getMD5() {
 
@@ -705,7 +705,7 @@ std::getMD5() {
 #    pid::onExit.unlink ${path}/testfile2
 #    pid::onExit.unlink ${path}/testfile3
 #    pid::onExit.unlink ${path}
-#    std::getMD5.list $path >| grep ^[[:xdigit:]]*.*testfile.$                  #? true
+#    std::getMD5.list $path                  | {{ ^[[:xdigit:]]*.*testfile.$ }}
 #    std::getMD5.list                                                           #? ${_bashlyk_iErrorMissingArgument}
 #    err::status
 #    std::getMD5.list /notexist/path                                            #? ${_bashlyk_iErrorNoSuchFileOrDir}
@@ -752,7 +752,7 @@ std::getMD5.list() {
 #  EXAMPLE
 #    local sTag='date TO="+0400" TZ="MSK"' sContent='Mon, 22 Apr 2013 15:55:50'
 #    local sXml='<date TO="+0400" TZ="MSK">Mon, 22 Apr 2013 15:55:50</date>'
-#    std::xml "$sTag" "$sContent" >| grep "^${sXml}$"                           #? true
+#    std::xml "$sTag" "$sContent"                           | {{ "^${sXml}$" }}
 #  SOURCE
 std::xml() {
 
@@ -786,9 +786,9 @@ std::xml() {
 #    err::status
 #    std::getTimeInSec SeventenFourSec                                          #? $_bashlyk_iErrorInvalidArgument
 #    err::status
-#    std::getTimeInSec 59seconds >| grep -w 59                                  #? true
+#    std::getTimeInSec 59seconds                       | {{ -w 59            }}
 #    std::getTimeInSec -v v ${s}minutes                                         #? true
-#    echo $v >| grep -w $(( s * 60 ))                                           #? true
+#    echo $v                                           | {{ -w $(( s * 60 )) }}
 #    std::getTimeInSec -v 123s                                                  #? $_bashlyk_iErrorInvalidVariable
 #    err::status
 #    std::getTimeInSec -v -v                                                    #? $_bashlyk_iErrorInvalidVariable
@@ -848,7 +848,7 @@ std::getTimeInSec() {
 #  TODO
 #    race possible
 #  EXAMPLE
-#    std::getFreeFD | grep -P "^\d+$"                                           #? true
+#    std::getFreeFD | {{ -P "^\d+$" }}
 #  SOURCE
 std::getFreeFD() {
 
@@ -912,10 +912,10 @@ std::isHash() {
 #    show input without leading and trailing spaces
 #  EXAMPLE
 #    local s=" a  b c  "
-#    std::trim "$s" >| grep "^a  b c$"                                          #? true
-#    std::trim  $s  >| grep "^a b c$"                                           #? true
-#    std::trim      >| grep ^$                                                  #? true
-#    std::trim '  ' >| grep ^$                                                  #? true
+#    std::trim "$s"                                          | {{ "^a  b c$" }}
+#    std::trim  $s                                           | {{ "^a b c$"  }}
+#    std::trim                                               | {{ ^$         }}
+#    std::trim '  '                                          | {{ ^$         }}
 #  SOURCE
 std::trim() {
 
@@ -938,7 +938,7 @@ std::trim() {
 #    local s fn
 #    std::temp -v fn
 #    for s in $( seq 0 12 ); do printf -- '\t%s\n' "$RANDOM"; done > $fn        #-
-#    std::cat < $fn | grep -E '^[[:space:]][0-9]{1,5}$'                         #? true
+#    std::cat < $fn                        | {{ -E '^[[:space:]][0-9]{1,5}$' }}
 #  SOURCE
 std::cat() {
 
@@ -958,7 +958,7 @@ std::cat() {
 #  DESCRIPTION
 #    show 'date -R' like output
 #  EXAMPLE
-#    std::dateR >| grep -P "^\S{3}, \d{2} \S{3} \d{4} \d{2}:\d{2}:\d{2} .\d{4}$"  #? true
+#    std::dateR | {{ -P "^\S{3}, \d{2} \S{3} \d{4} \d{2}:\d{2}:\d{2} .\d{4}$" }}
 #  SOURCE
 if (( _bashlyk_ShellVersion > 4002000 )); then
 
@@ -976,7 +976,7 @@ fi
 #  DESCRIPTION
 #    show uptime value in the seconds
 #  EXAMPLE
-#    std::uptime >| grep "^[[:digit:]]*$"                                         #? true
+#    std::uptime                                       | {{ "^[[:digit:]]*$" }}
 #  SOURCE
 if (( _bashlyk_ShellVersion > 4002000 )); then
 
@@ -998,7 +998,7 @@ fi
 #  INPUTS
 #    <text> - prefix text before " uptime <number> sec"
 #  EXAMPLE
-#    std::finally $RANDOM >| grep "^[[:digit:]]* uptime [[:digit:]]* sec$"      #? true
+#    std::finally $RANDOM      | {{ "^[[:digit:]]* uptime [[:digit:]]* sec$" }}
 #  SOURCE
 std::finally() { echo "$@ uptime $( std::uptime ) sec"; }
 #******
