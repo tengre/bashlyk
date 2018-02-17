@@ -20,6 +20,7 @@ set -e
  cmd=/usr/bin/bashlyk
 path=/usr/share/bashlyk
 CONF=/etc/bashlyk/bashlyk.conf
+BVER=0
 
 case "$1" in
 
@@ -38,8 +39,13 @@ case "$1" in
 
     if [ -s "$CONF" ]; then
 
-      if dpkg-query -W -f='${Depends}\n' | grep -Po 'bashlyk.\(.*?1\.[0-8].*?\)'
-      then
+      BVER=$(                                                                  \
+      dpkg-query -W -f='${Depends}\n'|grep -Po 'bashlyk.\(>?=?\s?\d+\.\d+.*?\)'\
+        | sed -re "s/bashlyk.\(>?=?.?([0-9]*)\.([0-9]*).*\)/\1\2/"             \
+        | grep -Po "^\d+$" 2>/dev/null                                         \
+      )
+
+      if [ -z "$BVER" -o "$BVER" -lt 190 ]; then
 
         if ! grep '_bashlyk_aLib=.*old.*' $CONF >/dev/null 2>&1; then
 

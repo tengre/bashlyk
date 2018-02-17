@@ -1,5 +1,5 @@
 #
-# $Id: testunit.awk 788 2018-02-12 01:30:48+04:00 toor $
+# $Id: testunit.awk 790 2018-02-17 21:59:26+04:00 toor $
 #
 
 BEGIN {
@@ -60,8 +60,8 @@ BEGIN {
 
   bEmbed = 0
   print "--EOF--"
-  print "cat $testunitEmbedB >> $_bashlyk_TestUnit_fnLog 2>\&1"
-  print "diff -wu $testunitEmbedA $testunitEmbedB >> $_bashlyk_TestUnit_fnLog 2>\&1; udfTestUnitMsg true"
+  print "cat $testunitEmbedB >> $_bashlyk_TestUnit_fnLog 2>&1"
+  print "diff -wu $testunitEmbedA $testunitEmbedB >> $_bashlyk_TestUnit_fnLog 2>&1; udfTestUnitMsg true"
   next
 
 }
