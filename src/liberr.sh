@@ -1,5 +1,5 @@
 #
-# $Id: liberr.sh 786 2018-02-05 22:01:36+04:00 toor $
+# $Id: liberr.sh 788 2018-02-12 01:30:47+04:00 toor $
 #
 #****h* BASHLYK/liberr
 #  DESCRIPTION
@@ -247,9 +247,9 @@ err::status.show() {
 #    err::status 555                                                            #? $_bashlyk_iErrorUnexpected
 #    err::status AlreadyStarted "$$"                                            #? $_bashlyk_iErrorAlreadyStarted
 #    err::status iErrorInvalidVariable 12Invalid test                           #? $_bashlyk_iErrorInvalidVariable
-#    err::status          >| grep '^invalid variable - 12Invalid test (200)$'   #? true
+#    err::status | {{ '^invalid variable - 12Invalid test (200)$' }}
 #    err::status NotAvailable test unit
-#    echo $(err::status)  >| grep '^target is not available - test unit (166)$' #? true
+#    echo $(err::status) | {{'^target is not available - test unit (166)$'}}
 #  SOURCE
 err::status() {
 
@@ -293,7 +293,8 @@ err::status() {
 #  OUTPUT
 #    BASH Stack Trace
 #  EXAMPLE
-#    err::stacktrace                     >| grep '1: code err::stacktrace_test' #? true
+## TODO improves required
+#    err::stacktrace | {{'1: code err::stacktrace_test'}}
 #  SOURCE
 err::stacktrace() {
 
@@ -330,7 +331,7 @@ err::stacktrace() {
 #  OUTPUT
 #    source code line
 #  EXAMPLE
-#    err::sourcecode                             >| grep ^err::sourcecode_test$ #? true
+#    err::sourcecode | {{'^err::sourcecode_test$'}}
 #  SOURCE
 err::sourcecode() {
 
@@ -887,7 +888,7 @@ err::__add_throw_to_command() {
 #  TODO
 #    error handling for input 'try' function checking not worked
 #  EXAMPLE
-#    err::__convert_try_to_func >| grep "^${TMPDIR}/.*ok.*fail.*; false; }$"    #? true
+#    err::__convert_try_to_func | {{"^${TMPDIR}/.*ok.*fail.*; false; }$"}}
 #  SOURCE
 err::__convert_try_to_func() {
 

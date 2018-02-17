@@ -1,5 +1,5 @@
 #
-# $Id: libini.sh 786 2018-02-05 22:01:37+04:00 toor $
+# $Id: libini.sh 788 2018-02-12 01:30:47+04:00 toor $
 #
 #****h* BASHLYK/libini
 #  DESCRIPTION
@@ -147,7 +147,7 @@ _bashlyk_hError[$_bashlyk_iErrorIniExtraCharInKey]="extra character(s) in the ke
 #    declare -pf tnew.show >/dev/null 2>&1                                      #= true
 #    declare -pf tnew.save >/dev/null 2>&1                                      #= true
 #    declare -pf tnew.load >/dev/null 2>&1                                      #= true
-#    tnew.__section.id @ >| grep _hTNEW_settings                                #? true
+#    tnew.__section.id @ | {{ _hTNEW_settings }}
 #    tnew.free
 #  SOURCE
 INI() {
@@ -202,8 +202,8 @@ INI() {
 #    INI tSectionId1
 #    INI tSectionId2
 #    tSectionId1.__section.select
-#    tSectionId1.__section.id   >| grep ^_hTSECTIONID1_[[:xdigit:]]*$           #? true
-#    tSectionId2.__section.id @ >| grep ^_hTSECTIONID2_settings$                #? true
+#    tSectionId1.__section.id   | {{ ^_hTSECTIONID1_[[:xdigit:]]*$ }}
+#    tSectionId2.__section.id @ | {{ ^_hTSECTIONID2_settings$ }}
 #    tSectionId1.free
 #    tSectionId2.free
 #  SOURCE
@@ -234,11 +234,11 @@ INI::__section.id() {
 #    tSectionIndex.__section.select sItem1
 #    tSectionIndex.__section.select sItem2
 #    tSectionIndex.__section.select test "with double" quotes
-#    tSectionIndex.__section.byindex   >| grep ^4$                              #? true
-#    tSectionIndex.__section.byindex 0 >| grep ^__global__$                     #? true
-#    tSectionIndex.__section.byindex 1 >| grep ^sItem1$                         #? true
-#    tSectionIndex.__section.byindex 2 >| grep ^sItem2$                         #? true
-#    tSectionIndex.__section.byindex 3
+#    tSectionIndex.__section.byindex   | {{ ^4$          }}
+#    tSectionIndex.__section.byindex 0 | {{ ^__global__$ }}
+#    tSectionIndex.__section.byindex 1 | {{ ^sItem1$     }}
+#    tSectionIndex.__section.byindex 2 | {{ ^sItem2$     }}
+#    tSectionIndex.__section.byindex 3 | {{ '^test with double quotes$' }}
 #    tSectionIndex.free
 #  SOURCE
 INI::__section.byindex() {
@@ -312,14 +312,14 @@ INI::free() {
 #    INI tSel
 #    tSel.__section.select                                                      #? true
 #    tSel.__section.set key "is value from unnamed section"
-#    tSel.__section.get key >| grep '^is value from unnamed section$'           #? true
+#    tSel.__section.get key               |{{'^is value from unnamed section$'}}
 #    tSel.__section.select tSect                                                #? true
 #    tSel.__section.set key "is value"
-#    tSel.__section.get key >| grep '^is value$'                                #? true
+#    tSel.__section.get key               | {{ '^is value$' }}
 #    tSel.__section.select section with spaces                                  #? true
 #    tSel.__section.set "key with spaces" "is value"
-#    tSel.__section.get "key with spaces" >| grep '^is value$'                  #? true
-#    tSel.__section.id @ >| grep -P "^_hTSEL.*(settings|[[:xdigit:]]*)$"        #? true
+#    tSel.__section.get "key with spaces" | {{ '^is value$' }}
+#    tSel.__section.id @         | {{ -P "^_hTSEL.*(settings|[[:xdigit:]]*)$" }}
 #    tSel.free
 #  SOURCE
 INI::__section.select() {
@@ -398,9 +398,9 @@ INI::__section.select() {
 #    ## TODO tests checking
 #    tCheckSpaces.set [ section ] key = value
 #    tCheckSpaces.settings.section.padding = false
-#    tCheckSpaces.show                                >| grep '^\[section\]$'   #? true
+#    tCheckSpaces.show                                | {{ '^\[section\]$'   }}
 #    tCheckSpaces.settings.section.padding = true
-#    tCheckSpaces.show                                >| grep '^\[ section \]$' #? true
+#    tCheckSpaces.show                                | {{ '^\[ section \]$' }}
 #    tCheckSpaces.free
 #  SOURCE
 INI::__section.show() {
@@ -684,9 +684,9 @@ INI::__section.getArray() {
 #    tGet.__section.set key "is unnamed section"
 #    tGet.__section.select section
 #    tGet.__section.set "key with spaces" "is value"
-#    tGet.get [section] key with spaces >| grep '^is value$'                    #? true
-#    tGet.get   key >| grep '^is unnamed section$'                              #? true
-#    tGet.get []key >| grep '^is unnamed section$'                              #? true
+#    tGet.get [section] key with spaces | {{ '^is value$'           }}
+#    tGet.get           key             | {{ '^is unnamed section$' }}
+#    tGet.get []key                     | {{ '^is unnamed section$' }}
 #    tGet.__section.select accumu
 #    tGet.__section.set _bashlyk_raw_num 3
 #    tGet.__section.set _bashlyk_raw_incr=0 "is raw value No.1"
@@ -792,9 +792,9 @@ INI::get() {
 #key2
 #key with spaces
 #}}}
-#    tKeys.keys [section2] >| grep ^+$                                          #? true
-#    tKeys.keys [section3] >| grep ^-$                                          #? true
-#    tKeys.keys [section4] >| grep ^=$                                          #? true
+#    tKeys.keys [section2] | {{ ^+$ }}
+#    tKeys.keys [section3] | {{ ^-$ }}
+#    tKeys.keys [section4] | {{ ^=$ }}
 #    tKeys.free
 #  SOURCE
 INI::keys() {
@@ -871,10 +871,10 @@ INI::keys() {
 #    tSet.set key = is unnamed section
 #    tSet.set key with spaces = is unnamed section
 #    tSet.show
-#    tSet.get [section]key >| grep '^is value$'                                 #? true
-#    tSet.get   key >| grep '^is unnamed section$'                              #? true
-#    tSet.get []key >| grep '^is unnamed section$'                              #? true
-#    tSet.get key with spaces >| grep '^is unnamed section$'                    #? true
+#    tSet.get [section]key                        | {{ '^is value$'           }}
+#    tSet.get   key                               | {{ '^is unnamed section$' }}
+#    tSet.get []key                               | {{ '^is unnamed section$' }}
+#    tSet.get key with spaces                     | {{ '^is unnamed section$' }}
 #    tSet.set [section1]+= is raw value No.1
 #    tSet.set [section1] += is raw value No.2
 #    tSet.set [section1]+  =   is raw value No.3
@@ -1039,10 +1039,10 @@ INI::show() {
 #    ## TODO globs
 #    tComments.settings chComment = \# this is comment';'
 #    tComments.save $fn
-#    cat $fn             >| grep -Po "^# this is comment; created .* by $USER"  #? true
+#    cat $fn               | {{ -Po "^# this is comment; created .* by $USER" }}
 #    tComments.settings chComment =
 #    tComments.save $fn
-#    cat $fn             >| grep -Po "^# created .* by $USER"                   #? true
+#    cat $fn               | {{ -Po "^# created .* by $USER" }}
 #    tComments.free
 #  SOURCE
 INI::save() {
@@ -1839,9 +1839,9 @@ INI::getopt() {
 #    tSettings.set key = value
 #    tSettings.settings bBooleanOption     =   true
 #    tSettings.settings sSimpleFakeOption  =   simple fake option
-#    tSettings.settings sSimpleFakeOption        >| grep '^simple fake option$' #? true
-#    tSettings.settings bBooleanOption           >| grep ^true$                 #? true
-#    tSettings.settings >| wc -w                  | grep ^39$                   #? true
+#    tSettings.settings sSimpleFakeOption        | {{ '^simple fake option$' }}
+#    tSettings.settings bBooleanOption           | {{ ^true$                 }}
+#    tSettings.settings >| wc -w                 | {{ ^39$                   }}
 #    tSettings.settings bSection With Spaces                                    #? $_bashlyk_iErrorInvalidArgument
 #    tSettings.free
 #  SOURCE
@@ -1891,9 +1891,9 @@ INI::settings() {
 #    InvalidArgument - expected true or false
 #  EXAMPLE
 #    INI tShellmode
-#    tShellmode.settings.shellmode                              >| grep ^false$ #? true
+#    tShellmode.settings.shellmode                              | {{ ^false$ }}
 #    tShellmode.settings.shellmode = YEs                                        #? true
-#    tShellmode.settings.shellmode                              >| grep ^true$  #? true
+#    tShellmode.settings.shellmode                              | {{ ^true$  }}
 #    tShellmode.settings.shellmode = error                                      #? $_bashlyk_iErrorInvalidArgument
 #    tShellmode.free
 #  SOURCE
@@ -1957,9 +1957,9 @@ INI::settings.shellmode() {
 #    InvalidArgument - expected true or false
 #  EXAMPLE
 #    INI tShellmode
-#    tShellmode.settings.section.padding                        >| grep ^true$  #? true
+#    tShellmode.settings.section.padding                        | {{ ^true$  }}
 #    tShellmode.settings.section.padding = FALSE                                #? true
-#    tShellmode.settings.section.padding                        >| grep ^false$ #? true
+#    tShellmode.settings.section.padding                        | {{ ^false$ }}
 #    tShellmode.settings.section.padding = error                                #? $_bashlyk_iErrorInvalidArgument
 #    tShellmode.free
 #  SOURCE

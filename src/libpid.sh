@@ -1,5 +1,5 @@
 #
-# $Id: libpid.sh 779 2017-06-15 01:04:54+04:00 toor $
+# $Id: libpid.sh 788 2018-02-12 01:30:48+04:00 toor $
 #
 #****h* BASHLYK/libpid
 #  DESCRIPTION
@@ -284,7 +284,7 @@ pid::stop() {
 #    ( $cmd || false )                                                          #? false
 #    pid::file                                                                  #? true
 #    test -f $_bashlyk_fnPid                                                    #? true
-#    head -n 1 $_bashlyk_fnPid >| grep -w $$                                    #? true
+#    head -n 1 $_bashlyk_fnPid                                    | {{ -w $$ }}
 #    rm -f $_bashlyk_fnPid
 #  SOURCE
 pid::file() {
@@ -386,10 +386,9 @@ pid::onStarted.exit() {
 #    sleep 99 &
 #    pid::onExit.stop $!
 #    test "${_bashlyk_apidClean[$BASHPID]}" -eq "$!"                            #? true
-#    ps -p $! -o pid= >| grep -w $!                                             #? true
+#    ps -p $! -o pid=                                           | {{ -w $! }}
 #    echo $(pid::onExit.stop $!; echo "$BASHPID : $! ")
-#    ps -p $! -o pid= >| grep -w $!                                             #? false
-#
+#    ps -p $! -o pid=                                           | {{ -w $! }}1
 #  SOURCE
 pid::onExit.stop() {
 
@@ -435,25 +434,25 @@ pid::onExit.close() {
 #    std::temp fnTemp1 keep=true suffix=.${s}1
 #    test -f $fnTemp1
 #    echo $(pid::onExit.unlink $fnTemp1 )
-#    ls -l ${TMPDIR}/*.${s}1 2>/dev/null >| grep ".*\.${s}1"                    #? false
+#    ls -l ${TMPDIR}/*.${s}1 2>/dev/null                    | {{ ".*\.${s}1" }}1
 #    echo $(std::temp fnTemp2 suffix=.${s}2)
-#    ls -l ${TMPDIR}/*.${s}2 2>/dev/null >| grep ".*\.${s}2"                    #? false
+#    ls -l ${TMPDIR}/*.${s}2 2>/dev/null                    | {{ ".*\.${s}2" }}1
 #    echo $(std::temp fnTemp2 suffix=.${s}3 keep=true)
-#    ls -l ${TMPDIR}/*.${s}3 2>/dev/null >| grep ".*\.${s}3"                    #? true
+#    ls -l ${TMPDIR}/*.${s}3 2>/dev/null                    | {{ ".*\.${s}3" }}
 #    a=$(ls -1 ${TMPDIR}/*.${s}3)
 #    echo $(pid::onExit.unlink $a )
-#    ls -l ${TMPDIR}/*.${s}3 2>/dev/null >| grep ".*\.${s}3"                    #? false
+#    ls -l ${TMPDIR}/*.${s}3 2>/dev/null                    | {{ ".*\.${s}3" }}1
 #    std::temp pathTemp1 keep=true suffix=.${s}1 type=dir
 #    test -d $pathTemp1
 #    echo $(pid::onExit.unlink $pathTemp1 )
-#    ls -1ld ${TMPDIR}/*.${s}1 2>/dev/null >| grep ".*\.${s}1"                  #? false
+#    ls -1ld ${TMPDIR}/*.${s}1 2>/dev/null                  | {{ ".*\.${s}1" }}1
 #    echo $(std::temp pathTemp2 suffix=.${s}2 type=dir)
-#    ls -1ld ${TMPDIR}/*.${s}2 2>/dev/null >| grep ".*\.${s}2"                  #? false
+#    ls -1ld ${TMPDIR}/*.${s}2 2>/dev/null                  | {{ ".*\.${s}2" }}1
 #    echo $(std::temp pathTemp2 suffix=.${s}3 keep=true type=dir)
-#    ls -1ld ${TMPDIR}/*.${s}3 2>/dev/null >| grep ".*\.${s}3"                  #? true
+#    ls -1ld ${TMPDIR}/*.${s}3 2>/dev/null                  | {{ ".*\.${s}3" }}
 #    a=$(ls -1ld ${TMPDIR}/*.${s}3)
 #    echo $(pid::onExit.unlink $a )
-#    ls -1ld ${TMPDIR}/*.${s}3 2>/dev/null >| grep ".*\.${s}3"                  #? false
+#    ls -1ld ${TMPDIR}/*.${s}3 2>/dev/null                  | {{ ".*\.${s}3" }}1
 #    ##TODO names with whitespaces
 #  SOURCE
 pid::onExit.unlink() {
@@ -490,16 +489,16 @@ pid::onExit.unlink() {
 #    pid=$!
 #    test -f $fn1
 #    test -d $path
-#    ps -p $pid -o pid= >| grep -w $pid
-#    ls /proc/$$/fd >| grep -w $fd
+#    ps -p $pid -o pid=                                         | {{ -w $pid }}
+#    ls /proc/$$/fd                                             | {{ -w $fd  }}
 #    pid::onExit.close $fd
 #    pid::onExit.stop $pid
 #    pid::onExit.unlink $fn1
 #    pid::onExit.unlink $path
 #    pid::onExit.unlink $pipe
 #    pid::trap
-#    ls /proc/$$/fd >| grep -w $fd                                              #? false
-#    ps -p $pid -o pid= >| grep -w $pid                                         #? false
+#    ls /proc/$$/fd                                              | {{ -w $fd }}!
+#    ps -p $pid -o pid=                                          | {{ -w $pid}}!
 #    test -f $fn1                                                               #? false
 #    test -d $path                                                              #? false
 #  SOURCE

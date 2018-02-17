@@ -1,5 +1,5 @@
 #
-# $Id: liblog.sh 768 2017-06-02 14:29:30+04:00 toor $
+# $Id: liblog.sh 788 2018-02-12 01:30:47+04:00 toor $
 #
 #****h* BASHLYK/liblog
 #  DESCRIPTION
@@ -174,8 +174,8 @@ log::ger() {
 #   Depends on output parameters
 #  EXAMPLE
 #    # TODO improve test
-#    echo -n . | log::add -                                >| grep '^\.$'       #? true
-#    echo test | log::add - tag                            >| grep '^tag test$' #? true
+#    echo -n . | log::add -                                | {{ '^\.$'       }}
+#    echo test | log::add - tag                            | {{ '^tag test$' }}
 #  SOURCE
 log::add() {
 
@@ -386,7 +386,7 @@ log::file() {
 #  EXAMPLE
 #    local re
 #    re='^[ADFJMNOS][abceglnoprtuyv]{2} [0-9]{2} [0-9]{2}:[0-9]{2}:[0-9]{2} AB$'
-#    log::stamp AB >| grep -E "$re"                                             #? true
+#    log::stamp AB | {{ -E "$re" }}
 #  SOURCE
 
 if (( _bashlyk_ShellVersion > 4002000 )); then

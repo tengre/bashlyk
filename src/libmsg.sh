@@ -1,5 +1,5 @@
 #
-# $Id: libmsg.sh 786 2018-02-05 22:01:37+04:00 toor $
+# $Id: libmsg.sh 788 2018-02-12 01:30:48+04:00 toor $
 #
 #****h* BASHLYK/libmsg
 #  DESCRIPTION
@@ -239,7 +239,7 @@ msg::notify() {
 #    local sBody="notification testing" sSubj="bashlyk::msg::notify2x" rc
 #    msg::notify2x "${sSubj}\n----\n${sBody}\n"
 #    rc=$?
-#    echo $rc >| grep "$(_ iErrorNotPermitted)\|$(_ iErrorXsessionNotFound)\|0" #? true
+#    echo $rc | {{ "$(_ iErrorNotPermitted)\|$(_ iErrorXsessionNotFound)\|0" }}
 #    [[ $rc -eq 0 ]] && sleep 1.5
 #  SOURCE
 msg::notify2x() {
@@ -356,19 +356,19 @@ msg::getXsessionProperties() {
 #    DEBUGLEVEL=$(( DEBUGLEVEL + 1 ))
 #    msg::notifyTool notify-send $title "$body" 8
 #    rc=$?
-#    echo $? >| grep "$(_ iErrorCommandNotFound)\|0"                            #? true
+#    echo $?                             | {{ "$(_ iErrorCommandNotFound)\|0" }}
 #    [[ $rc -eq 0 ]] && sleep 2
 #    msg::notifyTool kdialog     $title "$body" 8
 #    rc=$?
-#    echo $? >| grep "$(_ iErrorCommandNotFound)\|0"                            #? true
+#    echo $?                             | {{ "$(_ iErrorCommandNotFound)\|0" }}
 #    [[ $rc -eq 0 ]] && sleep 2
 #    msg::notifyTool zenity      $title "$body" 2
 #    rc=$?
-#    echo $? >| grep "$(_ iErrorCommandNotFound)\|0"                            #? true
+#    echo $?                             | {{ "$(_ iErrorCommandNotFound)\|0" }}
 #    [[ $rc -eq 0 ]] && sleep 2
 #    msg::notifyTool xmessage    $title "$body" 4
 #    rc=$?
-#    echo $? >| grep "$(_ iErrorCommandNotFound)\|0"                            #? true
+#    echo $?                             | {{ "$(_ iErrorCommandNotFound)\|0" }}
 #    DEBUGLEVEL=$(( DEBUGLEVEL - 1 ))
 #  SOURCE
 msg::notifyTool() {

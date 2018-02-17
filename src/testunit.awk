@@ -1,5 +1,5 @@
 #
-# $Id: testunit.awk 786 2018-02-05 22:01:37+04:00 toor $
+# $Id: testunit.awk 788 2018-02-12 01:30:48+04:00 toor $
 #
 
 BEGIN {
@@ -72,6 +72,17 @@ $1=$1 {
   if ( b == 1 ) {
 
     sub(/^# *?/, "")
+
+    if (match($0, /{{.*}}[1!]/)) {
+      sub(/{{.*}}[1!]/, "tee -a $_bashlyk_TestUnit_fnLog | grep & #? false")
+      gsub(/{{|}}[1!]/, "")
+    }
+
+    if (match($0, /{{.*}}0?/)) {
+      sub(/{{.*}}0?/, "tee -a $_bashlyk_TestUnit_fnLog | grep & #? true")
+      gsub(/{{|}}0?/, "")
+    }
+
     sub(/>\|/, " | tee -a $_bashlyk_TestUnit_fnLog | ")
 
     if (match($0, /#\?/)) {
