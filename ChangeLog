@@ -1,3 +1,70 @@
+Sun, 18 Feb 2018 00:49:19 +0400
+	New upstream release
+	Version 1.92
+
+- Simplified preparation of tests due to the use of special operators:
+<some code> | {{{
+multiline
+text to compare output
+}}}
+
+<some code> | {{pattern, string, regular expression}}
+
+- added support for old dependent packages by using libold.sh
+- improved liberr.sh library
+
+details
+
+testunit.awk:
+- added code to create a temporary file that can be used by the diff
+  command in the testunit
+- logging of the embedded data disabled by 'bEmbed' variable
+- '| {{{' saved stdout of the tested code to a 'right' temporary file,
+  prepare saving of the  embedded data to a 'left' temporary file
+- '}}}' display 'right' (result) temporary file and compare both files
+  by diff command, 0 return code is ok.
+- added support for {{...}}[0]? and {{...}}[1!] operator
+
+testunit.sh:
+- added setting of TMPDIR variable
+- added a two temporary files as diff arguments for '{{{}}}' operator
+
+debian/postinst:
+- compatibility is established for packages that depend on the version
+  of the bashlyk up to 1.9x
+- fixed error maintainer-script-should-not-use-dpkg-status-directly by
+  using dpkg-query -W -f='${Depends}\n' ...
+- removed unused variable
+
+liberr.sh:
+- err::eval:
+  - fixed incomplete list of arguments
+  - used err::orr instead err::status for arguments handling
+  - arguments transferred to err::eval from alias level
+  - splitted to the err::generate (public) and err::__generate
+    (private) parts for protecting variables in arguments from local
+    variables of this functions when calling the "eval"
+  - updated tests and docs
+  - reA{ct,rg} moved to library as readonly global _bashlyk_err_reA..
+- err::sourcecode:
+  - this function added to export list
+  - added robodoc section and simple test
+- err::or return 0-255 status now, the definition of [iError]<Status> is
+  handled correctly
+- err::status used err::orr
+- err::handler renamed to err::postfix
+- added simple test for err::stacktrace
+- added error states NotInteger and NotDecimal and new error state
+  _bashlyk_iError=255
+
+libstd.sh:
+- added std::isDecimal with tests
+- std::temp - improved tests and error handling
+
+libini.sh:
+- improved tests for INI::{g,s}et
+
+
 Fri, 02 Jun 2017 16:12:43 +0400
 	New upstream release
 	Version 1.91
