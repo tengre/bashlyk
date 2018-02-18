@@ -1,5 +1,5 @@
 #
-# $Id: testunit.awk 790 2018-02-17 21:59:26+04:00 toor $
+# $Id: testunit.awk 792 2018-02-18 13:47:45+04:00 toor $
 #
 
 BEGIN {
@@ -56,7 +56,7 @@ BEGIN {
 
 }
 
-/^#}}}$/ {
+/^# *?}}}$/ {
 
   bEmbed = 0
   print "--EOF--"

@@ -1,5 +1,5 @@
 #
-# $Id: liberr.sh 788 2018-02-12 01:30:47+04:00 toor $
+# $Id: liberr.sh 792 2018-02-18 13:47:45+04:00 toor $
 #
 #****h* BASHLYK/liberr
 #  DESCRIPTION
@@ -483,12 +483,12 @@ err::generate() {
 #    cmd='err::__generate 1 warn NoSuchFileOrDir /notexist'
 #    _bashlyk_onError=debug
 #    $cmd | {{{
-#err::stacktrace | msg::warn -  Warn: no\ such\ file\ or\ directory\ -\ /notexist\ ..\ \(185\) >&2; err::status 185 "/notexist"; : ; #
-#}}}
+#    err::stacktrace | msg::warn -  Warn: no\ such\ file\ or\ directory\ -\ /notexist\ ..\ \(185\) >&2; err::status 185 "/notexist"; : ; #
+# }}}
 #    _bashlyk_onError=echo
 #    $cmd | {{{
-#msg::warn  Warn: no\ such\ file\ or\ directory\ -\ /notexist\ ..\ \(185\) >&2; err::status 185 "/notexist"; : ; #
-#}}}
+#    msg::warn  Warn: no\ such\ file\ or\ directory\ -\ /notexist\ ..\ \(185\) >&2; err::status 185 "/notexist"; : ; #
+# }}}
 #  SOURCE
 err::__generate() {
 
@@ -862,8 +862,8 @@ err::postfix() {
 #  EXAMPLE
 #    local s='command --with -a -- arguments' cmd='err::__add_throw_to_command'
 #    $cmd $s | {{{
-#_bashlyk_sLastError[$BASHPID]="command: $(std::trim command --with -a -- arguments)\n output: {\n$(command --with -a -- arguments 2>&1)\n}" && echo -n . || return $?;
-#}}}
+#    _bashlyk_sLastError[$BASHPID]="command: $(std::trim command --with -a -- arguments)\n output: {\n$(command --with -a -- arguments 2>&1)\n}" && echo -n . || return $?;
+# }}}
 #  SOURCE
 err::__add_throw_to_command() {
 
@@ -950,17 +950,17 @@ err::__convert_try_to_func() {
 #                                                                               #-
 #   }                                                                           #-
 #   EOFtry                                                                      #-
-#  . $fn | {{{
-#... fail..(210)
+#   . $fn | {{{
+#   ... fail..(210)
 #
-#try block exception:
-#~~~~~~~~~~~~~~~~~~~~
-# status: 210
-#command: error4test
-# output: {
-#testunit.sh: special error for testing
-#}
-#}}}
+#   try block exception:
+#   ~~~~~~~~~~~~~~~~~~~~
+#    status: 210
+#   command: error4test
+#    output: {
+#    testunit.sh: special error for testing
+#   }
+# }}}
 #  SOURCE
 err::exception.message() {
 

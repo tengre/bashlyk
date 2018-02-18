@@ -3,7 +3,7 @@
 "http://www.oasis-open.org/docbook/xml/4.5/docbookx.dtd" [
 
 <!--
-$Id$
+$Id: bashlyk1.xml 792 2018-02-18 13:47:45+04:00 toor $
 `xsltproc -''-nonet \
           -''-param man.charmap.use.subset "0" \
           -''-param make.year.ranges "1" \
@@ -198,6 +198,7 @@ man(1), man(7), http://www.tldp.org/HOWTO/Man-Page/
       <refentrytitle>&dhpackage;</refentrytitle>
       <manvolnum>7</manvolnum>
      </citerefentry>
+     &nbsp;
      <citerefentry>
       <refentrytitle>&dhpackage;.conf</refentrytitle>
       <manvolnum>5</manvolnum>

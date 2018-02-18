@@ -1,5 +1,5 @@
 #
-# $Id: libini.sh 788 2018-02-12 01:30:47+04:00 toor $
+# $Id: libini.sh 792 2018-02-18 13:47:45+04:00 toor $
 #
 #****h* BASHLYK/libini
 #  DESCRIPTION
@@ -368,16 +368,16 @@ INI::__section.select() {
 #    tSShow.__section.show tSect | {{{
 #
 #
-#[ tSect ]
+#    [ tSect ]
 #
 #    key    =    is value
-#}}}
+# }}}
 #    tSShow.__section.select
 #    tSShow.__section.set key "unnamed section"
 #    tSShow.__section.show | {{{
 #
 #    key    =    unnamed section
-#}}}
+# }}}
 #    tSShow.free
 #    INI tSShow2
 #    tSShow2.settings.shellmode true
@@ -387,12 +387,12 @@ INI::__section.select() {
 #    tSShow2.__section.show tSect2 | {{{
 #
 #
-#[ tSect2 ]
+#    [ tSect2 ]
 #
-#keyOneWord=is_one_world_value
-#  keyFirst="is first value"
-# keySecond="is second value"
-#}}}
+#    keyOneWord=is_one_world_value
+#      keyFirst="is first value"
+#     keySecond="is second value"
+# }}}
 #    tSShow2.free
 #    INI tCheckSpaces
 #    ## TODO tests checking
@@ -525,19 +525,19 @@ INI::__section.show() {
 #
 #
 #
-#[ unique_values ]
+#    [ unique_values ]
 #
-#save only unique 2
-#save only unique 1
+#    save only unique 2
+#    save only unique 1
 #
 #
-#[ accumulated_values ]
+#    [ accumulated_values ]
 #
-#save all 1
-#save all 2
-#save all 1
+#    save all 1
+#    save all 2
+#    save all 1
 #
-#}}}
+# }}}
 #    tSRawData.free
 #  SOURCE
 INI::__section.setRawData() {
@@ -782,16 +782,16 @@ INI::get() {
 #    tKeys.set  [section4] = save unique value No.1
 #    tKeys.keys | tr ',' '\n' | sort | {{{
 #
-#keyA
-#keyB
-#key with spaces
-#}}}
+#    keyA
+#    keyB
+#    key with spaces
+# }}}
 #    tKeys.keys [section1] | tr ',' '\n' | sort | {{{
 #
-#key1
-#key2
-#key with spaces
-#}}}
+#    key1
+#    key2
+#    key with spaces
+# }}}
 #    tKeys.keys [section2] | {{ ^+$ }}
 #    tKeys.keys [section3] | {{ ^-$ }}
 #    tKeys.keys [section4] | {{ ^=$ }}
@@ -883,15 +883,15 @@ INI::keys() {
 #    tSet.set [section2] =   save unique value No.1
 #    eval "$(tSet.get [section2])"
 #    for s in "${a[@]}"; do echo $s; done | sort | {{{
-#save unique value No.1
-#save unique value No.2
-#}}}
+#    save unique value No.1
+#    save unique value No.2
+# }}}
 #    eval "$(tSet.get [section1])"
 #    for s in "${a[@]}"; do echo $s; done | sort | {{{
-#is raw value No.1
-#is raw value No.2
-#is raw value No.3
-#}}}
+#    is raw value No.1
+#    is raw value No.2
+#    is raw value No.3
+# }}}
 #    tSet.free
 #    _ onError return
 #    INI InvalidInput
@@ -967,19 +967,19 @@ INI::set() {
 #    tShow.set [section with spaces] key with spaces = value with spaces
 #    tShow.show | {{{
 #
-#    key    =    unnamed section
+#        key    =    unnamed section
 #
 #
-#[ tShow ]
+#    [ tShow ]
 #
-#    key    =    is value
+#        key    =    is value
 #
 #
-#[ section with spaces ]
+#    [ section with spaces ]
 #
-#    key with spaces    =    value with spaces
+#        key with spaces    =    value with spaces
 #
-#}}}
+# }}}
 #    tShow.free
 #  SOURCE
 INI::show() {
@@ -1027,14 +1027,14 @@ INI::show() {
 #    tSave.free
 #    tail -n +4 $fn | {{{
 #
-#    key    =    unnamed section
+#        key    =    unnamed section
 #
 #
-#[ section ]
+#    [ section ]
 #
-#    key    =    is value
+#        key    =    is value
 #
-#}}}
+# }}}
 #    INI tComments
 #    ## TODO globs
 #    tComments.settings chComment = \# this is comment';'
@@ -1129,51 +1129,51 @@ INI::save() {
 #   tRead.read $ini                                                             #? true
 #   tRead.show | {{{
 #
-#                 key    =    on the global unnamed section
-#    key::with::colon    =    with colon
-#        key.with.dot    =    with dot
+#                    key    =    on the global unnamed section
+#       key::with::colon    =    with colon
+#           key.with.dot    =    with dot
 #
 #
-#[ section with punct (!#%^&*+=|?$) and spaces: "Foo Bar" <user@host.domain> ]
+#   [ section with punct (!#%^&*+=|?$) and spaces: "Foo Bar" <user@host.domain> ]
 #
-#                key    =    $(date -R)
-#                 iZ    =
-#                 iY    =    25
-#                 iX    =    80
-#                  b    =    false
-#        multi equal    =    value with equal ( = ), more = stop.
-#    key with spaces    =    value with spaces
-#
-#
-#[ exec ]:
-#
-#TZ=UTC date -R --date='@12345678'
-#sUname="$(uname -a)"
-#if [[ $HOSTNAME ]]; then
-#  export HOSTNAME=$(hostname)
-#fi
-#
-#:[ exec ]
+#                   key    =    $(date -R)
+#                    iZ    =
+#                    iY    =    25
+#                    iX    =    80
+#                     b    =    false
+#           multi equal    =    value with equal ( = ), more = stop.
+#       key with spaces    =    value with spaces
 #
 #
-#[ replace ]
+#   [ exec ]:
 #
-#           key    =    in the base mode
-#        key in    =    the base mode
-#    key in the    =    base mode
+#   TZ=UTC date -R --date='@12345678'
+#   sUname="$(uname -a)"
+#   if [[ $HOSTNAME ]]; then
+#     export HOSTNAME=$(hostname)
+#   fi
+#
+#   :[ exec ]
 #
 #
-#[ section with raw data ]
+#   [ replace ]
+#
+#              key    =    in the base mode
+#           key in    =    the base mode
+#       key in the    =    base mode
+#
+#
+#   [ section with raw data ]
 #
 #
 #
-#[ unify ]
+#   [ unify ]
 #
-#           key    =    in the base mode
-#        key in    =    the base mode
-#    key in the    =    base mode
+#              key    =    in the base mode
+#           key in    =    the base mode
+#       key in the    =    base mode
 #
-#}}}
+# }}}
 #   tRead.free
 #  SOURCE
 INI::read() {
@@ -1409,59 +1409,59 @@ INI::read() {
 #   tLoad.save $iniSave                                                         #? true
 #   tLoad.show | {{{
 #
-#     file    =    child
-#     main    =    false
-#    child    =    true
+#        file    =    child
+#        main    =    false
+#       child    =    true
 #
 #
-#[ exec ]:
+#   [ exec ]:
 #
-#TZ=UTC date -R --date='@12345679'
-#sUname="$(uname)"
-#if [[ $HOSTNAME ]]; then
-#export HOSTNAME=$(hostname -f)
-#fi
-#echo $sUname
+#   TZ=UTC date -R --date='@12345679'
+#   sUname="$(uname)"
+#   if [[ $HOSTNAME ]]; then
+#   export HOSTNAME=$(hostname -f)
+#   fi
+#   echo $sUname
 #
-#:[ exec ]
-#
-#
-#[ main ]
-#
-#       msg    =    child file
-#       cnt    =    80
-#      hint    =    $(date "+%s") more = equals =
-#    iXo Xo    =    19
+#   :[ exec ]
 #
 #
-#[ replace ]
+#   [ main ]
 #
-#after replacing
-#
-#
-#[ unify ]
-#
-#*.lit
-#*.bak
-#*.xxx
-#*.tmp
+#          msg    =    child file
+#          cnt    =    80
+#         hint    =    $(date "+%s") more = equals =
+#       iXo Xo    =    19
 #
 #
-#[ acc ]
+#   [ replace ]
 #
-#*.bak
-#*.tmp
-#*.bak
-#*.tmp
-#*.com
-#*.exe
-#*.jpg
-#*.png
-#*.mp3
-#*.dll
-#*.asp
+#   after replacing
 #
-#}}}
+#
+#   [ unify ]
+#
+#   *.lit
+#   *.bak
+#   *.xxx
+#   *.tmp
+#
+#
+#   [ acc ]
+#
+#   *.bak
+#   *.tmp
+#   *.bak
+#   *.tmp
+#   *.com
+#   *.exe
+#   *.jpg
+#   *.png
+#   *.mp3
+#   *.dll
+#   *.asp
+#
+# }}}
 ##    tLoad.free
 #  SOURCE
 INI::load() {
@@ -1611,14 +1611,14 @@ INI::load() {
 #    child    =    true
 #
 #
-#[ exec ]:
+#    [ exec ]:
 #
-#clear
+#    clear
 #
-#:[ exec ]
+#    :[ exec ]
 #
 #
-#[ main ]
+#    [ main ]
 #
 #       msg    =    test
 #       cnt    =    80
@@ -1626,37 +1626,37 @@ INI::load() {
 #    iXo Xo    =    19
 #
 #
-#[ replace ]
+#    [ replace ]
 #
-#after replacing
-#
-#
-#[ unify ]
-#
-#*.lit
-#*.bak
-#*.xxx
-#a.2
-#*.tmp
+#    after replacing
 #
 #
-#[ acc ]
+#    [ unify ]
 #
-#*.bak
-#*.tmp
-#*.bak
-#*.tmp
-#*.com
-#*.exe
-#*.jpg
-#*.png
-#*.mp3
-#*.dll
-#*.asp
-#a
-#b
+#    *.lit
+#    *.bak
+#    *.xxx
+#    a.2
+#    *.tmp
 #
-#}}}
+#
+#    [ acc ]
+#
+#    *.bak
+#    *.tmp
+#    *.bak
+#    *.tmp
+#    *.com
+#    *.exe
+#    *.jpg
+#    *.png
+#    *.mp3
+#    *.dll
+#    *.asp
+#    a
+#    b
+#
+# }}}
 #    tCLI.free
 #  SOURCE
 INI::bind.cli() {

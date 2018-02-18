@@ -1,5 +1,5 @@
 #
-# $Id: libmsg.sh 788 2018-02-12 01:30:48+04:00 toor $
+# $Id: libmsg.sh 792 2018-02-18 13:47:45+04:00 toor $
 #
 #****h* BASHLYK/libmsg
 #  DESCRIPTION
@@ -63,13 +63,13 @@ declare -rg _bashlyk_exports_msg="                                             \
 #    <text> - is used as a header for a stream from standard input
 #  EXAMPLE
 #    msg::echo 'test' | {{{
-#test
-#}}}
+#    test
+# }}}
 #    msg::echo - subject <<< body | {{{
-#subject
-#----
-#body
-#}}}
+#    subject
+#    ----
+#    body
+# }}}
 #  SOURCE
 msg::echo() {
 
