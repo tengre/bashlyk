@@ -1,6 +1,6 @@
 #!/bin/bash
 #
-# $Id: bashlyk 780 2017-06-15 16:50:54+04:00 toor $
+# $Id: bashlyk 793 2018-02-19 22:17:20+04:00 toor $
 #
 #****h* BASHLYK/bashlyk
 #  DESCRIPTION
@@ -60,25 +60,11 @@ declare -rg _bashlyk_PWD=${PWD:=$(pwd)}
 #    according to the XDG Base Directory Specification.
 #    In the event that it was not possible to determine the owner of the process
 #    or if there is no home directory, the hierarchy of script objects is
-#    created in the global temporary directory $ TMPDIR
+#    created in the global temporary directory $TMPDIR
 #  SOURCE
 bashlyk::init() {
 
-  local pathCnf pathRoot pathRun pathLog pathDat sHome IFS=$' \t\n'
-
-  if   [[ -w /dev/shm ]]; then
-
-    TMPDIR=/dev/shm
-
-  elif [[ -w /run/shm ]]; then
-
-    TMPDIR=/run/shm
-
-  else
-
-    TMPDIR=/tmp
-
-  fi
+  local s IFS=$' \t\n'
 
   if [[ $_bashlyk ]]; then
 
@@ -108,30 +94,53 @@ bashlyk::init() {
          *)
             if [[ -z "$HOME" || ! -O "$HOME" ]]; then
 
-              sHome=$(getent passwd $_bashlyk_sUser | cut -d ":" -f 6)
-              [[ $sHome && -d "$sHome" && -O "$sHome" ]] || \
-               sHome="/${TMPDIR}/${$}_${_bashlyk_sUser}"
+              s=$(getent passwd $_bashlyk_sUser | cut -d ":" -f 6)
+              [[ $s && -d "$s" && -O "$s" ]] || \
+               s="/${TMPDIR}/${$}_${_bashlyk_sUser}"
 
             else
 
-              sHome=$HOME
+              s=$HOME
 
             fi
 
-            _bashlyk_pathRun="${sHome}/.cache/${_bashlyk_pathPrefix}/run"
-            _bashlyk_pathLog="${sHome}/.local/share/${_bashlyk_pathPrefix}/log"
-            _bashlyk_pathDat="${sHome}/.local/share/${_bashlyk_pathPrefix}/lib"
-            _bashlyk_pathCnf="${sHome}/.config/${_bashlyk_pathPrefix}"
-            _bashlyk_pathIni="${sHome}/.config/${_bashlyk_pathPrefix}"
+            _bashlyk_pathRun="${s}/.cache/${_bashlyk_pathPrefix}/run"
+            _bashlyk_pathLog="${s}/.local/share/${_bashlyk_pathPrefix}/log"
+            _bashlyk_pathDat="${s}/.local/share/${_bashlyk_pathPrefix}/lib"
+            _bashlyk_pathCnf="${s}/.config/${_bashlyk_pathPrefix}"
+            _bashlyk_pathIni="${s}/.config/${_bashlyk_pathPrefix}"
 
-            [[ -s "${sHome}/.config/bashlyk/bashlyk.conf" ]] \
-              && . "${sHome}/.config/bashlyk/bashlyk.conf"
+            [[ -s "${s}/.config/bashlyk/bashlyk.conf" ]] \
+              && . "${s}/.config/bashlyk/bashlyk.conf"
 
-            [[ -s "${sHome}/.config/${_bashlyk_pathPrefix}/bashlyk.conf" ]] \
-              && . "${sHome}/.config/${_bashlyk_pathPrefix}/bashlyk.conf"
+            [[ -s "${s}/.config/${_bashlyk_pathPrefix}/bashlyk.conf" ]] \
+              && . "${s}/.config/${_bashlyk_pathPrefix}/bashlyk.conf"
 
          ;;
   esac
+
+  ## TODO check exists of the /proc/mounts
+  for TMPDIR in /dev/shm /run/shm /tmp $_bashlyk_pathDat; do
+
+    [[ -w $TMPDIR ]] || continue
+    s=$( findmnt -n -o SOURCE,TARGET --target $TMPDIR | xargs )
+
+    if ! grep "${s}.*noexec" /proc/mounts >/dev/null 2>&1; then
+
+      declare -rg TMPEXEC=$TMPDIR
+      break
+
+    fi
+
+  done
+  unset s
+
+  if [[ ! $TMPEXEC ]]; then
+
+    echo "warn: not found filesystem for exec temporary files"
+    TMPEXEC=$TMPDIR
+
+  fi
 
   [[ -t 1 ]] && _bashlyk_bInteract=1 || _bashlyk_bInteract=0
   tty > /dev/null 2>&1 && _bashlyk_bTerminal=1 || _bashlyk_bTerminal=0

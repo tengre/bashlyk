@@ -1,5 +1,5 @@
 #
-# $Id: libpid.sh 788 2018-02-12 01:30:48+04:00 toor $
+# $Id: libpid.sh 793 2018-02-19 22:17:20+04:00 toor $
 #
 #****h* BASHLYK/libpid
 #  DESCRIPTION
@@ -140,8 +140,8 @@ pid::status() {
 #    local a cmd1 cmd2 fmt1 fmt2 i pid                                          #-
 #    fmt1='#!/bin/bash\nread -t %s -N 0 </dev/zero\n'
 #    fmt2='#!/bin/bash\nfor i in 900 700 600 500; do\n%s %s &\ndone\n'
-#    std::temp cmd1
-#    std::temp cmd2
+#    std::temp cmd1 path=$TMPEXEC
+#    std::temp cmd2 path=$TMPEXEC
 #    printf -- "$fmt1" '$1' | tee $cmd1
 #    chmod +x $cmd1
 #    printf -- "$fmt2" "$cmd1" '$i' | tee $cmd2
@@ -152,8 +152,9 @@ pid::status() {
 #    done                                                                       #-
 #    $cmd2
 #    ($cmd1 400)&                                                               #-
-#    pid=$!
 #    ## TODO wait for cmd1 starting
+#    sleep 0.5
+#    pid=$!
 #    pid::stop                                                                  #? $_bashlyk_iErrorMissingArgument
 #    pid::stop pid=$pid                                                         #? $_bashlyk_iErrorMissingArgument
 #    pid::stop childs                                                           #? $_bashlyk_iErrorMissingArgument
@@ -276,7 +277,7 @@ pid::stop() {
 #    NotExistNotCreated - PID file don't created
 #  EXAMPLE
 #    local cmd fmt='#!/bin/bash\n%s . bashlyk\n%s || exit $?\n%s\n'             #-
-#    std::temp cmd                                                              #? true
+#    std::temp cmd path=$TMPEXEC                                                #? true
 #    printf -- "$fmt" '_bashlyk_log=nouse' 'pid::file' 'sleep 8' | tee $cmd
 #    chmod +x $cmd                                                              #? true
 #    ($cmd)&                                                                    #? true

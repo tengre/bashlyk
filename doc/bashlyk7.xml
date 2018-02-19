@@ -4,7 +4,7 @@
 
 <!--
 
-$Id: bashlyk7.xml 559 2016-09-24 21:49:45+04:00 toor $
+$Id: bashlyk7.xml 793 2018-02-19 22:17:20+04:00 toor $
 
 `xsltproc -''-nonet \
           -''-param man.charmap.use.subset "0" \
@@ -141,26 +141,12 @@ man(1), man(7), http://www.tldp.org/HOWTO/Man-Page/
      </listitem>
     </varlistentry>
     <varlistentry>
-     <term><filename>libcnf.sh</filename></term>
-     <listitem>
-      <para>
-       active configuration files control
-      </para>
-     </listitem>
-    </varlistentry>
-    <varlistentry>
-     <term><filename>libopt.sh</filename></term>
-     <listitem>
-      <para>
-       command line options manipulations
-      </para>
-     </listitem>
-    </varlistentry>
-    <varlistentry>
      <term><filename>libini.sh</filename></term>
      <listitem>
       <para>
-       ini configuration management
+       ini configuration management,
+       active configuration files safety control,
+       command line options manipulations
       </para>
      </listitem>
     </varlistentry>
