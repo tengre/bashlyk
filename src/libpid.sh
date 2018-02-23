@@ -1,5 +1,5 @@
 #
-# $Id: libpid.sh 793 2018-02-19 22:17:20+04:00 toor $
+# $Id: libpid.sh 794 2018-02-23 23:21:28+04:00 toor $
 #
 #****h* BASHLYK/libpid
 #  DESCRIPTION
@@ -454,7 +454,7 @@ pid::onExit.close() {
 #    a=$(ls -1ld ${TMPDIR}/*.${s}3)
 #    echo $(pid::onExit.unlink $a )
 #    ls -1ld ${TMPDIR}/*.${s}3 2>/dev/null                  | {{ ".*\.${s}3" }}1
-#    ##TODO names with whitespaces
+#    ## TODO names with whitespaces
 #  SOURCE
 pid::onExit.unlink() {
 

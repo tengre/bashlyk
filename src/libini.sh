@@ -1,5 +1,5 @@
 #
-# $Id: libini.sh 792 2018-02-18 13:47:45+04:00 toor $
+# $Id: libini.sh 794 2018-02-23 23:21:28+04:00 toor $
 #
 #****h* BASHLYK/libini
 #  DESCRIPTION
@@ -389,8 +389,8 @@ INI::__section.select() {
 #
 #    [ tSect2 ]
 #
-#    keyOneWord=is_one_world_value
 #      keyFirst="is first value"
+#    keyOneWord=is_one_world_value
 #     keySecond="is second value"
 # }}}
 #    tSShow2.free
@@ -434,7 +434,7 @@ INI::__section.show() {
                                                                                \
         [[ \$k =~ ^_bashlyk_raw_uniq= ]] && printf -- '%s\n' \"\${$id[\$k]}\"; \
                                                                                \
-      done;                                                                    \
+      done | sort;                                                             \
                                                                                \
     "
 
@@ -481,7 +481,7 @@ INI::__section.show() {
             printf -- '%${iPad}s%${iKeyWidth}s%${iPad}s=%${iPad}s%s\n'         \
               \"\" \"\$k\" \"\" \"\"  \"\$v\";                                 \
           fi                                                                   \
-        done;                                                                  \
+        done | sort;                                                           \
                                                                                \
       "
 
@@ -527,8 +527,8 @@ INI::__section.show() {
 #
 #    [ unique_values ]
 #
-#    save only unique 2
 #    save only unique 1
+#    save only unique 2
 #
 #
 #    [ accumulated_values ]
@@ -1136,13 +1136,13 @@ INI::save() {
 #
 #   [ section with punct (!#%^&*+=|?$) and spaces: "Foo Bar" <user@host.domain> ]
 #
-#                   key    =    $(date -R)
-#                    iZ    =
-#                    iY    =    25
-#                    iX    =    80
-#                     b    =    false
-#           multi equal    =    value with equal ( = ), more = stop.
-#       key with spaces    =    value with spaces
+#                  b    =    false
+#                 iX    =    80
+#                 iY    =    25
+#                 iZ    =
+#                key    =    $(date -R)
+#    key with spaces    =    value with spaces
+#        multi equal    =    value with equal ( = ), more = stop.
 #
 #
 #   [ exec ]:
@@ -1409,9 +1409,9 @@ INI::read() {
 #   tLoad.save $iniSave                                                         #? true
 #   tLoad.show | {{{
 #
+#       child    =    true
 #        file    =    child
 #        main    =    false
-#       child    =    true
 #
 #
 #   [ exec ]:
@@ -1428,10 +1428,10 @@ INI::read() {
 #
 #   [ main ]
 #
-#          msg    =    child file
 #          cnt    =    80
 #         hint    =    $(date "+%s") more = equals =
 #       iXo Xo    =    19
+#          msg    =    child file
 #
 #
 #   [ replace ]
@@ -1441,10 +1441,10 @@ INI::read() {
 #
 #   [ unify ]
 #
-#   *.lit
 #   *.bak
-#   *.xxx
+#   *.lit
 #   *.tmp
+#   *.xxx
 #
 #
 #   [ acc ]
@@ -1606,9 +1606,9 @@ INI::load() {
 #    tCLI.load $ini []file,main,child [exec]- [main]hint,msg,cnt [replace]- [unify]= [acc]+  #? true
 #    tCLI.show | {{{
 #
+#    child    =    true
 #     file    =    CLI
 #     main    =    false
-#    child    =    true
 #
 #
 #    [ exec ]:
@@ -1620,10 +1620,10 @@ INI::load() {
 #
 #    [ main ]
 #
-#       msg    =    test
 #       cnt    =    80
 #      hint    =    'Hi!'
 #    iXo Xo    =    19
+#       msg    =    test
 #
 #
 #    [ replace ]
@@ -1633,11 +1633,11 @@ INI::load() {
 #
 #    [ unify ]
 #
-#    *.lit
-#    *.bak
-#    *.xxx
 #    a.2
+#    *.bak
+#    *.lit
 #    *.tmp
+#    *.xxx
 #
 #
 #    [ acc ]

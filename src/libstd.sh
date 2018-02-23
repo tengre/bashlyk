@@ -1,5 +1,5 @@
 #
-# $Id: libstd.sh 792 2018-02-18 13:47:45+04:00 toor $
+# $Id: libstd.sh 794 2018-02-23 23:21:28+04:00 toor $
 #
 #****h* BASHLYK/libstd
 #  DESCRIPTION
@@ -896,7 +896,7 @@ std::isHash() {
 
   errorify on InvalidVariable $1 || return
 
-  [[ $( declare -pA $1 2>/dev/null ) =~ ^declare.*-A ]] \
+  [[ $( declare -p $1 2>/dev/null ) =~ ^declare.*-A ]] \
     && return 0 || return $( _ iErrorInvalidHash )
 
 }
