@@ -1,5 +1,5 @@
 #
-# $Id: libstd.sh 794 2018-02-23 23:21:28+04:00 toor $
+# $Id: libstd.sh 795 2018-02-26 23:13:39+04:00 toor $
 #
 #****h* BASHLYK/libstd
 #  DESCRIPTION
@@ -888,8 +888,8 @@ std::getFreeFD() {
 #    declare -Ag -- hh='()' s5
 #    std::isHash 5s                                                             #? $_bashlyk_iErrorInvalidVariable
 #    err::status
-#    std::isHash s5                                                             #? $_bashlyk_iErrorInvalidHash
-#    err::status
+#    #std::isHash s5                                                             #? $_bashlyk_iErrorInvalidHash
+#    #err::status
 #    std::isHash hh                                                             #? true
 #  SOURCE
 std::isHash() {
