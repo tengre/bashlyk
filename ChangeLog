@@ -1,8 +1,8 @@
-Sun, 18 Feb 2018 00:49:19 +0400
+Mon, 05 Mar 2018 00:53:20 +0400
 	New upstream release
 	Version 1.92
 
-- Simplified preparation of tests due to the use of special operators:
+- simplified preparation of tests due to the use of special operators:
 <some code> | {{{
 multiline
 text to compare output
@@ -10,6 +10,9 @@ text to compare output
 
 <some code> | {{pattern, string, regular expression}}
 
+- improved support for bash 4.4
+- added global variable $TMPEXEC as pointer to the path on the executable
+  filesystem for temporary files
 - added support for old dependent packages by using libold.sh
 - improved liberr.sh library
 
@@ -23,6 +26,8 @@ testunit.awk:
   prepare saving of the  embedded data to a 'left' temporary file
 - '}}}' display 'right' (result) temporary file and compare both files
   by diff command, 0 return code is ok.
+- added support for indentation in blocks of embedded data to correct
+  the generation of robodoc documentation
 - added support for {{...}}[0]? and {{...}}[1!] operator
 
 testunit.sh:
@@ -60,9 +65,26 @@ liberr.sh:
 libstd.sh:
 - added std::isDecimal with tests
 - std::temp - improved tests and error handling
+- behavior of 'declare -A a' changed for bash 4.4. Declaration without
+  definition does not return an error. std::isHash return error for
+  undefined array
 
 libini.sh:
 - improved tests for INI::{g,s}et
+- added sorting to the output of the INI::*show methods for a successful test
+  run with multi-line output
+- INI::__section.getArray return error for undefined array
+
+libpid.sh:
+- testunits - temporary executables create by a command like
+  'std::temp cmd path=$TMPEXEC'
+
+doc/bashlyk7.xml:
+- description updated
+
+bashlyk:
+- variable $TMPEXEC set to the path on the executable filesystem
+- bashlyk::init - removed unused local variables
 
 
 Fri, 02 Jun 2017 16:12:43 +0400
