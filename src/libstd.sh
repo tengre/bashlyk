@@ -1,5 +1,5 @@
 #
-# $Id: libstd.sh 795 2018-02-26 23:13:39+04:00 toor $
+# $Id: libstd.sh 796 2018-03-04 15:46:29+04:00 toor $
 #
 #****h* BASHLYK/libstd
 #  DESCRIPTION
@@ -882,22 +882,33 @@ std::getFreeFD() {
 #    <variable> - variable name
 #  RETURN VALUE
 #    InvalidVariable - argument is not valid variable name
-#    InvalidHash     - argument is not hash variable
+#    InvalidHash     - argument is not hash variable (or declared only - empty)
 #    Success         - argument is name of the associative array
 #  EXAMPLE
 #    declare -Ag -- hh='()' s5
+#    declare -ag -- aa='()'
 #    std::isHash 5s                                                             #? $_bashlyk_iErrorInvalidVariable
 #    err::status
-#    #std::isHash s5                                                             #? $_bashlyk_iErrorInvalidHash
-#    #err::status
+#    std::isHash s5                                                             #? $_bashlyk_iErrorInvalidHash
+#    err::status
+#    std::isHash aa                                                             #? $_bashlyk_iErrorInvalidHash
+#    err::status
 #    std::isHash hh                                                             #? true
+#    err::status
 #  SOURCE
 std::isHash() {
 
   errorify on InvalidVariable $1 || return
 
-  [[ $( declare -p $1 2>/dev/null ) =~ ^declare.*-A ]] \
-    && return 0 || return $( _ iErrorInvalidHash )
+  if [[ $( declare -p $1 2>/dev/null ) =~ ^declare.-A.${1}= ]]; then
+
+    return 0
+
+  else
+
+    return $( _ iErrorInvalidHash )
+
+  fi
 
 }
 #******
