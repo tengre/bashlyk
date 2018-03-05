@@ -1,5 +1,5 @@
 #
-# $Id: libcfg.sh 794 2018-02-23 23:21:28+04:00 toor $
+# $Id: libcfg.sh 800 2018-03-05 22:47:15+04:00 toor $
 #
 #****h* BASHLYK/libcfg
 #  DESCRIPTION
@@ -655,7 +655,11 @@ CFG::__section.getArray() {
 
   fi
 
-  declare -pa a 2>/dev/null || return $( _ iErrorEmptyResult )
+  #
+  # expected defined items of a result array
+  #
+  s=$( declare -pa a 2>/dev/null )
+  [[ $s =~ ^declare.-a.a= ]] && echo "$s" || return $( _ iErrorEmptyResult )
 
 }
 #******
