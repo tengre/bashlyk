@@ -1,4 +1,4 @@
-# $Id: TODO 798 2018-03-05 22:02:30+04:00 toor $
+# $Id: TODO 801 2018-03-08 23:32:20+04:00 toor $
 + liblog.sh: не проходит тест udfWarn без терминала (в не интерактивном режиме)
 + libini.sh: при тесте с другими модулями в ini файлах оказывается вывод других
   тестовых блоков (решено в версии 1.57)
@@ -120,10 +120,10 @@ Fri, 06 Mar 2015 12:44:00 +0400
 + #170617 - std - rewrite testunit engine
 - #170721 - ini - doublequote notes for filenames with whitespaces
 - #180305 - rename ini to cfg
-- #180306 - cfg - add CFG::filename method
+- #180306 - cfg - add CFG::storage method
 - #180307 - err - 'on error' rename to 'error'
 - #180308 - replace testunit.awk by testunit.sh
-
+- #180309 - add setting 'backup config'
 
 
 
