@@ -1,5 +1,5 @@
 #
-# $Id: libcfg.sh 801 2018-03-08 23:32:20+04:00 toor $
+# $Id: libcfg.sh 802 2018-03-08 23:56:03+04:00 toor $
 #
 #****h* BASHLYK/libcfg
 #  DESCRIPTION
@@ -1524,7 +1524,7 @@ CFG::load() {
 
   local -a a
   local -A h hKeyValue hRawMode
-  local csv i IFS ini fmtPairs fmtSections fn o path reSection reValidSections s
+  local cfg csv i IFS fmtPairs fmtSections fn o path reSection reValidSections s
   local sSection
 
   o=${FUNCNAME[0]%%.*}
@@ -1578,7 +1578,7 @@ CFG::load() {
 
   fi
 
-  [[ $path ]] && ini=${fn##*/}
+  [[ $path ]] && cfg=${fn##*/}
 
   s=$* && IFS='][' && a=( $s ) && IFS=$' \t\n'
 
@@ -1594,22 +1594,22 @@ CFG::load() {
 
   unset -f CFG::load::parse
 
-  a=( ${ini//./ } )
+  a=( ${cfg//./ } )
 
   csv=${csv%*|}
 
   [[ $csv ]] && reValidSections=${fmtSections/\%SECTION\%/$csv}
 
-  unset ini s
+  unset cfg s
 
   for (( i = ${#a[@]}-1; i >= 0; i-- )); do
 
     [[ ${a[i]} ]] || continue
-    [[ $ini    ]] && ini="${a[i]}.${ini}" || ini="${a[i]}"
+    [[ $cfg    ]] && cfg="${a[i]}.${cfg}" || cfg="${a[i]}"
 
-    if [[ -s "${path}/${ini}" ]]; then
+    if [[ -s "${path}/${cfg}" ]]; then
 
-      ${o}.storage ${path}/${ini}
+      ${o}.storage ${path}/${cfg}
       ${o}.read $reValidSections
 
     fi
@@ -1619,13 +1619,13 @@ CFG::load() {
   eval "s=\${_h${o^^}[__cli__]}"
   if [[ $s ]]; then
 
-    std::temp ini
+    std::temp cfg
 
-    ${s}.save $ini
-    ${o}.storage $ini
+    ${s}.save $cfg
+    ${o}.storage $cfg
     ${o}.read $reValidSections
 
-    rm -f $ini
+    rm -f $cfg
 
   fi
 
@@ -1656,17 +1656,17 @@ CFG::load() {
 #    MissingArgument - arguments is not specified
 #    InvalidArgument - invalid format of the arguments
 #  EXAMPLE
-#    local ini
+#    local cfg
 #    _ sArg "-F CLI -E clear -H 'Hi!' -M test -U a.2 -U a.2 --acc a --acc b "   #-
-#    std::temp ini
-#    tLoad.save $ini                                                            #? true
+#    std::temp cfg
+#    tLoad.save $cfg                                                            #? true
 #    tLoad.free
 #    _ onError retwarn
 #    CFG tCLI
 #    tCLI.bind.cli                                                              #? $_bashlyk_iErrorInvalidOption
 #    tCLI.bind.cli file{F}: exec{E}:- main-hint{H}: main-msg{M}: unify{U}:=     #? $_bashlyk_iErrorInvalidOption
 #    tCLI.bind.cli file{F}: exec{E}:- main-hint{H}: main-msg{M}: unify{U}:= acc:+            #? true
-#    tCLI.storage $ini
+#    tCLI.storage $cfg
 #    tCLI.load []file,main,child [exec]- [main]hint,msg,cnt [replace]- [unify]= [acc]+  #? true
 #    tCLI.show | {{{
 #
