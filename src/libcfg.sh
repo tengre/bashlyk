@@ -1,5 +1,5 @@
 #
-# $Id: libcfg.sh 803 2018-03-09 14:30:51+04:00 toor $
+# $Id: libcfg.sh 805 2018-03-10 00:28:08+04:00 toor $
 #
 #****h* BASHLYK/libcfg
 #  DESCRIPTION
@@ -163,18 +163,37 @@ CFG() {
 
   throw on InvalidVariable $o
 
-  declare -Ag -- _h${o^^}_settings='(                                          \
+  if [[ $o =~ ^c(o)?nf ]]; then
+
+    declare -Ag -- _h${o^^}_settings='(                                        \
                                                                                \
-    [chComment]="#"                                                            \
-    [bSectionPadding]="true"                                                   \
-    [bShellMode]="false"                                                       \
-    [reKey]="$_bashlyk_INI_reKey"                                              \
-    [reKeyVal]="$_bashlyk_INI_reKeyVal"                                        \
-    [fmtPairs]="$_bashlyk_INI_fmtPairs"                                        \
-    [fmtSection0]="\n\n[ %s ]%s\n\n"                                           \
-    [fmtSection1]="\n%s[ %s ]\n"                                               \
+      [chComment]="#"                                                          \
+      [bSectionPadding]="true"                                                 \
+      [bShellMode]="true"                                                      \
+      [reKey]="$_bashlyk_CNF_reKey"                                            \
+      [reKeyVal]="$_bashlyk_CNF_reKeyVal"                                      \
+      [fmtPairs]="$_bashlyk_CNF_fmtPairs"                                      \
+      [fmtSection0]="\n\n# [ %s ]%s\n\n"                                       \
+      [fmtSection1]="\n# %s[ %s ]\n"                                           \
                                                                                \
-  )'
+    )'
+
+  else
+
+    declare -Ag -- _h${o^^}_settings='(                                        \
+                                                                               \
+      [chComment]="#"                                                          \
+      [bSectionPadding]="true"                                                 \
+      [bShellMode]="false"                                                     \
+      [reKey]="$_bashlyk_INI_reKey"                                            \
+      [reKeyVal]="$_bashlyk_INI_reKeyVal"                                      \
+      [fmtPairs]="$_bashlyk_INI_fmtPairs"                                      \
+      [fmtSection0]="\n\n[ %s ]%s\n\n"                                         \
+      [fmtSection1]="\n%s[ %s ]\n"                                             \
+                                                                               \
+    )'
+
+  fi
 
   declare -Ag -- _h${o^^}="([__settings__]=_h${o^^}_settings)"
   declare -ag -- _a${o^^}="()"
@@ -926,7 +945,7 @@ CFG::set() {
 
   else
 
-  on error InvalidArgument $*
+    on error InvalidArgument $*
 
   fi
 
@@ -948,13 +967,22 @@ CFG::set() {
 
   else
 
-    [[ $k =~ $( ${o}.settings reKey ) ]] || on error IniExtraCharInKey "$k"
-
     iKeyWidth=$( ${o}.__section.get _bashlyk_key_width )
     std::isNumber $iKeyWidth || iKeyWidth=0
 
     (( ${#k} > iKeyWidth )) && ${o}.__section.set _bashlyk_key_width ${#k}
-    ${o}.__section.set "$k" "$v"
+
+
+    if [[ $k =~ $( ${o}.settings reKey ) ]]; then
+
+      ${o}.__section.set "$k" "$v"
+
+    else
+
+      ## TODO get ${o}.settings chComment
+      ${o}.__section.set "#[!] - $( on error echo IniExtraCharInKey 2>&1 ): $k" "$v"
+
+    fi
 
   fi
 
@@ -992,6 +1020,33 @@ CFG::set() {
 #
 # }}}
 #    tShow.free
+#    echo "autoswitch to the 'conf' mode by prefix of the instance name"
+#    CFG confAuto
+#    confAuto.set []valid_key = any_value_No.1
+#    confAuto.set []anotherKey = any value No.2
+#    confAuto.set [any section]validKey = any value No.3
+#    confAuto.set [any section]another_key = any_value_No.4
+#    confAuto.set [another section]invalid-key = any value No.5
+#    confAuto.set [another section]_Valid_Key = any value No.6
+#    confAuto.show | {{{
+#
+#    anotherKey="any value No.2"
+#     valid_key=any_value_No.1
+#
+#
+#    # [ any section ]
+#
+#    another_key=any_value_No.4
+#       validKey="any value No.3"
+#
+#
+#    # [ another section ]
+#
+#    _Valid_Key="any value No.6"
+#    #[!] - Warn: extra character(s) in the key - 2 .. (109): invalid-key="any value No.5"
+#
+#    }}}
+#  confAuto.free
 #  SOURCE
 CFG::show() {
 
@@ -1028,8 +1083,8 @@ CFG::show() {
 #
 #    CFG cfgStorage
 #    cfgStorage.storage | {{ .*\.cfg$ }}
-#    cfgStorage.storage test.ini
-#    cfgStorage.storage | {{ ^test\.ini$ }}
+#    cfgStorage.storage external.ini
+#    cfgStorage.storage | {{ ^external\.ini$ }}
 #
 #  SOURCE
 CFG::storage() {
@@ -1180,7 +1235,7 @@ CFG::save() {
 #    key in = the base mode                                                     #-
 #    key in the = base mode                                                     #-
 #    EOFini                                                                     #-
-#   _ onError retwarn
+#   _ onError warn+return
 #   CFG tRead
 #   tRead.read                                                                  #? $_bashlyk_iErrorNoSuchFileOrDir
 #   tRead.storage
@@ -1667,7 +1722,7 @@ CFG::load() {
 #    std::temp cfg
 #    tLoad.save $cfg                                                            #? true
 #    tLoad.free
-#    _ onError retwarn
+#    _ onError warn+return
 #    CFG tCLI
 #    tCLI.bind.cli                                                              #? $_bashlyk_iErrorInvalidOption
 #    tCLI.bind.cli file{F}: exec{E}:- main-hint{H}: main-msg{M}: unify{U}:=     #? $_bashlyk_iErrorInvalidOption
