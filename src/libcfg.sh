@@ -1,5 +1,5 @@
 #
-# $Id: libcfg.sh 802 2018-03-08 23:56:03+04:00 toor $
+# $Id: libcfg.sh 803 2018-03-09 14:30:51+04:00 toor $
 #
 #****h* BASHLYK/libcfg
 #  DESCRIPTION
@@ -1048,8 +1048,10 @@ CFG::storage() {
 
     if [[ ! $s ]]; then
 
-      s=$( exec -c sha1sum <<< "${0}::${o}" )
+      s="$( exec -c sha1sum <<< "${0}::${o}" )"
       s="${_bashlyk_pathDat}/${s:0:40}.cfg"
+      mkdir -p $_bashlyk_pathDat || throw on NoSuchFileOrDir "$_bashlyk_pathDat"
+      pid::onExit.unlink $_bashlyk_pathDat
 
     fi
 
@@ -1518,7 +1520,11 @@ CFG::read() {
 #   *.asp
 #
 # }}}
-##    tLoad.free
+##
+##
+##    # preserve data for testing next method - CFG::bind.cli
+##    # tLoad.free
+##
 #  SOURCE
 CFG::load() {
 
