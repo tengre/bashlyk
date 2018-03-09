@@ -1,46 +1,50 @@
 #
-# $Id: libcfg.sh 800 2018-03-05 22:47:15+04:00 toor $
+# $Id: libcfg.sh 803 2018-03-09 14:30:51+04:00 toor $
 #
 #****h* BASHLYK/libcfg
 #  DESCRIPTION
-#    Management of the configuration files in the INI-style. Implemented
-#    capabilities and features:
-#     - associative arrays are used to store the CFG configuration data
-#     - OOP style used for a treatment of the CFG configuration data:
+#    Management of configuration data of various sources - files (including INI
+#    style) and command line options. Implemented capabilities and features:
+#     - associative arrays are used to store the configuration data
+#     - OOP style used for a treatment of the configuration data:
 #       * functions (eg, get/set) bind with the configuration data, as "methods"
-#         of the corresponding instance of the base class "INI"
+#         of the corresponding instance of the base class "CFG"
 #       * used the constructor and destructor to manage the life cycle of the
 #         resources allocated for processing configuration data
-#     - CFG configuration source may be not only single file but also a group of
+#     - configuration source may be not only single file but also a group of
 #       related files
 #     - supported the filtration ability  - retrieving only the specified
 #       sections and parameters
 #     - The possibility of simultaneous and independent work with different
-#       sources of CFG data
+#       sources of the configuration data
 #     - Get/Set certain configuration data by using parameter as key
 #     - Record the configuration data to a file or output to the standard device
-#       in CFG format.
+#       in the INI format or "active configuration".
 #     - Support for Command Line Interface (CLI) - simultaneous determination of
 #       long and short options of configuration parameters.
 #     - parsing the command line arguments and their binding to configuration
-#       data that allows you to override selected parameters of the INI-file.
+#       data that allows you to override selected parameters of the
+#       configuration file.
 #  USES
 #    libstd liberr
 #  EXAMPLE
-#    # create ini object from CFG class
+#    # create object from CFG class
 #    CFG ini
 #
-#    # bind to ini object CLI options
+#    # bind CLI options to the ini object
 #    ## TODO detailed description required
 #    ini.bind.cli config{c}: source{s}:-- help{h} mode{m}: dry-run
 #
 #    # get value of the --config (-c) option
 #    conf=$( ini.getopt config )
 #
-#    # load selected only options from ini configuration file and combine with
+#    # set file as source of the configuration data
+#    ini.storage $conf
+#
+#    # load selected options from ini configuration file and combine with
 #    # CLI options.
 #    # [!] CLI options with the same name have higher priority
-#    ini.load $conf                                                            \
+#    ini.load                                                                  \
 #                  []mode,help                                                 \
 #               [dry]run                                                       \
 #            [source]=
@@ -61,8 +65,11 @@
 #    ini.set [source] = $HOME
 #    ini.set [source] = /var/mail/$USER
 #
-#    # save updated configuration to file
-#    ini.save $conf
+#    # save updated configuration to file $conf
+#    ini.save
+#
+#    # or other file
+#    ini.save other file.ini
 #
 #    # destroy ini object, free resources
 #    ini.free
@@ -105,7 +112,7 @@ declare -rg _bashlyk_methods_cfg="                                             \
     __section.id __section.byindex __section.select __section.show             \
     __section.setRawData __section.getArray get set show save read             \
     settings settings.section.padding settings.shellmode                       \
-    keys load bind.cli getopt free                                             \
+    keys load bind.cli getopt free storage                                     \
 "
 
 declare -rg _bashlyk_externals_cfg="                                           \
@@ -117,7 +124,7 @@ declare -rg _bashlyk_externals_cfg="                                           \
 declare -rg _bashlyk_exports_cfg="                                             \
                                                                                \
     CFG CFG::{get,set,keys,show,save,read,load,bind.cli,getopt,settings,       \
-              settings.section.padding,settings.shellmode,free}                \
+              settings.section.padding,settings.shellmode,free,storage}        \
                                                                                \
 "
 _bashlyk_iErrorIniMissingMethod=111
@@ -172,7 +179,7 @@ CFG() {
   declare -Ag -- _h${o^^}="([__settings__]=_h${o^^}_settings)"
   declare -ag -- _a${o^^}="()"
 
-  std::temp fn path="${TMPDIR}/${USER}/bashlyk" prefix='ini.' suffix=".${o}"
+  std::temp fn path="${TMPDIR}/${USER}/bashlyk" prefix='cfg.' suffix=".${o}"
 
   for s in $_bashlyk_methods_cfg; do
 
@@ -1006,17 +1013,64 @@ CFG::show() {
 
 }
 #******
-#****e* libcfg/CFG::save
+#****e* libcfg/CFG::storage
 #  SYNOPSIS
-#    CFG::save <file>
+#    CFG::storage <storage>
 #  DESCRIPTION
-#    Save the configuration to the specified file in the CFG format
+#    Bind external storage (filename & etc) for the configuration object
 #  NOTES
 #    public method
 #  ARGUMENTS
-#    <file>  - target file for saving, full path required
+#    <storage>  - external storage, such as a file
 #  ERRORS
-#    MissingArgument    - the file name is not specified
+#    MissingArgument - the storage name is not specified
+#  EXAMPLE
+#
+#    CFG cfgStorage
+#    cfgStorage.storage | {{ .*\.cfg$ }}
+#    cfgStorage.storage test.ini
+#    cfgStorage.storage | {{ ^test\.ini$ }}
+#
+#  SOURCE
+CFG::storage() {
+
+  local o s
+
+  o=${FUNCNAME[0]%%.*}
+
+  if [[ $* ]]; then
+
+    ${o}.settings storage = $*
+
+  else
+
+    s="$( ${o}.settings storage )"
+
+    if [[ ! $s ]]; then
+
+      s="$( exec -c sha1sum <<< "${0}::${o}" )"
+      s="${_bashlyk_pathDat}/${s:0:40}.cfg"
+      mkdir -p $_bashlyk_pathDat || throw on NoSuchFileOrDir "$_bashlyk_pathDat"
+      pid::onExit.unlink $_bashlyk_pathDat
+
+    fi
+
+    echo "$s"
+
+  fi
+
+}
+#******
+#****e* libcfg/CFG::save
+#  SYNOPSIS
+#    CFG::save [<file>]
+#  DESCRIPTION
+#    Save the configuration to the specified file
+#  NOTES
+#    public method
+#  ARGUMENTS
+#    <file>  - target file for saving, default specified by 'storage' method
+#  ERRORS
 #    NotExistNotCreated - the target file is not created
 #  EXAMPLE
 #    local fn
@@ -1051,13 +1105,13 @@ CFG::show() {
 #  SOURCE
 CFG::save() {
 
-  throw on MissingArgument $1
-
   local c fmtComment fn o
 
-  fmtComment='%COMMENT%\n%COMMENT% created %s by %s\n%COMMENT%\n'
-  fn="$1"
   o=${FUNCNAME[0]%%.*}
+
+  [[ $* ]] && fn="$*" || fn="$( ${o}.storage )"
+
+  fmtComment='%COMMENT%\n%COMMENT% created %s by %s\n%COMMENT%\n'
 
   c=$( ${o}.settings chComment )
   : ${c:=#}
@@ -1079,9 +1133,9 @@ CFG::save() {
 #******
 #****e* libcfg/CFG::read
 #  SYNOPSIS
-#    CFG::read <filename>
+#    CFG::read
 #  DESCRIPTION
-#    Handling a configuration from the single CFG file. Read valid "key=value"
+#    Handling a configuration from the single file. Read valid "key=value"
 #    pairs and as bonus "active" sections data only
 #  ERRORS
 #    NoSuchFileOrDir - input file not exist
@@ -1128,9 +1182,11 @@ CFG::save() {
 #    EOFini                                                                     #-
 #   _ onError retwarn
 #   CFG tRead
-#   tRead.read                                                                  #? $_bashlyk_iErrorMissingArgument
-#   tRead.read /not/exist/file.$$.ini                                           #? $_bashlyk_iErrorNoSuchFileOrDir
-#   tRead.read $ini                                                             #? true
+#   tRead.read                                                                  #? $_bashlyk_iErrorNoSuchFileOrDir
+#   tRead.storage
+#   tRead.read                                                                  #? $_bashlyk_iErrorNoSuchFileOrDir
+#   tRead.storage $ini
+#   tRead.read                                                                  #? true
 #   tRead.show | {{{
 #
 #                    key    =    on the global unnamed section
@@ -1182,13 +1238,13 @@ CFG::save() {
 #  SOURCE
 CFG::read() {
 
-  errorify on MissingArgument $1 || return
-  errorify on NoSuchFileOrDir $1 || return
-
   local bActiveSection bIgnore csv fn i iKeyWidth reComment reKeyVal reSection
   local reValidSections s
 
   o=${FUNCNAME[0]%%.*}
+
+  fn=$( ${o}.storage )
+  errorify on NoSuchFileOrDir $fn || return
 
   reSection='^[[:space:]]*(:?)\[[[:space:]]*([[:print:]]+?)[[:space:]]*\](:?)[[:space:]]*$'
   reComment='^[[:space:]]*$|(^|[[:space:]]+)[\#\;].*$'
@@ -1196,16 +1252,15 @@ CFG::read() {
   reKeyVal=$( ${o}.settings reKeyVal )
 
   s="__global__"
-  fn="$1"
 
-  [[ $2 ]] && reValidSections="$2" || reValidSections="$reSection"
+  [[ $* ]] && reValidSections="$*" || reValidSections="$reSection"
   [[ ${hKeyValue[@]} ]] || local -A hKeyValue
   [[ ${hRawMode[@]}  ]] || local -A hRawMode
 
   ## TODO permit hi uid ?
   if [[ ! $( exec -c stat -c %u $fn ) =~ ^($UID|0)$ ]]; then
 
-    on error NotPermitted $1 owned by $( stat -c %U $fn )
+    on error NotPermitted $fn owned by $( stat -c %U $fn )
 
   fi
 
@@ -1309,13 +1364,11 @@ CFG::read() {
 ## TODO well known places of the configuration don't worked..
 #****e* libcfg/CFG::load
 #  SYNOPSIS
-#    CFG::load <file> <section>:(<options>|<raw mode>) ...
-#    CFG::load <file> {[\[<section>\]](<options>|<raw mode>)} ...
+#    CFG::load <section>:(<options>|<raw mode>) ...
+#    CFG::load {[\[<section>\]](<options>|<raw mode>)} ...
 #  DESCRIPTION
-#    load the specified configuration data from a group of related CFG files
+#    load the specified configuration data from a group of related files
 #  ARGUMENTS
-#    <file>     - the final configuration file. Based on of his name may be
-#                 pre-loaded the parent files of the configuration
 #    <section>  - section name, by default is empty for global section
 #    <options>  - comma separated list of the options for loading. Required or
 #                 replaced by <raw mode> argument
@@ -1409,7 +1462,8 @@ CFG::read() {
 #    EOFiniChild                                                                #-
 #   CFG tLoad
 #   ## TODO add more tests
-#   tLoad.load $iniLoad []file,main,child [exec]- [main]hint, msg, cnt [replace]- [unify]= [acc]+ #? true
+#   tLoad.storage $iniLoad
+#   tLoad.load []file,main,child [exec]- [main]hint, msg, cnt [replace]- [unify]= [acc]+ #? true
 #   tLoad.save $iniSave                                                         #? true
 #   tLoad.show | {{{
 #
@@ -1466,18 +1520,24 @@ CFG::read() {
 #   *.asp
 #
 # }}}
-##    tLoad.free
+##
+##
+##    # preserve data for testing next method - CFG::bind.cli
+##    # tLoad.free
+##
 #  SOURCE
 CFG::load() {
 
-  [[ ${1##*/} =~ ^\.|\.$ ]] && on error InvalidArgument "${BASH_REMATCH[0]}"
-
   local -a a
   local -A h hKeyValue hRawMode
-  local csv i IFS ini fmtPairs fmtSections o path reSection reValidSections s
+  local cfg csv i IFS fmtPairs fmtSections fn o path reSection reValidSections s
   local sSection
 
   o=${FUNCNAME[0]%%.*}
+
+  fn="$( ${o}.storage )"
+  [[ ${fn##*/} =~ ^\.|\.$ ]] && on error InvalidArgument "${BASH_REMATCH[0]}"
+
   fmtSections='^[[:space:]]*(:?)\[[[:space:]]*(%SECTION%)[[:space:]]*\](:?)[[:space:]]*$'
 
   fmtPairs=$( ${o}.settings fmtPairs )
@@ -1510,23 +1570,21 @@ CFG::load() {
   # end CFG::load::parse
   #
 
-  [[ "$1" == "${1##*/}" && -f "$(_ pathIni)/$1" ]] && path=$(_ pathIni)
-  [[ "$1" == "${1##*/}" && -f "$1"              ]] && path=$( exec -c pwd )
-  [[ "$1" != "${1##*/}" && -f "$1"              ]] && path=${1%/*}
+  [[ "$fn" == "${fn##*/}" && -f "$(_ pathIni)/$fn" ]] && path="$( _ pathIni )"
+  [[ "$fn" == "${fn##*/}" && -f "$fn"              ]] && path="$( exec -c pwd )"
+  [[ "$fn" != "${fn##*/}" && -f "$fn"              ]] && path="${fn%/*}"
 
-  if [[ ! $path && -f "/etc/$(_ pathPrefix)/$1" ]]; then
+  if [[ ! $path && -f "/etc/$(_ pathPrefix)/$fn" ]]; then
 
     path="/etc/$( _ pathPrefix )"
 
   else
 
-    errorify on NoSuchFileOrDir $1 || return
+    errorify on NoSuchFileOrDir $fn || return
 
   fi
 
-  [[ $path ]] && ini=${1##*/}
-
-  shift
+  [[ $path ]] && cfg=${fn##*/}
 
   s=$* && IFS='][' && a=( $s ) && IFS=$' \t\n'
 
@@ -1542,31 +1600,38 @@ CFG::load() {
 
   unset -f CFG::load::parse
 
-  a=( ${ini//./ } )
+  a=( ${cfg//./ } )
 
   csv=${csv%*|}
 
   [[ $csv ]] && reValidSections=${fmtSections/\%SECTION\%/$csv}
 
-  unset ini s
+  unset cfg s
 
   for (( i = ${#a[@]}-1; i >= 0; i-- )); do
 
     [[ ${a[i]} ]] || continue
-    [[ $ini    ]] && ini="${a[i]}.${ini}" || ini="${a[i]}"
-    [[ -s "${path}/${ini}" ]] && ${o}.read "${path}/${ini}" "$reValidSections"
+    [[ $cfg    ]] && cfg="${a[i]}.${cfg}" || cfg="${a[i]}"
+
+    if [[ -s "${path}/${cfg}" ]]; then
+
+      ${o}.storage ${path}/${cfg}
+      ${o}.read $reValidSections
+
+    fi
 
   done
 
   eval "s=\${_h${o^^}[__cli__]}"
   if [[ $s ]]; then
 
-    std::temp ini
+    std::temp cfg
 
-    ${s}.save $ini
-    ${o}.read $ini "$reValidSections"
+    ${s}.save $cfg
+    ${o}.storage $cfg
+    ${o}.read $reValidSections
 
-    rm -f $ini
+    rm -f $cfg
 
   fi
 
@@ -1597,17 +1662,18 @@ CFG::load() {
 #    MissingArgument - arguments is not specified
 #    InvalidArgument - invalid format of the arguments
 #  EXAMPLE
-#    local ini
+#    local cfg
 #    _ sArg "-F CLI -E clear -H 'Hi!' -M test -U a.2 -U a.2 --acc a --acc b "   #-
-#    std::temp ini
-#    tLoad.save $ini                                                            #? true
+#    std::temp cfg
+#    tLoad.save $cfg                                                            #? true
 #    tLoad.free
 #    _ onError retwarn
 #    CFG tCLI
 #    tCLI.bind.cli                                                              #? $_bashlyk_iErrorInvalidOption
 #    tCLI.bind.cli file{F}: exec{E}:- main-hint{H}: main-msg{M}: unify{U}:=     #? $_bashlyk_iErrorInvalidOption
 #    tCLI.bind.cli file{F}: exec{E}:- main-hint{H}: main-msg{M}: unify{U}:= acc:+            #? true
-#    tCLI.load $ini []file,main,child [exec]- [main]hint,msg,cnt [replace]- [unify]= [acc]+  #? true
+#    tCLI.storage $cfg
+#    tCLI.load []file,main,child [exec]- [main]hint,msg,cnt [replace]- [unify]= [acc]+  #? true
 #    tCLI.show | {{{
 #
 #    child    =    true
@@ -1845,6 +1911,7 @@ CFG::getopt() {
 #    tSettings.settings sSimpleFakeOption  =   simple fake option
 #    tSettings.settings sSimpleFakeOption        | {{ '^simple fake option$' }}
 #    tSettings.settings bBooleanOption           | {{ ^true$                 }}
+#    ## TODO improves required
 #    tSettings.settings >| wc -w                 | {{ ^39$                   }}
 #    tSettings.settings bSection With Spaces                                    #? $_bashlyk_iErrorInvalidArgument
 #    tSettings.free

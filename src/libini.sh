@@ -1,5 +1,5 @@
 #
-# $Id: libini.sh 796 2018-03-04 15:46:29+04:00 toor $
+# $Id: libini.sh 803 2018-03-09 14:30:51+04:00 toor $
 #
 #****h* BASHLYK/libini
 #  DESCRIPTION
@@ -1466,7 +1466,11 @@ INI::read() {
 #   *.asp
 #
 # }}}
-##    tLoad.free
+##
+##
+##    # preserve data for testing next method - CFG::bind.cli
+##    # tLoad.free
+##
 #  SOURCE
 INI::load() {
 
