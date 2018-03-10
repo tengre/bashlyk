@@ -1,5 +1,5 @@
 #
-# $Id: libcfg.sh 805 2018-03-10 00:28:08+04:00 toor $
+# $Id: libcfg.sh 807 2018-03-10 14:58:00+04:00 toor $
 #
 #****h* BASHLYK/libcfg
 #  DESCRIPTION
@@ -168,8 +168,9 @@ CFG() {
     declare -Ag -- _h${o^^}_settings='(                                        \
                                                                                \
       [chComment]="#"                                                          \
-      [bSectionPadding]="true"                                                 \
       [bShellMode]="true"                                                      \
+      [bSaveConfig]="true"                                                     \
+      [bSectionPadding]="true"                                                 \
       [reKey]="$_bashlyk_CNF_reKey"                                            \
       [reKeyVal]="$_bashlyk_CNF_reKeyVal"                                      \
       [fmtPairs]="$_bashlyk_CNF_fmtPairs"                                      \
@@ -183,8 +184,9 @@ CFG() {
     declare -Ag -- _h${o^^}_settings='(                                        \
                                                                                \
       [chComment]="#"                                                          \
-      [bSectionPadding]="true"                                                 \
       [bShellMode]="false"                                                     \
+      [bSaveConfig]="true"                                                     \
+      [bSectionPadding]="true"                                                 \
       [reKey]="$_bashlyk_INI_reKey"                                            \
       [reKeyVal]="$_bashlyk_INI_reKeyVal"                                      \
       [fmtPairs]="$_bashlyk_INI_fmtPairs"                                      \
@@ -1160,7 +1162,7 @@ CFG::storage() {
 #  SOURCE
 CFG::save() {
 
-  local c fmtComment fn o
+  local c fmtComment fn o s
 
   o=${FUNCNAME[0]%%.*}
 
@@ -1168,10 +1170,15 @@ CFG::save() {
 
   fmtComment='%COMMENT%\n%COMMENT% created %s by %s\n%COMMENT%\n'
 
-  c=$( ${o}.settings chComment )
+  c="$( ${o}.settings chComment )"
+  s="$( ${o}.settings bSaveConfig )"
   : ${c:=#}
 
-  [[ -s $fn ]] && mv -f $fn ${fn}.bak
+  if [[ ! $s =~ ^(false|no|0)$ ]]; then
+
+    [[ -s $fn ]] && mv -f $fn ${fn}.bak
+
+  fi
 
   mkdir -p ${fn%/*} && touch $fn || on error throw NotExistNotCreated ${fn%/*}
 
@@ -1625,7 +1632,7 @@ CFG::load() {
   # end CFG::load::parse
   #
 
-  [[ "$fn" == "${fn##*/}" && -f "$(_ pathIni)/$fn" ]] && path="$( _ pathIni )"
+  [[ "$fn" == "${fn##*/}" && -f "$(_ pathCfg)/$fn" ]] && path="$( _ pathCfg )"
   [[ "$fn" == "${fn##*/}" && -f "$fn"              ]] && path="$( exec -c pwd )"
   [[ "$fn" != "${fn##*/}" && -f "$fn"              ]] && path="${fn%/*}"
 
@@ -1967,7 +1974,23 @@ CFG::getopt() {
 #    tSettings.settings sSimpleFakeOption        | {{ '^simple fake option$' }}
 #    tSettings.settings bBooleanOption           | {{ ^true$                 }}
 #    ## TODO improves required
-#    tSettings.settings >| wc -w                 | {{ ^39$                   }}
+#    tSettings.settings | {{{
+#
+#
+#    [ __settings__ ]
+#
+#           bBooleanOption    =    true
+#              bSaveConfig    =    true
+#          bSectionPadding    =    true
+#               bShellMode    =    false
+#                chComment    =    #
+#                 fmtPairs    =    ^[[:space:]]*\b(%KEY%)\b[[:space:]]*=[[:space:]]*(.*)[[:space:]]*$
+#              fmtSection0    =    \n\n[ %s ]%s\n\n
+#              fmtSection1    =    \n%s[ %s ]\n
+#                    reKey    =    ^\b([^=]+)\b$
+#                 reKeyVal    =    ^[[:space:]]*\b([^=]+)\b[[:space:]]*=[[:space:]]*(.*)[[:space:]]*$
+#        sSimpleFakeOption    =    simple fake option
+# }}}
 #    tSettings.settings bSection With Spaces                                    #? $_bashlyk_iErrorInvalidArgument
 #    tSettings.free
 #  SOURCE
