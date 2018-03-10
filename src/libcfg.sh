@@ -1,5 +1,5 @@
 #
-# $Id: libcfg.sh 807 2018-03-10 14:58:00+04:00 toor $
+# $Id: libcfg.sh 808 2018-03-10 19:04:33+04:00 toor $
 #
 #****h* BASHLYK/libcfg
 #  DESCRIPTION
@@ -109,24 +109,24 @@ declare -rg _bashlyk_INI_fmtPairs='^[[:space:]]*\b(%KEY%)\b[[:space:]]*=[[:space
 
 declare -rg _bashlyk_methods_cfg="                                             \
                                                                                \
-    __section.id __section.byindex __section.select __section.show             \
-    __section.setRawData __section.getArray get set show save read             \
-    settings settings.section.padding settings.shellmode                       \
-    keys load bind.cli getopt free storage                                     \
+    bind.cli get getopt keys load read save __section.byindex                  \
+    __section.getArray __section.id __section.select __section.setRawData      \
+    __section.show set settings settings.section.padding settings.shellmode    \
+    show storage free                                                          \
 "
 
 declare -rg _bashlyk_externals_cfg="                                           \
                                                                                \
-    getopt sha1sum mkdir mv pwd rm stat touch                                  \
+    [ getopt mkdir mv pwd rm sha1sum sort stat touch                           \
                                                                                \
 "
 
 declare -rg _bashlyk_exports_cfg="                                             \
                                                                                \
-    CFG CFG::{get,set,keys,show,save,read,load,bind.cli,getopt,settings,       \
-              settings.section.padding,settings.shellmode,free,storage}        \
-                                                                               \
+    CFG CFG::{bind.cli,free,get,getopt,keys,load,read,save,set,settings,       \
+    settings.section.padding,settings.shellmode,show,storage}                  \
 "
+
 _bashlyk_iErrorIniMissingMethod=111
 _bashlyk_iErrorIniBadMethod=110
 _bashlyk_iErrorIniExtraCharInKey=109

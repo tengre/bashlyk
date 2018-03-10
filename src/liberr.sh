@@ -1,5 +1,5 @@
 #
-# $Id: liberr.sh 792 2018-02-18 13:47:45+04:00 toor $
+# $Id: liberr.sh 808 2018-03-10 18:59:39+04:00 toor $
 #
 #****h* BASHLYK/liberr
 #  DESCRIPTION
@@ -43,14 +43,14 @@ alias         catch='; eval "$( err::__convert_try_to_func )" ||'
 #  DESCRIPTION
 #    Global variables of the library
 #  SOURCE
-declare -rg _bashlyk_aRequiredCmd_err="rm sed"
+declare -rg _bashlyk_aRequiredCmd_err="[ rm sed"
 
 declare -rg _bashlyk_methods_err="                                             \
                                                                                \
-    err::{__add_throw_to_command,CommandNotFound,__convert_try_to_func,        \
-    EmptyArgument,EmptyResult,EmptyVariable,eval,exception.message,debug,      \
-    __generate,generate,InvalidVariable,MissingArgument,NoSuchFileOrDir,orr,   \
-    stacktrace,status,status.show,sourcecode}                                  \
+    __add_throw_to_command CommandNotFound __convert_try_to_func debug         \
+    EmptyArgument EmptyOrMissingArgument EmptyResult EmptyVariable             \
+    exception.message generate __generate InvalidVariable MissingArgument      \
+    NoSuchFileOrDir orr postfix sourcecode stacktrace status status.show       \
 "
 
 declare -rg _bashlyk_aExport_err="                                             \

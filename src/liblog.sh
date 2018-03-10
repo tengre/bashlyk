@@ -1,5 +1,5 @@
 #
-# $Id: liblog.sh 788 2018-02-12 01:30:47+04:00 toor $
+# $Id: liblog.sh 808 2018-03-10 19:07:01+04:00 toor $
 #
 #****h* BASHLYK/liblog
 #  DESCRIPTION
@@ -44,7 +44,7 @@
 
 declare -rg _bashlyk_aRequiredCmd_log="                                        \
                                                                                \
-    hostname logger mkdir mkfifo rm touch tty                                  \
+    [ date hostname logger mkdir mkfifo rm touch tty                           \
                                                                                \
 "
 

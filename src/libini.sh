@@ -1,5 +1,5 @@
 #
-# $Id: libini.sh 803 2018-03-09 14:30:51+04:00 toor $
+# $Id: libini.sh 808 2018-03-10 19:04:33+04:00 toor $
 #
 #****h* BASHLYK/libini
 #  DESCRIPTION
@@ -102,24 +102,24 @@ declare -rg _bashlyk_ini_fmtPairs='^[[:space:]]*\b(%KEY%)\b[[:space:]]*=[[:space
 
 declare -rg _bashlyk_methods_ini="                                             \
                                                                                \
-    __section.id __section.byindex __section.select __section.show             \
-    __section.setRawData __section.getArray get set show save read             \
-    settings settings.section.padding settings.shellmode                       \
-    keys load bind.cli getopt free                                             \
+    bind.cli get getopt keys load read save __section.byindex                  \
+    __section.getArray __section.id __section.select __section.setRawData      \
+    __section.show set settings settings.section.padding settings.shellmode    \
+    show free                                                                  \
 "
 
 declare -rg _bashlyk_externals_ini="                                           \
                                                                                \
-    getopt sha1sum mkdir mv pwd rm stat touch                                  \
+    [ getopt mkdir mv pwd rm sha1sum sort stat touch                           \
                                                                                \
 "
 
 declare -rg _bashlyk_exports_ini="                                             \
                                                                                \
-    INI INI::{get,set,keys,show,save,read,load,bind.cli,getopt,settings,       \
-              settings.section.padding,settings.shellmode,free}                \
-                                                                               \
+    INI INI::{bind.cli,free,get,getopt,keys,load,read,save,set,settings,       \
+              settings.section.padding,settings.shellmode,show}                \
 "
+
 _bashlyk_iErrorIniMissingMethod=111
 _bashlyk_iErrorIniBadMethod=110
 _bashlyk_iErrorIniExtraCharInKey=109

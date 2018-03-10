@@ -1,5 +1,5 @@
 #
-# $Id: libpid.sh 794 2018-02-23 23:21:28+04:00 toor $
+# $Id: libpid.sh 808 2018-03-10 18:59:40+04:00 toor $
 #
 #****h* BASHLYK/libpid
 #  DESCRIPTION
@@ -46,14 +46,14 @@
 
 declare -rg _bashlyk_externals_pid="                                           \
                                                                                \
-    flock head kill mkdir pgrep rm rmdir sleep                                 \
+    [ flock head kill mkdir pgrep rm rmdir sleep                               \
                                                                                \
 "
 
 declare -rg _bashlyk_exports_pid="                                             \
                                                                                \
-    pid::{onExit.close,onExit.unlink,onExit.stop,status,onStarted.exit,trap,   \
-          file,stop}                                                           \
+    pid::{file,onExit.close,onExit.stop,onExit.unlink,onStarted.exit,status,   \
+          stop,trap}                                                           \
                                                                                \
 "
 #******

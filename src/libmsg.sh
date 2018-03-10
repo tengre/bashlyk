@@ -1,5 +1,5 @@
 #
-# $Id: libmsg.sh 792 2018-02-18 13:47:45+04:00 toor $
+# $Id: libmsg.sh 808 2018-03-10 19:23:16+04:00 toor $
 #
 #****h* BASHLYK/libmsg
 #  DESCRIPTION
@@ -43,7 +43,8 @@
 
 declare -rg _bashlyk_externals_msg="                                           \
                                                                                \
-    grep logname mail pgrep rm stat write notify-send|kdialog|zenity|xmessage  \
+    grep logname mail notify-send|kdialog|zenity|xmessage pgrep rm stat sudo   \
+    write                                                                      \
                                                                                \
 "
 
