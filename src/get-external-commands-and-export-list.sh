@@ -1,33 +1,50 @@
 #!/bin/bash
 #
-#$Id: get-external-commands-and-export-list.sh 757 2017-05-04 17:05:00+04:00 toor $
+#$Id: get-external-commands-and-export-list.sh 808 2018-03-10 19:30:25+04:00 toor $
 #
 . bashlyk
 #
 #
 #
-_get_external_binaries_list_a="$(grep -oP '(/usr)?/s?bin/\S+' /var/lib/dpkg/info/*.list | sed -re "s/.*bin\///" | xargs)"
-_get_external_binaries_list_a+=" awk mkfifo"
-#
-#
-udfMain() {
+get-external-commands-and-export-list::main() {
 
   eval set -- $(_ sArg)
 
-  [[ -f $1 ]] || eval $( udfOnError exitecho EmptyOrMissingArgument )
+  exit+warn on MissingArgument $1
+  exit+warn on NoSuchFileOrDir $1
 
-  local a s fn
+  local a s fn fnDat re
+
   fn=$1
+  fnDat="${TMPDIR}/get-external-commands-and-export-list.dat"
+
   shift
-  [[ $* ]] && a="$*" || a=$_get_external_binaries_list_a
+
+  if [[ $* ]]; then
+
+    a="$*"
+
+  else
+
+    if [[ -s $fnDat ]]; then
+
+      a="$(< $fnDat)"
+
+    else
+
+      a="$(grep -oP '(/usr)?/s?bin/\S+' /var/lib/dpkg/info/*.list | sed -re "s/.*bin\///" | xargs)"
+      echo "$a" > $fnDat
+
+    fi
+
+  fi
 
   printf -- "\nused external commands:\n-----------------------\n"
   for s in ${a//[/\\\[}; do
 
-    grep -w $s $fn | grep -P "(^\s*?|[&|]\s*?|\044\(\s*?)$s" | grep -v "^#\|_bashlyk_aRequiredCmd" | grep -o "$s"
+    grep -P "[^\"\'][&|(]?\s+${s}\s+" $fn | grep -v "^#\|_bashlyk_externals_" | grep -o "$s"
 
   done | sort | uniq | xargs
-
 
   printf -- "\n\nexport list:\n------------\n"
 
@@ -38,5 +55,5 @@ udfMain() {
 #
 #
 #
-udfMain
+get-external-commands-and-export-list::main
 #

@@ -1,6 +1,6 @@
 #!/bin/bash
 #
-# $Id: bashlyk 793 2018-02-19 22:17:20+04:00 toor $
+# $Id: bashlyk 807 2018-03-10 14:58:00+04:00 toor $
 #
 #****h* BASHLYK/bashlyk
 #  DESCRIPTION
@@ -82,11 +82,11 @@ bashlyk::init() {
 
     'root')
 
-            _bashlyk_pathCnf="/etc/${_bashlyk_pathPrefix}"
-            _bashlyk_pathIni="/etc/${_bashlyk_pathPrefix}"
+            _bashlyk_pathCfg="/etc/${_bashlyk_pathPrefix}"
             _bashlyk_pathRun="/var/run/${_bashlyk_pathPrefix}"
             _bashlyk_pathLog="/var/log/${_bashlyk_pathPrefix}"
             _bashlyk_pathDat="/var/lib/${_bashlyk_pathPrefix}"
+
             [[ -s "/etc/${_bashlyk_pathPrefix}/bashlyk.conf" ]] \
              && . "/etc/${_bashlyk_pathPrefix}/bashlyk.conf"
     ;;
@@ -104,11 +104,10 @@ bashlyk::init() {
 
             fi
 
+            _bashlyk_pathCfg="${s}/.config/${_bashlyk_pathPrefix}"
             _bashlyk_pathRun="${s}/.cache/${_bashlyk_pathPrefix}/run"
             _bashlyk_pathLog="${s}/.local/share/${_bashlyk_pathPrefix}/log"
             _bashlyk_pathDat="${s}/.local/share/${_bashlyk_pathPrefix}/lib"
-            _bashlyk_pathCnf="${s}/.config/${_bashlyk_pathPrefix}"
-            _bashlyk_pathIni="${s}/.config/${_bashlyk_pathPrefix}"
 
             [[ -s "${s}/.config/bashlyk/bashlyk.conf" ]] \
               && . "${s}/.config/bashlyk/bashlyk.conf"
@@ -118,6 +117,9 @@ bashlyk::init() {
 
          ;;
   esac
+
+  _bashlyk_pathCnf="$_bashlyk_pathCfg"
+  _bashlyk_pathIni="$_bashlyk_pathCfg"
 
   ## TODO check exists of the /proc/mounts
   for TMPDIR in /dev/shm /run/shm /tmp $_bashlyk_pathDat; do

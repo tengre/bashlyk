@@ -1,5 +1,5 @@
 #
-# $Id: libstd.sh 796 2018-03-04 15:46:29+04:00 toor $
+# $Id: libstd.sh 808 2018-03-10 18:59:40+04:00 toor $
 #
 #****h* BASHLYK/libstd
 #  DESCRIPTION
@@ -44,17 +44,19 @@ declare -rg _bashlyk_iMaxOutputLines=1000
 
 declare -rg _bashlyk_aRequiredCmd_std="                                        \
                                                                                \
-    chgrp chmod chown echo expr md5sum mkdir mkfifo mktemp|tempfile rm touch   \
+    [ chgrp chmod chown date echo expr hostname md5sum mkdir mkfifo mktemp pwd \
+    rm tempfile touch                                                          \
                                                                                \
 "
 
 declare -rg _bashlyk_aExport_std="                                             \
                                                                                \
-    _ std::{acceptArrayItem,cat,finally,getFreeFD,getMD5,getMD5.list,          \
-    getTimeInSec,isHash,isNumber,isVariable,lazyquote,showVariable,temp,trim,  \
-    whitespace.decode,whitespace.encode,xml}                                   \
+    _ std::{acceptArrayItem,cat,finally,getFreeFD,getMD5,getMD5.list           \
+    getTimeInSec,isDecimal,isHash,isNumber,isVariable,lazyquote,showVariable,  \
+    temp,trim,whitespace.decode,whitespace.encode,xml}                         \
                                                                                \
 "
+
 #******
 #****f* libstd/std::isNumber
 #  SYNOPSIS

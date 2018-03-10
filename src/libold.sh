@@ -1,5 +1,5 @@
 #
-# $Id: libold.sh 783 2018-01-05 21:24:49+04:00 toor $
+# $Id: libold.sh 808 2018-03-10 18:59:39+04:00 toor $
 #
 #****h* BASHLYK/libold
 #  DESCRIPTION
@@ -47,7 +47,7 @@
 
 declare -rg _bashlyk_externals_old="                                           \
                                                                                \
-    awk cat chgrp chmod chown cut date dirname expr flock getopt grep logger   \
+    [ awk cat chgrp chmod chown cut date dirname expr flock getopt grep logger \
     mawk md5sum mkdir mkfifo mktemp mv pgrep pwd rm rmdir sed sleep sort sudo  \
     tempfile touch tr tty uniq xargs notify-send|kdialog|zenity|xmessage       \
                                                                                \

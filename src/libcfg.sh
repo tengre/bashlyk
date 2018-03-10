@@ -1,46 +1,50 @@
 #
-# $Id: libini.sh 808 2018-03-10 19:04:33+04:00 toor $
+# $Id: libcfg.sh 808 2018-03-10 19:04:33+04:00 toor $
 #
-#****h* BASHLYK/libini
+#****h* BASHLYK/libcfg
 #  DESCRIPTION
-#    Management of the configuration files in the INI-style. Implemented
-#    capabilities and features:
-#     - associative arrays are used to store the INI configuration data
-#     - OOP style used for a treatment of the INI configuration data:
+#    Management of configuration data of various sources - files (including INI
+#    style) and command line options. Implemented capabilities and features:
+#     - associative arrays are used to store the configuration data
+#     - OOP style used for a treatment of the configuration data:
 #       * functions (eg, get/set) bind with the configuration data, as "methods"
-#         of the corresponding instance of the base class "INI"
+#         of the corresponding instance of the base class "CFG"
 #       * used the constructor and destructor to manage the life cycle of the
 #         resources allocated for processing configuration data
-#     - INI configuration source may be not only single file but also a group of
+#     - configuration source may be not only single file but also a group of
 #       related files
 #     - supported the filtration ability  - retrieving only the specified
 #       sections and parameters
 #     - The possibility of simultaneous and independent work with different
-#       sources of INI data
+#       sources of the configuration data
 #     - Get/Set certain configuration data by using parameter as key
 #     - Record the configuration data to a file or output to the standard device
-#       in INI format.
+#       in the INI format or "active configuration".
 #     - Support for Command Line Interface (CLI) - simultaneous determination of
 #       long and short options of configuration parameters.
 #     - parsing the command line arguments and their binding to configuration
-#       data that allows you to override selected parameters of the INI-file.
+#       data that allows you to override selected parameters of the
+#       configuration file.
 #  USES
 #    libstd liberr
 #  EXAMPLE
-#    # create ini object from INI class
-#    INI ini
+#    # create object from CFG class
+#    CFG ini
 #
-#    # bind to ini object CLI options
+#    # bind CLI options to the ini object
 #    ## TODO detailed description required
 #    ini.bind.cli config{c}: source{s}:-- help{h} mode{m}: dry-run
 #
 #    # get value of the --config (-c) option
 #    conf=$( ini.getopt config )
 #
-#    # load selected only options from ini configuration file and combine with
+#    # set file as source of the configuration data
+#    ini.storage $conf
+#
+#    # load selected options from ini configuration file and combine with
 #    # CLI options.
 #    # [!] CLI options with the same name have higher priority
-#    ini.load $conf                                                            \
+#    ini.load                                                                  \
 #                  []mode,help                                                 \
 #               [dry]run                                                       \
 #            [source]=
@@ -61,8 +65,11 @@
 #    ini.set [source] = $HOME
 #    ini.set [source] = /var/mail/$USER
 #
-#    # save updated configuration to file
-#    ini.save $conf
+#    # save updated configuration to file $conf
+#    ini.save
+#
+#    # or other file
+#    ini.save other file.ini
 #
 #    # destroy ini object, free resources
 #    ini.free
@@ -70,54 +77,54 @@
 #  AUTHOR
 #    Damir Sh. Yakupov <yds@bk.ru>
 #******
-#***iV* libini/BASH compatibility
+#***iV* libcfg/BASH compatibility
 #  DESCRIPTION
 #    Compatibility checked by bashlyk (BASH version 4.xx or more required)
-#    $_BASHLYK_LIBINI provides protection against re-using of this module
+#    $_BASHLYK_LIBCFG provides protection against re-using of this module
 #  SOURCE
-[ -n "$_BASHLYK_LIBINI" ] && return 0 || _BASHLYK_LIBINI=1
+[ -n "$_BASHLYK_LIBCFG" ] && return 0 || _BASHLYK_LIBCFG=1
 [ -n "$_BASHLYK" ] || . ${_bashlyk_pathLib}/bashlyk || eval '                  \
                                                                                \
     echo "[!] bashlyk loader required for ${0}, abort.."; exit 255             \
                                                                                \
 '
 #******
-#****L* libini/Used libraries
+#****L* libcfg/Used libraries
 # DESCRIPTION
 #   Loading external libraries
 # SOURCE
 [[ -s ${_bashlyk_pathLib}/liberr.sh ]] && . "${_bashlyk_pathLib}/liberr.sh"
 [[ -s ${_bashlyk_pathLib}/libstd.sh ]] && . "${_bashlyk_pathLib}/libstd.sh"
 #******
-#****G* libini/Global Variables
+#****G* libcfg/Global Variables
 #  DESCRIPTION
 #    Global variables of the library
 #  SOURCE
-declare -rg _bashlyk_cnf_reKey='^\b([_a-zA-Z][_a-zA-Z0-9]*)\b$'
-declare -rg _bashlyk_ini_reKey='^\b([^=]+)\b$'
-declare -rg _bashlyk_cnf_reKeyVal='^[[:space:]]*\b([_a-zA-Z][_a-zA-Z0-9]*)\b=(.*)[[:space:]]*$'
-declare -rg _bashlyk_ini_reKeyVal='^[[:space:]]*\b([^=]+)\b[[:space:]]*=[[:space:]]*(.*)[[:space:]]*$'
-declare -rg _bashlyk_cnf_fmtPairs='^[[:space:]]*\b(%KEY%)\b=(.*)[[:space:]]*$'
-declare -rg _bashlyk_ini_fmtPairs='^[[:space:]]*\b(%KEY%)\b[[:space:]]*=[[:space:]]*(.*)[[:space:]]*$'
+declare -rg _bashlyk_CNF_reKey='^\b([_a-zA-Z][_a-zA-Z0-9]*)\b$'
+declare -rg _bashlyk_INI_reKey='^\b([^=]+)\b$'
+declare -rg _bashlyk_CNF_reKeyVal='^[[:space:]]*\b([_a-zA-Z][_a-zA-Z0-9]*)\b=(.*)[[:space:]]*$'
+declare -rg _bashlyk_INI_reKeyVal='^[[:space:]]*\b([^=]+)\b[[:space:]]*=[[:space:]]*(.*)[[:space:]]*$'
+declare -rg _bashlyk_CNF_fmtPairs='^[[:space:]]*\b(%KEY%)\b=(.*)[[:space:]]*$'
+declare -rg _bashlyk_INI_fmtPairs='^[[:space:]]*\b(%KEY%)\b[[:space:]]*=[[:space:]]*(.*)[[:space:]]*$'
 
-declare -rg _bashlyk_methods_ini="                                             \
+declare -rg _bashlyk_methods_cfg="                                             \
                                                                                \
     bind.cli get getopt keys load read save __section.byindex                  \
     __section.getArray __section.id __section.select __section.setRawData      \
     __section.show set settings settings.section.padding settings.shellmode    \
-    show free                                                                  \
+    show storage free                                                          \
 "
 
-declare -rg _bashlyk_externals_ini="                                           \
+declare -rg _bashlyk_externals_cfg="                                           \
                                                                                \
     [ getopt mkdir mv pwd rm sha1sum sort stat touch                           \
                                                                                \
 "
 
-declare -rg _bashlyk_exports_ini="                                             \
+declare -rg _bashlyk_exports_cfg="                                             \
                                                                                \
-    INI INI::{bind.cli,free,get,getopt,keys,load,read,save,set,settings,       \
-              settings.section.padding,settings.shellmode,show}                \
+    CFG CFG::{bind.cli,free,get,getopt,keys,load,read,save,set,settings,       \
+    settings.section.padding,settings.shellmode,show,storage}                  \
 "
 
 _bashlyk_iErrorIniMissingMethod=111
@@ -127,22 +134,22 @@ _bashlyk_hError[$_bashlyk_iErrorIniMissingMethod]="instance failed - missing met
 _bashlyk_hError[$_bashlyk_iErrorIniBadMethod]="instance failed - bad method"
 _bashlyk_hError[$_bashlyk_iErrorIniExtraCharInKey]="extra character(s) in the key"
 #******
-#****e* libini/INI
+#****e* libcfg/CFG
 #  SYNOPSIS
-#    INI [<id>]
+#    CFG [<id>]
 #  DESCRIPTION
-#    constructor for new instance <id> of the INI "class" (object)
+#    constructor for new instance <id> of the CFG "class" (object)
 #  NOTES
 #    public method
 #  ARGUMENTS
-#    valid variable name for created instance, default - used class name INI as
+#    valid variable name for created instance, default - used class name CFG as
 #    instance
 #  ERRORS
 #    InvalidVariable  - invalid variable name for instance
 #    IniMissingMethod - method not found
 #    IniBadMethod     - bad method
 #  EXAMPLE
-#    INI tnew                                                                   #? true
+#    CFG tnew                                                                   #? true
 #    ## TODO check errors
 #    declare -pf tnew.show >/dev/null 2>&1                                      #= true
 #    declare -pf tnew.save >/dev/null 2>&1                                      #= true
@@ -150,35 +157,56 @@ _bashlyk_hError[$_bashlyk_iErrorIniExtraCharInKey]="extra character(s) in the ke
 #    tnew.__section.id @ | {{ _hTNEW_settings }}
 #    tnew.free
 #  SOURCE
-INI() {
+CFG() {
 
-  local f fn s o=${1:-INI}
+  local f fn s o=${1:-CFG}
 
   throw on InvalidVariable $o
 
-  declare -Ag -- _h${o^^}_settings='(                                          \
+  if [[ $o =~ ^c(o)?nf ]]; then
+
+    declare -Ag -- _h${o^^}_settings='(                                        \
                                                                                \
-    [chComment]="#"                                                            \
-    [bSectionPadding]="true"                                                   \
-    [bShellMode]="false"                                                       \
-    [reKey]="$_bashlyk_ini_reKey"                                              \
-    [reKeyVal]="$_bashlyk_ini_reKeyVal"                                        \
-    [fmtPairs]="$_bashlyk_ini_fmtPairs"                                        \
-    [fmtSection0]="\n\n[ %s ]%s\n\n"                                           \
-    [fmtSection1]="\n%s[ %s ]\n"                                               \
+      [chComment]="#"                                                          \
+      [bShellMode]="true"                                                      \
+      [bSaveConfig]="true"                                                     \
+      [bSectionPadding]="true"                                                 \
+      [reKey]="$_bashlyk_CNF_reKey"                                            \
+      [reKeyVal]="$_bashlyk_CNF_reKeyVal"                                      \
+      [fmtPairs]="$_bashlyk_CNF_fmtPairs"                                      \
+      [fmtSection0]="\n\n# [ %s ]%s\n\n"                                       \
+      [fmtSection1]="\n# %s[ %s ]\n"                                           \
                                                                                \
-  )'
+    )'
+
+  else
+
+    declare -Ag -- _h${o^^}_settings='(                                        \
+                                                                               \
+      [chComment]="#"                                                          \
+      [bShellMode]="false"                                                     \
+      [bSaveConfig]="true"                                                     \
+      [bSectionPadding]="true"                                                 \
+      [reKey]="$_bashlyk_INI_reKey"                                            \
+      [reKeyVal]="$_bashlyk_INI_reKeyVal"                                      \
+      [fmtPairs]="$_bashlyk_INI_fmtPairs"                                      \
+      [fmtSection0]="\n\n[ %s ]%s\n\n"                                         \
+      [fmtSection1]="\n%s[ %s ]\n"                                             \
+                                                                               \
+    )'
+
+  fi
 
   declare -Ag -- _h${o^^}="([__settings__]=_h${o^^}_settings)"
   declare -ag -- _a${o^^}="()"
 
-  std::temp fn path="${TMPDIR}/${USER}/bashlyk" prefix='ini.' suffix=".${o}"
+  std::temp fn path="${TMPDIR}/${USER}/bashlyk" prefix='cfg.' suffix=".${o}"
 
-  for s in $_bashlyk_methods_ini; do
+  for s in $_bashlyk_methods_cfg; do
 
-    f=$( declare -pf INI::${s} 2>/dev/null ) || on error throw IniMissingMethod "INI::${s} for $o"
+    f=$( declare -pf CFG::${s} 2>/dev/null ) || on error throw IniMissingMethod "CFG::${s} for $o"
 
-    echo "${f/INI::$s/${o}.$s}" >> $fn || on error throw IniBadMethod "INI::$s for $o"
+    echo "${f/CFG::$s/${o}.$s}" >> $fn || on error throw IniBadMethod "CFG::$s for $o"
 
   done
 
@@ -187,27 +215,27 @@ INI() {
 
 }
 #******
-#****p* libini/INI::__section.id
+#****p* libcfg/CFG::__section.id
 #  SYNOPSIS
-#    INI::__section.id [<section>]
+#    CFG::__section.id [<section>]
 #  DESCRIPTION
 #    get a link of the storage for specified section or links for all storages.
 #  NOTES
-#    INI private method
+#    CFG private method
 #  ARGUMENTS
 #    <section> - section name, '@' - all sections, default - unnamed 'global'
 #  OUTPUT
 #    associative array(s), in which are stored data of the section(s)
 #  EXAMPLE
-#    INI tSectionId1
-#    INI tSectionId2
+#    CFG tSectionId1
+#    CFG tSectionId2
 #    tSectionId1.__section.select
 #    tSectionId1.__section.id   | {{ ^_hTSECTIONID1_[[:xdigit:]]*$ }}
 #    tSectionId2.__section.id @ | {{ ^_hTSECTIONID2_settings$ }}
 #    tSectionId1.free
 #    tSectionId2.free
 #  SOURCE
-INI::__section.id() {
+CFG::__section.id() {
 
   local o=${FUNCNAME[0]%%.*}
 
@@ -215,21 +243,21 @@ INI::__section.id() {
 
 }
 #******
-#****p* libini/INI::__section.byindex
+#****p* libcfg/CFG::__section.byindex
 #  SYNOPSIS
-#    INI::__section.byindex [<index>]
+#    CFG::__section.byindex [<index>]
 #  DESCRIPTION
 #    get the name of the section at the specified index, or number of then
 #    registered sections.
 #  NOTES
-#    INI private method
+#    CFG private method
 #  ARGUMENTS
 #    <index> - index of the section in the common list in order of registration,
 #              default - total number of the registered sections
 #  OUTPUT
 #    section name or total number of the registered sections
 #  EXAMPLE
-#    INI tSectionIndex
+#    CFG tSectionIndex
 #    tSectionIndex.__section.select
 #    tSectionIndex.__section.select sItem1
 #    tSectionIndex.__section.select sItem2
@@ -241,7 +269,7 @@ INI::__section.id() {
 #    tSectionIndex.__section.byindex 3 | {{ '^test with double quotes$' }}
 #    tSectionIndex.free
 #  SOURCE
-INI::__section.byindex() {
+CFG::__section.byindex() {
 
   local i o=${FUNCNAME[0]%%.*} s
 
@@ -253,16 +281,16 @@ INI::__section.byindex() {
 
 }
 #******
-#****e* libini/INI::free
+#****e* libcfg/CFG::free
 #  SYNOPSIS
-#    INI::free
+#    CFG::free
 #  DESCRIPTION
 #    destructor of the instance
 #  NOTES
 #    public method
 #  EXAMPLE
 #    local i o s
-#    INI tFree
+#    CFG tFree
 #    tFree.__section.select
 #    tFree.__section.select sFree
 #    o=$( tFree.__section.id @ )
@@ -273,7 +301,7 @@ INI::__section.byindex() {
 #    done                                                                       #-
 #    (( i == 3 ))                                                               #? true
 #  SOURCE
-INI::free() {
+CFG::free() {
 
   local o s
 
@@ -297,19 +325,19 @@ INI::free() {
 
 }
 #******
-#****p* libini/INI::__section.select
+#****p* libcfg/CFG::__section.select
 #  SYNOPSIS
-#    INI::__section.select [<section>]
+#    CFG::__section.select [<section>]
 #  DESCRIPTION
-#    select current section of the instance, prepare INI getter/setter for the
+#    select current section of the instance, prepare CFG getter/setter for the
 #    private storage of the selected section
 #  NOTES
-#    INI private method
+#    CFG private method
 #  ARGUMENTS
 #    <section> - section name, default - unnamed global
 #  EXAMPLE
 #    local s
-#    INI tSel
+#    CFG tSel
 #    tSel.__section.select                                                      #? true
 #    tSel.__section.set key "is value from unnamed section"
 #    tSel.__section.get key               |{{'^is value from unnamed section$'}}
@@ -322,7 +350,7 @@ INI::free() {
 #    tSel.__section.id @         | {{ -P "^_hTSEL.*(settings|[[:xdigit:]]*)$" }}
 #    tSel.free
 #  SOURCE
-INI::__section.select() {
+CFG::__section.select() {
 
   local id o s="${@:-__global__}"
 
@@ -352,9 +380,9 @@ INI::__section.select() {
 
 }
 #******
-#****p* libini/INI::__section.show
+#****p* libcfg/CFG::__section.show
 #  SYNOPSIS
-#    INI::__section.show [<section>]
+#    CFG::__section.show [<section>]
 #  DESCRIPTION
 #    show a content of the specified section
 #  ARGUMENTS
@@ -362,7 +390,7 @@ INI::__section.select() {
 #  OUTPUT
 #    the contents (must be empty) of the specified section with name as header
 #  EXAMPLE
-#    INI tSShow
+#    CFG tSShow
 #    tSShow.__section.select tSect
 #    tSShow.__section.set key "is value"
 #    tSShow.__section.show tSect | {{{
@@ -379,7 +407,7 @@ INI::__section.select() {
 #    key    =    unnamed section
 # }}}
 #    tSShow.free
-#    INI tSShow2
+#    CFG tSShow2
 #    tSShow2.settings.shellmode true
 #    tSShow2.set [ tSect2 ] keyFirst   = is first value
 #    tSShow2.set [ tSect2 ] keySecond  = is second value
@@ -394,7 +422,7 @@ INI::__section.select() {
 #     keySecond="is second value"
 # }}}
 #    tSShow2.free
-#    INI tCheckSpaces
+#    CFG tCheckSpaces
 #    ## TODO tests checking
 #    tCheckSpaces.set [ section ] key = value
 #    tCheckSpaces.settings.section.padding = false
@@ -403,7 +431,7 @@ INI::__section.select() {
 #    tCheckSpaces.show                                | {{ '^\[ section \]$' }}
 #    tCheckSpaces.free
 #  SOURCE
-INI::__section.show() {
+CFG::__section.show() {
 
   local iC id k o sA sU s
 
@@ -496,14 +524,14 @@ INI::__section.show() {
 
 }
 #******
-#****p* libini/INI::__section.setRawData
+#****p* libcfg/CFG::__section.setRawData
 #  SYNOPSIS
-#    INI::__section.setRawData -|=|+ <data>
+#    CFG::__section.setRawData -|=|+ <data>
 #  DESCRIPTION
 #    set "raw" data record to the current section with special key prefix
 #    '_bashlyk_raw_...'
 #  NOTES
-#    INI private method
+#    CFG private method
 #  ARGUMENTS
 #    -+   - add "raw" record with incremented key like "_bashlyk_raw_incr=<No>"
 #    =    - add or update "raw" unique record with key like
@@ -512,7 +540,7 @@ INI::__section.show() {
 #  ERRORS
 #    InvalidArgument - unexpected "raw" mode
 #  EXAMPLE
-#    INI tSRawData
+#    CFG tSRawData
 #    tSRawData.__section.select "unique_values"
 #    tSRawData.__section.setRawData "=" "save only unique 1"
 #    tSRawData.__section.setRawData "=" "save only unique 2"
@@ -540,7 +568,7 @@ INI::__section.show() {
 # }}}
 #    tSRawData.free
 #  SOURCE
-INI::__section.setRawData() {
+CFG::__section.setRawData() {
 
   local c=$1 i o s
 
@@ -578,22 +606,22 @@ INI::__section.setRawData() {
 
 }
 #******
-#****p* libini/INI::__section.getArray
+#****p* libcfg/CFG::__section.getArray
 #  SYNOPSIS
-#    INI::__section.getArray [<section>]
+#    CFG::__section.getArray [<section>]
 #  DESCRIPTION
 #    get unnamed records from specified section as serialized array. Try to get
 #    a unique "raw" records (with the prefix "_bashlyk_raw_uniq=...") or
 #    incremented records (with prefix "_bashlyk_raw_incr=...")
 #  NOTES
-#    INI private method
+#    CFG private method
 #  ARGUMENTS
 #    <section> - specified section, default - unnamed global
 #  ERRORS
 #    MissingArgument - arguments not found
 #  EXAMPLE
 #    local -a a
-#    INI tGA
+#    CFG tGA
 #    tGA.__section.select sect1
 #    tGA.__section.set _bashlyk_raw_num 3
 #    tGA.__section.set _bashlyk_raw_incr=0 "is raw value No.1"
@@ -612,7 +640,7 @@ INI::__section.setRawData() {
 #    (( ${#a[@]} == 2 ))                                                        #? true
 #    tGA.free
 #  SOURCE
-INI::__section.getArray() {
+CFG::__section.getArray() {
 
   local -a a
   local i id iC o s sU
@@ -663,27 +691,27 @@ INI::__section.getArray() {
 
 }
 #******
-#****e* libini/INI::get
+#****e* libcfg/CFG::get
 #  SYNOPSIS
-#    INI::get [\[<section>\]]<key>
+#    CFG::get [\[<section>\]]<key>
 #  DESCRIPTION
 #    get single value for a key or serialized array of the "raw" records for
 #    specified section
 #  SEE ALSO
-#    INI::__section.getArray
+#    CFG::__section.getArray
 #  NOTES
 #    public method
 #  ARGUMENTS
 #    <section> - specified section, default - unnamed global
 #    <key>     - named key for "key=value" pair of the input data. For unnamed
 #                records this argument must be supressed, this cases return
-#                serialized array of the records (see INI::__section.getArray)
+#                serialized array of the records (see CFG::__section.getArray)
 #  ERRORS
 #    MissingArgument - arguments not found
 #    InvalidArgument - expected like a '[section]key', '[]key' or 'key'
 #  EXAMPLE
 #    local -a a
-#    INI tGet
+#    CFG tGet
 #    tGet.__section.select
 #    tGet.__section.set key "is unnamed section"
 #    tGet.__section.select section
@@ -710,7 +738,7 @@ INI::__section.getArray() {
 #    (( ${#a[@]} == 2 ))                                                        #? true
 #    tGet.free
 #  SOURCE
-INI::get() {
+CFG::get() {
 
   errorify on MissingArgument $* || return
 
@@ -757,9 +785,9 @@ INI::get() {
 
 }
 #******
-#****e* libini/INI::keys
+#****e* libcfg/CFG::keys
 #  SYNOPSIS
-#    INI::keys [\[<section>\]]
+#    CFG::keys [\[<section>\]]
 #  DESCRIPTION
 #    Show all the keys of the selected section in a row, separated by commas.
 #    For the section of the "raw data" (without keys) will be shown the storage
@@ -771,7 +799,7 @@ INI::get() {
 #  ERRORS
 #    InvalidArgument - expected like a '[section]key', '[]key' or 'key'
 #  EXAMPLE
-#    INI tKeys
+#    CFG tKeys
 #    tKeys.set  [section1] key1 = is value 1
 #    tKeys.set  [section1] key2 = is value 2
 #    tKeys.set  [section1] key with spaces = is value 3
@@ -801,7 +829,7 @@ INI::get() {
 #    tKeys.keys [section4] | {{ ^=$ }}
 #    tKeys.free
 #  SOURCE
-INI::keys() {
+CFG::keys() {
 
   local -a a
   local csv IFS o k s="$*"
@@ -851,9 +879,9 @@ INI::keys() {
 
 }
 #******
-#****e* libini/INI::set
+#****e* libcfg/CFG::set
 #  SYNOPSIS
-#    INI::set [\[<section>\]]<key> = <value>
+#    CFG::set [\[<section>\]]<key> = <value>
 #  DESCRIPTION
 #    set a value to the specified key of the section
 #  NOTES
@@ -869,7 +897,7 @@ INI::keys() {
 #                      or 'key = value'
 #  EXAMPLE
 #    local -a a
-#    INI tSet
+#    CFG tSet
 #    tSet.set                                                                   #? $_bashlyk_iErrorMissingArgument
 #    tSet.set [section]key = is value
 #    tSet.set key = is unnamed section
@@ -898,14 +926,14 @@ INI::keys() {
 # }}}
 #    tSet.free
 #    _ onError return
-#    INI InvalidInput
+#    CFG InvalidInput
 #    InvalidInput.set Thu, 30 Jun 2016 08:55:36 +0400                           #? $_bashlyk_iErrorInvalidArgument
 #    err::status
 #    InvalidInput.set [section] Thu, 30 Jun 2016 08:55:36 +0400                 #? $_bashlyk_iErrorInvalidArgument
 #    err::status
 #    InvalidInput.free
 #  SOURCE
-INI::set() {
+CFG::set() {
 
   errorify on MissingArgument $* || return
 
@@ -919,7 +947,7 @@ INI::set() {
 
   else
 
-  on error InvalidArgument $*
+    on error InvalidArgument $*
 
   fi
 
@@ -941,29 +969,38 @@ INI::set() {
 
   else
 
-    [[ $k =~ $( ${o}.settings reKey ) ]] || on error IniExtraCharInKey "$k"
-
     iKeyWidth=$( ${o}.__section.get _bashlyk_key_width )
     std::isNumber $iKeyWidth || iKeyWidth=0
 
     (( ${#k} > iKeyWidth )) && ${o}.__section.set _bashlyk_key_width ${#k}
-    ${o}.__section.set "$k" "$v"
+
+
+    if [[ $k =~ $( ${o}.settings reKey ) ]]; then
+
+      ${o}.__section.set "$k" "$v"
+
+    else
+
+      ## TODO get ${o}.settings chComment
+      ${o}.__section.set "#[!] - $( on error echo IniExtraCharInKey 2>&1 ): $k" "$v"
+
+    fi
 
   fi
 
 }
 #******
-#****e* libini/INI::show
+#****e* libcfg/CFG::show
 #  SYNOPSIS
-#    INI::show
+#    CFG::show
 #  DESCRIPTION
-#    Show a instance data in the INI format
+#    Show a instance data in the CFG format
 #  NOTES
 #    public method
 #  OUTPUT
-#    instance data in the INI format
+#    instance data in the CFG format
 #  EXAMPLE
-#    INI tShow
+#    CFG tShow
 #    tShow.__section.select "tShow"
 #    tShow.__section.set key "is value"
 #    tShow.__section.select
@@ -985,8 +1022,35 @@ INI::set() {
 #
 # }}}
 #    tShow.free
+#    echo "autoswitch to the 'conf' mode by prefix of the instance name"
+#    CFG confAuto
+#    confAuto.set []valid_key = any_value_No.1
+#    confAuto.set []anotherKey = any value No.2
+#    confAuto.set [any section]validKey = any value No.3
+#    confAuto.set [any section]another_key = any_value_No.4
+#    confAuto.set [another section]invalid-key = any value No.5
+#    confAuto.set [another section]_Valid_Key = any value No.6
+#    confAuto.show | {{{
+#
+#    anotherKey="any value No.2"
+#     valid_key=any_value_No.1
+#
+#
+#    # [ any section ]
+#
+#    another_key=any_value_No.4
+#       validKey="any value No.3"
+#
+#
+#    # [ another section ]
+#
+#    _Valid_Key="any value No.6"
+#    #[!] - Warn: extra character(s) in the key - 2 .. (109): invalid-key="any value No.5"
+#
+#    }}}
+#  confAuto.free
 #  SOURCE
-INI::show() {
+CFG::show() {
 
   local i o s
 
@@ -1006,23 +1070,70 @@ INI::show() {
 
 }
 #******
-#****e* libini/INI::save
+#****e* libcfg/CFG::storage
 #  SYNOPSIS
-#    INI::save <file>
+#    CFG::storage <storage>
 #  DESCRIPTION
-#    Save the configuration to the specified file in the INI format
+#    Bind external storage (filename & etc) for the configuration object
 #  NOTES
 #    public method
 #  ARGUMENTS
-#    <file>  - target file for saving, full path required
+#    <storage>  - external storage, such as a file
 #  ERRORS
-#    MissingArgument    - the file name is not specified
+#    MissingArgument - the storage name is not specified
+#  EXAMPLE
+#
+#    CFG cfgStorage
+#    cfgStorage.storage | {{ .*\.cfg$ }}
+#    cfgStorage.storage external.ini
+#    cfgStorage.storage | {{ ^external\.ini$ }}
+#
+#  SOURCE
+CFG::storage() {
+
+  local o s
+
+  o=${FUNCNAME[0]%%.*}
+
+  if [[ $* ]]; then
+
+    ${o}.settings storage = $*
+
+  else
+
+    s="$( ${o}.settings storage )"
+
+    if [[ ! $s ]]; then
+
+      s="$( exec -c sha1sum <<< "${0}::${o}" )"
+      s="${_bashlyk_pathDat}/${s:0:40}.cfg"
+      mkdir -p $_bashlyk_pathDat || throw on NoSuchFileOrDir "$_bashlyk_pathDat"
+      pid::onExit.unlink $_bashlyk_pathDat
+
+    fi
+
+    echo "$s"
+
+  fi
+
+}
+#******
+#****e* libcfg/CFG::save
+#  SYNOPSIS
+#    CFG::save [<file>]
+#  DESCRIPTION
+#    Save the configuration to the specified file
+#  NOTES
+#    public method
+#  ARGUMENTS
+#    <file>  - target file for saving, default specified by 'storage' method
+#  ERRORS
 #    NotExistNotCreated - the target file is not created
 #  EXAMPLE
 #    local fn
 #    std::temp fn
 #    pid::onExit.unlink ${fn}.bak
-#    INI tSave
+#    CFG tSave
 #    tSave.__section.select section
 #    tSave.__section.set key "is value"
 #    tSave.__section.select
@@ -1039,7 +1150,7 @@ INI::show() {
 #        key    =    is value
 #
 # }}}
-#    INI tComments
+#    CFG tComments
 #    ## TODO globs
 #    tComments.settings chComment = \# this is comment';'
 #    tComments.save $fn
@@ -1049,20 +1160,25 @@ INI::show() {
 #    cat $fn               | {{ -Po "^# created .* by $USER" }}
 #    tComments.free
 #  SOURCE
-INI::save() {
+CFG::save() {
 
-  throw on MissingArgument $1
+  local c fmtComment fn o s
 
-  local c fmtComment fn o
-
-  fmtComment='%COMMENT%\n%COMMENT% created %s by %s\n%COMMENT%\n'
-  fn="$1"
   o=${FUNCNAME[0]%%.*}
 
-  c=$( ${o}.settings chComment )
+  [[ $* ]] && fn="$*" || fn="$( ${o}.storage )"
+
+  fmtComment='%COMMENT%\n%COMMENT% created %s by %s\n%COMMENT%\n'
+
+  c="$( ${o}.settings chComment )"
+  s="$( ${o}.settings bSaveConfig )"
   : ${c:=#}
 
-  [[ -s $fn ]] && mv -f $fn ${fn}.bak
+  if [[ ! $s =~ ^(false|no|0)$ ]]; then
+
+    [[ -s $fn ]] && mv -f $fn ${fn}.bak
+
+  fi
 
   mkdir -p ${fn%/*} && touch $fn || on error throw NotExistNotCreated ${fn%/*}
 
@@ -1077,11 +1193,11 @@ INI::save() {
 
 }
 #******
-#****e* libini/INI::read
+#****e* libcfg/CFG::read
 #  SYNOPSIS
-#    INI::read <filename>
+#    CFG::read
 #  DESCRIPTION
-#    Handling a configuration from the single INI file. Read valid "key=value"
+#    Handling a configuration from the single file. Read valid "key=value"
 #    pairs and as bonus "active" sections data only
 #  ERRORS
 #    NoSuchFileOrDir - input file not exist
@@ -1126,11 +1242,13 @@ INI::save() {
 #    key in = the base mode                                                     #-
 #    key in the = base mode                                                     #-
 #    EOFini                                                                     #-
-#   _ onError retwarn
-#   INI tRead
-#   tRead.read                                                                  #? $_bashlyk_iErrorMissingArgument
-#   tRead.read /not/exist/file.$$.ini                                           #? $_bashlyk_iErrorNoSuchFileOrDir
-#   tRead.read $ini                                                             #? true
+#   _ onError warn+return
+#   CFG tRead
+#   tRead.read                                                                  #? $_bashlyk_iErrorNoSuchFileOrDir
+#   tRead.storage
+#   tRead.read                                                                  #? $_bashlyk_iErrorNoSuchFileOrDir
+#   tRead.storage $ini
+#   tRead.read                                                                  #? true
 #   tRead.show | {{{
 #
 #                    key    =    on the global unnamed section
@@ -1180,15 +1298,15 @@ INI::save() {
 # }}}
 #   tRead.free
 #  SOURCE
-INI::read() {
-
-  errorify on MissingArgument $1 || return
-  errorify on NoSuchFileOrDir $1 || return
+CFG::read() {
 
   local bActiveSection bIgnore csv fn i iKeyWidth reComment reKeyVal reSection
   local reValidSections s
 
   o=${FUNCNAME[0]%%.*}
+
+  fn=$( ${o}.storage )
+  errorify on NoSuchFileOrDir $fn || return
 
   reSection='^[[:space:]]*(:?)\[[[:space:]]*([[:print:]]+?)[[:space:]]*\](:?)[[:space:]]*$'
   reComment='^[[:space:]]*$|(^|[[:space:]]+)[\#\;].*$'
@@ -1196,16 +1314,15 @@ INI::read() {
   reKeyVal=$( ${o}.settings reKeyVal )
 
   s="__global__"
-  fn="$1"
 
-  [[ $2 ]] && reValidSections="$2" || reValidSections="$reSection"
+  [[ $* ]] && reValidSections="$*" || reValidSections="$reSection"
   [[ ${hKeyValue[@]} ]] || local -A hKeyValue
   [[ ${hRawMode[@]}  ]] || local -A hRawMode
 
   ## TODO permit hi uid ?
   if [[ ! $( exec -c stat -c %u $fn ) =~ ^($UID|0)$ ]]; then
 
-    on error NotPermitted $1 owned by $( stat -c %U $fn )
+    on error NotPermitted $fn owned by $( stat -c %U $fn )
 
   fi
 
@@ -1307,15 +1424,13 @@ INI::read() {
 }
 #******
 ## TODO well known places of the configuration don't worked..
-#****e* libini/INI::load
+#****e* libcfg/CFG::load
 #  SYNOPSIS
-#    INI::load <file> <section>:(<options>|<raw mode>) ...
-#    INI::load <file> {[\[<section>\]](<options>|<raw mode>)} ...
+#    CFG::load <section>:(<options>|<raw mode>) ...
+#    CFG::load {[\[<section>\]](<options>|<raw mode>)} ...
 #  DESCRIPTION
-#    load the specified configuration data from a group of related INI files
+#    load the specified configuration data from a group of related files
 #  ARGUMENTS
-#    <file>     - the final configuration file. Based on of his name may be
-#                 pre-loaded the parent files of the configuration
 #    <section>  - section name, by default is empty for global section
 #    <options>  - comma separated list of the options for loading. Required or
 #                 replaced by <raw mode> argument
@@ -1407,9 +1522,10 @@ INI::read() {
 #    *.xxx                                                                      #-
 #    *.lit                                                                      #-
 #    EOFiniChild                                                                #-
-#   INI tLoad
+#   CFG tLoad
 #   ## TODO add more tests
-#   tLoad.load $iniLoad []file,main,child [exec]- [main]hint, msg, cnt [replace]- [unify]= [acc]+ #? true
+#   tLoad.storage $iniLoad
+#   tLoad.load []file,main,child [exec]- [main]hint, msg, cnt [replace]- [unify]= [acc]+ #? true
 #   tLoad.save $iniSave                                                         #? true
 #   tLoad.show | {{{
 #
@@ -1472,24 +1588,26 @@ INI::read() {
 ##    # tLoad.free
 ##
 #  SOURCE
-INI::load() {
-
-  [[ ${1##*/} =~ ^\.|\.$ ]] && on error InvalidArgument "${BASH_REMATCH[0]}"
+CFG::load() {
 
   local -a a
   local -A h hKeyValue hRawMode
-  local csv i IFS ini fmtPairs fmtSections o path reSection reValidSections s
+  local cfg csv i IFS fmtPairs fmtSections fn o path reSection reValidSections s
   local sSection
 
   o=${FUNCNAME[0]%%.*}
+
+  fn="$( ${o}.storage )"
+  [[ ${fn##*/} =~ ^\.|\.$ ]] && on error InvalidArgument "${BASH_REMATCH[0]}"
+
   fmtSections='^[[:space:]]*(:?)\[[[:space:]]*(%SECTION%)[[:space:]]*\](:?)[[:space:]]*$'
 
   fmtPairs=$( ${o}.settings fmtPairs )
 
   #
-  # Internal temporary function into INI::load namespace
+  # Internal temporary function into CFG::load namespace
   #
-  INI::load::parse() {
+  CFG::load::parse() {
 
     local s sSection
 
@@ -1511,66 +1629,71 @@ INI::load() {
 
   }
   #
-  # end INI::load::parse
+  # end CFG::load::parse
   #
 
-  [[ "$1" == "${1##*/}" && -f "$(_ pathIni)/$1" ]] && path=$(_ pathIni)
-  [[ "$1" == "${1##*/}" && -f "$1"              ]] && path=$( exec -c pwd )
-  [[ "$1" != "${1##*/}" && -f "$1"              ]] && path=${1%/*}
+  [[ "$fn" == "${fn##*/}" && -f "$(_ pathCfg)/$fn" ]] && path="$( _ pathCfg )"
+  [[ "$fn" == "${fn##*/}" && -f "$fn"              ]] && path="$( exec -c pwd )"
+  [[ "$fn" != "${fn##*/}" && -f "$fn"              ]] && path="${fn%/*}"
 
-  if [[ ! $path && -f "/etc/$(_ pathPrefix)/$1" ]]; then
+  if [[ ! $path && -f "/etc/$(_ pathPrefix)/$fn" ]]; then
 
     path="/etc/$( _ pathPrefix )"
 
   else
 
-    errorify on NoSuchFileOrDir $1 || return
+    errorify on NoSuchFileOrDir $fn || return
 
   fi
 
-  [[ $path ]] && ini=${1##*/}
-
-  shift
+  [[ $path ]] && cfg=${fn##*/}
 
   s=$* && IFS='][' && a=( $s ) && IFS=$' \t\n'
 
-  [[ ${a[0]} ]] && INI::load::parse "" "${a[0]}"
+  [[ ${a[0]} ]] && CFG::load::parse "" "${a[0]}"
 
   for (( i=1; i < ${#a[@]}; i++ )); do
 
-    INI::load::parse "${a[$i]}" "${a[$i+1]}"
+    CFG::load::parse "${a[$i]}" "${a[$i+1]}"
 
     i=$(( i+1 ))
 
   done
 
-  unset -f INI::load::parse
+  unset -f CFG::load::parse
 
-  a=( ${ini//./ } )
+  a=( ${cfg//./ } )
 
   csv=${csv%*|}
 
   [[ $csv ]] && reValidSections=${fmtSections/\%SECTION\%/$csv}
 
-  unset ini s
+  unset cfg s
 
   for (( i = ${#a[@]}-1; i >= 0; i-- )); do
 
     [[ ${a[i]} ]] || continue
-    [[ $ini    ]] && ini="${a[i]}.${ini}" || ini="${a[i]}"
-    [[ -s "${path}/${ini}" ]] && ${o}.read "${path}/${ini}" "$reValidSections"
+    [[ $cfg    ]] && cfg="${a[i]}.${cfg}" || cfg="${a[i]}"
+
+    if [[ -s "${path}/${cfg}" ]]; then
+
+      ${o}.storage ${path}/${cfg}
+      ${o}.read $reValidSections
+
+    fi
 
   done
 
   eval "s=\${_h${o^^}[__cli__]}"
   if [[ $s ]]; then
 
-    std::temp ini
+    std::temp cfg
 
-    ${s}.save $ini
-    ${o}.read $ini "$reValidSections"
+    ${s}.save $cfg
+    ${o}.storage $cfg
+    ${o}.read $reValidSections
 
-    rm -f $ini
+    rm -f $cfg
 
   fi
 
@@ -1579,16 +1702,16 @@ INI::load() {
 }
 #******
 ## TODO raw section description required
-#****e* libini/INI::bind.cli
+#****e* libcfg/CFG::bind.cli
 #  SYNOPSIS
-#    INI::bind.cli [<section>-]<option long name>{<short name>}[:[:=+]] ...
+#    CFG::bind.cli [<section>-]<option long name>{<short name>}[:[:=+]] ...
 #  DESCRIPTION
-#    Parse command line options and bind to the INI instance
+#    Parse command line options and bind to the CFG instance
 #  ARGUMENTS
 #    <option name> - option name that used as long option of the CLI and key for
-#                    array of the INI data
+#                    array of the CFG data
 #    <section>     - part of the option name for binding it to a certain section
-#                    of the INI data. By default, it is assumed that option is
+#                    of the CFG data. By default, it is assumed that option is
 #                    included to the global section
 #    <short name>  - short alias as single letter for option name
 #    first  :      - option is expected to have a required argument
@@ -1596,22 +1719,23 @@ INI::load() {
 #           =      - option is expected to have list of unique arguments
 #           +      - option is expected to have list of accumulated arguments
 #                    by default, option is included in the global section of the
-#                    INI instance data
+#                    CFG instance data
 #  ERRORS
 #    MissingArgument - arguments is not specified
 #    InvalidArgument - invalid format of the arguments
 #  EXAMPLE
-#    local ini
+#    local cfg
 #    _ sArg "-F CLI -E clear -H 'Hi!' -M test -U a.2 -U a.2 --acc a --acc b "   #-
-#    std::temp ini
-#    tLoad.save $ini                                                            #? true
+#    std::temp cfg
+#    tLoad.save $cfg                                                            #? true
 #    tLoad.free
-#    _ onError retwarn
-#    INI tCLI
+#    _ onError warn+return
+#    CFG tCLI
 #    tCLI.bind.cli                                                              #? $_bashlyk_iErrorInvalidOption
 #    tCLI.bind.cli file{F}: exec{E}:- main-hint{H}: main-msg{M}: unify{U}:=     #? $_bashlyk_iErrorInvalidOption
 #    tCLI.bind.cli file{F}: exec{E}:- main-hint{H}: main-msg{M}: unify{U}:= acc:+            #? true
-#    tCLI.load $ini []file,main,child [exec]- [main]hint,msg,cnt [replace]- [unify]= [acc]+  #? true
+#    tCLI.storage $cfg
+#    tCLI.load []file,main,child [exec]- [main]hint,msg,cnt [replace]- [unify]= [acc]+  #? true
 #    tCLI.show | {{{
 #
 #    child    =    true
@@ -1667,7 +1791,7 @@ INI::load() {
 # }}}
 #    tCLI.free
 #  SOURCE
-INI::bind.cli() {
+CFG::bind.cli() {
 
   local -a a
   local c fnErr fmtCase fmtHandler k o sSection sShort sLong s S evalGetopts sCases v
@@ -1675,7 +1799,7 @@ INI::bind.cli() {
   o=${FUNCNAME[0]%%.*}
   c=cli${RANDOM}
 
-  INI $c
+  CFG $c
   eval "_h${o^^}[__cli__]=$c"
 
   fmtHandler="                                                                 \
@@ -1762,15 +1886,15 @@ INI::bind.cli() {
 
 }
 #******
-#****e* libini/INI::getopt
+#****e* libcfg/CFG::getopt
 #  SYNOPSIS
-#    INI::getopt <option>[--]
+#    CFG::getopt <option>[--]
 #  DESCRIPTION
-#    get option value after binding command line options to the INI instance
-#    ( it makes sense only after the execution of the method "INI::bind.cli" )
+#    get option value after binding command line options to the CFG instance
+#    ( it makes sense only after the execution of the method "CFG::bind.cli" )
 #  ARGUMENTS
 #    <option> - option name that used as long option of the CLI and key for
-#               array of the INI data
+#               array of the CFG data
 #          -- - expected list of the values - serialized array
 #  ERRORS
 #    MissingArgument - arguments is not specified
@@ -1781,7 +1905,7 @@ INI::bind.cli() {
 #    option value
 #  EXAMPLE
 #    _ sArg "-F CLI -E clear -H 'Hi!' -M test -U a.2 -U a.2"                    #-
-#    INI tOpt
+#    CFG tOpt
 #    tOpt.getopt                                                                #? $_bashlyk_iErrorMissingArgument
 #    tOpt.getopt not-exist                                                      #? $_bashlyk_iErrorNotAvailable
 #    tOpt.getopt invalid - argument - list                                      #? $_bashlyk_iErrorInvalidArgument
@@ -1794,7 +1918,7 @@ INI::bind.cli() {
 #    tOpt.getopt acc--                                                          #? $_bashlyk_iErrorEmptyResult
 #    tOpt.free
 #  SOURCE
-INI::getopt() {
+CFG::getopt() {
 
   local -a a
   local IFS o s="$*"
@@ -1829,11 +1953,11 @@ INI::getopt() {
 
 }
 #******
-#****p* libini/INI::settings
+#****p* libcfg/CFG::settings
 #  SYNOPSIS
-#    INI::settings [ <key> [ = <value> ] ]
+#    CFG::settings [ <key> [ = <value> ] ]
 #  DESCRIPTION
-#    set or get propertie(s) of the INI instance
+#    set or get propertie(s) of the CFG instance
 #  ARGUMENTS
 #    <key>   - select propertie for action - get (show) or set
 #    <value> - set new value for selected properties
@@ -1843,17 +1967,34 @@ INI::getopt() {
 #  ERRORS
 #    iErrorInvalidArgument - invalid key name ( char class :alnum: expected )
 #  EXAMPLE
-#    INI tSettings
+#    CFG tSettings
 #    tSettings.set key = value
 #    tSettings.settings bBooleanOption     =   true
 #    tSettings.settings sSimpleFakeOption  =   simple fake option
 #    tSettings.settings sSimpleFakeOption        | {{ '^simple fake option$' }}
 #    tSettings.settings bBooleanOption           | {{ ^true$                 }}
-#    tSettings.settings >| wc -w                 | {{ ^39$                   }}
+#    ## TODO improves required
+#    tSettings.settings | {{{
+#
+#
+#    [ __settings__ ]
+#
+#           bBooleanOption    =    true
+#              bSaveConfig    =    true
+#          bSectionPadding    =    true
+#               bShellMode    =    false
+#                chComment    =    #
+#                 fmtPairs    =    ^[[:space:]]*\b(%KEY%)\b[[:space:]]*=[[:space:]]*(.*)[[:space:]]*$
+#              fmtSection0    =    \n\n[ %s ]%s\n\n
+#              fmtSection1    =    \n%s[ %s ]\n
+#                    reKey    =    ^\b([^=]+)\b$
+#                 reKeyVal    =    ^[[:space:]]*\b([^=]+)\b[[:space:]]*=[[:space:]]*(.*)[[:space:]]*$
+#        sSimpleFakeOption    =    simple fake option
+# }}}
 #    tSettings.settings bSection With Spaces                                    #? $_bashlyk_iErrorInvalidArgument
 #    tSettings.free
 #  SOURCE
-INI::settings() {
+CFG::settings() {
 
   local o=${FUNCNAME[0]%%.*} k s v
 
@@ -1879,9 +2020,9 @@ INI::settings() {
 
 }
 #******
-#****p* libini/INI::settings.shellmode
+#****p* libcfg/CFG::settings.shellmode
 #  SYNOPSIS
-#    INI::settings.shellmode [ [=] true|false ]
+#    CFG::settings.shellmode [ [=] true|false ]
 #  DESCRIPTION
 #    enable/disable "active configuration" for instance INI. For example, save
 #    the configuration with "shellmode = true" looks like:
@@ -1898,14 +2039,14 @@ INI::settings() {
 #  ERRORS
 #    InvalidArgument - expected true or false
 #  EXAMPLE
-#    INI tShellmode
+#    CFG tShellmode
 #    tShellmode.settings.shellmode                              | {{ ^false$ }}
 #    tShellmode.settings.shellmode = YEs                                        #? true
 #    tShellmode.settings.shellmode                              | {{ ^true$  }}
 #    tShellmode.settings.shellmode = error                                      #? $_bashlyk_iErrorInvalidArgument
 #    tShellmode.free
 #  SOURCE
-INI::settings.shellmode() {
+CFG::settings.shellmode() {
 
   local o=${FUNCNAME[0]%%.*}
 
@@ -1917,18 +2058,18 @@ INI::settings.shellmode() {
 
     true|yes|1)
 
-      ${o}.__section.set reKey $_bashlyk_cnf_reKey
-      ${o}.__section.set reKeyVal $_bashlyk_cnf_reKeyVal
-      ${o}.__section.set fmtPairs $_bashlyk_cnf_fmtPairs
+      ${o}.__section.set reKey $_bashlyk_CNF_reKey
+      ${o}.__section.set reKeyVal $_bashlyk_CNF_reKeyVal
+      ${o}.__section.set fmtPairs $_bashlyk_CNF_fmtPairs
       ${o}.__section.set bShellMode true
 
     ;;
 
     false|no|0)
 
-      ${o}.__section.set reKey $_bashlyk_ini_reKey
-      ${o}.__section.set reKeyVal $_bashlyk_ini_reKeyVal
-      ${o}.__section.set fmtPairs $_bashlyk_ini_fmtPairs
+      ${o}.__section.set reKey $_bashlyk_INI_reKey
+      ${o}.__section.set reKeyVal $_bashlyk_INI_reKeyVal
+      ${o}.__section.set fmtPairs $_bashlyk_INI_fmtPairs
       ${o}.__section.set bShellMode false
 
     ;;
@@ -1949,9 +2090,9 @@ INI::settings.shellmode() {
 
 }
 #******
-#****p* libini/INI::settings.section.padding
+#****p* libcfg/CFG::settings.section.padding
 #  SYNOPSIS
-#    INI::settings.section.padding [ [=] true|false ]
+#    CFG::settings.section.padding [ [=] true|false ]
 #  DESCRIPTION
 #    enable/disable padding with one whitespace around section name.
 #    default is enabled
@@ -1964,14 +2105,14 @@ INI::settings.shellmode() {
 #  ERRORS
 #    InvalidArgument - expected true or false
 #  EXAMPLE
-#    INI tShellmode
+#    CFG tShellmode
 #    tShellmode.settings.section.padding                        | {{ ^true$  }}
 #    tShellmode.settings.section.padding = FALSE                                #? true
 #    tShellmode.settings.section.padding                        | {{ ^false$ }}
 #    tShellmode.settings.section.padding = error                                #? $_bashlyk_iErrorInvalidArgument
 #    tShellmode.free
 #  SOURCE
-INI::settings.section.padding() {
+CFG::settings.section.padding() {
 
   local o=${FUNCNAME[0]%%.*}
 
