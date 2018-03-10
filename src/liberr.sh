@@ -1,5 +1,5 @@
 #
-# $Id: liberr.sh 808 2018-03-10 18:59:39+04:00 toor $
+# $Id: liberr.sh 810 2018-03-11 01:01:29+04:00 toor $
 #
 #****h* BASHLYK/liberr
 #  DESCRIPTION
@@ -300,8 +300,7 @@ err::stacktrace() {
 
   local i s=$( printf -- '\u00a0' )
 
-  printf -- '\nStack trace by %s from %s:\n+-->>-----\n'                       \
-            "${FUNCNAME[0]}" "${BASH_SOURCE[0]}"
+  printf -- 'Stack trace by %s from %s {\n' "${FUNCNAME[0]}" "${BASH_SOURCE[0]}"
 
   for (( i=${#FUNCNAME[@]}-1; i >= 0; i-- )); do
 
@@ -317,7 +316,7 @@ err::stacktrace() {
 
   done
 
-  printf -- '+-->>-----\n'
+  printf -- '}\n\n'
 
 }
 #******
@@ -497,8 +496,8 @@ err::__generate() {
   #
   std::isNumber $1 && rc=$1 && shift || rc=$_bashlyk_iErrorUnknown
   #
-        a=( $* )
       IFS=$' \t\n'
+        a=( $* )
      echo='echo'
      warn='msg::warn'
   sAction=$_bashlyk_onError
