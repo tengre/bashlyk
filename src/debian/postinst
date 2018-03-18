@@ -42,14 +42,14 @@ case "$1" in
       BVER=$(                                                                  \
       dpkg-query -W -f='${Depends}\n'|grep -Po 'bashlyk.\(>?=?\s?\d+\.\d+.*?\)'\
         | sed -re "s/bashlyk.\(>?=?.?([0-9]*)\.([0-9]*).*\)/\1\2/"             \
-        | grep -Po "^\d+$" 2>/dev/null                                         \
+        | grep -Po "^\d+$" 2>/dev/null || true                                 \
       )
 
       if [ -z "$BVER" -o "$BVER" -lt 190 ]; then
 
         if ! grep '_bashlyk_aLib=.*old.*' $CONF >/dev/null 2>&1; then
 
-          sed -i -re "s/shlyk_aLib=\"(.*)\"\}$/shlyk_aLib=\"\1,old\"\}/g" $CONF
+          sed -i -re "s/shlyk_aLib=\"(.*)\"\}$/shlyk_aLib=\"\1,old\"\}/g" $CONF || true
 
         fi
 
