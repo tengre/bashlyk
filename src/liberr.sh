@@ -1,5 +1,5 @@
 #
-# $Id: liberr.sh 810 2018-03-11 01:01:29+04:00 toor $
+# $Id: liberr.sh 812 2018-03-21 18:34:33+04:00 toor $
 #
 #****h* BASHLYK/liberr
 #  DESCRIPTION
@@ -12,7 +12,7 @@
 #***iV* liberr/BASH compatibility
 #  DESCRIPTION
 #    Compatibility checked by bashlyk (BASH version 4.xx or more required)
-#    $_BASHLYK_LIBERR provides protection against re-using of this module
+#    $_BASHLYK_liberr provides protection against re-using of this module
 #  SOURCE
 [ -n "$_BASHLYK_LIBERR" ] && return 0 || _BASHLYK_LIBERR=1
 [ -n "$_BASHLYK" ] || . ${_bashlyk_pathLib}/bashlyk || eval '                  \
@@ -27,7 +27,7 @@ shopt -s expand_aliases
 #    usable aliases for exported functions
 #  SOURCE
 alias           try='try()'
-alias            on='eval $( err::generate "$@" )'
+alias         error='eval $( err::generate "$@" )'
 alias          show='err::postfix echo'
 alias          warn='err::postfix warn'
 alias         abort='err::postfix exit'
@@ -56,12 +56,13 @@ declare -rg _bashlyk_methods_err="                                             \
 declare -rg _bashlyk_aExport_err="                                             \
                                                                                \
     abort catch err::{exception.message,stacktrace,status,sourcecode} errorify \
-    errorify+echo errorify+warn exit+echo exit+warn on show throw try warn     \
+    errorify+echo errorify+warn exit+echo exit+warn error show throw try warn  \
                                                                                \
 "
 
-declare -rg _bashlyk_err_reAct='^(echo|warn)$|^((echo|warn)[+])?(exit|return)$|^throw$'
-declare -rg _bashlyk_err_reArg='((on|\$\(.?err::generate.\"\$\@\".?\)).error|err::generate)[[:space:]]*?([^\>]*)[[:space:]]*?[\>\|]?'
+#declare -rg _bashlyk_err_reAct='^action=(echo|warn)$|action=((echo|warn)[+])?(exit|return)$|^action=throw$'
+declare -rg _bashlyk_err_reAct='^action=((echo|warn)|(((echo|warn)[+])?(exit|return))|(throw))$'
+declare -rg _bashlyk_err_reArg='(error|err::generate|\$\(.?err::generate.\"\$\@\".?\))[[:space:]]*?([^\>]*)[[:space:]]*?[\>\|]?'
 
 : ${_bashlyk_onError:=throw}
 #
@@ -354,7 +355,7 @@ err::sourcecode() {
 #******
 #****e* liberr/err::generate
 #  SYNOPSIS
-#    err::generate [<action>] [<state>] [<message>]
+#    err::generate [<state>] [[action=]<action>] [<message>]
 #  DESCRIPTION
 #    Generate code for flexible error handling, which depends on the global
 #    variable or arguments. Possible to combine with each other the following
@@ -406,14 +407,15 @@ err::sourcecode() {
 #  OUTPUT
 #    command line, which can be performed using the eval <...>
 #  EXAMPLE
-#    false || on error warn NoSuchFileOrDir /notexist                           #? true
+#    false || error NoSuchFileOrDir action=warn /notexist                       #? true
 #    _bashlyk_onError=debug
-#    false || on error exit NoSuchFileOrDir /notexist                           #? $_bashlyk_iErrorNoSuchFileOrDir
-#    #_bashlyk_onError=echo
-#    err::orr 166 || on error echo                                              #? true
-#    err::orr  11 || on error 123                                               #? 123
-#    err::orr 123 || on error bla-bla bla                                       #? 123
-#    err::orr 123 || on error                                                   #? 123
+#    false || error NoSuchFileOrDir action=exit /notexist                       #? $_bashlyk_iErrorNoSuchFileOrDir
+#    err::orr 100 || error action=echo                                          #? true
+#    err::orr 101 || error 115 action=echo+return                               #? 115
+#    err::orr 102 || error 116                                                  #? 116
+#    err::orr 103 || error bla-bla bla                                          #? 103
+#    err::orr 103 || error CommandNotFound bla-bla bla                          #? $_bashlyk_iErrorCommandNotFound
+#    err::orr 104 || error                                                      #? 104
 #  SOURCE
 err::generate() {
 
@@ -425,13 +427,13 @@ err::generate() {
 
   fi
 
-  err::__generate $bashlyk_err_gen_rc $(eval echo "\"${BASH_REMATCH[3]//\"/}\"")
+  err::__generate $bashlyk_err_gen_rc $(eval echo "\"${BASH_REMATCH[2]//\"/}\"")
 
 }
 #******
 #****p* liberr/err::__generate
 #  SYNOPSIS
-#    err::__generate [<action>] [<state>] [<message>]
+#    err::__generate [<state>] [[action=]<action>] [[hint=]<message>]
 #  DESCRIPTION
 #    The internal part of the function err::generate for protecting variables in
 #    arguments from local variables of this functions when calling the "eval"
@@ -479,7 +481,7 @@ err::generate() {
 #    command line, which can be performed using the eval <...>
 #  EXAMPLE
 #    local cmd
-#    cmd='err::__generate 1 warn NoSuchFileOrDir /notexist'
+#    cmd='err::__generate 1 NoSuchFileOrDir action=warn /notexist'
 #    _bashlyk_onError=debug
 #    $cmd | {{{
 #    err::stacktrace | msg::warn -  Warn: no\ such\ file\ or\ directory\ -\ /notexist\ ..\ \(185\) >&2; err::status 185 "/notexist"; : ; #
@@ -501,12 +503,27 @@ err::__generate() {
      echo='echo'
      warn='msg::warn'
   sAction=$_bashlyk_onError
-  #
-  [[ ${a[0],,} =~ $_bashlyk_err_reAct ]] && sAction=${a[0],,} && i=1 || i=0
+  
+  if   [[ ${a[0]} =~ $_bashlyk_err_reAct ]]; then
+  
+    sAction=${BASH_REMATCH[1]}
+    rs=$rc
+    i=1
+    
+  elif [[ ${a[1]} =~ $_bashlyk_err_reAct ]]; then
 
-  [[ ${a[$i]} ]] || a[$i]=$rc
-
-  err::orr ${a[$i]}; rs=$?
+    sAction=${BASH_REMATCH[1]}
+    [[ ${a[0]} ]] && rs=${a[0]} || rs=$rc
+    i=2
+  
+  else
+  
+    i=0
+    [[ ${a[0]} ]] && rs=${a[0]} && i=1 || rs=$rc
+  
+  fi
+  
+  err::orr $rs; rs=$?
 
   if (( rs >= $_bashlyk_iErrorUnknown )); then
 
@@ -515,18 +532,16 @@ err::__generate() {
     if [[ ${_bashlyk_hError[$rc]} ]]; then
 
       rs=$rc
-      s+="${_bashlyk_hError[$rc]} - ${a[@]:$i} .. ($rc)"
+      s+="${_bashlyk_hError[$rc]} - ${a[@]} .. ($rc)"
 
     else
 
       (( rs == 255 )) && rs=$rc
-      s+="${a[@]:$i} .. ($rc)"
+      s+="${a[@]} .. ($rc)"
 
     fi
 
   else
-
-    : $(( i++ ))
 
     if [[ ${_bashlyk_hError[$rs]} ]]; then
 
@@ -576,6 +591,7 @@ err::__generate() {
   if [[ $_bashlyk_onError == debug ]]; then
 
     sAction=${sAction/exit/err::orr}
+    sAction=${sAction/return/err::orr}
 
   fi
 
@@ -786,7 +802,7 @@ err::EmptyResult() {
 #                     EmptyResult
 #    <argument>   - checked value by type (see <state>)
 #  OUTPUT
-#    see on error ...
+#    see error ...
 #  EXAMPLE
 #    ## TODO improve tests
 #    local fn1 fn2
@@ -808,19 +824,17 @@ err::postfix() {
   local re='^(echo|warn)$|^((echo|warn)[+])?(exit|return)$|^throw$' i=0 j=0 s
   ## TODO add reAction and reState for safely arguments parsing
 
-  [[ $1 =~ $re ]] && shift || on error throw InvalidArgument "${1:-first argument}"
-  [[ $1 == on  ]] && shift || on error throw InvalidArgument "${1:-second argument}"
-  [[ $1        ]] && shift || on error throw MissingArgument "${1:-third argument}"
+  [[ $1 =~ $re ]] && shift || error InvalidArgument action=throw "${1:-first argument}"
+  [[ $1 == on  ]] && shift || error InvalidArgument action=throw "${1:-second argument}"
+  [[ $1        ]] && shift || error MissingArgument action=throw "${1:-third argument}"
 
   if ! declare -pf err::${aErrHandler[2]} >/dev/null 2>&1; then
 
-    on error throw InvalidArgument "${aErrHandler[2]}"
+    error InvalidArgument action=throw "${aErrHandler[2]}"
 
   fi
 
-  unset aErrHandler[1]
-
-  [[ $* ]] || on error ${aErrHandler[@]}
+  [[ $* ]] || error ${aErrHandler[2]} action=${aErrHandler[0]} ${aErrHandler[@]:3}
 
   for s in "$@"; do
 
@@ -839,7 +853,7 @@ err::postfix() {
   if (( i > 0 )); then
 
     (( i > 1 )) && aErrHandler[3]+=" [total $i]"
-    on error ${aErrHandler[@]:0:3}
+    error ${aErrHandler[2]} action=${aErrHandler[0]} ${aErrHandler[3]}
 
   fi
 
