@@ -1,5 +1,5 @@
 #
-# $Id: liblog.sh 808 2018-03-10 19:07:01+04:00 toor $
+# $Id: liblog.sh 813 2018-03-21 19:02:16+04:00 toor $
 #
 #****h* BASHLYK/liblog
 #  DESCRIPTION
@@ -131,7 +131,7 @@ log::ger() {
 
   fi
 
-  mkdir -p "$_bashlyk_pathLog" || on error throw NotExistNotCreated $_bashlyk_pathLog
+  mkdir -p "$_bashlyk_pathLog" || error NotExistNotCreated action=throw $_bashlyk_pathLog
 
   pid::onExit.unlink $_bashlyk_pathLog
 
@@ -304,7 +304,7 @@ log::init() {
 
   fi
 
-  mkdir -p $_bashlyk_pathRun || on error return+warn NotExistNotCreated $_bashlyk_pathRun
+  mkdir -p $_bashlyk_pathRun || error NotExistNotCreated action=return+warn $_bashlyk_pathRun
 
   [[ -a "$fnSock" ]] && rm -f $fnSock
 
@@ -321,7 +321,7 @@ log::init() {
 
   else
 
-    on error warn NotExistNotCreated Socket $fnSock not created..
+    error NotExistNotCreated action=warn Socket $fnSock not created..
 
     exec >>$_bashlyk_fnLog 2>&1
 
@@ -366,7 +366,7 @@ log::file() {
     mkdir -p "$_bashlyk_pathLog"
     touch "$_bashlyk_fnLog"
 
-  } || on error throw NotExistNotCreated $_bashlyk_fnLog
+  } || error NotExistNotCreated action=throw $_bashlyk_fnLog
 
   log::init
 

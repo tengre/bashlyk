@@ -1,5 +1,5 @@
 #
-# $Id: libpid.sh 808 2018-03-10 18:59:40+04:00 toor $
+# $Id: libpid.sh 813 2018-03-21 19:02:16+04:00 toor $
 #
 #****h* BASHLYK/libpid
 #  DESCRIPTION
@@ -95,7 +95,7 @@ pid::status() {
 
   errorify on MissingArgument $* || return
 
-  std::isNumber $1 && (( $1 < 65536 )) || on error return InvalidArgument $1
+  std::isNumber $1 && (( $1 < 65536 )) || error InvalidArgument action=return $1
 
   local re="\\b${1}\\b"
 
@@ -302,7 +302,7 @@ pid::file() {
 
   fi
 
-  mkdir -p "${fnPid%/*}" || on error echo+return NotExistNotCreated ${fnPid%/*}
+  mkdir -p "${fnPid%/*}" || error NotExistNotCreated action=echo+return ${fnPid%/*}
 
   fd=$( std::getFreeFD )
 
@@ -316,7 +316,7 @@ pid::file() {
 
     if pid::status "$pid" $( _ s0 ) $( _ sArg ); then
 
-      on error echo+return AlreadyStarted $pid
+      error AlreadyStarted action=echo+return $pid
 
     fi
 
@@ -328,7 +328,7 @@ pid::file() {
 
     else
 
-      on error echo+return NotExistNotCreated $fnPid
+      error NotExistNotCreated action=echo+return $fnPid
 
     fi
 
@@ -336,11 +336,11 @@ pid::file() {
 
     if pid::status "$pid" $( _ s0 ) $( _ sArg ); then
 
-      on error echo+return AlreadyStarted $pid
+      error AlreadyStarted action=echo+return $pid
 
     else
 
-      on error echo+return AlreadyLocked $fnPid
+      error AlreadyLocked action=echo+return $fnPid
 
     fi
 

@@ -1,5 +1,5 @@
 #
-# $Id: libcfg.sh 808 2018-03-10 19:04:33+04:00 toor $
+# $Id: libcfg.sh 813 2018-03-21 19:02:16+04:00 toor $
 #
 #****h* BASHLYK/libcfg
 #  DESCRIPTION
@@ -204,13 +204,13 @@ CFG() {
 
   for s in $_bashlyk_methods_cfg; do
 
-    f=$( declare -pf CFG::${s} 2>/dev/null ) || on error throw IniMissingMethod "CFG::${s} for $o"
+    f=$( declare -pf CFG::${s} 2>/dev/null ) || error IniMissingMethod action=throw "CFG::${s} for $o"
 
-    echo "${f/CFG::$s/${o}.$s}" >> $fn || on error throw IniBadMethod "CFG::$s for $o"
+    echo "${f/CFG::$s/${o}.$s}" >> $fn || error IniBadMethod action=throw "CFG::$s for $o"
 
   done
 
-  source $fn || on error throw InvalidArgument "$fn"
+  source $fn || error InvalidArgument action=throw "$fn"
   return 0
 
 }
@@ -648,7 +648,7 @@ CFG::__section.getArray() {
   o=${FUNCNAME[0]%%.*}
   ${o}.__section.select $*
   id=$( ${o}.__section.id $* )
-  std::isHash $id || on error $(_ onError) InvalidHash $id
+  std::isHash $id || error InvalidHash action=$(_ onError) $id
 
   sU=$( ${o}.__section.get _bashlyk_raw_mode )
 
@@ -767,7 +767,7 @@ CFG::get() {
       ;;
 
     *)
-      on error warn+return InvalidArgument $*
+      error InvalidArgument action=warn+return $*
       ;;
 
   esac
@@ -849,7 +849,7 @@ CFG::keys() {
     ;;
 
     *)
-      on error warn+return InvalidArgument "${a[@]}"
+      error InvalidArgument action=warn+return "${a[@]}"
     ;;
 
   esac
@@ -947,7 +947,7 @@ CFG::set() {
 
   else
 
-    on error InvalidArgument $*
+    error InvalidArgument $*
 
   fi
 
@@ -982,7 +982,7 @@ CFG::set() {
     else
 
       ## TODO get ${o}.settings chComment
-      ${o}.__section.set "#[!] - $( on error echo IniExtraCharInKey 2>&1 ): $k" "$v"
+      ${o}.__section.set "#[!] - $( error IniExtraCharInKey action=echo 2>&1 ): $k" "$v"
 
     fi
 
@@ -1180,7 +1180,7 @@ CFG::save() {
 
   fi
 
-  mkdir -p ${fn%/*} && touch $fn || on error throw NotExistNotCreated ${fn%/*}
+  mkdir -p ${fn%/*} && touch $fn || error NotExistNotCreated action=throw ${fn%/*}
 
   {
 
@@ -1322,7 +1322,7 @@ CFG::read() {
   ## TODO permit hi uid ?
   if [[ ! $( exec -c stat -c %u $fn ) =~ ^($UID|0)$ ]]; then
 
-    on error NotPermitted $fn owned by $( stat -c %U $fn )
+    error NotPermitted $fn owned by $( stat -c %U $fn )
 
   fi
 
@@ -1598,7 +1598,7 @@ CFG::load() {
   o=${FUNCNAME[0]%%.*}
 
   fn="$( ${o}.storage )"
-  [[ ${fn##*/} =~ ^\.|\.$ ]] && on error InvalidArgument "${BASH_REMATCH[0]}"
+  [[ ${fn##*/} =~ ^\.|\.$ ]] && error InvalidArgument "${BASH_REMATCH[0]}"
 
   fmtSections='^[[:space:]]*(:?)\[[[:space:]]*(%SECTION%)[[:space:]]*\](:?)[[:space:]]*$'
 
@@ -1824,7 +1824,7 @@ CFG::bind.cli() {
 
     else
 
-      on error InvalidArgument $s - format error
+      error InvalidArgument $s - format error
 
     fi
 
@@ -1874,12 +1874,12 @@ CFG::bind.cli() {
       [[ ${h[unrecognized]} ]] && s+="${h[unrecognized]%*,}"
 
       unset h
-      on error warn+return InvalidOption "${s%*,} (command line:  $( _ sArg ))"
+      error InvalidOption action=warn+return "${s%*,} (command line:  $( _ sArg ))"
 
     ;;
 
     *)
-      on error InvalidOption "internal fail - $( < $fnErr )"
+      error InvalidOption "internal fail - $( < $fnErr )"
     ;;
 
   esac

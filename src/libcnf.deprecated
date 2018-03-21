@@ -1,5 +1,5 @@
 #
-# $Id: libcnf.sh 764 2017-05-11 17:28:10+04:00 toor $
+# $Id: libcnf.deprecated 813 2018-03-21 19:02:16+04:00 toor $
 #
 #****h* BASHLYK/libcnf
 #  DESCRIPTION
@@ -243,7 +243,7 @@ udfSetConfig() {
   [[ "$1" != "${1##*/}" ]] && path="${1%/*}" || path="$( _ pathCnf )"
   conf="${path}/${1##*/}"
 
-  mkdir -p $path && touch $conf || on error throw NotExistNotCreated $conf
+  mkdir -p $path && touch $conf || error NotExistNotCreated action=throw $conf
 
   o="${FUNCNAME[0]%%.*}_${RANDOM}${RANDOM}"
   INI $o
