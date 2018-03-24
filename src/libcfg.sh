@@ -1,5 +1,5 @@
 #
-# $Id: libcfg.sh 813 2018-03-21 19:02:16+04:00 toor $
+# $Id: libcfg.sh 814 2018-03-25 01:48:12+04:00 toor $
 #
 #****h* BASHLYK/libcfg
 #  DESCRIPTION
@@ -39,7 +39,7 @@
 #    conf=$( ini.getopt config )
 #
 #    # set file as source of the configuration data
-#    ini.storage $conf
+#    ini.storage.use $conf
 #
 #    # load selected options from ini configuration file and combine with
 #    # CLI options.
@@ -112,7 +112,7 @@ declare -rg _bashlyk_methods_cfg="                                             \
     bind.cli get getopt keys load read save __section.byindex                  \
     __section.getArray __section.id __section.select __section.setRawData      \
     __section.show set settings settings.section.padding settings.shellmode    \
-    show storage free                                                          \
+    show storage.show storage.use free                                         \
 "
 
 declare -rg _bashlyk_externals_cfg="                                           \
@@ -124,7 +124,7 @@ declare -rg _bashlyk_externals_cfg="                                           \
 declare -rg _bashlyk_exports_cfg="                                             \
                                                                                \
     CFG CFG::{bind.cli,free,get,getopt,keys,load,read,save,set,settings,       \
-    settings.section.padding,settings.shellmode,show,storage}                  \
+    settings.section.padding,settings.shellmode,show,storage.show storage.use} \
 "
 
 _bashlyk_iErrorIniMissingMethod=111
@@ -1070,26 +1070,27 @@ CFG::show() {
 
 }
 #******
-#****e* libcfg/CFG::storage
+#****e* libcfg/CFG::storage.use
 #  SYNOPSIS
-#    CFG::storage <storage>
+#    CFG::storage.use [<storage>]
 #  DESCRIPTION
 #    Bind external storage (filename & etc) for the configuration object
 #  NOTES
 #    public method
 #  ARGUMENTS
 #    <storage>  - external storage, such as a file
-#  ERRORS
-#    MissingArgument - the storage name is not specified
+#                 by default a special file is generated
 #  EXAMPLE
 #
-#    CFG cfgStorage
-#    cfgStorage.storage | {{ .*\.cfg$ }}
-#    cfgStorage.storage external.ini
-#    cfgStorage.storage | {{ ^external\.ini$ }}
+#    CFG cfgStorageUse
+#    cfgStorageUse.storage.use
+#    cfgStorageUse.settings storage | {{ lib/[[:xdigit:]]*\.cfg$ }}
+#    cfgStorageUse.storage.use external.ini
+#    cfgStorageUse.settings storage | {{ ^external\.ini$ }}
+#    cfgStorageUse.free
 #
 #  SOURCE
-CFG::storage() {
+CFG::storage.use() {
 
   local o s
 
@@ -1097,7 +1098,7 @@ CFG::storage() {
 
   if [[ $* ]]; then
 
-    ${o}.settings storage = $*
+    s="$*"
 
   else
 
@@ -1112,9 +1113,39 @@ CFG::storage() {
 
     fi
 
-    echo "$s"
-
   fi
+
+  ${o}.settings storage = $s
+
+}
+#******
+#****e* libcfg/CFG::storage.show
+#  SYNOPSIS
+#    CFG::storage.show
+#  DESCRIPTION
+#    show current storage name (if defined)
+#  NOTES
+#    public method
+#  ERRORS
+#    MissingArgument - the storage name is not specified
+#  EXAMPLE
+#
+#    CFG cfgStorageShow
+#    cfgStorageShow.storage.show                                                #? $_bashlyk_iErrorEmptyResult
+#    cfgStorageShow.storage.use external.ini
+#    cfgStorageShow.storage.show | {{ ^external\.ini$ }}
+#    cfgStorageShow.free
+#
+#  SOURCE
+CFG::storage.show() {
+
+  local s
+
+  s="$( ${FUNCNAME[0]%%.*}.settings storage )"
+
+  echo $s
+
+  errorify on EmptyResult $s
 
 }
 #******
@@ -1166,7 +1197,7 @@ CFG::save() {
 
   o=${FUNCNAME[0]%%.*}
 
-  [[ $* ]] && fn="$*" || fn="$( ${o}.storage )"
+  [[ $* ]] && fn="$*" || fn="$( ${o}.storage.show )"
 
   fmtComment='%COMMENT%\n%COMMENT% created %s by %s\n%COMMENT%\n'
 
@@ -1245,9 +1276,9 @@ CFG::save() {
 #   _ onError warn+return
 #   CFG tRead
 #   tRead.read                                                                  #? $_bashlyk_iErrorNoSuchFileOrDir
-#   tRead.storage
+#   tRead.storage.use
 #   tRead.read                                                                  #? $_bashlyk_iErrorNoSuchFileOrDir
-#   tRead.storage $ini
+#   tRead.storage.use $ini
 #   tRead.read                                                                  #? true
 #   tRead.show | {{{
 #
@@ -1305,7 +1336,7 @@ CFG::read() {
 
   o=${FUNCNAME[0]%%.*}
 
-  fn=$( ${o}.storage )
+  fn=$( ${o}.storage.show )
   errorify on NoSuchFileOrDir $fn || return
 
   reSection='^[[:space:]]*(:?)\[[[:space:]]*([[:print:]]+?)[[:space:]]*\](:?)[[:space:]]*$'
@@ -1524,7 +1555,7 @@ CFG::read() {
 #    EOFiniChild                                                                #-
 #   CFG tLoad
 #   ## TODO add more tests
-#   tLoad.storage $iniLoad
+#   tLoad.storage.use $iniLoad
 #   tLoad.load []file,main,child [exec]- [main]hint, msg, cnt [replace]- [unify]= [acc]+ #? true
 #   tLoad.save $iniSave                                                         #? true
 #   tLoad.show | {{{
@@ -1597,7 +1628,7 @@ CFG::load() {
 
   o=${FUNCNAME[0]%%.*}
 
-  fn="$( ${o}.storage )"
+  fn="$( ${o}.storage.show )"
   [[ ${fn##*/} =~ ^\.|\.$ ]] && error InvalidArgument "${BASH_REMATCH[0]}"
 
   fmtSections='^[[:space:]]*(:?)\[[[:space:]]*(%SECTION%)[[:space:]]*\](:?)[[:space:]]*$'
@@ -1677,7 +1708,7 @@ CFG::load() {
 
     if [[ -s "${path}/${cfg}" ]]; then
 
-      ${o}.storage ${path}/${cfg}
+      ${o}.storage.use ${path}/${cfg}
       ${o}.read $reValidSections
 
     fi
@@ -1690,7 +1721,7 @@ CFG::load() {
     std::temp cfg
 
     ${s}.save $cfg
-    ${o}.storage $cfg
+    ${o}.storage.use $cfg
     ${o}.read $reValidSections
 
     rm -f $cfg
@@ -1734,7 +1765,7 @@ CFG::load() {
 #    tCLI.bind.cli                                                              #? $_bashlyk_iErrorInvalidOption
 #    tCLI.bind.cli file{F}: exec{E}:- main-hint{H}: main-msg{M}: unify{U}:=     #? $_bashlyk_iErrorInvalidOption
 #    tCLI.bind.cli file{F}: exec{E}:- main-hint{H}: main-msg{M}: unify{U}:= acc:+            #? true
-#    tCLI.storage $cfg
+#    tCLI.storage.use $cfg
 #    tCLI.load []file,main,child [exec]- [main]hint,msg,cnt [replace]- [unify]= [acc]+  #? true
 #    tCLI.show | {{{
 #
