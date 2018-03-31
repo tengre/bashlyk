@@ -1,5 +1,5 @@
 #
-# $Id: libstd.sh 808 2018-03-10 18:59:40+04:00 toor $
+# $Id: libstd.sh 813 2018-03-21 19:02:16+04:00 toor $
 #
 #****h* BASHLYK/libstd
 #  DESCRIPTION
@@ -399,11 +399,11 @@ std::temp() {
 
     [[ "$1" == "-v" ]] && shift
 
-    std::isVariable $1 || on error InvalidVariable $1
+    std::isVariable $1 || error InvalidVariable $1
 
     eval 'export $1="$( shift; std::temp stdout-mode ${@//keep=false/} )"'
 
-    [[ ${!1} ]] || on error EmptyResult $1
+    [[ ${!1} ]] || error EmptyResult $1
 
     [[ $* =~ keep=false || ! $* =~ keep=true ]] && pid::onExit.unlink ${!1}
 
@@ -436,7 +436,7 @@ std::temp() {
 
                 if [[ $1 == $s ]]; then
 
-                  std::isVariable $1 || on error InvalidVariable $1
+                  std::isVariable $1 || error InvalidVariable $1
 
                 fi
 
@@ -471,7 +471,7 @@ std::temp() {
 
   fi
 
-  mkdir -p $path || on error NotExistNotCreated "$path"
+  mkdir -p $path || error NotExistNotCreated "$path"
 
   pid::onExit.unlink $fnErr
 
@@ -522,7 +522,7 @@ std::temp() {
 
   if ! [[ -f "$s" || -p "$s" || -d "$s" ]]; then
 
-    on error NotExistNotCreated $s $(< $fnErr)
+    error NotExistNotCreated $s $(< $fnErr)
 
   fi
 
@@ -560,7 +560,7 @@ std::acceptArrayItem() {
 
   errorify on MissingArgument $1 || return
 
-  [[ "$1" =~ ^[_a-zA-Z][_a-zA-Z0-9]*(\[.*\])?$ ]] || on error return InvalidVariable $1
+  [[ "$1" =~ ^[_a-zA-Z][_a-zA-Z0-9]*(\[.*\])?$ ]] || error InvalidVariable action=return $1
 
   [[ "$1" =~ ^[_a-zA-Z][_a-zA-Z0-9]*\[.*\]$ ]] && echo "{$1}" || echo "$1"
 
@@ -720,7 +720,7 @@ std::getMD5.list() {
   errorify on MissingArgument $@ || return
   errorify on NoSuchFileOrDir "$@" || return
 
-  cd "$@" 2>/dev/null || on error warn+return NotPermitted $@
+  cd "$@" 2>/dev/null || error NotPermitted action=warn+return $@
 
   pathDst="$( exec -c pwd )"
 
@@ -732,7 +732,7 @@ std::getMD5.list() {
 
   done< <(eval "ls -1drt * 2>/dev/null")
 
-  cd "$pathSrc" || on error warn+return NotPermitted $pathSrc
+  cd "$pathSrc" || error NotPermitted action=warn+return $pathSrc
 
   return 0
 
@@ -803,15 +803,15 @@ std::getTimeInSec() {
 
   if [[ "$1" == "-v" ]]; then
 
-    std::isVariable "$2" || on error InvalidVariable $2
+    std::isVariable "$2" || error InvalidVariable $2
 
     [[ "$3" == "-v" ]] \
-      && on error InvalidArgument "$3 - number with time suffix expected"
+      && error InvalidArgument "$3 - number with time suffix expected"
 
     eval 'export $2="$( std::getTimeInSec $3 )"'
 
     [[ ${!2} ]] || eval 'export $2="$( std::getTimeInSec $4 )"'
-    [[ ${!2} ]] || on error EmptyResult $2
+    [[ ${!2} ]] || error EmptyResult $2
 
     return $?
 
@@ -819,7 +819,7 @@ std::getTimeInSec() {
 
   local i=${1%%[[:alpha:]]*}
 
-  std::isNumber $i || on error InvalidArgument ${1%%[[:alpha:]]*}
+  std::isNumber $i || error InvalidArgument ${1%%[[:alpha:]]*}
 
   case ${1##*[[:digit:]]} in
 
@@ -831,7 +831,7 @@ std::getTimeInSec() {
            months|month|mon) echo $(( i*3600*24*30 ));;
                years|year|y) echo $(( i*3600*24*365 ));;
                           *) echo ""
-                             on error InvalidArgument "$1 - number with time suffix expected"
+                             error InvalidArgument "$1 - number with time suffix expected"
                           ;;
 
   esac

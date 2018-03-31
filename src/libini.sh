@@ -1,5 +1,5 @@
 #
-# $Id: libini.sh 808 2018-03-10 19:04:33+04:00 toor $
+# $Id: libini.sh 813 2018-03-21 19:02:16+04:00 toor $
 #
 #****h* BASHLYK/libini
 #  DESCRIPTION
@@ -176,13 +176,13 @@ INI() {
 
   for s in $_bashlyk_methods_ini; do
 
-    f=$( declare -pf INI::${s} 2>/dev/null ) || on error throw IniMissingMethod "INI::${s} for $o"
+    f=$( declare -pf INI::${s} 2>/dev/null ) || error IniMissingMethod action=throw "INI::${s} for $o"
 
-    echo "${f/INI::$s/${o}.$s}" >> $fn || on error throw IniBadMethod "INI::$s for $o"
+    echo "${f/INI::$s/${o}.$s}" >> $fn || error IniBadMethod action=throw "INI::$s for $o"
 
   done
 
-  source $fn || on error throw InvalidArgument "$fn"
+  source $fn || error InvalidArgument action=throw $fn
   return 0
 
 }
@@ -620,7 +620,7 @@ INI::__section.getArray() {
   o=${FUNCNAME[0]%%.*}
   ${o}.__section.select $*
   id=$( ${o}.__section.id $* )
-  std::isHash $id || on error $(_ onError) InvalidHash $id
+  std::isHash $id || error InvalidHash action=$(_ onError) $id
 
   sU=$( ${o}.__section.get _bashlyk_raw_mode )
 
@@ -739,7 +739,7 @@ INI::get() {
       ;;
 
     *)
-      on error warn+return InvalidArgument $*
+      error InvalidArgument action=warn+return $*
       ;;
 
   esac
@@ -821,7 +821,7 @@ INI::keys() {
     ;;
 
     *)
-      on error warn+return InvalidArgument "${a[@]}"
+      error InvalidArgument action=warn+return ${a[@]}
     ;;
 
   esac
@@ -919,7 +919,7 @@ INI::set() {
 
   else
 
-  on error InvalidArgument $*
+  error InvalidArgument $*
 
   fi
 
@@ -941,7 +941,7 @@ INI::set() {
 
   else
 
-    [[ $k =~ $( ${o}.settings reKey ) ]] || on error IniExtraCharInKey "$k"
+    [[ $k =~ $( ${o}.settings reKey ) ]] || error IniExtraCharInKey "$k"
 
     iKeyWidth=$( ${o}.__section.get _bashlyk_key_width )
     std::isNumber $iKeyWidth || iKeyWidth=0
@@ -1064,7 +1064,7 @@ INI::save() {
 
   [[ -s $fn ]] && mv -f $fn ${fn}.bak
 
-  mkdir -p ${fn%/*} && touch $fn || on error throw NotExistNotCreated ${fn%/*}
+  mkdir -p ${fn%/*} && touch $fn || error NotExistNotCreated action=throw ${fn%/*}
 
   {
 
@@ -1205,7 +1205,7 @@ INI::read() {
   ## TODO permit hi uid ?
   if [[ ! $( exec -c stat -c %u $fn ) =~ ^($UID|0)$ ]]; then
 
-    on error NotPermitted $1 owned by $( stat -c %U $fn )
+    error NotPermitted $1 owned by $( stat -c %U $fn )
 
   fi
 
@@ -1474,7 +1474,7 @@ INI::read() {
 #  SOURCE
 INI::load() {
 
-  [[ ${1##*/} =~ ^\.|\.$ ]] && on error InvalidArgument "${BASH_REMATCH[0]}"
+  [[ ${1##*/} =~ ^\.|\.$ ]] && error InvalidArgument "${BASH_REMATCH[0]}"
 
   local -a a
   local -A h hKeyValue hRawMode
@@ -1700,7 +1700,7 @@ INI::bind.cli() {
 
     else
 
-      on error InvalidArgument $s - format error
+      error InvalidArgument $s - format error
 
     fi
 
@@ -1750,12 +1750,12 @@ INI::bind.cli() {
       [[ ${h[unrecognized]} ]] && s+="${h[unrecognized]%*,}"
 
       unset h
-      on error warn+return InvalidOption "${s%*,} (command line:  $( _ sArg ))"
+      error InvalidOption action=warn+return "${s%*,} (command line:  $( _ sArg ))"
 
     ;;
 
     *)
-      on error InvalidOption "internal fail - $( < $fnErr )"
+      error InvalidOption "internal fail - $( < $fnErr )"
     ;;
 
   esac
