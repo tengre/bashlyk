@@ -1,5 +1,5 @@
 #
-# $Id: liberr.sh 812 2018-03-21 18:34:33+04:00 toor $
+# $Id: liberr.sh 815 2018-04-01 01:19:41+04:00 toor $
 #
 #****h* BASHLYK/liberr
 #  DESCRIPTION
@@ -50,7 +50,8 @@ declare -rg _bashlyk_methods_err="                                             \
     __add_throw_to_command CommandNotFound __convert_try_to_func debug         \
     EmptyArgument EmptyOrMissingArgument EmptyResult EmptyVariable             \
     exception.message generate __generate InvalidVariable MissingArgument      \
-    NoSuchFileOrDir orr postfix sourcecode stacktrace status status.show       \
+    NotExistNotCreated NotNumber NoSuchFileOrDir orr postfix sourcecode        \
+    stacktrace status status.show                                              \
 "
 
 declare -rg _bashlyk_aExport_err="                                             \
@@ -60,7 +61,6 @@ declare -rg _bashlyk_aExport_err="                                             \
                                                                                \
 "
 
-#declare -rg _bashlyk_err_reAct='^action=(echo|warn)$|action=((echo|warn)[+])?(exit|return)$|^action=throw$'
 declare -rg _bashlyk_err_reAct='^action=((echo|warn)|(((echo|warn)[+])?(exit|return))|(throw))$'
 declare -rg _bashlyk_err_reArg='(error|err::generate|\$\(.?err::generate.\"\$\@\".?\))[[:space:]]*?([^\>]*)[[:space:]]*?[\>\|]?'
 
@@ -653,6 +653,43 @@ err::NoSuchFileOrDir() {
 
 }
 #******
+#****p* liberr/err::NotExistNotCreated
+#  SYNOPSIS
+#    err::NotExistNotCreated <path>
+#  DESCRIPTION
+#    return true if argument is non empty, exists or succesfully created.
+#    Designed to check the conditions in the function err::postfix
+#  NOTES
+#    private method
+#  ARGUMENTS
+#    <path> - filesystem directory for checking
+#  RETURN VALUE
+#    NotExistNotCreated - no arguments, the specified path does not exist and is
+#                         not created
+#    0                  - specified path are found or created
+#  EXAMPLE
+#    local pathYes='/tmp' pathNo1=""
+#    err::NotExistNotCreated                                                    #? $_bashlyk_iErrorNotExistNotCreated
+#    err::NotExistNotCreated $pathNo1                                           #? $_bashlyk_iErrorNotExistNotCreated
+#    $(err::NotExistNotCreated $pathNo1 || exit 123)                            #? 123
+#    err::NotExistNotCreated $pathYes                                           #? true
+#  SOURCE
+err::NotExistNotCreated() {
+
+  [[ $* ]] || return $_bashlyk_iErrorNotExistNotCreated
+
+  if ! mkdir -p "$@" >/dev/null 2>&1; then
+
+    return $_bashlyk_iErrorNotExistNotCreated
+
+  else
+
+    return 0
+
+  fi
+
+}
+#******
 #****p* liberr/err::InvalidVariable
 #  SYNOPSIS
 #    err::InvalidVariable <variable>
@@ -676,6 +713,32 @@ err::NoSuchFileOrDir() {
 err::InvalidVariable() {
 
   [[ $* ]] && std::isVariable "$*" || return $_bashlyk_iErrorInvalidVariable
+
+}
+#******
+#****p* liberr/err::NotNumber
+#  SYNOPSIS
+#    err::NotNumber <argument>
+#  DESCRIPTION
+#    return true if argument is non empty, valid number, designed to check the
+#    conditions in the function err::postfix
+#  NOTES
+#    private method
+#  INPUTS
+#    <argument> - expected number
+#  RETURN VALUE
+#    NotNumber  - argument is empty or not number
+#    0          - valid number
+#  EXAMPLE
+#    err::NotNumber                                                             #? $_bashlyk_iErrorNotNumber
+#    err::NotNumber 1a                                                          #? $_bashlyk_iErrorNotNumber
+#    err::NotNumber 12                                                          #? true
+#    $(err::NotNumber 2b || exit 123)                                           #? 123
+#    $(err::NotNumber 33 && exit 123)                                           #? 123
+#  SOURCE
+err::NotNumber() {
+
+  std::isNumber $* || return $_bashlyk_iErrorNotNumber
 
 }
 #******
@@ -816,6 +879,8 @@ err::EmptyResult() {
 #    $(throw on NoSuchFileOrDir "/notexist.throw.child")                        #? $_bashlyk_iErrorNoSuchFileOrDir
 #    $(exit+echo on CommandNotFound notexist.exit+echo.child)                   #? $_bashlyk_iErrorCommandNotFound
 #    $(errorify on CommandNotFound notexist.errorify.child || return)           #? $_bashlyk_iErrorCommandNotFound
+#    $(errorify on NotNumber q123 || return)                                    #? $_bashlyk_iErrorNotNumber
+#    $(errorify on NotExistNotCreated || return)                                #? $_bashlyk_iErrorNotExistNotCreated
 #    warn on CommandNotFound notexist nomoreexist                               #? true
 #  SOURCE
 err::postfix() {
