@@ -1,5 +1,5 @@
 #
-# $Id: liberr.sh 815 2018-04-01 01:19:41+04:00 toor $
+# $Id: liberr.sh 817 2018-04-07 23:48:34+04:00 toor $
 #
 #****h* BASHLYK/liberr
 #  DESCRIPTION
@@ -1092,6 +1092,48 @@ err::debug() {
   [[ $* ]] && echo "$*" >&2
 
   return 0
+
+}
+#******
+#****f* liberr/err::debugf
+#  SYNOPSIS
+#    err::debugf <level> <format> <values>
+#  DESCRIPTION
+#    show a formatted message on the stderr if the <level> is equal or less than
+#    the $DEBUGLEVEL value otherwise return code 1
+#  INPUTS
+#    <level>  - decimal number of the debug level ( 0 for wrong argument)
+#    <format> - printf format string
+#    <values> - values for format string
+#  OUTPUT
+#    show a formatted message on the stderr
+#  RETURN VALUE
+#    0               - <level> equal or less than $DEBUGLEVEL value
+#    1               - <level> more than $DEBUGLEVEL value
+#    MissingArgument - no arguments
+#  EXAMPLE
+#    DEBUGLEVEL=0
+#    err::debugf                                                                #? $_bashlyk_iErrorMissingArgument
+#    err::debugf 0 '%s\n' 'test0'                                               #? true
+#    err::debugf 1 '%s\n' 'test0'                                               #? 1
+#    DEBUGLEVEL=5
+#    err::debugf 0 '%s\n' 'test5'                                               #? true
+#    err::debugf 6 '%s\n' 'test5'                                               #? 1
+#    err::debugf '%s\n' 'test0'                                                 #? true
+#  SOURCE
+err::debugf() {
+
+  errorify on MissingArgument $* || return
+
+  if [[ $1 =~ ^[0-9]+$ ]]; then
+
+    (( ${DEBUGLEVEL:=0} >= $1 )) && shift || return 1
+
+  fi
+
+  [[ $* ]] && printf -- $* >&2
+
+  return $?
 
 }
 #******
