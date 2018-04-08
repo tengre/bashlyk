@@ -1,5 +1,5 @@
 #
-# $Id: liberr.sh 817 2018-04-07 23:48:34+04:00 toor $
+# $Id: liberr.sh 819 2018-04-08 15:11:19+04:00 toor $
 #
 #****h* BASHLYK/liberr
 #  DESCRIPTION
@@ -1117,11 +1117,13 @@ err::debug() {
 #    err::debugf 0 '%s\n' 'test0'                                               #? true
 #    err::debugf 1 '%s\n' 'test0'                                               #? 1
 #    DEBUGLEVEL=5
-#    err::debugf 0 '%s\n' 'test5'                                               #? true
+#    err::debugf 0 "%s: %s\n" "test5" "$(date -R)"                              #? true
 #    err::debugf 6 '%s\n' 'test5'                                               #? 1
 #    err::debugf '%s\n' 'test0'                                                 #? true
 #  SOURCE
 err::debugf() {
+
+  local IFS=$' \t\n'
 
   errorify on MissingArgument $* || return
 
@@ -1131,7 +1133,7 @@ err::debugf() {
 
   fi
 
-  [[ $* ]] && printf -- $* >&2
+  [[ $* ]] && eval 'printf -- "$@" >&2'
 
   return $?
 
