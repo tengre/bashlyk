@@ -1,5 +1,5 @@
 #
-# $Id: libstd.sh 813 2018-03-21 19:02:16+04:00 toor $
+# $Id: libstd.sh 821 2018-04-10 18:29:12+04:00 toor $
 #
 #****h* BASHLYK/libstd
 #  DESCRIPTION
@@ -560,7 +560,7 @@ std::acceptArrayItem() {
 
   errorify on MissingArgument $1 || return
 
-  [[ "$1" =~ ^[_a-zA-Z][_a-zA-Z0-9]*(\[.*\])?$ ]] || error InvalidVariable action=return $1
+  [[ "$1" =~ ^[_a-zA-Z][_a-zA-Z0-9]*(\[.*\])?$ ]] || error InvalidVariable return $1
 
   [[ "$1" =~ ^[_a-zA-Z][_a-zA-Z0-9]*\[.*\]$ ]] && echo "{$1}" || echo "$1"
 
@@ -720,7 +720,7 @@ std::getMD5.list() {
   errorify on MissingArgument $@ || return
   errorify on NoSuchFileOrDir "$@" || return
 
-  cd "$@" 2>/dev/null || error NotPermitted action=warn+return $@
+  cd "$@" 2>/dev/null || error NotPermitted warn+return $@
 
   pathDst="$( exec -c pwd )"
 
@@ -732,7 +732,7 @@ std::getMD5.list() {
 
   done< <(eval "ls -1drt * 2>/dev/null")
 
-  cd "$pathSrc" || error NotPermitted action=warn+return $pathSrc
+  cd "$pathSrc" || error NotPermitted warn+return $pathSrc
 
   return 0
 
