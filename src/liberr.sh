@@ -1,5 +1,5 @@
 #
-# $Id: liberr.sh 819 2018-04-08 15:11:19+04:00 toor $
+# $Id: liberr.sh 820 2018-04-10 18:01:10+04:00 toor $
 #
 #****h* BASHLYK/liberr
 #  DESCRIPTION
@@ -1114,12 +1114,12 @@ err::debug() {
 #  EXAMPLE
 #    DEBUGLEVEL=0
 #    err::debugf                                                                #? $_bashlyk_iErrorMissingArgument
-#    err::debugf 0 '%s\n' 'test0'                                               #? true
-#    err::debugf 1 '%s\n' 'test0'                                               #? 1
+#    err::debugf 0 '%s: %s\n' 'level0' "$(date -R)" 2>&1 | {{ ^level0: }}
+#    err::debugf 1 '%s\n' 'level 1'                                             #? 1
 #    DEBUGLEVEL=5
-#    err::debugf 0 "%s: %s\n" "test5" "$(date -R)"                              #? true
-#    err::debugf 6 '%s\n' 'test5'                                               #? 1
-#    err::debugf '%s\n' 'test0'                                                 #? true
+#    err::debugf 4 "%s: %s\n" "level5" "$(date -R)" 2>&1 | {{ ^level5: }}
+#    err::debugf 6 '%s:\n' 'level6'                                             #? 1
+#    err::debugf '%s:\n' 'default0' 2>&1 | {{ ^default0: }}
 #  SOURCE
 err::debugf() {
 
