@@ -1,5 +1,5 @@
 #
-# $Id: libcfg.sh 821 2018-04-10 18:29:12+04:00 toor $
+# $Id: libcfg.sh 825 2018-04-15 14:48:25+04:00 toor $
 #
 #****h* BASHLYK/libcfg
 #  DESCRIPTION
@@ -1082,12 +1082,12 @@ CFG::show() {
 #                 by default a special file is generated
 #  EXAMPLE
 #
-#    CFG cfgStorageUse
-#    cfgStorageUse.storage.use
-#    cfgStorageUse.settings storage | {{ lib/[[:xdigit:]]*\.cfg$ }}
-#    cfgStorageUse.storage.use external.ini
-#    cfgStorageUse.settings storage | {{ ^external\.ini$ }}
-#    cfgStorageUse.free
+#    CFG cfgStorage
+#    cfgStorage.storage.use
+#    cfgStorage.settings storage | {{ ${_bashlyk_pathDat}/[[:xdigit:]]*\.cfg$ }}
+#    cfgStorage.storage.use external.ini
+#    cfgStorage.settings storage | {{ ^external\.ini$ }}
+#    cfgStorage.free
 #
 #  SOURCE
 CFG::storage.use() {
