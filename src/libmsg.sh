@@ -1,5 +1,5 @@
 #
-# $Id: libmsg.sh 808 2018-03-10 19:23:16+04:00 toor $
+# $Id: libmsg.sh 823 2018-04-15 12:04:54+04:00 toor $
 #
 #****h* BASHLYK/libmsg
 #  DESCRIPTION
@@ -384,11 +384,11 @@ msg::notifyTool() {
 
   X=$( _ sXSessionProp )
   #
-  declare -A h=(                                                                                                   \
-    [notify-send]="$X $1 -t $t \"$2 via $1\" \"$(printf -- "%s" "$3")\""                                           \
-    [kdialog]="$X $1 --title \"$2 via $1\" --passivepopup \"$(printf -- "%s" "$3")\" $t"                           \
+  local -A h=(                                                                                                     \
     [zenity]="$X $1 --notification --timeout $(($t/2)) --text \"$(printf -- "%s via %s\n\n%s\n" "$2" "$1" "$3")\"" \
     [xmessage]="$X $1 -center -timeout $t \"$(printf -- "%s via %s\n\n%s\n" "$2" "$1" "$3")\""                     \
+    [kdialog]="$X $1 --title \"$2 via $1\" --passivepopup \"$(printf -- "%s" "$3")\" $t"                           \
+    [notify-send]="$X $1 -t $t \"$2 via $1\" \"$(printf -- "%s" "$3")\""                                           \
   )
 
   if hash "$1" 2>/dev/null; then
