@@ -1,3 +1,48 @@
+Sun, 15 Apr 2018 14:24:16 +0400
+	New upstream release
+	Version 1.93
+
+- libini library has been renamed to libcfg, which emphasizes the versatility of
+  this library as a means of managing configurations or complex data
+  conglomerations. Innovations:
+  - added a separate method for specifying an external configuration store.
+  - you can specify the configuration type (shellmode or INI) by the prefix of
+    the instance name of the class CFG.
+  - added bSaveConfig option for the instance settings
+- liberr - the syntax of the error handling function is changed:
+  'on error <action> <code> <hint>' -> 'error <code> <action> <hint>'
+  - added the handlers NotNumber, NotExistNotCreated
+  - added function err::debugf for formatted output
+- fixed debian/postinst bug for a first installation
+- updated lists of the external commands and exports
+
+details:
+
+libcfg.sh:
+- CFG::storage.use without argument make $_bashlyk_pathDat directory and
+  default storage
+- if instance name begin with 'conf' then used "active configuration"
+  mode (shellmode), wherein if the key is not a valid variable, then the
+  'key = value' string turns into a comment
+- added bSaveConfig option for management a preserving configuration on
+  the CFG::save method call
+- improved testunit for CFG::settings method
+- added test for autoswitch testing
+- updated descriptions
+- changed CFG::{save,read,load,bind.cli} methods for use CFG::storage.use
+  method
+
+libmsg.sh:
+- msg::notifyTool - fixed variable declaration
+
+bashlyk:
+- added global variable _bashlyk_pathCfg - _bashlyk_path{Cnf,Ini} sister
+
+get-external-commands-and-export-list.sh:
+- improved a performance by caching of the search
+- agreed with the latest version of the bashlyk library
+
+
 Mon, 05 Mar 2018 00:53:20 +0400
 	New upstream release
 	Version 1.92
@@ -1588,3 +1633,5 @@ Mon, 22 Sep 2008 16:44:02 +0500
 	New upstream release
 	Version 1.35
 
+--
+$Id: ChangeLog 824 2018-04-15 14:37:11+04:00 toor $
