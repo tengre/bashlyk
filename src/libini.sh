@@ -1,5 +1,5 @@
 #
-# $Id: libini.sh 813 2018-03-21 19:02:16+04:00 toor $
+# $Id: libini.sh 821 2018-04-10 18:29:12+04:00 toor $
 #
 #****h* BASHLYK/libini
 #  DESCRIPTION
@@ -176,13 +176,13 @@ INI() {
 
   for s in $_bashlyk_methods_ini; do
 
-    f=$( declare -pf INI::${s} 2>/dev/null ) || error IniMissingMethod action=throw "INI::${s} for $o"
+    f=$( declare -pf INI::${s} 2>/dev/null ) || error IniMissingMethod throw "INI::${s} for $o"
 
-    echo "${f/INI::$s/${o}.$s}" >> $fn || error IniBadMethod action=throw "INI::$s for $o"
+    echo "${f/INI::$s/${o}.$s}" >> $fn || error IniBadMethod throw "INI::$s for $o"
 
   done
 
-  source $fn || error InvalidArgument action=throw $fn
+  source $fn || error InvalidArgument throw $fn
   return 0
 
 }
@@ -620,7 +620,7 @@ INI::__section.getArray() {
   o=${FUNCNAME[0]%%.*}
   ${o}.__section.select $*
   id=$( ${o}.__section.id $* )
-  std::isHash $id || error InvalidHash action=$(_ onError) $id
+  std::isHash $id || error InvalidHash $(_ onError) $id
 
   sU=$( ${o}.__section.get _bashlyk_raw_mode )
 
@@ -739,7 +739,7 @@ INI::get() {
       ;;
 
     *)
-      error InvalidArgument action=warn+return $*
+      error InvalidArgument warn+return $*
       ;;
 
   esac
@@ -821,7 +821,7 @@ INI::keys() {
     ;;
 
     *)
-      error InvalidArgument action=warn+return ${a[@]}
+      error InvalidArgument warn+return ${a[@]}
     ;;
 
   esac
@@ -1064,7 +1064,7 @@ INI::save() {
 
   [[ -s $fn ]] && mv -f $fn ${fn}.bak
 
-  mkdir -p ${fn%/*} && touch $fn || error NotExistNotCreated action=throw ${fn%/*}
+  mkdir -p ${fn%/*} && touch $fn || error NotExistNotCreated throw ${fn%/*}
 
   {
 
@@ -1750,7 +1750,7 @@ INI::bind.cli() {
       [[ ${h[unrecognized]} ]] && s+="${h[unrecognized]%*,}"
 
       unset h
-      error InvalidOption action=warn+return "${s%*,} (command line:  $( _ sArg ))"
+      error InvalidOption warn+return "${s%*,} (command line:  $( _ sArg ))"
 
     ;;
 

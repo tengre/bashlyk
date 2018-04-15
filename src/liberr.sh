@@ -1,5 +1,5 @@
 #
-# $Id: liberr.sh 820 2018-04-10 18:01:10+04:00 toor $
+# $Id: liberr.sh 821 2018-04-10 18:29:12+04:00 toor $
 #
 #****h* BASHLYK/liberr
 #  DESCRIPTION
@@ -61,7 +61,7 @@ declare -rg _bashlyk_aExport_err="                                             \
                                                                                \
 "
 
-declare -rg _bashlyk_err_reAct='^action=((echo|warn)|(((echo|warn)[+])?(exit|return))|(throw))$'
+declare -rg _bashlyk_err_reAct='^((echo|warn)|(((echo|warn)[+])?(exit|return))|(throw))$'
 declare -rg _bashlyk_err_reArg='(error|err::generate|\$\(.?err::generate.\"\$\@\".?\))[[:space:]]*?([^\>]*)[[:space:]]*?[\>\|]?'
 
 : ${_bashlyk_onError:=throw}
@@ -355,7 +355,7 @@ err::sourcecode() {
 #******
 #****e* liberr/err::generate
 #  SYNOPSIS
-#    err::generate [<state>] [[action=]<action>] [<message>]
+#    err::generate [<state>] [<action>] [<message>]
 #  DESCRIPTION
 #    Generate code for flexible error handling, which depends on the global
 #    variable or arguments. Possible to combine with each other the following
@@ -407,11 +407,11 @@ err::sourcecode() {
 #  OUTPUT
 #    command line, which can be performed using the eval <...>
 #  EXAMPLE
-#    false || error NoSuchFileOrDir action=warn /notexist                       #? true
+#    false || error NoSuchFileOrDir warn /notexist                              #? true
 #    _bashlyk_onError=debug
-#    false || error NoSuchFileOrDir action=exit /notexist                       #? $_bashlyk_iErrorNoSuchFileOrDir
-#    err::orr 100 || error action=echo                                          #? true
-#    err::orr 101 || error 115 action=echo+return                               #? 115
+#    false || error NoSuchFileOrDir exit /notexist                              #? $_bashlyk_iErrorNoSuchFileOrDir
+#    err::orr 100 || error echo                                                 #? true
+#    err::orr 101 || error 115 echo+return                                      #? 115
 #    err::orr 102 || error 116                                                  #? 116
 #    err::orr 103 || error bla-bla bla                                          #? 103
 #    err::orr 103 || error CommandNotFound bla-bla bla                          #? $_bashlyk_iErrorCommandNotFound
@@ -433,7 +433,7 @@ err::generate() {
 #******
 #****p* liberr/err::__generate
 #  SYNOPSIS
-#    err::__generate [<state>] [[action=]<action>] [[hint=]<message>]
+#    err::__generate [<state>] [<action>] [[hint=]<message>]
 #  DESCRIPTION
 #    The internal part of the function err::generate for protecting variables in
 #    arguments from local variables of this functions when calling the "eval"
@@ -481,7 +481,7 @@ err::generate() {
 #    command line, which can be performed using the eval <...>
 #  EXAMPLE
 #    local cmd
-#    cmd='err::__generate 1 NoSuchFileOrDir action=warn /notexist'
+#    cmd='err::__generate 1 NoSuchFileOrDir warn /notexist'
 #    _bashlyk_onError=debug
 #    $cmd | {{{
 #    err::stacktrace | msg::warn -  Warn: no\ such\ file\ or\ directory\ -\ /notexist\ ..\ \(185\) >&2; err::status 185 "/notexist"; : ; #
@@ -889,17 +889,17 @@ err::postfix() {
   local re='^(echo|warn)$|^((echo|warn)[+])?(exit|return)$|^throw$' i=0 j=0 s
   ## TODO add reAction and reState for safely arguments parsing
 
-  [[ $1 =~ $re ]] && shift || error InvalidArgument action=throw "${1:-first argument}"
-  [[ $1 == on  ]] && shift || error InvalidArgument action=throw "${1:-second argument}"
-  [[ $1        ]] && shift || error MissingArgument action=throw "${1:-third argument}"
+  [[ $1 =~ $re ]] && shift || error InvalidArgument throw "${1:-first argument}"
+  [[ $1 == on  ]] && shift || error InvalidArgument throw "${1:-second argument}"
+  [[ $1        ]] && shift || error MissingArgument throw "${1:-third argument}"
 
   if ! declare -pf err::${aErrHandler[2]} >/dev/null 2>&1; then
 
-    error InvalidArgument action=throw "${aErrHandler[2]}"
+    error InvalidArgument throw "${aErrHandler[2]}"
 
   fi
 
-  [[ $* ]] || error ${aErrHandler[2]} action=${aErrHandler[0]} ${aErrHandler[@]:3}
+  [[ $* ]] || error ${aErrHandler[2]} ${aErrHandler[0]} ${aErrHandler[@]:3}
 
   for s in "$@"; do
 
@@ -918,7 +918,7 @@ err::postfix() {
   if (( i > 0 )); then
 
     (( i > 1 )) && aErrHandler[3]+=" [total $i]"
-    error ${aErrHandler[2]} action=${aErrHandler[0]} ${aErrHandler[3]}
+    error ${aErrHandler[2]} ${aErrHandler[0]} ${aErrHandler[3]}
 
   fi
 

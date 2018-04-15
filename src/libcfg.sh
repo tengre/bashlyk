@@ -1,5 +1,5 @@
 #
-# $Id: libcfg.sh 814 2018-03-25 01:48:12+04:00 toor $
+# $Id: libcfg.sh 821 2018-04-10 18:29:12+04:00 toor $
 #
 #****h* BASHLYK/libcfg
 #  DESCRIPTION
@@ -204,13 +204,13 @@ CFG() {
 
   for s in $_bashlyk_methods_cfg; do
 
-    f=$( declare -pf CFG::${s} 2>/dev/null ) || error IniMissingMethod action=throw "CFG::${s} for $o"
+    f=$( declare -pf CFG::${s} 2>/dev/null ) || error IniMissingMethod throw "CFG::${s} for $o"
 
-    echo "${f/CFG::$s/${o}.$s}" >> $fn || error IniBadMethod action=throw "CFG::$s for $o"
+    echo "${f/CFG::$s/${o}.$s}" >> $fn || error IniBadMethod throw "CFG::$s for $o"
 
   done
 
-  source $fn || error InvalidArgument action=throw "$fn"
+  source $fn || error InvalidArgument throw "$fn"
   return 0
 
 }
@@ -648,7 +648,7 @@ CFG::__section.getArray() {
   o=${FUNCNAME[0]%%.*}
   ${o}.__section.select $*
   id=$( ${o}.__section.id $* )
-  std::isHash $id || error InvalidHash action=$(_ onError) $id
+  std::isHash $id || error InvalidHash $(_ onError) $id
 
   sU=$( ${o}.__section.get _bashlyk_raw_mode )
 
@@ -767,7 +767,7 @@ CFG::get() {
       ;;
 
     *)
-      error InvalidArgument action=warn+return $*
+      error InvalidArgument warn+return $*
       ;;
 
   esac
@@ -849,7 +849,7 @@ CFG::keys() {
     ;;
 
     *)
-      error InvalidArgument action=warn+return "${a[@]}"
+      error InvalidArgument warn+return "${a[@]}"
     ;;
 
   esac
@@ -982,7 +982,7 @@ CFG::set() {
     else
 
       ## TODO get ${o}.settings chComment
-      ${o}.__section.set "#[!] - $( error IniExtraCharInKey action=echo 2>&1 ): $k" "$v"
+      ${o}.__section.set "#[!] - $( error IniExtraCharInKey echo 2>&1 ): $k" "$v"
 
     fi
 
@@ -1211,7 +1211,7 @@ CFG::save() {
 
   fi
 
-  mkdir -p ${fn%/*} && touch $fn || error NotExistNotCreated action=throw ${fn%/*}
+  mkdir -p ${fn%/*} && touch $fn || error NotExistNotCreated throw ${fn%/*}
 
   {
 
@@ -1905,7 +1905,7 @@ CFG::bind.cli() {
       [[ ${h[unrecognized]} ]] && s+="${h[unrecognized]%*,}"
 
       unset h
-      error InvalidOption action=warn+return "${s%*,} (command line:  $( _ sArg ))"
+      error InvalidOption warn+return "${s%*,} (command line:  $( _ sArg ))"
 
     ;;
 
