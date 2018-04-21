@@ -55,6 +55,16 @@ case "$1" in
 
       fi >/dev/null 2>&1
 
+      if [ -z "$BVER" -o "$BVER" -lt 193 ]; then
+
+        if ! grep '_bashlyk_aLib=.*ini.*' $CONF >/dev/null 2>&1; then
+
+          sed -i -re "s/shlyk_aLib=\"(.*)\"\}$/shlyk_aLib=\"\1,ini\"\}/g" $CONF || true
+
+        fi
+
+      fi >/dev/null 2>&1
+
     fi
 
     ;;
