@@ -1,5 +1,5 @@
 #
-# $Id: libcfg.sh 825 2018-04-15 14:48:25+04:00 toor $
+# $Id: libcfg.sh 827 2018-04-22 16:16:29+04:00 toor $
 #
 #****h* BASHLYK/libcfg
 #  DESCRIPTION
@@ -1629,7 +1629,6 @@ CFG::load() {
   o=${FUNCNAME[0]%%.*}
 
   fn="$( ${o}.storage.show )"
-  [[ ${fn##*/} =~ ^\.|\.$ ]] && error InvalidArgument "${BASH_REMATCH[0]}"
 
   fmtSections='^[[:space:]]*(:?)\[[[:space:]]*(%SECTION%)[[:space:]]*\](:?)[[:space:]]*$'
 
@@ -1693,7 +1692,13 @@ CFG::load() {
 
   unset -f CFG::load::parse
 
-  a=( ${cfg//./ } )
+  if [[ $cfg =~ ^(\.)?(.*[^.])(\.)?$ ]]; then
+
+        a=( ${BASH_REMATCH[2]//./ } )
+     a[0]="${BASH_REMATCH[1]}${a[0]}"
+    a[-1]="${a[-1]}${BASH_REMATCH[3]}"
+
+  fi
 
   csv=${csv%*|}
 
