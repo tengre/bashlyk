@@ -1,4 +1,4 @@
-# $Id: TODO 814 2018-03-25 01:48:12+04:00 toor $
+# $Id: TODO 828 2018-06-18 01:19:07+04:00 toor $
 + liblog.sh: не проходит тест udfWarn без терминала (в не интерактивном режиме)
 + libini.sh: при тесте с другими модулями в ini файлах оказывается вывод других
   тестовых блоков (решено в версии 1.57)
@@ -125,7 +125,10 @@ Fri, 06 Mar 2015 12:44:00 +0400
 - #180308 - replace testunit.awk by testunit.sh
 + #180309 - cfg - add setting 'backup config'
 + #180310 - cfg - autoswitch between INI and CONF mode of the CFG instance
-
-
+- #180501 - cfg - CFG::get - check return code
+- #180502 - log - log notify messages (do not worked)
+- #180509 - err - added NoSuch{Dir,File}, Timeout error states
+- #180515 - cfg - 'conf', 'cnf' prefixes for 'shellmode', 'config' and other - 'INI-style'
+- #180518 - net - net::ipv4.mask without address
 
 
