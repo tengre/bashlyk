@@ -1,4 +1,4 @@
-# $Id: TODO 828 2018-06-18 01:19:07+04:00 toor $
+# $Id: TODO 829 2018-07-19 23:43:39+04:00 yds $
 + liblog.sh: не проходит тест udfWarn без терминала (в не интерактивном режиме)
 + libini.sh: при тесте с другими модулями в ini файлах оказывается вывод других
   тестовых блоков (решено в версии 1.57)
@@ -130,5 +130,6 @@ Fri, 06 Mar 2015 12:44:00 +0400
 - #180509 - err - added NoSuch{Dir,File}, Timeout error states
 - #180515 - cfg - 'conf', 'cnf' prefixes for 'shellmode', 'config' and other - 'INI-style'
 - #180518 - net - net::ipv4.mask without address
+- #180719 - cfg - use CFG::load without config file if exist cli options
 
 
