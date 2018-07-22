@@ -1,5 +1,5 @@
 #
-# $Id: libcfg.sh 827 2018-04-22 16:16:29+04:00 toor $
+# $Id: libcfg.sh 830 2018-07-23 01:16:35+04:00 toor $
 #
 #****h* BASHLYK/libcfg
 #  DESCRIPTION
@@ -1092,15 +1092,33 @@ CFG::show() {
 #  SOURCE
 CFG::storage.use() {
 
-  local o s
+  local fnErr o s
 
   o=${FUNCNAME[0]%%.*}
 
   if [[ $* ]]; then
 
-    s="$*"
+    std::temp fnErr
+
+    if [[ -f "$@" ]]; then
+
+      LANG=C touch "$@" && head -c 1 "$@" || s="NotPermitted"
+
+    else
+     
+      LANG=C mkdir -p $( dirname "$@" ) && touch "$@" || s='NotExistAndNotCreated'
+
+    fi >$fnErr 2>&1
 
   else
+
+    s='MissingArgument'
+
+  fi
+
+  if [[ $s =~ ^(Not|Missing) ]]; then
+
+    [[ -s $fnErr ]] && error $s warn $(< $fnErr)
 
     s="$( ${o}.settings storage )"
 
@@ -1112,6 +1130,10 @@ CFG::storage.use() {
       pid::onExit.unlink $_bashlyk_pathDat
 
     fi
+
+  else
+
+    s="$@"
 
   fi
 
