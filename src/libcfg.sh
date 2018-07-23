@@ -1,5 +1,5 @@
 #
-# $Id: libcfg.sh 830 2018-07-23 01:16:35+04:00 toor $
+# $Id: libcfg.sh 833 2018-07-23 23:59:07+04:00 yds $
 #
 #****h* BASHLYK/libcfg
 #  DESCRIPTION
@@ -1087,6 +1087,8 @@ CFG::show() {
 #    cfgStorage.settings storage | {{ ${_bashlyk_pathDat}/[[:xdigit:]]*\.cfg$ }}
 #    cfgStorage.storage.use external.ini
 #    cfgStorage.settings storage | {{ ^external\.ini$ }}
+#    cfgStorage.storage.use /sys/external.ini
+#    cfgStorage.settings storage | {{ ^external\.ini$ }}
 #    cfgStorage.free
 #
 #  SOURCE
@@ -1106,7 +1108,8 @@ CFG::storage.use() {
 
     else
      
-      LANG=C mkdir -p $( dirname "$@" ) && touch "$@" || s='NotExistAndNotCreated'
+      LANG=C mkdir -p $( dirname "$@" ) && touch "$@" || s='NotExistNotCreated'
+      # TODO finally - [[ -s "$@" ]] || rm -f "$@"
 
     fi >$fnErr 2>&1
 
@@ -1126,7 +1129,8 @@ CFG::storage.use() {
 
       s="$( exec -c sha1sum <<< "${0}::${o}" )"
       s="${_bashlyk_pathDat}/${s:0:40}.cfg"
-      mkdir -p $_bashlyk_pathDat || throw on NoSuchFileOrDir "$_bashlyk_pathDat"
+      mkdir -p $_bashlyk_pathDat && touch $s || error NotExistNotCreated throw "$s"
+      # TODO finally - [[ -s "$@" ]] || rm -f "$@"
       pid::onExit.unlink $_bashlyk_pathDat
 
     fi
@@ -1299,7 +1303,7 @@ CFG::save() {
 #   CFG tRead
 #   tRead.read                                                                  #? $_bashlyk_iErrorNoSuchFileOrDir
 #   tRead.storage.use
-#   tRead.read                                                                  #? $_bashlyk_iErrorNoSuchFileOrDir
+#   tRead.read                                                                  #? true
 #   tRead.storage.use $ini
 #   tRead.read                                                                  #? true
 #   tRead.show | {{{
