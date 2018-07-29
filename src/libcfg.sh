@@ -1,5 +1,5 @@
 #
-# $Id: libcfg.sh 834 2018-07-29 10:04:03+04:00 toor $
+# $Id: libcfg.sh 836 2018-07-29 13:15:55+04:00 toor $
 #
 #****h* BASHLYK/libcfg
 #  DESCRIPTION
@@ -1377,7 +1377,13 @@ CFG::read() {
 
   o=${FUNCNAME[0]%%.*}
 
-  fn=$( ${o}.storage.show )
+  fn="$( ${o}.storage.show )" || {
+
+    ${o}.storage.use
+    fn="$( ${o}.storage.show )"
+
+  }
+
   errorify on NoSuchFileOrDir $fn || return
 
   reSection='^[[:space:]]*(:?)\[[[:space:]]*([[:print:]]+?)[[:space:]]*\](:?)[[:space:]]*$'
@@ -1669,7 +1675,12 @@ CFG::load() {
 
   o=${FUNCNAME[0]%%.*}
 
-  fn="$( ${o}.storage.show )"
+  fn="$( ${o}.storage.show )" || {
+
+    ${o}.storage.use
+    fn="$( ${o}.storage.show )"
+
+  }
 
   fmtSections='^[[:space:]]*(:?)\[[[:space:]]*(%SECTION%)[[:space:]]*\](:?)[[:space:]]*$'
 
