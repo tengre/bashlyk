@@ -1,5 +1,5 @@
 #
-# $Id: libcfg.sh 827 2018-04-22 16:16:29+04:00 toor $
+# $Id: libcfg.sh 834 2018-07-29 10:04:03+04:00 toor $
 #
 #****h* BASHLYK/libcfg
 #  DESCRIPTION
@@ -117,7 +117,7 @@ declare -rg _bashlyk_methods_cfg="                                             \
 
 declare -rg _bashlyk_externals_cfg="                                           \
                                                                                \
-    [ getopt mkdir mv pwd rm sha1sum sort stat touch                           \
+    [ getopt mkdir mv pwd readlink rm sha1sum sort stat touch                  \
                                                                                \
 "
 
@@ -1086,21 +1086,46 @@ CFG::show() {
 #    cfgStorage.storage.use
 #    cfgStorage.settings storage | {{ ${_bashlyk_pathDat}/[[:xdigit:]]*\.cfg$ }}
 #    cfgStorage.storage.use external.ini
-#    cfgStorage.settings storage | {{ ^external\.ini$ }}
+#    cfgStorage.settings storage | {{ /external\.ini$ }}
+#    cfgStorage.storage.use /sys/extern.ini
+#    cfgStorage.settings storage | {{ /external\.ini$ }}
+#    rm -f external.ini
 #    cfgStorage.free
 #
 #  SOURCE
 CFG::storage.use() {
 
-  local o s
+  local fnErr o s sErr LANG=C
 
   o=${FUNCNAME[0]%%.*}
 
   if [[ $* ]]; then
 
-    s="$*"
+    s="$( readlink -f "$@" )"
+
+    std::temp fnErr
+
+    if [[ -f "$s" ]]; then
+
+      ## TODO readonly maybe
+      touch "$s" && head -c 1 "$s" || sErr="NotPermitted"
+
+    else
+
+      mkdir -p "${s%/*}" && touch "$s" || sErr='NotExistNotCreated'
+      # TODO finally - [[ -s "$s" ]] || rm -f "$s"
+
+    fi >$fnErr 2>&1
 
   else
+
+    sErr='MissingArgument'
+
+  fi
+
+  if [[ $sErr =~ ^(Not|Missing) ]]; then
+
+    [[ -s $fnErr ]] && error $sErr warn "${s}, details - $(< $fnErr)"
 
     s="$( ${o}.settings storage )"
 
@@ -1108,10 +1133,20 @@ CFG::storage.use() {
 
       s="$( exec -c sha1sum <<< "${0}::${o}" )"
       s="${_bashlyk_pathDat}/${s:0:40}.cfg"
-      mkdir -p $_bashlyk_pathDat || throw on NoSuchFileOrDir "$_bashlyk_pathDat"
-      pid::onExit.unlink $_bashlyk_pathDat
 
     fi
+
+    std::temp fnErr
+
+    ( mkdir -p "${s%/*}" && touch "$s" ) > $fnErr 2>&1 ||
+    error NotExistNotCreated throw "${s}, details - $(< $fnErr)"
+
+    pid::onExit.unlink "${s%/*}"
+    # TODO finally - [[ -s "$s" ]] || rm -f "$s"
+
+  else
+
+    s="$( readlink -f "$@" )"
 
   fi
 
@@ -1133,7 +1168,8 @@ CFG::storage.use() {
 #    CFG cfgStorageShow
 #    cfgStorageShow.storage.show                                                #? $_bashlyk_iErrorEmptyResult
 #    cfgStorageShow.storage.use external.ini
-#    cfgStorageShow.storage.show | {{ ^external\.ini$ }}
+#    cfgStorageShow.storage.show | {{ /external\.ini$ }}
+#    rm -f external.ini
 #    cfgStorageShow.free
 #
 #  SOURCE
@@ -1197,7 +1233,12 @@ CFG::save() {
 
   o=${FUNCNAME[0]%%.*}
 
-  [[ $* ]] && fn="$*" || fn="$( ${o}.storage.show )"
+  [[ $* ]] && fn="$*" || fn="$( ${o}.storage.show )" || {
+
+    ${o}.storage.use
+    fn="$( ${o}.storage.show )"
+
+  }
 
   fmtComment='%COMMENT%\n%COMMENT% created %s by %s\n%COMMENT%\n'
 
@@ -1211,7 +1252,7 @@ CFG::save() {
 
   fi
 
-  mkdir -p ${fn%/*} && touch $fn || error NotExistNotCreated throw ${fn%/*}
+  ( mkdir -p ${fn%/*} && touch $fn ) >/dev/null 2>&1 || error NotExistNotCreated throw ${fn%/*}
 
   {
 
@@ -1277,7 +1318,7 @@ CFG::save() {
 #   CFG tRead
 #   tRead.read                                                                  #? $_bashlyk_iErrorNoSuchFileOrDir
 #   tRead.storage.use
-#   tRead.read                                                                  #? $_bashlyk_iErrorNoSuchFileOrDir
+#   tRead.read                                                                  #? true
 #   tRead.storage.use $ini
 #   tRead.read                                                                  #? true
 #   tRead.show | {{{
