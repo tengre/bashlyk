@@ -1,5 +1,5 @@
 #
-# $Id: libcfg.sh 836 2018-07-29 13:15:55+04:00 toor $
+# $Id: libcfg.sh 838 2018-07-29 15:01:35+04:00 toor $
 #
 #****h* BASHLYK/libcfg
 #  DESCRIPTION
@@ -1112,7 +1112,7 @@ CFG::storage.use() {
 
     else
 
-      mkdir -p "${s%/*}" && touch "$s" || sErr='NotExistNotCreated'
+      mkdir -p "${s%/*}/" && touch "$s" || sErr='NotExistNotCreated'
       # TODO finally - [[ -s "$s" ]] || rm -f "$s"
 
     fi >$fnErr 2>&1
@@ -1138,7 +1138,7 @@ CFG::storage.use() {
 
     std::temp fnErr
 
-    ( mkdir -p "${s%/*}" && touch "$s" ) > $fnErr 2>&1 ||
+    ( mkdir -p "${s%/*}/" && touch "$s" ) > $fnErr 2>&1 ||
     error NotExistNotCreated throw "${s}, details - $(< $fnErr)"
 
     pid::onExit.unlink "${s%/*}"
@@ -1248,18 +1248,18 @@ CFG::save() {
 
   if [[ ! $s =~ ^(false|no|0)$ ]]; then
 
-    [[ -s $fn ]] && mv -f $fn ${fn}.bak
+    [[ -s "$fn" ]] && mv -f "$fn" "${fn}.bak"
 
   fi
 
-  ( mkdir -p ${fn%/*} && touch $fn ) >/dev/null 2>&1 || error NotExistNotCreated throw ${fn%/*}
+  ( mkdir -p "${fn%/*}/" && touch "$fn" ) >/dev/null 2>&1 || error NotExistNotCreated throw ${fn%/*}
 
   {
 
     printf -- "${fmtComment//%COMMENT%/$c}" "$( std::dateR )" "$( _ sUser )"
     ${o}.show
 
-  } > $fn
+  } > "$fn"
 
   return 0
 
