@@ -1,5 +1,5 @@
 #
-# $Id: libcfg.sh 838 2018-07-29 15:01:35+04:00 toor $
+# $Id: libcfg.sh 839 2018-07-29 23:04:23+04:00 toor $
 #
 #****h* BASHLYK/libcfg
 #  DESCRIPTION
@@ -1316,9 +1316,8 @@ CFG::save() {
 #    EOFini                                                                     #-
 #   _ onError warn+return
 #   CFG tRead
-#   tRead.read                                                                  #? $_bashlyk_iErrorNoSuchFileOrDir
-#   tRead.storage.use
 #   tRead.read                                                                  #? true
+#   tRead.storage.show
 #   tRead.storage.use $ini
 #   tRead.read                                                                  #? true
 #   tRead.show | {{{
