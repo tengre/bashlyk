@@ -1,5 +1,5 @@
 #
-# $Id: liberr.sh 821 2018-04-10 18:29:12+04:00 toor $
+# $Id: liberr.sh 840 2018-08-02 02:02:54+04:00 yds $
 #
 #****h* BASHLYK/liberr
 #  DESCRIPTION
@@ -1089,7 +1089,7 @@ err::debug() {
 
   fi
 
-  [[ $* ]] && echo "$*" >&2
+  [[ $* ]] && printf -- '%s\n' "$*" >&2
 
   return 0
 

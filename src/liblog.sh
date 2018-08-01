@@ -1,5 +1,5 @@
 #
-# $Id: liblog.sh 821 2018-04-10 18:29:12+04:00 toor $
+# $Id: liblog.sh 840 2018-08-02 02:02:54+04:00 yds $
 #
 #****h* BASHLYK/liblog
 #  DESCRIPTION
@@ -138,7 +138,7 @@ log::ger() {
   case "${bSysLog}${bUseLog}" in
 
     00)
-        echo "$@"
+        printf -- '%s\n' "$@"
      ;;
 
     01)
@@ -146,7 +146,7 @@ log::ger() {
      ;;
 
     10)
-        echo "$*"
+        printf -- '%s\n' "$*"
         logger -t "$sTagLog" "$*"
      ;;
 

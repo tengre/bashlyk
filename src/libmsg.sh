@@ -1,5 +1,5 @@
 #
-# $Id: libmsg.sh 823 2018-04-15 12:04:54+04:00 toor $
+# $Id: libmsg.sh 840 2018-08-02 02:02:54+04:00 yds $
 #
 #****h* BASHLYK/libmsg
 #  DESCRIPTION
@@ -77,13 +77,13 @@ msg::echo() {
   if [[ "$1" == "-" ]]; then
 
     shift
-    [[ $1 ]] && printf -- "%s\n----\n" "$*"
+    [[ $1 ]] && printf -- '%s\n----\n' "$*"
 
     std::cat
 
   else
 
-    [[ $* ]] && echo $*
+    [[ $* ]] && printf -- '%s\n' "$*"
 
   fi
 
@@ -166,7 +166,7 @@ msg::mail() {
 
       *)
 
-         [[ -s "$*" ]] && std::cat < "$*" || echo "$*"
+         [[ -s "$*" ]] && std::cat < "$*" || printf -- '%s\n' "$*"
 
        ;;
 

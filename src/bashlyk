@@ -1,6 +1,6 @@
 #!/bin/bash
 #
-# $Id: bashlyk 807 2018-03-10 14:58:00+04:00 toor $
+# $Id: bashlyk 840 2018-08-02 02:02:54+04:00 yds $
 #
 #****h* BASHLYK/bashlyk
 #  DESCRIPTION
@@ -47,6 +47,7 @@
     )                                                                          \
 }
 declare -rg _bashlyk_PWD=${PWD:=$(pwd)}
+declare -ag _bashlyk_aArg=( "$@" )
 #******
 #****f* bashlyk/bashlyk::init
 #  SYNOPSIS
