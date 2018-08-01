@@ -1,5 +1,5 @@
 #
-# $Id: libcfg.sh 839 2018-07-29 23:04:23+04:00 toor $
+# $Id: libcfg.sh 840 2018-08-02 02:08:42+04:00 yds $
 #
 #****h* BASHLYK/libcfg
 #  DESCRIPTION
@@ -422,7 +422,7 @@ CFG::__section.select() {
 #     keySecond="is second value"
 # }}}
 #    tSShow2.free
-#    CFG tCheckSpaces
+#    CFG tCheckSpaces   
 #    ## TODO tests checking
 #    tCheckSpaces.set [ section ] key = value
 #    tCheckSpaces.settings.section.padding = false
@@ -1812,17 +1812,17 @@ CFG::load() {
 #    InvalidArgument - invalid format of the arguments
 #  EXAMPLE
 #    local cfg
-#    _ sArg "-F CLI -E clear -H 'Hi!' -M test -U a.2 -U a.2 --acc a --acc b "   #-
+#    _bashlyk_aArg=( -F CLI -E clear -H 'Hi!' -M test -U a.2 -U a.2 --acc "with  white spaces" --acc b )
 #    std::temp cfg
 #    tLoad.save $cfg                                                            #? true
 #    tLoad.free
 #    _ onError warn+return
 #    CFG tCLI
-#    tCLI.bind.cli                                                              #? $_bashlyk_iErrorInvalidOption
-#    tCLI.bind.cli file{F}: exec{E}:- main-hint{H}: main-msg{M}: unify{U}:=     #? $_bashlyk_iErrorInvalidOption
-#    tCLI.bind.cli file{F}: exec{E}:- main-hint{H}: main-msg{M}: unify{U}:= acc:+            #? true
+#    tCLI.bind.cli                                                                     #? $_bashlyk_iErrorInvalidOption
+#    tCLI.bind.cli file{F}: exec{E}:- main-hint{H}: main-msg{M}: unify{U}:=            #? $_bashlyk_iErrorInvalidOption
+#    tCLI.bind.cli file{F}: exec{E}:- main-hint{H}: main-msg{M}: unify{U}:= acc:+      #? true
 #    tCLI.storage.use $cfg
-#    tCLI.load []file,main,child [exec]- [main]hint,msg,cnt [replace]- [unify]= [acc]+  #? true
+#    tCLI.load []file,main,child [exec]- [main]hint,msg,cnt [replace]- [unify]= [acc]+ #? true
 #    tCLI.show | {{{
 #
 #    child    =    true
@@ -1840,7 +1840,7 @@ CFG::load() {
 #    [ main ]
 #
 #       cnt    =    80
-#      hint    =    'Hi!'
+#      hint    =    Hi!
 #    iXo Xo    =    19
 #       msg    =    test
 #
@@ -1872,7 +1872,7 @@ CFG::load() {
 #    *.mp3
 #    *.dll
 #    *.asp
-#    a
+#    with white spaces
 #    b
 #
 # }}}
@@ -1881,7 +1881,7 @@ CFG::load() {
 CFG::bind.cli() {
 
   local -a a
-  local c fnErr fmtCase fmtHandler k o sSection sShort sLong s S evalGetopts sCases v
+  local c fnErr fmtCase fmtHandler k o rc sSection sShort sLong s S evalGetopts sCases v
 
   o=${FUNCNAME[0]%%.*}
   c=cli${RANDOM}
@@ -1889,16 +1889,14 @@ CFG::bind.cli() {
   CFG $c
   eval "_h${o^^}[__cli__]=$c"
 
-  fmtHandler="                                                                 \
-                                                                               \
-    ${c}.getopts() {                                                           \
-      while true; do                                                           \
-        case \$1 in                                                            \
-          %s --) shift; break;;                                                \
-        esac;                                                                  \
-      done                                                                     \
-    }                                                                          \
-  "
+  fmtHandler='
+    while true; do
+      case "$1" in
+        %s --) shift; break;;
+            *) err::debug 0 "$0: invalid option -- ${1/--/}"; break;;
+      esac;
+    done\n
+  '
 
   fmtCase="--%s%s) ${c}.set [%s]%s = %s; shift %s;;"
 
@@ -1930,39 +1928,54 @@ CFG::bind.cli() {
 
   done
 
+  S=''
+  for i in "${_bashlyk_aArg[@]}"; do
+
+    S+="$(std::lazyquote ${i}) "
+
+  done
+  
+  
   std::temp fnErr
-  s="$(                                                                        \
-                                                                               \
-    LC_ALL=C getopt -u -o $sShort --long ${sLong%*,} -n $0 -- $(_ sArg)        \
-    2>$fnErr                                                                   \
-                                                                               \
-  )"
+  s=$(                                                                      \
+                                                                            \
+    LC_ALL=C getopt -u -o $sShort --long ${sLong%*,} -n $0 -- "$S" 2>$fnErr \
+                                                                            \
+  )
+  
+  rc=$?
 
-  case $? in
+  if (( rc == 0 )); then
 
-    0)
-      evalGetopts="$( printf -- "$fmtHandler" "$sCases" )"
-      eval "$evalGetopts" && ${c}.getopts $s
-      unset -f evalGetopts
+    evalGetopts="$( printf -- "$fmtHandler" "$sCases" )"
+    eval set -- "$s"
+    eval "$evalGetopts" 2>$fnErr
+    [[ -s $fnErr ]] && rc=1
+    
+  fi
+
+  case $rc in
+  
+    0) : 
     ;;
-
+  
     1)
+   
       local -A h
-      while read -t 4 s; do
+       while read -t 4 s; do
 
-        s=${s//$0: /}
-        s=${s// option/}
-        s=${s// --/}
-        h[${s% *}]+="${s##* },"
+         s=${s//$0: /}
+         s=${s// option/}
+         s=${s// --/}
+         h[${s% *}]+="${s##* },"
 
-      done < $fnErr
+       done < $fnErr
 
-      [[ ${h[invalid]}      ]] && s+="${h[invalid]%*,},"
-      [[ ${h[unrecognized]} ]] && s+="${h[unrecognized]%*,}"
+       [[ ${h[invalid]}      ]] && s+="${h[invalid]%*,},"
+       [[ ${h[unrecognized]} ]] && s+="${h[unrecognized]%*,}"
 
-      unset h
-      error InvalidOption warn+return "${s%*,} (command line:  $( _ sArg ))"
-
+       unset h
+       error InvalidOption warn+return "${s%*,} (command line: $S )"
     ;;
 
     *)
@@ -1991,7 +2004,7 @@ CFG::bind.cli() {
 #  OUTPUT
 #    option value
 #  EXAMPLE
-#    _ sArg "-F CLI -E clear -H 'Hi!' -M test -U a.2 -U a.2"                    #-
+#    _bashlyk_aArg=( -F CLI -E clear -H 'Hi!' -M test -U a.2 -U a.2 )                    #-
 #    CFG tOpt
 #    tOpt.getopt                                                                #? $_bashlyk_iErrorMissingArgument
 #    tOpt.getopt not-exist                                                      #? $_bashlyk_iErrorNotAvailable

@@ -1,5 +1,5 @@
 #
-# $Id: libstd.sh 821 2018-04-10 18:29:12+04:00 toor $
+# $Id: libstd.sh 840 2018-08-02 02:02:54+04:00 yds $
 #
 #****h* BASHLYK/libstd
 #  DESCRIPTION
@@ -228,16 +228,17 @@ std::isVariable() {
 #    std::lazyquote                                                             #? $_bashlyk_iErrorMissingArgument
 #    std::lazyquote "word"                                   | {{ '^word$'   }}
 #    std::lazyquote two words                                | {{ '^\".*\"$' }}
+#    std::lazyquote "two words"                              | {{ '^\".*\"$' }}
 #  SOURCE
 std::lazyquote() {
 
   if [[ "$*" =~ [[:space:]] && ! "$*" =~ ^\".*\"$ ]]; then
 
-    echo "\"$*\""
+    printf -- '"%s"\n' "$*"
 
   else
 
-    [[ $* ]] && echo "$*" || return $_bashlyk_iErrorMissingArgument
+    [[ $* ]] && printf -- '%s\n' "$*" || return $_bashlyk_iErrorMissingArgument
 
   fi
 
@@ -271,13 +272,13 @@ std::whitespace.encode() {
        ## TODO - on/off timeout
        while read s; do
 
-         echo "${s// /$_bashlyk_sWSpaceAlias}"
+         printf -- '%s\n' "${s// /$_bashlyk_sWSpaceAlias}"
 
        done
     ;;
 
     *)
-       echo "${s// /$_bashlyk_sWSpaceAlias}"
+       printf -- '%s\n' "${s// /$_bashlyk_sWSpaceAlias}"
     ;;
 
   esac
@@ -316,7 +317,7 @@ std::whitespace.decode() {
        ## TODO - on/off timeout
        while read s; do
 
-         echo "${s//${_bashlyk_sWSpaceAlias}/ }"
+         printf -- '%s\n' "${s//${_bashlyk_sWSpaceAlias}/ }"
 
        done
     ;;
@@ -528,9 +529,7 @@ std::temp() {
 
   [[ $* =~ keep=false ]] && pid::onExit.unlink $s
 
-  [[ $s ]] || return $( _ iErrorEmptyResult )
-
-  echo $s
+  [[ $s ]] && printf -- '%s\n' "$s" || return $( _ iErrorEmptyResult )
 
 }
 #******
@@ -679,7 +678,7 @@ std::getMD5() {
 
   esac
 
-  [[ $s ]] && echo ${s%% *} || return $_bashlyk_iErrorEmptyResult
+  [[ $s ]] && printf -- '%s\n' "${s%% *}" || return $_bashlyk_iErrorEmptyResult
 
 }
 #******
@@ -765,7 +764,7 @@ std::xml() {
 
   shift
 
-  echo "<${a[*]}>${*}</${a[0]}>"
+  printf -- '%s\n' "<${a[*]}>${*}</${a[0]}>"
 
 }
 #******
@@ -936,7 +935,7 @@ std::trim() {
 
   [[ $s =~ ^\+$ ]] && s+=" "
 
-  echo "$( expr "$s" : "^\ *\(.*[^ ]\)\ *$" )"
+  printf -- '%s\n' "$( expr "$s" : "^\ *\(.*[^ ]\)\ *$" )"
 
 }
 #******
@@ -955,11 +954,11 @@ std::trim() {
 #  SOURCE
 std::cat() {
 
-  [[ $* ]] && echo "$*"
+  [[ $* ]] && printf -- '%s\n' "$*"
 
   while IFS= read -t 32 || [[ $REPLY ]]; do
 
-    echo "$REPLY"
+    printf -- '%s\n' "$REPLY"
 
   done
 
@@ -993,13 +992,17 @@ fi
 #  SOURCE
 if (( _bashlyk_ShellVersion > 4002000 )); then
 
-  std::uptime() { echo $(( $(printf '%(%s)T' '-1') - $(printf '%(%s)T' '-2') )); }
+  std::uptime() { 
+  
+    echo $(( $(printf -- '%(%s)T' '-1') - $(printf -- '%(%s)T' '-2') ))
+    
+  }
 
 else
 
   readonly _bashlyk_iStartTimeStamp=$( exec -c date "+%s" )
 
-  std::uptime() { echo $(( $(exec -c date "+%s") - _bashlyk_iStartTimeStamp )); }
+  std::uptime() { echo $(($(exec -c date "+%s") - _bashlyk_iStartTimeStamp )); }
 
 fi
 #******
