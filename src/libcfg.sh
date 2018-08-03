@@ -1,5 +1,5 @@
 #
-# $Id: libcfg.sh 840 2018-08-02 02:08:42+04:00 yds $
+# $Id: libcfg.sh 842 2018-08-03 12:48:22+04:00 yds $
 #
 #****h* BASHLYK/libcfg
 #  DESCRIPTION
@@ -1814,15 +1814,15 @@ CFG::load() {
 #    local cfg
 #    _bashlyk_aArg=( -F CLI -E clear -H 'Hi!' -M test -U a.2 -U a.2 --acc "with  white spaces" --acc b )
 #    std::temp cfg
-#    tLoad.save $cfg                                                            #? true
+#    tLoad.save $cfg                                                                 #? true
 #    tLoad.free
 #    _ onError warn+return
 #    CFG tCLI
-#    tCLI.bind.cli                                                                     #? $_bashlyk_iErrorInvalidOption
-#    tCLI.bind.cli file{F}: exec{E}:- main-hint{H}: main-msg{M}: unify{U}:=            #? $_bashlyk_iErrorInvalidOption
-#    tCLI.bind.cli file{F}: exec{E}:- main-hint{H}: main-msg{M}: unify{U}:= acc:+      #? true
+#    tCLI.bind.cli                                                                   #? $_bashlyk_iErrorMissingArgument
+#    tCLI.bind.cli file{F}: exec{E}:- main-hint{H}: main-msg{M}: unify{U}:=          #? $_bashlyk_iErrorInvalidOption
+#    tCLI.bind.cli file{F}: exec{E}:- main-hint{H}: main-msg{M}: unify{U}:= acc:+    #? true
 #    tCLI.storage.use $cfg
-#    tCLI.load []file,main,child [exec]- [main]hint,msg,cnt [replace]- [unify]= [acc]+ #? true
+#    tCLI.load file,main,child [exec]- [main]hint,msg,cnt [replace]- [unify]= [acc]+ #? true
 #    tCLI.show | {{{
 #
 #    child    =    true
@@ -1927,24 +1927,31 @@ CFG::bind.cli() {
     ) "
 
   done
-
-  S=''
-  for i in "${_bashlyk_aArg[@]}"; do
-
-    S+="$(std::lazyquote ${i}) "
-
-  done
-  
   
   std::temp fnErr
-  s=$(                                                                      \
-                                                                            \
-    LC_ALL=C getopt -u -o $sShort --long ${sLong%*,} -n $0 -- "$S" 2>$fnErr \
-                                                                            \
-  )
   
-  rc=$?
+  if [[ $sShort || $sLong ]]; then
 
+    [[ $sShort ]] && sShort="-o $sShort"
+    [[ $sLong  ]] &&  sLong="--long ${sLong%*,}"
+    
+    S=''
+    for i in "${_bashlyk_aArg[@]}"; do
+
+      S+="$(std::lazyquote ${i}) "
+
+    done
+  
+    s=$( LC_ALL=C getopt -u $sShort $sLong -n $0 -- "$S" 2>$fnErr )
+    rc=$?
+
+  else
+  
+    error MissingArgument warn+return "cli options not found.."
+    rc=$?
+  
+  fi
+    
   if (( rc == 0 )); then
 
     evalGetopts="$( printf -- "$fmtHandler" "$sCases" )"
@@ -1962,28 +1969,28 @@ CFG::bind.cli() {
     1)
    
       local -A h
-       while read -t 4 s; do
+      while read -t 4 s; do
 
-         s=${s//$0: /}
-         s=${s// option/}
-         s=${s// --/}
-         h[${s% *}]+="${s##* },"
+        s=${s//$0: /}
+        s=${s// option/}
+        s=${s// --/}
+        h[${s% *}]+="${s##* },"
 
-       done < $fnErr
+      done < $fnErr
 
-       [[ ${h[invalid]}      ]] && s+="${h[invalid]%*,},"
-       [[ ${h[unrecognized]} ]] && s+="${h[unrecognized]%*,}"
+      [[ ${h[invalid]}      ]] && s+="${h[invalid]%*,},"
+      [[ ${h[unrecognized]} ]] && s+="${h[unrecognized]%*,}"
 
-       unset h
-       error InvalidOption warn+return "${s%*,} (command line: $S )"
+      unset h
+      error InvalidOption warn+return "${s%*,} (command line: $S )"
     ;;
 
     *)
-      error InvalidOption "internal fail - $( < $fnErr )"
+      error $rc "internal fail - $( < $fnErr )"
     ;;
 
   esac
-
+  
 }
 #******
 #****e* libcfg/CFG::getopt
