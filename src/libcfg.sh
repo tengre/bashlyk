@@ -1,5 +1,5 @@
 #
-# $Id: libcfg.sh 843 2018-08-06 13:25:24+04:00 toor $
+# $Id: libcfg.sh 844 2018-08-07 00:20:59+04:00 yds $
 #
 #****h* BASHLYK/libcfg
 #  DESCRIPTION
@@ -1789,9 +1789,10 @@ CFG::load() {
 }
 #******
 ## TODO raw section description required
+## TODO optional arguments are untested...
 #****e* libcfg/CFG::bind.cli
 #  SYNOPSIS
-#    CFG::bind.cli [<section>-]<option long name>{<short name>}[:[:=+]] ...
+#    CFG::bind.cli [<section>[-]][<option name>{<short name>}[:[:]]]|[-=+] ...
 #  DESCRIPTION
 #    Parse command line options and bind to the CFG instance
 #  ARGUMENTS
@@ -1799,10 +1800,14 @@ CFG::load() {
 #                    array of the CFG data
 #    <section>     - part of the option name for binding it to a certain section
 #                    of the CFG data. By default, it is assumed that option is
-#                    included to the global section
+#                    included to the global section. The presence of a hyphen in
+#                    the name of the section creates a hierarchy "section"-"key"
+#                    for the easy mapping the command line options to the 
+#                    configuration file keys
 #    <short name>  - short alias as single letter for option name
 #    first  :      - option is expected to have a required argument
 #    second :      - argument is a optional
+#           -      - replace content of the raw section 
 #           =      - option is expected to have list of unique arguments
 #           +      - option is expected to have list of accumulated arguments
 #                    by default, option is included in the global section of the
@@ -1812,7 +1817,7 @@ CFG::load() {
 #    InvalidArgument - invalid format of the arguments
 #  EXAMPLE
 #    local cfg
-#    _bashlyk_aArg=( -F CLI -E clear -H 'Hi!' -M test -U a.2 -U a.2 --acc "with  white spaces" --acc b )
+#    _bashlyk_aArg=( --file CLI -E clear -H 'Hi!' -M test -U a.2 -U a.2 --acc "with white spaces" --acc b )
 #    std::temp cfg
 #    tLoad.save $cfg                                                                 #? true
 #    tLoad.free
@@ -1893,7 +1898,7 @@ CFG::bind.cli() {
     while true; do
       case "$1" in
         %s --) shift; break;;
-            *) err::debug 0 "$0: invalid option -- $1"; break;;
+            *) err::debug 0 "$0: invalid option -- '$1'"; break;;
       esac;
     done\n
   '
@@ -1936,13 +1941,9 @@ CFG::bind.cli() {
     [[ $sLong  ]] &&  sLong="-l ${sLong%*,}"
 
     S=""
-    for i in "${_bashlyk_aArg[@]}"; do
+    for i in "${_bashlyk_aArg[@]}";do S+="$( std::whitespace.encode $i ) "; done
 
-      S+="$(std::whitespace.encode ${i}) "
-
-    done
-
-    s=$( LC_ALL=C getopt -u $sShort $sLong -n $0 -- $S 2>$fnErr )
+    s=$( LC_ALL=C getopt -u $sShort $sLong -n $0 -- ${S%* } 2>$fnErr )
     rc=$?
 
   else
@@ -2011,7 +2012,7 @@ CFG::bind.cli() {
 #  OUTPUT
 #    option value
 #  EXAMPLE
-#    _bashlyk_aArg=( -F CLI -E clear -H 'Hi!' -M test -U a.2 -U a.2 )                    #-
+#    _bashlyk_aArg=( -F CLI -E clear -H 'Hi!' -M test -U a.2 -U a.2 )           #-
 #    CFG tOpt
 #    tOpt.getopt                                                                #? $_bashlyk_iErrorMissingArgument
 #    tOpt.getopt not-exist                                                      #? $_bashlyk_iErrorNotAvailable
