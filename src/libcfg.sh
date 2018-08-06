@@ -1,5 +1,5 @@
 #
-# $Id: libcfg.sh 842 2018-08-03 12:48:22+04:00 yds $
+# $Id: libcfg.sh 843 2018-08-06 13:25:24+04:00 toor $
 #
 #****h* BASHLYK/libcfg
 #  DESCRIPTION
@@ -422,7 +422,7 @@ CFG::__section.select() {
 #     keySecond="is second value"
 # }}}
 #    tSShow2.free
-#    CFG tCheckSpaces   
+#    CFG tCheckSpaces
 #    ## TODO tests checking
 #    tCheckSpaces.set [ section ] key = value
 #    tCheckSpaces.settings.section.padding = false
@@ -1893,7 +1893,7 @@ CFG::bind.cli() {
     while true; do
       case "$1" in
         %s --) shift; break;;
-            *) err::debug 0 "$0: invalid option -- ${1/--/}"; break;;
+            *) err::debug 0 "$0: invalid option -- $1"; break;;
       esac;
     done\n
   '
@@ -1917,7 +1917,7 @@ CFG::bind.cli() {
 
     [[ ${a[4]} ]] && sLong+="${a[4]}${a[7]},"
     [[ ${a[6]} ]] && sShort+="${a[6]}${a[7]}" && s="|-${a[6]}"
-    [[ ${a[7]} ]] && S="2" && v='$2'
+    [[ ${a[7]} ]] && S="2" && v='$( std::whitespace.decode - <<< $2 )'
     [[ ${a[8]} =~ ^(=|\-|\+)$ ]] && k="${a[8]}" && sSection="${a[4]}"
 
     sCases+="$(                                                                \
@@ -1927,47 +1927,47 @@ CFG::bind.cli() {
     ) "
 
   done
-  
+
   std::temp fnErr
-  
+
   if [[ $sShort || $sLong ]]; then
 
-    [[ $sShort ]] && sShort="-o $sShort"
-    [[ $sLong  ]] &&  sLong="--long ${sLong%*,}"
-    
-    S=''
+    [[ $sShort ]] && sShort="-o ${sShort}"
+    [[ $sLong  ]] &&  sLong="-l ${sLong%*,}"
+
+    S=""
     for i in "${_bashlyk_aArg[@]}"; do
 
-      S+="$(std::lazyquote ${i}) "
+      S+="$(std::whitespace.encode ${i}) "
 
     done
-  
-    s=$( LC_ALL=C getopt -u $sShort $sLong -n $0 -- "$S" 2>$fnErr )
+
+    s=$( LC_ALL=C getopt -u $sShort $sLong -n $0 -- $S 2>$fnErr )
     rc=$?
 
   else
-  
+
     error MissingArgument warn+return "cli options not found.."
     rc=$?
-  
+
   fi
-    
+
   if (( rc == 0 )); then
 
     evalGetopts="$( printf -- "$fmtHandler" "$sCases" )"
     eval set -- "$s"
     eval "$evalGetopts" 2>$fnErr
     [[ -s $fnErr ]] && rc=1
-    
+
   fi
 
   case $rc in
-  
-    0) : 
+
+    0) :
     ;;
-  
+
     1)
-   
+
       local -A h
       while read -t 4 s; do
 
@@ -1990,7 +1990,7 @@ CFG::bind.cli() {
     ;;
 
   esac
-  
+
 }
 #******
 #****e* libcfg/CFG::getopt
