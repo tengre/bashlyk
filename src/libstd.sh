@@ -1,5 +1,5 @@
 #
-# $Id: libstd.sh 840 2018-08-02 02:02:54+04:00 yds $
+# $Id: libstd.sh 846 2018-08-07 23:18:54+04:00 yds $
 #
 #****h* BASHLYK/libstd
 #  DESCRIPTION
@@ -301,10 +301,11 @@ std::whitespace.encode() {
 #    local text s
 #    s="${_bashlyk_sWSpaceAlias}"
 #    text="many${s}arguments${s}expected${s}..."
-#    std::whitespace.decode $text
-#    a=($(std::whitespace.decode $text))
+#    std::whitespace.decode $text                                   | {{ '"' }}
+#    std::whitespace.decode - <<< $text                             | {{ '"' }}1
+#    a=( $( std::whitespace.decode $text ) )
 #    echo ${#a[@]}                                                  | {{ ^4$ }}
-#    a=($(echo $text | std::whitespace.decode -))
+#    a=( $( std::whitespace.decode - <<< $text ) )
 #    echo ${#a[@]}                                                  | {{ ^4$ }}
 #  SOURCE
 std::whitespace.decode() {
