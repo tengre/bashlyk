@@ -1,5 +1,5 @@
 #
-# $Id: libpid.sh 821 2018-04-10 18:29:12+04:00 toor $
+# $Id: libpid.sh 850 2018-08-09 02:09:22+04:00 yds $
 #
 #****h* BASHLYK/libpid
 #  DESCRIPTION
@@ -37,6 +37,7 @@
 #  SOURCE
 #: ${_bashlyk_fnPid:=}
 #: ${_bashlyk_fnSock:=}
+#: ${_bashlyk_afoZero:=}
 #: ${_bashlyk_afoClean:=}
 #: ${_bashlyk_afdClean:=}
 #: ${_bashlyk_ajobClean:=}
@@ -466,6 +467,51 @@ pid::onExit.unlink() {
 
 }
 #******
+#****e* libpid/pid::onExit.unlink.empty
+#  SYNOPSIS
+#    pid::onExit.unlink.empty <file(s)>
+#  DESCRIPTION
+#    add list of zero size files for removing on exit
+#  NOTES
+#    public
+#  INPUTS
+#    <file(s)> - whitespace separated files and/or directories list
+#  EXAMPLE
+#    local a fnTemp1 fnTemp2 pathTemp1 pathTemp2 s=$RANDOM
+#    std::temp fnTemp1 keep=true suffix=.${s}1
+#    test -f $fnTemp1
+#    echo $(pid::onExit.unlink.empty $fnTemp1 )
+#    ls -l ${TMPDIR}/*.${s}1 2>/dev/null                    | {{ ".*\.${s}1" }}1
+#    echo $(std::temp fnTemp2 suffix=.${s}2)
+#    ls -l ${TMPDIR}/*.${s}2 2>/dev/null                    | {{ ".*\.${s}2" }}1
+#    echo $(std::temp fnTemp2 suffix=.${s}3 keep=true)
+#    ls -l ${TMPDIR}/*.${s}3 2>/dev/null                    | {{ ".*\.${s}3" }}
+#    a=$(ls -1 ${TMPDIR}/*.${s}3)
+#    echo $(pid::onExit.unlink.empty $a )
+#    ls -l ${TMPDIR}/*.${s}3 2>/dev/null                    | {{ ".*\.${s}3" }}1
+#    std::temp pathTemp1 keep=true suffix=.${s}1 type=dir
+#    test -d $pathTemp1
+#    echo $(pid::onExit.unlink.empty $pathTemp1 )
+#    ls -1ld ${TMPDIR}/*.${s}1 2>/dev/null                  | {{ ".*\.${s}1" }}1
+#    echo $(std::temp pathTemp2 suffix=.${s}2 type=dir)
+#    ls -1ld ${TMPDIR}/*.${s}2 2>/dev/null                  | {{ ".*\.${s}2" }}1
+#    echo $(std::temp pathTemp2 suffix=.${s}3 keep=true type=dir)
+#    ls -1ld ${TMPDIR}/*.${s}3 2>/dev/null                  | {{ ".*\.${s}3" }}
+#    a=$(ls -1ld ${TMPDIR}/*.${s}3)
+#    echo $(pid::onExit.unlink.empty $a )
+#    ls -1ld ${TMPDIR}/*.${s}3 2>/dev/null                  | {{ ".*\.${s}3" }}1
+#    ## TODO names with whitespaces
+#  SOURCE
+pid::onExit.unlink.empty() {
+
+  [[ $* ]] || return $_bashlyk_iErrorMissingArgument
+
+  _bashlyk_afoZero[$BASHPID]+=" $@"
+
+  trap "pid::trap" EXIT INT TERM
+
+}
+#******
 #****e* libpid/pid::trap
 #  SYNOPSIS
 #    pid::trap
@@ -542,6 +588,13 @@ pid::trap() {
     [[ -f $s ]] && rm -f $s && continue
     [[ -p $s ]] && rm -f $s && continue
     [[ -d $s ]] && rmdir --ignore-fail-on-non-empty $s 2>/dev/null && continue
+
+  done
+  
+  for s in ${_bashlyk_afoZero[$BASHPID]}; do
+
+    [[ ! -s $s ]] && rm -f $s && continue
+    [[ -d $s   ]] && rmdir --ignore-fail-on-non-empty $s 2>/dev/null && continue
 
   done
 

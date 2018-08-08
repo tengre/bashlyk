@@ -1,5 +1,5 @@
 #
-# $Id: libcfg.sh 847 2018-08-08 23:24:25+04:00 yds $
+# $Id: libcfg.sh 850 2018-08-09 02:09:22+04:00 yds $
 #
 #****h* BASHLYK/libcfg
 #  DESCRIPTION
@@ -1113,7 +1113,7 @@ CFG::storage.use() {
     else
 
       mkdir -p "${s%/*}/" && touch "$s" || sErr='NotExistNotCreated'
-      # TODO finally - [[ -s "$s" ]] || rm -f "$s"
+      pid::onExit.unlink.empty "$s"
 
     fi >$fnErr 2>&1
 
@@ -1142,7 +1142,7 @@ CFG::storage.use() {
     error NotExistNotCreated throw -- ${s}, details - $(< $fnErr)
 
     pid::onExit.unlink "${s%/*}"
-    # TODO finally - [[ -s "$s" ]] || rm -f "$s"
+    pid::onExit.unlink.empty "$s"
 
   else
 
