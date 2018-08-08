@@ -1,5 +1,5 @@
 #
-# $Id: libstd.sh 847 2018-08-08 23:24:25+04:00 yds $
+# $Id: libstd.sh 849 2018-08-09 01:47:33+04:00 yds $
 #
 #****h* BASHLYK/libstd
 #  DESCRIPTION
@@ -51,9 +51,9 @@ declare -rg _bashlyk_aRequiredCmd_std="                                        \
 
 declare -rg _bashlyk_aExport_std="                                             \
                                                                                \
-    _ std::{acceptArrayItem,cat,finally,getFreeFD,getMD5,getMD5.list           \
-    getTimeInSec,isDecimal,isHash,isNumber,isVariable,lazyquote,showVariable,  \
-    temp,trim,whitespace.decode,whitespace.encode,xml}                         \
+    _ std::{acceptArrayItem,cat,finally,getFreeFD,getMD5,getMD5.list,          \
+    getTimeInSec,inline,isDecimal,isHash,isNumber,isVariable,lazyquote,        \
+    showVariable,temp,trim,whitespace.decode,whitespace.encode,xml}            \
                                                                                \
 "
 

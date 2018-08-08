@@ -3,7 +3,7 @@ Section: libs
 Priority: extra
 Maintainer: Damir Sh. Yakupov <yds@bk.ru>
 Build-Depends: debhelper (>= 5), autotools-dev, xsltproc, robodoc, docbook-xsl, automake
-Standards-Version: 3.9.5
+Standards-Version: 3.9.7
 
 Package: bashlyk
 Architecture: all
