@@ -1,5 +1,5 @@
 #
-# $Id: libnet.sh 845 2018-08-07 01:57:41+04:00 yds $
+# $Id: libnet.sh 847 2018-08-08 23:24:25+04:00 yds $
 #
 #****h* BASHLYK/libnet
 #  DESCRIPTION
@@ -84,7 +84,7 @@ net::ipv4.host() {
 
   done< <( sipcalc -d4 $* )
 
-  echo "${!h[@]}"
+  printf -- '%s\n' "${!h[*]}"
 
   errorify on EmptyResult ${!h[@]}
 
@@ -122,7 +122,7 @@ net::ipv4.mask() {
 
   done< <( sipcalc -d4 $* )
 
-  echo "${!h[@]}"
+  printf -- '%s\n' "${!h[*]}"
 
   errorify on EmptyResult ${!h[@]}
 
@@ -160,7 +160,7 @@ net::ipv4.network() {
 
   done< <( sipcalc -d4 $* )
 
-  echo "${!h[@]}"
+  printf -- '%s\n' "${!h[*]}"
 
   errorify on EmptyResult ${!h[@]}
 
@@ -197,7 +197,7 @@ net::ipv4.broadcast() {
 
   done< <( sipcalc -d4 $* )
 
-  echo "${!h[@]}"
+  printf -- '%s\n' "${!h[*]}"
 
   errorify on EmptyResult ${!h[@]}
 
@@ -251,7 +251,7 @@ net::ipv4.cidr() {
 
   done< <( sipcalc -d4 $* )
 
-  echo "${!h[@]}"
+  printf -- '%s\n' "${!h[*]}"
 
   errorify on EmptyResult ${!h[@]}
 

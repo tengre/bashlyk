@@ -1,5 +1,5 @@
 #
-# $Id: libmsg.sh 840 2018-08-02 02:02:54+04:00 yds $
+# $Id: libmsg.sh 847 2018-08-08 23:24:25+04:00 yds $
 #
 #****h* BASHLYK/libmsg
 #  DESCRIPTION
@@ -214,7 +214,7 @@ msg::notify() {
 
   }
 
-  log::interactivity || std::cat - < $fnTmp
+  log::necessity && std::cat - < $fnTmp
 
   rm -f $fnTmp
 

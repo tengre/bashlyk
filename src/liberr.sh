@@ -1,5 +1,5 @@
 #
-# $Id: liberr.sh 840 2018-08-02 02:02:54+04:00 yds $
+# $Id: liberr.sh 847 2018-08-08 23:24:25+04:00 yds $
 #
 #****h* BASHLYK/liberr
 #  DESCRIPTION
@@ -355,7 +355,7 @@ err::sourcecode() {
 #******
 #****e* liberr/err::generate
 #  SYNOPSIS
-#    err::generate [<state>] [<action>] [<message>]
+#    err::generate [<state>] [<action>] [--] [<message>]
 #  DESCRIPTION
 #    Generate code for flexible error handling, which depends on the global
 #    variable or arguments. Possible to combine with each other the following
@@ -404,9 +404,15 @@ err::sourcecode() {
 #    <message> - An error detail, such as the file name. When specifying a
 #                message, you should keep in mind that the error table
 #                ($_bashlyk_hError) has already prepared the descriptions.
+#                Important!!! Only one line is expected, additional lines can be 
+#                processed by the interpreter. To avoid execution of these lines
+#                as a code, you need to remove linefeeds from variables, do not 
+#                apply double quotes around them (see examples).
+#                
 #  OUTPUT
 #    command line, which can be performed using the eval <...>
 #  EXAMPLE
+#    local fn s
 #    false || error NoSuchFileOrDir warn /notexist                              #? true
 #    _bashlyk_onError=debug
 #    false || error NoSuchFileOrDir exit /notexist                              #? $_bashlyk_iErrorNoSuchFileOrDir
@@ -416,18 +422,24 @@ err::sourcecode() {
 #    err::orr 103 || error bla-bla bla                                          #? 103
 #    err::orr 103 || error CommandNotFound bla-bla bla                          #? $_bashlyk_iErrorCommandNotFound
 #    err::orr 104 || error                                                      #? 104
+#    std::temp fn
+#    w > $fn                                                                    #-
+#    error InvalidArgument warn "$(std::inline< <(w))"                          #? true ## See test log for the absence of multiline artefacts
+#    error InvalidArgument warn -- $(w)                                         #? true ## See test log for the absence of multiline artefacts
+#    error InvalidArgument warn "$(std::inline lf_tag < $fn)"                   #? true ## See test log for the absence of multiline artefacts
+#    error InvalidArgument warn "test "$(w)" test"                              #? true ## See test log for the absence of multiline artefacts
 #  SOURCE
 err::generate() {
 
   local bashlyk_err_gen_rc=$?
-
+  
   if [[ ! "$( err::sourcecode )" =~ $_bashlyk_err_reArg ]]; then
 
     echo "echo \"$@ - invalid arguments for error handling, abort...\"; exit $_bashlyk_iErrorInvalidArgument;"
 
   fi
-
-  err::__generate $bashlyk_err_gen_rc $(eval echo "\"${BASH_REMATCH[2]//\"/}\"")
+  
+  err::__generate $bashlyk_err_gen_rc $( eval echo "${BASH_REMATCH[2]}")
 
 }
 #******
@@ -484,11 +496,11 @@ err::generate() {
 #    cmd='err::__generate 1 NoSuchFileOrDir warn /notexist'
 #    _bashlyk_onError=debug
 #    $cmd | {{{
-#    err::stacktrace | msg::warn -  Warn: no\ such\ file\ or\ directory\ -\ /notexist\ ..\ \(185\) >&2; err::status 185 "/notexist"; : ; #
+#    err::stacktrace | msg::warn -  Warn: no\ such\ file\ or\ directory\ -\ /notexist\ ..\ \(185\) >&2; err::status 185 "/notexist"; :; #
 # }}}
 #    _bashlyk_onError=echo
 #    $cmd | {{{
-#    msg::warn  Warn: no\ such\ file\ or\ directory\ -\ /notexist\ ..\ \(185\) >&2; err::status 185 "/notexist"; : ; #
+#    msg::warn  Warn: no\ such\ file\ or\ directory\ -\ /notexist\ ..\ \(185\) >&2; err::status 185 "/notexist"; :; #
 # }}}
 #  SOURCE
 err::__generate() {
@@ -499,7 +511,7 @@ err::__generate() {
   std::isNumber $1 && rc=$1 && shift || rc=$_bashlyk_iErrorUnknown
   #
       IFS=$' \t\n'
-        a=( $* )
+        a=( ${*/--/} )
      echo='echo'
      warn='msg::warn'
   sAction=$_bashlyk_onError
@@ -889,13 +901,13 @@ err::postfix() {
   local re='^(echo|warn)$|^((echo|warn)[+])?(exit|return)$|^throw$' i=0 j=0 s
   ## TODO add reAction and reState for safely arguments parsing
 
-  [[ $1 =~ $re ]] && shift || error InvalidArgument throw "${1:-first argument}"
-  [[ $1 == on  ]] && shift || error InvalidArgument throw "${1:-second argument}"
-  [[ $1        ]] && shift || error MissingArgument throw "${1:-third argument}"
+  [[ $1 =~ $re ]] && shift || error InvalidArgument throw ${1:-first argument}
+  [[ $1 == on  ]] && shift || error InvalidArgument throw ${1:-second argument}
+  [[ $1        ]] && shift || error MissingArgument throw ${1:-third argument}
 
   if ! declare -pf err::${aErrHandler[2]} >/dev/null 2>&1; then
 
-    error InvalidArgument throw "${aErrHandler[2]}"
+    error InvalidArgument throw ${aErrHandler[2]}
 
   fi
 

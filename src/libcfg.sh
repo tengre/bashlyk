@@ -1,5 +1,5 @@
 #
-# $Id: libcfg.sh 844 2018-08-07 00:20:59+04:00 yds $
+# $Id: libcfg.sh 847 2018-08-08 23:24:25+04:00 yds $
 #
 #****h* BASHLYK/libcfg
 #  DESCRIPTION
@@ -204,13 +204,13 @@ CFG() {
 
   for s in $_bashlyk_methods_cfg; do
 
-    f=$( declare -pf CFG::${s} 2>/dev/null ) || error IniMissingMethod throw "CFG::${s} for $o"
+    f=$( declare -pf CFG::${s} 2>/dev/null ) || error IniMissingMethod throw -- CFG::${s} for $o
 
-    echo "${f/CFG::$s/${o}.$s}" >> $fn || error IniBadMethod throw "CFG::$s for $o"
+    echo "${f/CFG::$s/${o}.$s}" >> $fn || error IniBadMethod throw -- CFG::$s for $o
 
   done
 
-  source $fn || error InvalidArgument throw "$fn"
+  source $fn || error InvalidArgument throw $fn
   return 0
 
 }
@@ -648,7 +648,7 @@ CFG::__section.getArray() {
   o=${FUNCNAME[0]%%.*}
   ${o}.__section.select $*
   id=$( ${o}.__section.id $* )
-  std::isHash $id || error InvalidHash $(_ onError) $id
+  std::isHash $id || error InvalidHash -- $(_ onError) $id
 
   sU=$( ${o}.__section.get _bashlyk_raw_mode )
 
@@ -849,7 +849,7 @@ CFG::keys() {
     ;;
 
     *)
-      error InvalidArgument warn+return "${a[@]}"
+      error InvalidArgument warn+return ${a[@]}
     ;;
 
   esac
@@ -1125,7 +1125,7 @@ CFG::storage.use() {
 
   if [[ $sErr =~ ^(Not|Missing) ]]; then
 
-    [[ -s $fnErr ]] && error $sErr warn "${s}, details - $(< $fnErr)"
+    [[ -s $fnErr ]] && error $sErr -- warn ${s}, details - $(< $fnErr)
 
     s="$( ${o}.settings storage )"
 
@@ -1139,7 +1139,7 @@ CFG::storage.use() {
     std::temp fnErr
 
     ( mkdir -p "${s%/*}/" && touch "$s" ) > $fnErr 2>&1 ||
-    error NotExistNotCreated throw "${s}, details - $(< $fnErr)"
+    error NotExistNotCreated throw -- ${s}, details - $(< $fnErr)
 
     pid::onExit.unlink "${s%/*}"
     # TODO finally - [[ -s "$s" ]] || rm -f "$s"
@@ -1948,7 +1948,7 @@ CFG::bind.cli() {
 
   else
 
-    error MissingArgument warn+return "cli options not found.."
+    error MissingArgument warn+return -- cli options not found..
     rc=$?
 
   fi
@@ -1983,11 +1983,11 @@ CFG::bind.cli() {
       [[ ${h[unrecognized]} ]] && s+="${h[unrecognized]%*,}"
 
       unset h
-      error InvalidOption warn+return "${s%*,} (command line: $S )"
+      error InvalidOption warn+return ${s%*,} "( command line: "$S" )"
     ;;
 
     *)
-      error $rc "internal fail - $( < $fnErr )"
+      error $rc -- internal fail - $( < $fnErr )
     ;;
 
   esac

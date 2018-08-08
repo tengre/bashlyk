@@ -1,5 +1,5 @@
 #
-# $Id: libstd.sh 846 2018-08-07 23:18:54+04:00 yds $
+# $Id: libstd.sh 847 2018-08-08 23:24:25+04:00 yds $
 #
 #****h* BASHLYK/libstd
 #  DESCRIPTION
@@ -473,7 +473,7 @@ std::temp() {
 
   fi
 
-  mkdir -p $path || error NotExistNotCreated "$path"
+  mkdir -p $path || error NotExistNotCreated $path
 
   pid::onExit.unlink $fnErr
 
@@ -524,7 +524,7 @@ std::temp() {
 
   if ! [[ -f "$s" || -p "$s" || -d "$s" ]]; then
 
-    error NotExistNotCreated $s $(< $fnErr)
+    error NotExistNotCreated -- $s $(< $fnErr)
 
   fi
 
@@ -560,7 +560,7 @@ std::acceptArrayItem() {
 
   errorify on MissingArgument $1 || return
 
-  [[ "$1" =~ ^[_a-zA-Z][_a-zA-Z0-9]*(\[.*\])?$ ]] || error InvalidVariable return $1
+  [[ "$1" =~ ^[_a-zA-Z][_a-zA-Z0-9]*(\[.*\])?$ ]] || error InvalidVariable return -- $1
 
   [[ "$1" =~ ^[_a-zA-Z][_a-zA-Z0-9]*\[.*\]$ ]] && echo "{$1}" || echo "$1"
 
@@ -720,7 +720,7 @@ std::getMD5.list() {
   errorify on MissingArgument $@ || return
   errorify on NoSuchFileOrDir "$@" || return
 
-  cd "$@" 2>/dev/null || error NotPermitted warn+return $@
+  cd "$@" 2>/dev/null || error NotPermitted warn+return -- $@
 
   pathDst="$( exec -c pwd )"
 
@@ -732,7 +732,7 @@ std::getMD5.list() {
 
   done< <(eval "ls -1drt * 2>/dev/null")
 
-  cd "$pathSrc" || error NotPermitted warn+return $pathSrc
+  cd "$pathSrc" || error NotPermitted warn+return -- $pathSrc
 
   return 0
 
@@ -806,7 +806,7 @@ std::getTimeInSec() {
     std::isVariable "$2" || error InvalidVariable $2
 
     [[ "$3" == "-v" ]] \
-      && error InvalidArgument "$3 - number with time suffix expected"
+      && error InvalidArgument -- $3 - number with time suffix expected
 
     eval 'export $2="$( std::getTimeInSec $3 )"'
 
@@ -831,7 +831,7 @@ std::getTimeInSec() {
            months|month|mon) echo $(( i*3600*24*30 ));;
                years|year|y) echo $(( i*3600*24*365 ));;
                           *) echo ""
-                             error InvalidArgument "$1 - number with time suffix expected"
+                             error InvalidArgument -- $1 - number with time suffix expected
                           ;;
 
   esac
@@ -962,6 +962,35 @@ std::cat() {
     printf -- '%s\n' "$REPLY"
 
   done
+
+}
+#******
+#****f* libstd/std::inline
+#  SYNOPSIS
+#    std::1line [tag of the new line] 
+#  DESCRIPTION
+#    show input as single line
+#  OUTPUT
+#    show input as single line
+#  EXAMPLE
+#    local s fn
+#    std::temp -v fn
+#    for s in $( seq 0 1 ); do printf -- '%s\n' "$RANDOM"; done > $fn        #-
+#    std::inline lf < $fn | {{ -E '^[0-9]{1,5} \[lf\] [0-9]{1,5} \[lf\] $' }}
+#    std::inline    < $fn | {{ -E '^[0-9]{1,5} [0-9]{1,5} $' }}
+#  SOURCE
+std::inline() {
+
+  local tag=''
+  [[ $* ]] && tag=" [$*]"
+
+  while IFS= read -t 32 || [[ $REPLY ]]; do
+
+    printf -- '%s%s ' "$REPLY" "$tag"
+
+  done
+  
+    printf -- "\n"
 
 }
 #******
