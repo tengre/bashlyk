@@ -1,5 +1,5 @@
 #
-# $Id: libcfg.sh 850 2018-08-09 02:09:22+04:00 yds $
+# $Id: libcfg.sh 851 2018-08-13 01:59:23+04:00 toor $
 #
 #****h* BASHLYK/libcfg
 #  DESCRIPTION
@@ -163,7 +163,7 @@ CFG() {
 
   throw on InvalidVariable $o
 
-  if [[ $o =~ ^c(o)?nf ]]; then
+  if [[ $o =~ ^c(o)?nf && ! $o =~ ^config ]]; then
 
     declare -Ag -- _h${o^^}_settings='(                                        \
                                                                                \
@@ -730,6 +730,7 @@ CFG::__section.getArray() {
 #    tGet.__section.set _bashlyk_raw_uniq=b2 "is raw value No.2"
 #    tGet.__section.set _bashlyk_raw_uniq=a1 "is raw value No.3"
 #    tGet.get [a][b]                                                            #? $_bashlyk_iErrorInvalidArgument
+#    tGet.get [section]unexpected key                                           #? $_bashlyk_iErrorEmptyResult
 #    eval "$(tGet.get [accumu])"
 #    echo "3 item expected"
 #    (( ${#a[@]} == 3 ))                                                        #? true
@@ -779,7 +780,8 @@ CFG::get() {
   else
 
     ${o}.__section.select $s
-    ${o}.__section.get $( std::trim "$k" )
+    s="$( ${o}.__section.get $( std::trim "$k" ) )"
+    [[ $s ]] && echo "$s" || return $_bashlyk_iErrorEmptyResult
 
   fi
 
@@ -1802,12 +1804,12 @@ CFG::load() {
 #                    of the CFG data. By default, it is assumed that option is
 #                    included to the global section. The presence of a hyphen in
 #                    the name of the section creates a hierarchy "section"-"key"
-#                    for the easy mapping the command line options to the 
+#                    for the easy mapping the command line options to the
 #                    configuration file keys
 #    <short name>  - short alias as single letter for option name
 #    first  :      - option is expected to have a required argument
 #    second :      - argument is a optional
-#           -      - replace content of the raw section 
+#           -      - replace content of the raw section
 #           =      - option is expected to have list of unique arguments
 #           +      - option is expected to have list of accumulated arguments
 #                    by default, option is included in the global section of the
@@ -2153,6 +2155,12 @@ CFG::settings() {
 #    tShellmode.settings.shellmode                              | {{ ^true$  }}
 #    tShellmode.settings.shellmode = error                                      #? $_bashlyk_iErrorInvalidArgument
 #    tShellmode.free
+#    CFG cnfAuto
+#    cnfAuto.settings.shellmode                                 | {{ ^true$  }}
+#    cnfAuto.free
+#    CFG configAuto
+#    configAuto.settings.shellmode                              | {{ ^false$ }}
+#    configAuto.free
 #  SOURCE
 CFG::settings.shellmode() {
 
