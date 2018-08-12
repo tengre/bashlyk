@@ -1,5 +1,5 @@
 #
-# $Id: liberr.sh 847 2018-08-08 23:24:25+04:00 yds $
+# $Id: liberr.sh 851 2018-08-13 01:59:23+04:00 toor $
 #
 #****h* BASHLYK/liberr
 #  DESCRIPTION
@@ -93,6 +93,9 @@ _bashlyk_iErrorNotNumber=196
 _bashlyk_iErrorNotInteger=195
 _bashlyk_iErrorNotDecimal=194
 _bashlyk_iErrorNotExistNotCreated=190
+_bashlyk_iErrorAlreadyExist=188
+_bashlyk_iErrorNoSuchDir=187
+_bashlyk_iErrorNoSuchFile=186
 _bashlyk_iErrorNoSuchFileOrDir=185
 _bashlyk_iErrorNoSuchProcess=184
 _bashlyk_iErrorCurrentProcess=183
@@ -104,6 +107,7 @@ _bashlyk_iErrorUserXsessionNotFound=171
 _bashlyk_iErrorXsessionNotFound=170
 _bashlyk_iErrorIncompatibleVersion=169
 _bashlyk_iErrorTryBlockException=168
+_bashlyk_iErrorTimeExpired=167
 _bashlyk_iErrorNotAvailable=166
 _bashlyk_iErrorNotDetected=0
 _bashlyk_iErrorSuccess=0
@@ -124,6 +128,9 @@ _bashlyk_hError[$_bashlyk_iErrorNotNumber]="not number"
 _bashlyk_hError[$_bashlyk_iErrorNotInteger]="not integer"
 _bashlyk_hError[$_bashlyk_iErrorNotDecimal]="not decimal number"
 _bashlyk_hError[$_bashlyk_iErrorNotExistNotCreated]="not exist and not created"
+_bashlyk_hError[$_bashlyk_iErrorAlreadyExist]="already exist"
+_bashlyk_hError[$_bashlyk_iErrorNoSuchDir]="no such directory"
+_bashlyk_hError[$_bashlyk_iErrorNoSuchFile]="no such file"
 _bashlyk_hError[$_bashlyk_iErrorNoSuchFileOrDir]="no such file or directory"
 _bashlyk_hError[$_bashlyk_iErrorNoSuchProcess]="no such process"
 _bashlyk_hError[$_bashlyk_iErrorNotChildProcess]="not child process"
@@ -135,6 +142,7 @@ _bashlyk_hError[$_bashlyk_iErrorUserXsessionNotFound]="user X-Session not found"
 _bashlyk_hError[$_bashlyk_iErrorXsessionNotFound]="X-Session not found"
 _bashlyk_hError[$_bashlyk_iErrorIncompatibleVersion]="incompatible version"
 _bashlyk_hError[$_bashlyk_iErrorTryBlockException]="try block exception"
+_bashlyk_hError[$_bashlyk_iErrorTimeExpired]="time expired"
 _bashlyk_hError[$_bashlyk_iErrorNotAvailable]="target is not available"
 _bashlyk_hError[$_bashlyk_iErrorNotDetected]="unknown (unexpected) error, maybe everything is fine"
 #******
@@ -404,11 +412,11 @@ err::sourcecode() {
 #    <message> - An error detail, such as the file name. When specifying a
 #                message, you should keep in mind that the error table
 #                ($_bashlyk_hError) has already prepared the descriptions.
-#                Important!!! Only one line is expected, additional lines can be 
+#                Important!!! Only one line is expected, additional lines can be
 #                processed by the interpreter. To avoid execution of these lines
-#                as a code, you need to remove linefeeds from variables, do not 
+#                as a code, you need to remove linefeeds from variables, do not
 #                apply double quotes around them (see examples).
-#                
+#
 #  OUTPUT
 #    command line, which can be performed using the eval <...>
 #  EXAMPLE
@@ -432,13 +440,13 @@ err::sourcecode() {
 err::generate() {
 
   local bashlyk_err_gen_rc=$?
-  
+
   if [[ ! "$( err::sourcecode )" =~ $_bashlyk_err_reArg ]]; then
 
     echo "echo \"$@ - invalid arguments for error handling, abort...\"; exit $_bashlyk_iErrorInvalidArgument;"
 
   fi
-  
+
   err::__generate $bashlyk_err_gen_rc $( eval echo "${BASH_REMATCH[2]}")
 
 }
@@ -515,26 +523,26 @@ err::__generate() {
      echo='echo'
      warn='msg::warn'
   sAction=$_bashlyk_onError
-  
+
   if   [[ ${a[0]} =~ $_bashlyk_err_reAct ]]; then
-  
+
     sAction=${BASH_REMATCH[1]}
     rs=$rc
     i=1
-    
+
   elif [[ ${a[1]} =~ $_bashlyk_err_reAct ]]; then
 
     sAction=${BASH_REMATCH[1]}
     [[ ${a[0]} ]] && rs=${a[0]} || rs=$rc
     i=2
-  
+
   else
-  
+
     i=0
     [[ ${a[0]} ]] && rs=${a[0]} && i=1 || rs=$rc
-  
+
   fi
-  
+
   err::orr $rs; rs=$?
 
   if (( rs >= $_bashlyk_iErrorUnknown )); then

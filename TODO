@@ -1,4 +1,4 @@
-# $Id: TODO 849 2018-08-09 01:50:19+04:00 yds $
+# $Id: TODO 851 2018-08-13 01:59:23+04:00 toor $
 + liblog.sh: не проходит тест udfWarn без терминала (в не интерактивном режиме)
 + libini.sh: при тесте с другими модулями в ini файлах оказывается вывод других
   тестовых блоков (решено в версии 1.57)
@@ -113,24 +113,24 @@ Fri, 06 Mar 2015 12:44:00 +0400
 + #170207 - ini - settings for key and sections charset
 ! #170208 - check keys validity for active configuration! (+INI::set +INI::read)
 + #170209 - no hard throw state (for testing)
-- #170214 - std - for 'udfMakeTemp -v var' in the eval block are autoclean not worked
+? #170214 - std - for 'udfMakeTemp -v var' in the eval block are autoclean not worked
 - #170614 - std - add std::settings (decimal point & etc)
 + #170615 - std - std::isNumber add support for decimal numbers or add std::isDecimal
 + #170616 - std - move temp tools init to the bashlyk
 + #170617 - std - rewrite testunit engine
-- #170721 - ini - doublequote notes for filenames with whitespaces
-- #180305 - rename ini to cfg
++ #170721 - ini - doublequote notes for filenames with whitespaces
++ #180305 - rename ini to cfg
 + #180306 - cfg - add CFG::storage method
 + #180307 - err - 'on error <action> <errorname> <text>' replace by 'error <errorname> action=<action> hint=<text>'
 - #180308 - replace testunit.awk by testunit.sh
 + #180309 - cfg - add setting 'backup config'
 + #180310 - cfg - autoswitch between INI and CONF mode of the CFG instance
-- #180501 - cfg - CFG::get - check return code
++ #180501 - cfg - CFG::get - check return code
 + #180502 - log - log notify messages (do not worked)
-- #180509 - err - added NoSuch{Dir,File}, Timeout error states
-- #180515 - cfg - 'conf', 'cnf' prefixes for 'shellmode', 'config' and other - 'INI-style'
++ #180509 - err - added NoSuch{Dir,File}, Timeout error states
++ #180515 - cfg - 'conf', 'cnf' prefixes for 'shellmode', 'config' and other - 'INI-style'
 - #180518 - net - net::ipv4.mask without address
 + #180719 - cfg - use CFG::load without config file if exist cli options
-- #180723 - pid - add pid::onExit.unlink.empty for cleaning the empty files
++ #180723 - pid - add pid::onExit.unlink.empty for cleaning the empty files
 
 
