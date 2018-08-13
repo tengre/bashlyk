@@ -1,5 +1,5 @@
 #
-# $Id: liberr.sh 851 2018-08-13 01:59:23+04:00 toor $
+# $Id: liberr.sh 853 2018-08-14 00:30:42+04:00 yds $
 #
 #****h* BASHLYK/liberr
 #  DESCRIPTION
@@ -624,7 +624,7 @@ err::__generate() {
 #  SYNOPSIS
 #    err::CommandNotFound <filename>
 #  DESCRIPTION
-#    return true if argument is not empty, exists and executable (## TODO test)
+#    return true if argument is not empty, exists and executable
 #    designed to check the conditions in the function err::postfix
 #  NOTES
 #    private method
@@ -887,7 +887,6 @@ err::EmptyResult() {
 #  OUTPUT
 #    see error ...
 #  EXAMPLE
-#    ## TODO improve tests
 #    local fn1 fn2
 #    std::temp fn1
 #    std::temp fn2

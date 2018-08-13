@@ -1,5 +1,5 @@
 #
-# $Id: libmsg.sh 848 2018-08-08 23:42:31+04:00 yds $
+# $Id: libmsg.sh 853 2018-08-14 00:30:42+04:00 yds $
 #
 #****h* BASHLYK/libmsg
 #  DESCRIPTION
@@ -102,15 +102,15 @@ msg::echo() {
 #  OUTPUT
 #   show input message or value of ${_bashlyk_sLastError[$BASHPID]}
 #  EXAMPLE
-#    # TODO требуется более точная проверка
+#    # TODO more fine test required
 #    _bashlyk_sLastError[$BASHPID]="msg::warn testing .."
 #    local bNotUseLog=$_bashlyk_bNotUseLog
 #    _bashlyk_bNotUseLog=1
 #    msg::warn                                                                  #? true
 #    _bashlyk_bNotUseLog=0
-#    date | msg::warn - "bashlyk::msg::warn testing (non-interactive mode)"     #? true
+#    date -R | msg::warn - "bashlyk::msg::warn testing (non-interactive mode)"  #? true
 #    _bashlyk_bNotUseLog=1
-#    date | msg::warn - "msg::warn test int"                                    #? true
+#    date -R | msg::warn - "msg::warn test int"                                 #? true
 #    _bashlyk_bNotUseLog=$bNotUseLog
 #  SOURCE
 msg::warn() {

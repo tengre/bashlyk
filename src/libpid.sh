@@ -1,5 +1,5 @@
 #
-# $Id: libpid.sh 850 2018-08-09 02:09:22+04:00 yds $
+# $Id: libpid.sh 853 2018-08-14 00:30:42+04:00 yds $
 #
 #****h* BASHLYK/libpid
 #  DESCRIPTION
@@ -367,7 +367,7 @@ pid::file() {
 #    NotExistNotCreated - PID file don't created, current process stopped
 #  EXAMPLE
 #    pid::onStarted.exit                                                        #? true
-#    ## TODO проверка кодов возврата
+#    ## TODO check error states
 #  SOURCE
 pid::onStarted.exit() {
 

@@ -1,5 +1,5 @@
 #
-# $Id: libcfg.sh 851 2018-08-13 01:59:23+04:00 toor $
+# $Id: libcfg.sh 853 2018-08-14 00:30:42+04:00 yds $
 #
 #****h* BASHLYK/libcfg
 #  DESCRIPTION
@@ -150,7 +150,6 @@ _bashlyk_hError[$_bashlyk_iErrorIniExtraCharInKey]="extra character(s) in the ke
 #    IniBadMethod     - bad method
 #  EXAMPLE
 #    CFG tnew                                                                   #? true
-#    ## TODO check errors
 #    declare -pf tnew.show >/dev/null 2>&1                                      #= true
 #    declare -pf tnew.save >/dev/null 2>&1                                      #= true
 #    declare -pf tnew.load >/dev/null 2>&1                                      #= true
@@ -423,7 +422,6 @@ CFG::__section.select() {
 # }}}
 #    tSShow2.free
 #    CFG tCheckSpaces
-#    ## TODO tests checking
 #    tCheckSpaces.set [ section ] key = value
 #    tCheckSpaces.settings.section.padding = false
 #    tCheckSpaces.show                                | {{ '^\[section\]$'   }}
@@ -1109,8 +1107,8 @@ CFG::storage.use() {
 
     if [[ -f "$s" ]]; then
 
-      ## TODO readonly maybe
-      touch "$s" && head -c 1 "$s" || sErr="NotPermitted"
+      ## TODO readonly maybe - touch "$s"
+      head -c 1 "$s" >/dev/null 2>&1 || sErr="NotPermitted"
 
     else
 

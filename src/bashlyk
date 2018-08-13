@@ -1,6 +1,6 @@
 #!/bin/bash
 #
-# $Id: bashlyk 847 2018-08-08 23:24:25+04:00 yds $
+# $Id: bashlyk 853 2018-08-14 00:30:42+04:00 yds $
 #
 #****h* BASHLYK/bashlyk
 #  DESCRIPTION
@@ -48,6 +48,11 @@
 }
 declare -rg _bashlyk_PWD=${PWD:=$(pwd)}
 declare -ag _bashlyk_aArg=( "$@" )
+declare -rg _bashlyk_externals_bashlyk="                                       \
+                                                                               \
+    cut findmnt getent grep hostname id printf tr tty xargs                    \
+                                                                               \
+"
 #******
 #****f* bashlyk/bashlyk::init
 #  SYNOPSIS
@@ -122,12 +127,12 @@ bashlyk::init() {
   _bashlyk_pathCnf="$_bashlyk_pathCfg"
   _bashlyk_pathIni="$_bashlyk_pathCfg"
 
-  ## TODO check exists of the /proc/mounts
   for TMPDIR in /dev/shm /run/shm /tmp $_bashlyk_pathDat; do
 
     [[ -w $TMPDIR ]] || continue
     s=$( findmnt -n -o SOURCE,TARGET --target $TMPDIR | xargs )
 
+    [[ -f /proc/mounts ]] || break
     if ! grep "${s}.*noexec" /proc/mounts >/dev/null 2>&1; then
 
       declare -rg TMPEXEC=$TMPDIR
