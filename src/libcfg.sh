@@ -1,5 +1,5 @@
 #
-# $Id: libcfg.sh 853 2018-08-14 00:30:42+04:00 yds $
+# $Id: libcfg.sh 854 2018-08-14 01:35:39+04:00 yds $
 #
 #****h* BASHLYK/libcfg
 #  DESCRIPTION
@@ -1503,8 +1503,7 @@ CFG::read() {
 ## TODO well known places of the configuration don't worked..
 #****e* libcfg/CFG::load
 #  SYNOPSIS
-#    CFG::load <section>:(<options>|<raw mode>) ...
-#    CFG::load {[\[<section>\]](<options>|<raw mode>)} ...
+#    CFG::load [\[<section>\]](<options>|<raw mode>)[,] ...
 #  DESCRIPTION
 #    load the specified configuration data from a group of related files
 #  ARGUMENTS
@@ -1517,7 +1516,6 @@ CFG::read() {
 #                 + - add data to the early loaded data of the section
 #                 = - add only unique data of the early loaded data
 #  NOTES
-#    The file name must not begin with a point or end with a point.
 #    configuration sources are ignored if they do not owned by the owner of the
 #    process or root.
 #  ERRORS
