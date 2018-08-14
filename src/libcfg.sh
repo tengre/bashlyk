@@ -1,5 +1,5 @@
 #
-# $Id: libcfg.sh 854 2018-08-14 01:35:39+04:00 yds $
+# $Id: libcfg.sh 855 2018-08-15 01:07:45+04:00 yds $
 #
 #****h* BASHLYK/libcfg
 #  DESCRIPTION
@@ -28,51 +28,55 @@
 #  USES
 #    libstd liberr
 #  EXAMPLE
-#    # create object from CFG class
-#    CFG ini
+#    # create instance from CFG class
+#    CFG cfg
 #
-#    # bind CLI options to the ini object
-#    ## TODO detailed description required
-#    ini.bind.cli config{c}: source{s}:-- help{h} mode{m}: dry-run
+#    # define CLI options and bind to the 'cfg' instance
+#    cfg.bind.cli auth{a}: config{c}: source{s}:-- help{h} mode{m}: show-conf{C} show-data{d}
 #
-#    # get value of the --config (-c) option
-#    conf=$( ini.getopt config )
+#    # if set --help (-h) option then show usage only
+#    [[ $( cfg.getopt help ) ]] && usage() # and exit
 #
-#    # set file as source of the configuration data
-#    ini.storage.use $conf
+#    # get value of the --config (-c) option to the variable $config
+#    config=$( cfg.getopt config )
 #
-#    # load selected options from ini configuration file and combine with
-#    # CLI options.
+#    # set this value as source of the configuration data
+#    cfg.storage.use $config
+#
+#    # load selected options from INI-style configuration file and combine with
+#    # relevant CLI options.
 #    # [!] CLI options with the same name have higher priority
-#    ini.load                                                                  \
-#                  []mode,help                                                 \
-#               [dry]run                                                       \
+#    cfg.load                                                                  \
+#                  []auth,mode                                                 \
+#              [show]conf,data                                                 \
 #            [source]=
 #
-#    # check value of the option 'run' from section 'dry'
-#    if [[ $( ini.get [dry]run ) =~ ^(true|yes|1)$ ]]; then
-#      echo "dry run, view current config:"
-#
-#      # show configuration in the ini format
-#      ini.show
+#    # check value of the option 'conf' from section 'show'
+#    if [[ $( cfg.get [show]conf ) ]]; then
+#      echo "view current config:"
+#      # show configuration in the INI-style
+#      cfg.show
 #      exit 0
 #    fi
 #
 #    # set new value for 'mode' options from global section
-#    ini.set mode = demo
+#    cfg.set []mode = demo # or cfg.set mode = demo
+#
+#    # set new option 'date' to the global section
+#    cfg.set date = $( date -R )
 #
 #    # add new items to list of unique values
-#    ini.set [source] = $HOME
-#    ini.set [source] = /var/mail/$USER
+#    cfg.set [source] = $HOME
+#    cfg.set [source] = /var/mail/$USER
 #
-#    # save updated configuration to file $conf
-#    ini.save
+#    # save updated configuration to the file $config
+#    cfg.save
 #
-#    # or other file
-#    ini.save other file.ini
+#    # or "other file.ini"
+#    cfg.save other file.ini
 #
 #    # destroy ini object, free resources
-#    ini.free
+#    cfg.free
 #
 #  AUTHOR
 #    Damir Sh. Yakupov <yds@bk.ru>
@@ -112,7 +116,7 @@ declare -rg _bashlyk_methods_cfg="                                             \
     bind.cli get getopt keys load read save __section.byindex                  \
     __section.getArray __section.id __section.select __section.setRawData      \
     __section.show set settings settings.section.padding settings.shellmode    \
-    show storage.show storage.use free                                         \
+    show storage.show storage.use.default storage.use free                     \
 "
 
 declare -rg _bashlyk_externals_cfg="                                           \
@@ -1070,26 +1074,67 @@ CFG::show() {
 
 }
 #******
-#****e* libcfg/CFG::storage.use
+#****e* libcfg/CFG::storage.use.default
 #  SYNOPSIS
-#    CFG::storage.use [<storage>]
+#    CFG::storage.use.default
 #  DESCRIPTION
 #    Bind external storage (filename & etc) for the configuration object
 #  NOTES
 #    public method
-#  ARGUMENTS
-#    <storage>  - external storage, such as a file
-#                 by default a special file is generated
 #  EXAMPLE
 #
+#    CFG cfgStorDef
+#    cfgStorDef.storage.use.default
+#    cfgStorDef.settings storage | {{ ${_bashlyk_pathDat}/[[:xdigit:]]*\.cfg$ }}
+#    cfgStorDef.free
+#
+#  SOURCE
+CFG::storage.use.default() {
+
+  local fnErr o s LANG=C
+
+  o=${FUNCNAME[0]%%.*}
+
+  s="$( exec -c sha1sum <<< "${0}::${o}" )"
+  s="${_bashlyk_pathDat}/${s:0:40}.cfg"
+
+  std::temp fnErr
+
+  if ! ( mkdir -p "${s%/*}/" && touch "$s" ) > $fnErr 2>&1; then
+    
+    error NotExistNotCreated throw -- ${s}, details - $(< $fnErr)
+
+  fi
+  
+  pid::onExit.unlink "${s%/*}"
+  pid::onExit.unlink.empty "$s"
+  
+  ${o}.settings storage = $s
+  
+}
+#******
+#****e* libcfg/CFG::storage.use
+#  SYNOPSIS
+#    CFG::storage.use [<file>]
+#  DESCRIPTION
+#    Bind configuration file for a CFG instance. If specified a short filename,
+#    its search is first performed in the initialized configuration paths, only
+#    then in the current directory. The specified file is checked for reading 
+#    and the ability to create it in the absence. If the specified file can't be
+#    used, an appropriate warning is issued and an internal configuration file 
+#    is generated.
+#  NOTES
+#    public method
+#  ARGUMENTS
+#    <file> - external storage file, by default a internal file is generated
+#  EXAMPLE
 #    CFG cfgStorage
 #    cfgStorage.storage.use
 #    cfgStorage.settings storage | {{ ${_bashlyk_pathDat}/[[:xdigit:]]*\.cfg$ }}
 #    cfgStorage.storage.use external.ini
 #    cfgStorage.settings storage | {{ /external\.ini$ }}
-#    cfgStorage.storage.use /sys/extern.ini
-#    cfgStorage.settings storage | {{ /external\.ini$ }}
-#    rm -f external.ini
+#    cfgStorage.storage.use /sys/extern.ini                                     ## can't be used
+#    cfgStorage.settings storage | {{ ${_bashlyk_pathDat}/[[:xdigit:]]*\.cfg$ }}
 #    cfgStorage.free
 #
 #  SOURCE
@@ -1099,58 +1144,70 @@ CFG::storage.use() {
 
   o=${FUNCNAME[0]%%.*}
 
-  if [[ $* ]]; then
+  if [[ ! $* ]]; then
+  
+    s="$( ${o}.settings storage )"
+    
+    [[ $s ]] && eval set -- "$s" || { ${o}.storage.use.default; return; }
+      
+  fi
 
-    s="$( readlink -f "$@" )"
+  if [[ "$@" == "${@##*/}" ]]; then
+    
+    if ! s="$( readlink -eq "$_bashlyk_pathCfg/$@" )"; then
+    
+      if ! s="$( readlink -eq "/etc/$_bashlyk_pathPrefix/$@" )"; then
+      
+        s="$( readlink -eq "$@" )"
+      
+      fi
 
-    std::temp fnErr
+    fi
+      
+    [[ $s ]] || s="$_bashlyk_pathCfg/$@"   
+    
+  else
+      
+    s="$( readlink -eq "$@" )" || s="$@"
+      
+  fi
 
-    if [[ -f "$s" ]]; then
+  std::temp fnErr
 
-      ## TODO readonly maybe - touch "$s"
-      head -c 1 "$s" >/dev/null 2>&1 || sErr="NotPermitted"
+  if [[ -f "$s" ]]; then
 
-    else
-
-      mkdir -p "${s%/*}/" && touch "$s" || sErr='NotExistNotCreated'
-      pid::onExit.unlink.empty "$s"
-
-    fi >$fnErr 2>&1
+    ## TODO readonly maybe - touch "$s"
+    head -c 1 "$s" || sErr="NotPermitted"
 
   else
 
-    sErr='MissingArgument'
-
-  fi
-
-  if [[ $sErr =~ ^(Not|Missing) ]]; then
-
-    [[ -s $fnErr ]] && error $sErr -- warn ${s}, details - $(< $fnErr)
-
-    s="$( ${o}.settings storage )"
-
-    if [[ ! $s ]]; then
-
-      s="$( exec -c sha1sum <<< "${0}::${o}" )"
-      s="${_bashlyk_pathDat}/${s:0:40}.cfg"
+    if ( mkdir -p "${s%/*}/" && touch "$s" ); then
+    
+      pid::onExit.unlink "${s%/*}"
+      pid::onExit.unlink.empty "$s"
+      s="$( readlink -eq "$s" )" || sErr='NoSuchFile'
+      
+    else
+    
+      sErr='NotExistNotCreated'  
 
     fi
 
-    std::temp fnErr
+  fi >$fnErr 2>&1
 
-    ( mkdir -p "${s%/*}/" && touch "$s" ) > $fnErr 2>&1 ||
-    error NotExistNotCreated throw -- ${s}, details - $(< $fnErr)
+  if [[ $sErr =~ ^No ]]; then
 
-    pid::onExit.unlink "${s%/*}"
-    pid::onExit.unlink.empty "$s"
+    [[ -s $fnErr ]] && error $sErr warn -- ${s}, details - $(< $fnErr)
+   
+    ${o}.storage.use.default
+    
+    err::debugf 3 'used default storage - "%s"\n' "$( ${o}.storage.show )"
 
   else
-
-    s="$( readlink -f "$@" )"
+    
+    ${o}.settings storage = $s
 
   fi
-
-  ${o}.settings storage = $s
 
 }
 #******
@@ -1252,6 +1309,7 @@ CFG::save() {
 
   fi
 
+  ## TODO try ${o}.storage.use.default
   ( mkdir -p "${fn%/*}/" && touch "$fn" ) >/dev/null 2>&1 || error NotExistNotCreated throw ${fn%/*}
 
   {
@@ -1500,7 +1558,6 @@ CFG::read() {
 
 }
 #******
-## TODO well known places of the configuration don't worked..
 #****e* libcfg/CFG::load
 #  SYNOPSIS
 #    CFG::load [\[<section>\]](<options>|<raw mode>)[,] ...
@@ -1602,6 +1659,7 @@ CFG::read() {
 #   tLoad.storage.use $iniLoad
 #   tLoad.load []file,main,child [exec]- [main]hint, msg, cnt [replace]- [unify]= [acc]+ #? true
 #   tLoad.save $iniSave                                                         #? true
+#   tLoad.storage.use $iniSave
 #   tLoad.show | {{{
 #
 #       child    =    true
@@ -1667,17 +1725,20 @@ CFG::load() {
 
   local -a a
   local -A h hKeyValue hRawMode
-  local cfg csv i IFS fmtPairs fmtSections fn o path reSection reValidSections s
+  local cfg csv i IFS fmtPairs fmtSections o path reSection reValidSections s
   local sSection
 
   o=${FUNCNAME[0]%%.*}
 
-  fn="$( ${o}.storage.show )" || {
+  cfg="$( ${o}.storage.show )" || {
 
     ${o}.storage.use
-    fn="$( ${o}.storage.show )"
+    cfg="$( ${o}.storage.show )"
 
   }
+  
+  path="${cfg%/*}/"
+   cfg="${cfg##*/}"
 
   fmtSections='^[[:space:]]*(:?)\[[[:space:]]*(%SECTION%)[[:space:]]*\](:?)[[:space:]]*$'
 
@@ -1710,22 +1771,6 @@ CFG::load() {
   #
   # end CFG::load::parse
   #
-
-  [[ "$fn" == "${fn##*/}" && -f "$(_ pathCfg)/$fn" ]] && path="$( _ pathCfg )"
-  [[ "$fn" == "${fn##*/}" && -f "$fn"              ]] && path="$( exec -c pwd )"
-  [[ "$fn" != "${fn##*/}" && -f "$fn"              ]] && path="${fn%/*}"
-
-  if [[ ! $path && -f "/etc/$(_ pathPrefix)/$fn" ]]; then
-
-    path="/etc/$( _ pathPrefix )"
-
-  else
-
-    errorify on NoSuchFileOrDir $fn || return
-
-  fi
-
-  [[ $path ]] && cfg=${fn##*/}
 
   s=$* && IFS='][' && a=( $s ) && IFS=$' \t\n'
 
@@ -1760,7 +1805,7 @@ CFG::load() {
     [[ ${a[i]} ]] || continue
     [[ $cfg    ]] && cfg="${a[i]}.${cfg}" || cfg="${a[i]}"
 
-    if [[ -s "${path}/${cfg}" ]]; then
+    if [[ -s "${path}${cfg}" ]]; then
 
       ${o}.storage.use ${path}/${cfg}
       ${o}.read $reValidSections
