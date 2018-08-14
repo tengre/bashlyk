@@ -1,5 +1,5 @@
 #
-# $Id: liberr.sh 853 2018-08-14 00:30:42+04:00 yds $
+# $Id: liberr.sh 857 2018-08-15 02:45:09+04:00 yds $
 #
 #****h* BASHLYK/liberr
 #  DESCRIPTION
@@ -50,8 +50,8 @@ declare -rg _bashlyk_methods_err="                                             \
     __add_throw_to_command CommandNotFound __convert_try_to_func debug         \
     EmptyArgument EmptyOrMissingArgument EmptyResult EmptyVariable             \
     exception.message generate __generate InvalidVariable MissingArgument      \
-    NotExistNotCreated NotNumber NoSuchFileOrDir orr postfix sourcecode        \
-    stacktrace status status.show                                              \
+    NotExistNotCreated NotNumber AlreadyExist NoSuchFileOrDir NoSuchFile       \     
+    NoSuchDir orr postfix sourcecode stacktrace status status.show             \
 "
 
 declare -rg _bashlyk_aExport_err="                                             \
@@ -647,6 +647,32 @@ err::CommandNotFound() {
 
 }
 #******
+#****p* liberr/err::AlreadyExist
+#  SYNOPSIS
+#    err::AlreadyExist <filename>
+#  DESCRIPTION
+#    return true if argument is empty, not exists, designed to check the
+#    conditions in the function err::postfix
+#  NOTES
+#    private method
+#  ARGUMENTS
+#    <filename> - filesystem object for checking
+#  RETURN VALUE
+#    AlreadyExist - specified filesystem object is exists
+#    0            - no arguments, specified filesystem object are not found
+#  EXAMPLE
+#    local cmdYes='/bin/sh' pathNo1="/tmp" cmdNo1="bin_${RANDOM}"
+#    err::AlreadyExist                                                          #? true
+#    err::AlreadyExist $cmdNo1                                                  #? true
+#    $(err::AlreadyExist $pathNo1 || exit 123)                                  #? 123
+#    err::AlreadyExist $cmdYes                                                  #? $_bashlyk_iErrorAlreadyExist
+#  SOURCE
+err::AlreadyExist() {
+
+  [[ $* && -e "$*" ]] && return $_bashlyk_iErrorAlreadyExist || return 0
+
+}
+#******
 #****p* liberr/err::NoSuchFileOrDir
 #  SYNOPSIS
 #    err::NoSuchFileOrDir <filename>
@@ -670,6 +696,58 @@ err::CommandNotFound() {
 err::NoSuchFileOrDir() {
 
   [[ $* && -e "$*" ]] || return $_bashlyk_iErrorNoSuchFileOrDir
+
+}
+#******
+#****p* liberr/err::NoSuchFile
+#  SYNOPSIS
+#    err::NoSuchFile <filename>
+#  DESCRIPTION
+#    return true if argument is non empty, exists, designed to check the
+#    conditions in the function err::postfix
+#  NOTES
+#    private method
+#  ARGUMENTS
+#    <filename> - filesystem object for checking
+#  RETURN VALUE
+#    NoSuchFile - no arguments, specified file is nonexistent
+#    0          - specified file are found
+#  EXAMPLE
+#    local cmdYes='/bin/sh' cmdNo1="bin_${RANDOM}" cmdNo2="bin_${RANDOM}"
+#    err::NoSuchFile                                                       #? $_bashlyk_iErrorNoSuchFile
+#    err::NoSuchFile $cmdNo1                                               #? $_bashlyk_iErrorNoSuchFile
+#    $(err::NoSuchFile $cmdNo2 || exit 123)                                #? 123
+#    err::NoSuchFile $cmdYes                                               #? true
+#  SOURCE
+err::NoSuchFile() {
+
+  [[ $* && -f "$*" ]] || return $_bashlyk_iErrorNoSuchFile
+
+}
+#******
+#****p* liberr/err::NoSuchDir
+#  SYNOPSIS
+#    err::NoSuchDir <directory>
+#  DESCRIPTION
+#    return true if argument is non empty, exists, designed to check the
+#    conditions in the function err::postfix
+#  NOTES
+#    private method
+#  ARGUMENTS
+#    <directory> - directory for checking
+#  RETURN VALUE
+#    NoSuchDir - no arguments, specified directory is nonexistent
+#    0         - specified directory are found
+#  EXAMPLE
+#    local pathYes='/tmp' pathNo1="/bin_${RANDOM}" pathNo2="/bin_${RANDOM}"
+#    err::NoSuchDir                                                         #? $_bashlyk_iErrorNoSuchDir
+#    err::NoSuchDir $pathNo1                                                #? $_bashlyk_iErrorNoSuchDir
+#    $(err::NoSuchDir $pathNo2 || exit 123)                                 #? 123
+#    err::NoSuchDir $pathYes                                                #? true
+#  SOURCE
+err::NoSuchDir() {
+
+  [[ $* && -d "$*" ]] || return $_bashlyk_iErrorNoSuchDir
 
 }
 #******
