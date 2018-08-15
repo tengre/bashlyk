@@ -1,5 +1,5 @@
 #
-# $Id: libstd.sh 849 2018-08-09 01:47:33+04:00 yds $
+# $Id: libstd.sh 860 2018-08-16 01:20:31+04:00 yds $
 #
 #****h* BASHLYK/libstd
 #  DESCRIPTION
@@ -361,7 +361,6 @@ std::whitespace.decode() {
 #    EmptyResult        - name for temporary object missing
 #
 #  EXAMPLE
-#    ## TODO improve tests
 #    local foTemp s=$RANDOM
 #    _ onError return
 #    std::temp foTemp path=/tmp prefix=pre. suffix=.${s}1                       #? true
@@ -374,24 +373,27 @@ std::whitespace.decode() {
 #    ls -1 $foTemp 2>/dev/null                    | {{ "pre\..*\.${s}3$"     }}
 #    rm -f $foTemp
 #    foTemp=$(std::temp prefix=pre. suffix=.${s}4 keep=false)                   #? true
-#    echo $foTemp                            | {{ "${TMPDIR}/pre\..*\.${s}4" }}
+#    echo $foTemp                                 | {{ "pre\..*\.${s}4"      }}
 #    test -f $foTemp                                                            #? false
 #    rm -f $foTemp
-#    $(std::temp foTemp path=/tmp prefix=pre. suffix=.${s}5 keep=true)
+#    : $(std::temp foTemp path=/tmp prefix=pre. suffix=.${s}5 keep=true)
 #    ls -1 /tmp/pre.*.${s}5 2>/dev/null           | {{ "/tmp/pre\..*\.${s}5" }}
 #    rm -f /tmp/pre.*.${s}5
 #    $(std::temp foTemp path=/tmp prefix=pre. suffix=.${s}6)
 #    ls -1 /tmp/pre.*.${s}6 2>/dev/null           | {{ "/tmp/pre\..*\.${s}6" }}!
 #    unset foTemp
 #    foTemp=$(std::temp)                                                        #? true
-#    ls -1l $foTemp 2>/dev/null                                                 #? true
+#    ls -1 $foTemp 2>/dev/null                                                  #? true
 #    test -f $foTemp                                                            #? true
 #    rm -f $foTemp
 #    std::temp foTemp type=pipe                                                 #? true
 #    test -p $foTemp                                                            #? true
 #    rm -f $foTemp
+#    std::temp foTemp prefix="pref." suffix=".suffix with spaces.tmp"
+#    ls -1 "$foTemp"                              | {{ "ix with spaces.tmp$" }}
+#    rm -f "$foTemp"
 #    std::temp invalid+variable                                                 #? ${_bashlyk_iErrorInvalidVariable}
-#    err::status     | {{ -P '^invalid variable - invalid\+variable \(\d+\)$' }}
+#    err::status    | {{ -P '^invalid variable - invalid\+variable \(\d+\)$' }}
 #    std::temp path=/proc                                                       #? ${_bashlyk_iErrorNotExistNotCreated}
 #    err::status
 #  SOURCE
@@ -401,11 +403,12 @@ std::temp() {
 
     [[ "$1" == "-v" ]] && shift
 
-    std::isVariable $1 || error InvalidVariable $1
+    std::isVariable $1 || error InvalidVariable -- $1
 
-    eval 'export $1="$( shift; std::temp stdout-mode ${@//keep=false/} )"'
+    #eval 'export $1="$( shift; std::temp stdout-mode "${@//keep=false/}" )"'
+    eval 'printf -v $1 "%s" "$(shift; std::temp stdout-mode "${@//keep=false/}")"'
 
-    [[ ${!1} ]] || error EmptyResult $1
+    [[ ${!1} ]] || error EmptyResult -- $1
 
     [[ $* =~ keep=false || ! $* =~ keep=true ]] && pid::onExit.unlink ${!1}
 
@@ -419,14 +422,14 @@ std::temp() {
   fnErr=${TMPDIR:-/tmp}/${RANDOM}${RANDOM}${RANDOM}${USER}${$}
   IFS=$' \t\n'
 
-  for s in $*; do
+  for s in "$@"; do
 
     case "$s" in
 
-        path=*) path=${s#*=};;
-      prefix=*) sPrefix=${s#*=};;
-      suffix=*) sSuffix=${s#*=};;
-        mode=*) octMode=${s#*=};;
+        path=*) path="${s#*=}";;
+      prefix=*) sPrefix="${s#*=}";;
+      suffix=*) sSuffix="${s#*=}";;
+        mode=*) octMode="${s#*=}";;
        type=d*) optDir='-d';;
        type=f*) optDir='';;
        type=p*) bPipe=1;;
@@ -454,8 +457,8 @@ std::temp() {
 
   done
 
-  sPrefix=${sPrefix//\//}
-  sSuffix=${sSuffix//\//}
+  sPrefix="${sPrefix//\//}"
+  sSuffix="${sSuffix//\//}"
 
   if   hash mktemp   2>/dev/null; then
 
@@ -469,11 +472,11 @@ std::temp() {
 
   if [[ ! $path ]]; then
 
-    [[ $bPipe ]] && path=$( _ pathRun ) || path="$TMPDIR"
+    [[ $bPipe ]] && path="$( _ pathRun )" || path="$TMPDIR"
 
   fi
 
-  mkdir -p $path || error NotExistNotCreated $path
+  mkdir -p "$path" || error NotExistNotCreated -- $path
 
   pid::onExit.unlink $fnErr
 
@@ -483,13 +486,13 @@ std::temp() {
 
       s="${path}/${sPrefix:0:5}${RANDOM}${sSuffix}"
 
-      [[ $optDir ]] && mkdir -p $s || touch $s
+      [[ $optDir ]] && mkdir -p "$s" || touch "$s"
 
     ;;
 
     mktemp)
 
-      s=$( LC_ALL=C mktemp --tmpdir="$path" $optDir --suffix="$sSuffix" "${sPrefix:0:5}XXXXXXXX" )
+      s="$( LC_ALL=C mktemp --tmpdir="$path" $optDir --suffix="$sSuffix" "${sPrefix:0:5}XXXXXXXX" )"
 
     ;;
 
@@ -498,7 +501,7 @@ std::temp() {
       [[ $sPrefix ]] && sPrefix="-p ${sPrefix:0:5}"
       [[ $sSuffix ]] && sSuffix="-s $sSuffix"
 
-      s=$( LC_ALL=C tempfile -d $path $sPrefix $sSuffix )
+      s="$( LC_ALL=C tempfile -d "$path" "$sPrefix" "$sSuffix" )"
 
     ;;
 
@@ -506,8 +509,8 @@ std::temp() {
 
   if [[ $bPipe ]]; then
 
-    rm -f  $s
-    mkfifo $s
+    rm -f  "$s"
+    mkfifo "$s"
     : ${octMode:=0600}
 
   fi >>$fnErr 2>&1
@@ -528,7 +531,7 @@ std::temp() {
 
   fi
 
-  [[ $* =~ keep=false ]] && pid::onExit.unlink $s
+  [[ $* =~ keep=false ]] && pid::onExit.unlink "$s"
 
   [[ $s ]] && printf -- '%s\n' "$s" || return $( _ iErrorEmptyResult )
 
