@@ -1,5 +1,5 @@
 #
-# $Id: libpid.sh 853 2018-08-14 00:30:42+04:00 yds $
+# $Id: libpid.sh 860 2018-08-16 01:37:21+04:00 yds $
 #
 #****h* BASHLYK/libpid
 #  DESCRIPTION
@@ -37,7 +37,7 @@
 #  SOURCE
 #: ${_bashlyk_fnPid:=}
 #: ${_bashlyk_fnSock:=}
-#: ${_bashlyk_afoZero:=}
+#: ${_bashlyk_afoEmpty:=}
 #: ${_bashlyk_afoClean:=}
 #: ${_bashlyk_afdClean:=}
 #: ${_bashlyk_ajobClean:=}
@@ -430,38 +430,40 @@ pid::onExit.close() {
 #  NOTES
 #    public
 #  INPUTS
-#    <file(s)> - whitespace separated files and/or directories list
+#    <file(s)> - whitespace separated files and/or directories list.
+#                Warning! names with whitespaces must be doublequoted
 #  EXAMPLE
-#    local a fnTemp1 fnTemp2 pathTemp1 pathTemp2 s=$RANDOM
-#    std::temp fnTemp1 keep=true suffix=.${s}1
-#    test -f $fnTemp1
-#    echo $(pid::onExit.unlink $fnTemp1 )
-#    ls -l ${TMPDIR}/*.${s}1 2>/dev/null                    | {{ ".*\.${s}1" }}1
-#    echo $(std::temp fnTemp2 suffix=.${s}2)
-#    ls -l ${TMPDIR}/*.${s}2 2>/dev/null                    | {{ ".*\.${s}2" }}1
-#    echo $(std::temp fnTemp2 suffix=.${s}3 keep=true)
-#    ls -l ${TMPDIR}/*.${s}3 2>/dev/null                    | {{ ".*\.${s}3" }}
-#    a=$(ls -1 ${TMPDIR}/*.${s}3)
-#    echo $(pid::onExit.unlink $a )
-#    ls -l ${TMPDIR}/*.${s}3 2>/dev/null                    | {{ ".*\.${s}3" }}1
-#    std::temp pathTemp1 keep=true suffix=.${s}1 type=dir
-#    test -d $pathTemp1
-#    echo $(pid::onExit.unlink $pathTemp1 )
-#    ls -1ld ${TMPDIR}/*.${s}1 2>/dev/null                  | {{ ".*\.${s}1" }}1
-#    echo $(std::temp pathTemp2 suffix=.${s}2 type=dir)
-#    ls -1ld ${TMPDIR}/*.${s}2 2>/dev/null                  | {{ ".*\.${s}2" }}1
-#    echo $(std::temp pathTemp2 suffix=.${s}3 keep=true type=dir)
-#    ls -1ld ${TMPDIR}/*.${s}3 2>/dev/null                  | {{ ".*\.${s}3" }}
-#    a=$(ls -1ld ${TMPDIR}/*.${s}3)
-#    echo $(pid::onExit.unlink $a )
-#    ls -1ld ${TMPDIR}/*.${s}3 2>/dev/null                  | {{ ".*\.${s}3" }}1
-#    ## TODO names with whitespaces
+#    local a fn1 fn2 fn3 fn4 path1 path2 s=$RANDOM
+#    std::temp fn1 keep=true suffix=.${s}1
+#    : $( pid::onExit.unlink $fn1 )
+#    [ -f $fn1 ]                                                                #? false
+#    : $( std::temp fn2 suffix=.${s}2 keep=true )
+#    ls -1 ${TMPDIR}/*.${s}2 2>/dev/null                                        | {{ ".*\.${s}2" }}0
+#    IFS=$'\n' a=( $( ls -1 ${TMPDIR}/*.${s}2 ) )
+#    : $(pid::onExit.unlink "${a[@]}" )
+#    ls -1 ${TMPDIR}/*.${s}2 2>/dev/null                                        | {{ ".*\.${s}2" }}1
+#    std::temp path1 keep=true suffix=.${s}3 type=dir
+#    : $(pid::onExit.unlink $path1 )
+#    ls -1d ${TMPDIR}/*.${s}3 2>/dev/null                                       | {{ ".*\.${s}3" }}1
+#    : $(std::temp path2 suffix=.${s}4 keep=true type=dir)
+#    ls -1d ${TMPDIR}/*.${s}4 2>/dev/null                                       | {{ ".*\.${s}4" }}0
+#    IFS=$'\n' a=( $(ls -1d ${TMPDIR}/*.${s}4) )
+#    : $(pid::onExit.unlink "${a[@]}" )
+#    ls -1d ${TMPDIR}/*.${s}4 2>/dev/null                                       | {{ ".*\.${s}4" }}1
+#    : $( std::temp fn3 prefix=fn3_ suffix=".with spaces.tmp" keep=true )
+#    : $( std::temp fn4 prefix=fn4_ suffix=".with spaces.tmp" keep=true )
+#    ls -1 ${TMPDIR}/fn*spaces.tmp 2>/dev/null                                  | {{ "aces.tmp$" }}
+#    IFS=$'\n' a=( $(ls -1 ${TMPDIR}/fn*spaces.tmp 2>/dev/null) )
+#    : $(pid::onExit.unlink "${a[@]}" )
+#    ls -1 ${TMPDIR}/fn*spaces.tmp 2>/dev/null                                  | {{ "aces.tmp$" }}1
 #  SOURCE
 pid::onExit.unlink() {
 
   [[ $* ]] || return $_bashlyk_iErrorMissingArgument
 
-  _bashlyk_afoClean[$BASHPID]+=" $@"
+  local s IFS=$'\n'
+
+  for s in "$@"; do _bashlyk_afoClean[$BASHPID]+="${s}${IFS}"; done
 
   trap "pid::trap" EXIT INT TERM
 
@@ -477,36 +479,37 @@ pid::onExit.unlink() {
 #  INPUTS
 #    <file(s)> - whitespace separated files and/or directories list
 #  EXAMPLE
-#    local a fnTemp1 fnTemp2 pathTemp1 pathTemp2 s=$RANDOM
-#    std::temp fnTemp1 keep=true suffix=.${s}1
-#    test -f $fnTemp1
-#    echo $(pid::onExit.unlink.empty $fnTemp1 )
-#    ls -l ${TMPDIR}/*.${s}1 2>/dev/null                    | {{ ".*\.${s}1" }}1
-#    echo $(std::temp fnTemp2 suffix=.${s}2)
-#    ls -l ${TMPDIR}/*.${s}2 2>/dev/null                    | {{ ".*\.${s}2" }}1
-#    echo $(std::temp fnTemp2 suffix=.${s}3 keep=true)
-#    ls -l ${TMPDIR}/*.${s}3 2>/dev/null                    | {{ ".*\.${s}3" }}
-#    a=$(ls -1 ${TMPDIR}/*.${s}3)
-#    echo $(pid::onExit.unlink.empty $a )
-#    ls -l ${TMPDIR}/*.${s}3 2>/dev/null                    | {{ ".*\.${s}3" }}1
-#    std::temp pathTemp1 keep=true suffix=.${s}1 type=dir
-#    test -d $pathTemp1
-#    echo $(pid::onExit.unlink.empty $pathTemp1 )
-#    ls -1ld ${TMPDIR}/*.${s}1 2>/dev/null                  | {{ ".*\.${s}1" }}1
-#    echo $(std::temp pathTemp2 suffix=.${s}2 type=dir)
-#    ls -1ld ${TMPDIR}/*.${s}2 2>/dev/null                  | {{ ".*\.${s}2" }}1
-#    echo $(std::temp pathTemp2 suffix=.${s}3 keep=true type=dir)
-#    ls -1ld ${TMPDIR}/*.${s}3 2>/dev/null                  | {{ ".*\.${s}3" }}
-#    a=$(ls -1ld ${TMPDIR}/*.${s}3)
-#    echo $(pid::onExit.unlink.empty $a )
-#    ls -1ld ${TMPDIR}/*.${s}3 2>/dev/null                  | {{ ".*\.${s}3" }}1
-#    ## TODO names with whitespaces
+#    local a fn1 fn2 fn3 fn4 path1 path2 s=$RANDOM
+#    std::temp fn1 keep=true suffix=.${s}1
+#    : $( pid::onExit.unlink.empty $fn1 )
+#    [ -f $fn1 ]                                                                #? false
+#    : $( std::temp fn2 suffix=.${s}2 keep=true )
+#    ls -1 ${TMPDIR}/*.${s}2 2>/dev/null                                        | {{ ".*\.${s}2" }}0
+#    IFS=$'\n' a=( $( ls -1 ${TMPDIR}/*.${s}2 ) )
+#    : $(pid::onExit.unlink.empty "${a[@]}" )
+#    ls -1 ${TMPDIR}/*.${s}2 2>/dev/null                                        | {{ ".*\.${s}2" }}1
+#    std::temp path1 keep=true suffix=.${s}3 type=dir
+#    : $(pid::onExit.unlink.empty $path1 )
+#    ls -1d ${TMPDIR}/*.${s}3 2>/dev/null                                       | {{ ".*\.${s}3" }}1
+#    : $(std::temp path2 suffix=.${s}4 keep=true type=dir)
+#    ls -1d ${TMPDIR}/*.${s}4 2>/dev/null                                       | {{ ".*\.${s}4" }}0
+#    IFS=$'\n' a=( $(ls -1d ${TMPDIR}/*.${s}4) )
+#    : $(pid::onExit.unlink.empty "${a[@]}" )
+#    ls -1d ${TMPDIR}/*.${s}4 2>/dev/null                                       | {{ ".*\.${s}4" }}1
+#    : $( std::temp fn3 prefix=fn3_ suffix=".with spaces.tmp" keep=true )
+#    : $( std::temp fn4 prefix=fn4_ suffix=".with spaces.tmp" keep=true )
+#    ls -1 ${TMPDIR}/fn*spaces.tmp 2>/dev/null                                  | {{ "aces.tmp$" }}0
+#    IFS=$'\n' a=( $(ls -1 ${TMPDIR}/fn*spaces.tmp 2>/dev/null) )
+#    : $(pid::onExit.unlink.empty "${a[@]}" )
+#    ls -1 ${TMPDIR}/fn*spaces.tmp 2>/dev/null                                  | {{ "aces.tmp$" }}1
 #  SOURCE
 pid::onExit.unlink.empty() {
 
   [[ $* ]] || return $_bashlyk_iErrorMissingArgument
 
-  _bashlyk_afoZero[$BASHPID]+=" $@"
+  local s IFS=$'\n'
+
+  for s in "$@"; do _bashlyk_afoEmpty[$BASHPID]+="${s}${IFS}"; done
 
   trap "pid::trap" EXIT INT TERM
 
@@ -525,29 +528,32 @@ pid::onExit.unlink.empty() {
 #  NOTES
 #    public
 #  EXAMPLE
-#    local fd fn1 fn2 path pid pipe
+#    local fd fn1 fn2 fn3 path pid pipe
 #    std::temp fn1
 #    std::temp fn2
+#    std::temp fn3 prefix=fn3 suffix=".with spaces.tmp"
 #    std::temp path type=dir
 #    std::temp pipe type=pipe
 #    fd=$( std::getFreeFD )
 #    eval "exec ${fd}>$fn2"
 #    (sleep 1024)&
 #    pid=$!
-#    test -f $fn1
-#    test -d $path
-#    ps -p $pid -o pid=                                         | {{ -w $pid }}
-#    ls /proc/$$/fd                                             | {{ -w $fd  }}
+#    ps -p $pid -o pid=                                                         | {{ -w $pid }}0
+#    ls /proc/$$/fd                                                             | {{ -w $fd  }}0
 #    pid::onExit.close $fd
 #    pid::onExit.stop $pid
 #    pid::onExit.unlink $fn1
 #    pid::onExit.unlink $path
 #    pid::onExit.unlink $pipe
+#    pid::onExit.unlink "$fn3"
 #    pid::trap
-#    ls /proc/$$/fd                                              | {{ -w $fd }}!
-#    ps -p $pid -o pid=                                          | {{ -w $pid}}!
+#    ls /proc/$$/fd                                                             | {{ -w $fd }}1
+#    ps -p $pid -o pid=                                                         | {{ -w $pid}}1
 #    test -f $fn1                                                               #? false
 #    test -d $path                                                              #? false
+#    test -f "$fn3"                                                             #? false
+#    rm -f "$fn1" "$fn2" "$fn3" "$pipe"
+#    rmdir "$path"
 #  SOURCE
 pid::trap() {
 
@@ -583,20 +589,22 @@ pid::trap() {
 
   done
 
-  for s in ${_bashlyk_afoClean[$BASHPID]}; do
+  while read -t 4 s; do
 
-    [[ -f $s ]] && rm -f $s && continue
-    [[ -p $s ]] && rm -f $s && continue
-    [[ -d $s ]] && rmdir --ignore-fail-on-non-empty $s 2>/dev/null && continue
+    [[     $s  ]] || continue
+    [[ -f "$s" ]] && rm -f "$s" && continue
+    [[ -p "$s" ]] && rm -f "$s" && continue
+    [[ -d "$s" ]] && rmdir --ignore-fail-on-non-empty "$s" && continue
 
-  done
-  
-  for s in ${_bashlyk_afoZero[$BASHPID]}; do
+  done <<< "${_bashlyk_afoClean[$BASHPID]}" >/dev/null 2>&1
 
-    [[ ! -s $s ]] && rm -f $s && continue
-    [[ -d $s   ]] && rmdir --ignore-fail-on-non-empty $s 2>/dev/null && continue
+  while read -t 4 s; do
 
-  done
+    [[     $s  ]] || continue
+    [[ -s "$s" ]] || { rm -f "$s" && continue; }
+    [[ -d "$s" ]] && rmdir --ignore-fail-on-non-empty "$s" && continue
+
+  done <<< "${_bashlyk_afoEmpty[$BASHPID]}" >/dev/null 2>&1
 
   if [[ $_bashlyk_pidLogSock ]]; then
 
