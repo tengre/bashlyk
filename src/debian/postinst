@@ -30,7 +30,7 @@ case "$1" in
 
       ln -sf $cmd ${path}/bashlyk || true
 
-      echo "run BASHLYK library tests:"
+      echo "BASHLYK library tests:"
       bashlyk --bashlyk-test
 
     fi

@@ -23,7 +23,6 @@ case "$1" in
   remove|upgrade|deconfigure)
 
      rm -f ${path}/bashlyk
-     [ -x ${path}/testunit.sh ] && chmod -x ${path}/testunit.sh
 
     ;;
 
