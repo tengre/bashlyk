@@ -1,5 +1,5 @@
 #
-# $Id: testunit.sh 866 2018-08-17 10:34:46+04:00 yds $
+# $Id: testunit.sh 868 2018-08-17 17:54:10+04:00 toor $
 #
 #****h* BASHLYK/testunit
 #  DESCRIPTION
@@ -9,7 +9,7 @@
 #  AUTHOR
 #    Damir Sh. Yakupov <yds@bk.ru>
 #******
-#****v* libstd/Global Variables
+#****v* testunit/Global Variables
 #  DESCRIPTION
 #    Global variables
 #  SOURCE
@@ -124,8 +124,7 @@ testunit::main() {
   if [[ $? == "0" && "$_bashlyk_TestUnit_iCount" == "0" ]]; then
 
     echo " ok."
-    rm -f $_bashlyk_TestUnit_fnTmp
-    [[ -s $fnErr ]] || rm -f $fnErr
+    rm -f $_bashlyk_TestUnit_fnTmp $fnErr
 
   else
 
