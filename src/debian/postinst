@@ -26,46 +26,22 @@ case "$1" in
 
   configure)
 
-    [ -f ${path}/testunit.sh ] && chmod +x ${path}/testunit.sh
-
     if [ -x $cmd ]; then
 
       ln -sf $cmd ${path}/bashlyk || true
 
-      echo "BASHLYK library tests:"
+      echo "run BASHLYK library tests:"
       bashlyk --bashlyk-test
 
     fi
 
-    if [ -s "$CONF" ]; then
-
-      BVER=$(                                                                  \
+    BVER=$(                                                                    \
       dpkg-query -W -f='${Depends}\n'|grep -Po 'bashlyk.\(>?=?\s?\d+\.\d+.*?\)'\
         | sed -re "s/bashlyk.\(>?=?.?([0-9]*)\.([0-9]*).*\)/\1\2/"             \
         | grep -Po "^\d+$" 2>/dev/null || true                                 \
       )
 
-      if [ -z "$BVER" -o "$BVER" -lt 190 ]; then
-
-        if ! grep '_bashlyk_aLib=.*old.*' $CONF >/dev/null 2>&1; then
-
-          sed -i -re "s/shlyk_aLib=\"(.*)\"\}$/shlyk_aLib=\"\1,old\"\}/g" $CONF || true
-
-        fi
-
-      fi >/dev/null 2>&1
-
-      if [ -z "$BVER" -o "$BVER" -lt 193 ]; then
-
-        if ! grep '_bashlyk_aLib=.*ini.*' $CONF >/dev/null 2>&1; then
-
-          sed -i -re "s/shlyk_aLib=\"(.*)\"\}$/shlyk_aLib=\"\1,ini\"\}/g" $CONF || true
-
-        fi
-
-      fi >/dev/null 2>&1
-
-    fi
+    ## TODO message for support deprecated scripts
 
     ;;
 
