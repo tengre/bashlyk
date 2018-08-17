@@ -1,6 +1,6 @@
 #!/bin/bash
 #
-# $Id: bashlyk 853 2018-08-14 00:30:42+04:00 yds $
+# $Id: bashlyk 866 2018-08-17 10:34:46+04:00 yds $
 #
 #****h* BASHLYK/bashlyk
 #  DESCRIPTION
@@ -194,9 +194,9 @@ bashlyk::main() {
 
     cmd=${_bashlyk_pathLib}/testunit.sh
 
-    [[ -x "$cmd" ]] || eval 'echo "Error: $cmd not found..."; exit 255'
+    [[ -f "$cmd" ]] || eval 'echo "Error: $cmd not found..."; exit 255'
 
-    for s in $_bashlyk_aUnit; do $cmd $s; done
+    for s in $_bashlyk_aUnit; do bash $cmd $s; done
 
     exit $?
 

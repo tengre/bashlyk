@@ -1,47 +1,30 @@
 #
-# $Id: testunit.sh 786 2018-02-05 22:01:37+04:00 toor $
+# $Id: testunit.sh 866 2018-08-17 10:34:46+04:00 yds $
 #
 #****h* BASHLYK/testunit
 #  DESCRIPTION
-#    компилятор сценария для запуска тестирования библиотеки, зависит от
-#    awk-сценария testunit.awk
+#    script compiler to run a library test
+#  USES
+#    testunit.awk
 #  AUTHOR
 #    Damir Sh. Yakupov <yds@bk.ru>
 #******
-#****** testunit/External Modules
-# DESCRIPTION
-#   Using modules section
-#   Здесь указываются модули, код которых используется данной библиотекой
-# SOURCE
+#****v* libstd/Global Variables
+#  DESCRIPTION
+#    Global variables
+#  SOURCE
 : ${_bashlyk_pathLib:=/usr/share/bashlyk}
 : ${_bashlyk_pathLog:=/tmp}
 : ${_bashlyk_TestUnit_iCount:=0}
 : ${_bashlyk_TestUnit_fnTmp:=$( mktemp 2>/dev/null || tempfile || echo "/tmp/${RANDOM}${RANDOM}" )}
 #******
-  if   [[ -w /dev/shm ]]; then
-
-    TMPDIR=/dev/shm
-
-  elif [[ -w /run/shm ]]; then
-
-    TMPDIR=/run/shm
-
-  else
-
-    TMPDIR=/tmp
-
-  fi
-  export TMPDIR
-  testunitEmbedA="${TMPDIR}/testunit.embedded.a.${RANDOM}${RANDOM}"
-  testunitEmbedB="${TMPDIR}/testunit.embedded.b.${RANDOM}${RANDOM}"
-
-#****f* testunit/udfTestUnitMsg
+#****f* testunit/testunit::msg
 #  SYNOPSIS
-#    udfTestUnitMsg
+#    testunit::msg
 # DESCRIPTION
 #   bashlyk library test unit stdout
 #  SOURCE
-udfTestUnitMsg() {
+testunit::msg() {
 
   local rc0=$? rc1 rc2='' IFS=$' \t\n'
 
@@ -80,13 +63,13 @@ udfTestUnitMsg() {
 
 }
 #******
-#****f* testunit/udfError
+#****f* testunit/testunit::error
 #  SYNOPSIS
-#   udfError <сообщение об ошибке>
+#   testunit::error <error message>
 # DESCRIPTION
-#   Вывод указанного сообщения об ошибке c последующим завершением сценария
+#   output error message and exit
 #  SOURCE
-udfError() {
+testunit::error() {
 
   local rc=$?
   echo "$*"
@@ -94,21 +77,40 @@ udfError() {
 
 }
 #******
-#****f* testunit/udfMain
+#****f* testunit/testunit::main
 # DESCRIPTION
 #   main function libraries test unit
 #  SOURCE
-udfMain() {
+testunit::main() {
 
   [[ $1 ]] || return 254
 
+  if   [[ -w /dev/shm ]]; then
+
+    TMPDIR=/dev/shm
+
+  elif [[ -w /run/shm ]]; then
+
+    TMPDIR=/run/shm
+
+  else
+
+    TMPDIR=/tmp
+
+  fi
+  export TMPDIR
+
   local a s fn fnErr="${_bashlyk_TestUnit_fnTmp}.${1}.err" IFS=$' \t\n'
+  local testunitEmbedA testunitEmbedB
+
+  testunitEmbedA="${TMPDIR}/testunit.embedded.a.${RANDOM}${RANDOM}"
+  testunitEmbedB="${TMPDIR}/testunit.embedded.b.${RANDOM}${RANDOM}"
 
   fn=${_bashlyk_pathLib}/lib${1}.sh
 
   [[ -s "$fn" ]] && . $fn || return 254
 
-  mkdir -p $_bashlyk_pathLog || udfError "path $_bashlyk_pathLog not exist..."
+  mkdir -p $_bashlyk_pathLog || testunit::error "path $_bashlyk_pathLog not exist..."
 
   _bashlyk_TestUnit_fnLog=${_bashlyk_pathLog}/${1}.testunit.log
 
@@ -136,4 +138,4 @@ udfMain() {
 }
 #******
 
-udfMain $*
+testunit::main $*
