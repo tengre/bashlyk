@@ -1,5 +1,5 @@
 ##
-## $Id: Makefile.am 868 2018-08-17 17:54:10+04:00 toor $
+## $Id: Makefile.am 870 2018-08-20 00:52:27+04:00 toor $
 ##
 #
 AUTOMAKE_OPTIONS	= -Wno-portability
@@ -14,4 +14,4 @@ DESTDIR			=
 
 install-exec-hook:
 
-	ln -sf ${bindir}/bashlyk ${syslibdir}/bashlyk
+	$(shell) [ -L ${syslibdir}/bashlyk ] || ln -s ${bindir}/bashlyk ${syslibdir}/bashlyk
