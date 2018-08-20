@@ -1,5 +1,5 @@
 #
-# $Id: libmsg.sh 871 2018-08-21 00:37:17+04:00 yds $
+# $Id: libmsg.sh 872 2018-08-21 00:57:35+04:00 yds $
 #
 #****h* BASHLYK/libmsg
 #  DESCRIPTION
@@ -393,7 +393,7 @@ msg::notifyTool() {
 
   if hash "$1" 2>/dev/null; then
 
-    if (( DEBUGLEVEL > 0 )); then
+    if (( DEBUGLEVEL > 5 )); then
 
       ## save stderr for debugging
       std::temp t keep=true prefix='msg.' suffix=".notify_command.${1}.err"
@@ -410,7 +410,7 @@ msg::notifyTool() {
 
     fi
 
-    ## TODO workaround for zenity
+    ## TODO zenity with --timeout option return 5
     [[ "$1" == "zenity" && "$rc" == "5" ]] && rc=0
 
   else
