@@ -1,5 +1,5 @@
 #
-# $Id: libmsg.sh 853 2018-08-14 00:30:42+04:00 yds $
+# $Id: libmsg.sh 871 2018-08-21 00:37:17+04:00 yds $
 #
 #****h* BASHLYK/libmsg
 #  DESCRIPTION
@@ -249,7 +249,7 @@ msg::notify2x() {
 
   local iTimeout=8 s IFS=$' \t\n'
 
-  [[ -s "$*" ]] && s="$( std::cat - < "$*" )" || s="$( printf -- "$*" )"
+  [[ -s "$*" ]] && s="$( std::cat < "$*" )" || s="$( printf -- "$*" )"
 
   for cmd in notify-send kdialog zenity xmessage; do
 
@@ -355,19 +355,19 @@ msg::getXsessionProperties() {
 #    local title="bashlyk::msg::notifyTool" body="notification testing"
 #    local rc
 #    DEBUGLEVEL=$(( DEBUGLEVEL + 1 ))
-#    msg::notifyTool notify-send $title "$body" 8
+#    msg::notifyTool notify-send "$title" "$body" 8
 #    rc=$?
 #    echo $?                             | {{ "$(_ iErrorCommandNotFound)\|0" }}
 #    [[ $rc -eq 0 ]] && sleep 2
-#    msg::notifyTool kdialog     $title "$body" 8
+#    msg::notifyTool kdialog     "$title" "$body" 8
 #    rc=$?
 #    echo $?                             | {{ "$(_ iErrorCommandNotFound)\|0" }}
 #    [[ $rc -eq 0 ]] && sleep 2
-#    msg::notifyTool zenity      $title "$body" 2
+#    msg::notifyTool zenity      "$title" "$body" 2
 #    rc=$?
 #    echo $?                             | {{ "$(_ iErrorCommandNotFound)\|0" }}
 #    [[ $rc -eq 0 ]] && sleep 2
-#    msg::notifyTool xmessage    $title "$body" 4
+#    msg::notifyTool xmessage    "$title" "$body" 4
 #    rc=$?
 #    echo $?                             | {{ "$(_ iErrorCommandNotFound)\|0" }}
 #    DEBUGLEVEL=$(( DEBUGLEVEL - 1 ))
@@ -384,11 +384,11 @@ msg::notifyTool() {
 
   X=$( _ sXSessionProp )
   #
-  local -A h=(                                                                                                     \
-    [zenity]="$X $1 --notification --timeout $(($t/2)) --text \"$(printf -- "%s via %s\n\n%s\n" "$2" "$1" "$3")\"" \
-    [xmessage]="$X $1 -center -timeout $t \"$(printf -- "%s via %s\n\n%s\n" "$2" "$1" "$3")\""                     \
-    [kdialog]="$X $1 --title \"$2 via $1\" --passivepopup \"$(printf -- "%s" "$3")\" $t"                           \
-    [notify-send]="$X $1 -t $t \"$2 via $1\" \"$(printf -- "%s" "$3")\""                                           \
+  local -A h=(                                                                                                    \
+    [zenity]="$X $1 --notification --timeout $(($t/2)) --text '$(printf -- "%s via %s\n\n%s\n" "$2" "$1" " $3")'" \
+    [xmessage]="$X $1 -center -timeout $t '$(printf -- "%s via %s\n\n%s\n" "$2" "$1" " $3")'"                     \
+    [kdialog]="$X $1 --title \"$2 via $1\" --passivepopup '$(printf -- "%s" " $3")' $t"                           \
+    [notify-send]="$X $1 -t $t \"$2 via $1\" '$(printf -- "%s" " $3")'"                                           \
   )
 
   if hash "$1" 2>/dev/null; then
