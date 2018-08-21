@@ -1,5 +1,5 @@
 #
-# $Id: libstd.sh 860 2018-08-16 01:20:31+04:00 yds $
+# $Id: libstd.sh 873 2018-08-22 00:57:03+04:00 yds $
 #
 #****h* BASHLYK/libstd
 #  DESCRIPTION
@@ -42,19 +42,19 @@
 
 declare -rg _bashlyk_iMaxOutputLines=1000
 
-declare -rg _bashlyk_aRequiredCmd_std="                                        \
-                                                                               \
-    [ chgrp chmod chown date echo expr hostname md5sum mkdir mkfifo mktemp pwd \
-    rm tempfile touch                                                          \
-                                                                               \
+declare -rg _bashlyk_aRequiredCmd_std="
+
+    [ chgrp chmod chown date echo expr hostname md5sum mkdir mkfifo mktemp pwd
+    rm tempfile touch
+
 "
 
-declare -rg _bashlyk_aExport_std="                                             \
-                                                                               \
-    _ std::{acceptArrayItem,cat,finally,getFreeFD,getMD5,getMD5.list,          \
-    getTimeInSec,inline,isDecimal,isHash,isNumber,isVariable,lazyquote,        \
-    showVariable,temp,trim,whitespace.decode,whitespace.encode,xml}            \
-                                                                               \
+declare -rg _bashlyk_aExport_std="
+
+    _ std::{acceptArrayItem,cat,date,dateR,finally,getFreeFD,getMD5,getMD5.list,
+    getTimeInSec,inline,isDecimal,isHash,isNumber,isVariable,lazyquote,temp,
+    trim,showVariable,whitespace.decode,whitespace.encode,xml}
+
 "
 
 #******
@@ -970,15 +970,15 @@ std::cat() {
 #******
 #****f* libstd/std::inline
 #  SYNOPSIS
-#    std::1line [tag of the new line] 
+#    std::1nline [\[<mark linefeed>\]]
 #  DESCRIPTION
-#    show input as single line
+#    show input as single line, mark every linefeed with mark (if this setted)
 #  OUTPUT
 #    show input as single line
 #  EXAMPLE
 #    local s fn
 #    std::temp -v fn
-#    for s in $( seq 0 1 ); do printf -- '%s\n' "$RANDOM"; done > $fn        #-
+#    for s in $( seq 0 1 ); do printf -- '%s\n' "$RANDOM"; done > $fn           #-
 #    std::inline lf < $fn | {{ -E '^[0-9]{1,5} \[lf\] [0-9]{1,5} \[lf\] $' }}
 #    std::inline    < $fn | {{ -E '^[0-9]{1,5} [0-9]{1,5} $' }}
 #  SOURCE
@@ -992,7 +992,7 @@ std::inline() {
     printf -- '%s%s ' "$REPLY" "$tag"
 
   done
-  
+
     printf -- "\n"
 
 }
@@ -1015,6 +1015,24 @@ else
 
 fi
 #******
+#****f* libstd/std::date
+#  SYNOPSIS
+#    std::date <string with format controls>
+#  DESCRIPTION
+#    show formatted datetime output
+#  EXAMPLE
+#    std::date %s | {{ -P "^\d+$" }}
+#  SOURCE
+if (( _bashlyk_ShellVersion > 4002000 )); then
+
+  std::date() { printf -- "%($@)T\n" '-1'; }
+
+else
+
+  std::date() { exec -c date +"$@"; }
+
+fi
+#******
 #****f* libstd/std::uptime
 #  SYNOPSIS
 #    std::uptime
@@ -1025,10 +1043,10 @@ fi
 #  SOURCE
 if (( _bashlyk_ShellVersion > 4002000 )); then
 
-  std::uptime() { 
-  
+  std::uptime() {
+
     echo $(( $(printf -- '%(%s)T' '-1') - $(printf -- '%(%s)T' '-2') ))
-    
+
   }
 
 else
