@@ -1,6 +1,6 @@
 #!/bin/bash
 #
-# $Id: bashlyk 867 2018-08-17 10:46:07+04:00 yds $
+# $Id: bashlyk 874 2018-08-24 00:34:53+04:00 yds $
 #
 #****h* BASHLYK/bashlyk
 #  DESCRIPTION
@@ -48,10 +48,10 @@
 }
 declare -rg _bashlyk_PWD=${PWD:=$(pwd)}
 declare -ag _bashlyk_aArg=( "$@" )
-declare -rg _bashlyk_externals_bashlyk="                                       \
-                                                                               \
-    cut findmnt getent grep hostname id printf tr tty xargs                    \
-                                                                               \
+declare -rg _bashlyk_externals_bashlyk="
+
+    cut findmnt getent grep hostname id printf tr tty xargs
+
 "
 #******
 #****f* bashlyk/bashlyk::init
@@ -93,16 +93,16 @@ bashlyk::init() {
             _bashlyk_pathLog="/var/log/${_bashlyk_pathPrefix}"
             _bashlyk_pathDat="/var/lib/${_bashlyk_pathPrefix}"
 
-            [[ -s "/etc/${_bashlyk_pathPrefix}/bashlyk.conf" ]] \
-             && . "/etc/${_bashlyk_pathPrefix}/bashlyk.conf"
+            [[ -s "/etc/${_bashlyk_pathPrefix}/bashlyk.conf" ]] &&
+              . "/etc/${_bashlyk_pathPrefix}/bashlyk.conf"
     ;;
 
          *)
             if [[ -z "$HOME" || ! -O "$HOME" ]]; then
 
               s=$(getent passwd $_bashlyk_sUser | cut -d ":" -f 6)
-              [[ $s && -d "$s" && -O "$s" ]] || \
-               s="/${TMPDIR}/${$}_${_bashlyk_sUser}"
+              [[ $s && -d "$s" && -O "$s" ]] ||
+                s="/${TMPDIR}/${$}_${_bashlyk_sUser}"
 
             else
 
@@ -115,11 +115,11 @@ bashlyk::init() {
             _bashlyk_pathLog="${s}/.local/share/${_bashlyk_pathPrefix}/log"
             _bashlyk_pathDat="${s}/.local/share/${_bashlyk_pathPrefix}/lib"
 
-            [[ -s "${s}/.config/bashlyk/bashlyk.conf" ]] \
-              && . "${s}/.config/bashlyk/bashlyk.conf"
+            [[ -s "${s}/.config/bashlyk/bashlyk.conf" ]] &&
+              . "${s}/.config/bashlyk/bashlyk.conf"
 
-            [[ -s "${s}/.config/${_bashlyk_pathPrefix}/bashlyk.conf" ]] \
-              && . "${s}/.config/${_bashlyk_pathPrefix}/bashlyk.conf"
+            [[ -s "${s}/.config/${_bashlyk_pathPrefix}/bashlyk.conf" ]] &&
+              . "${s}/.config/${_bashlyk_pathPrefix}/bashlyk.conf"
 
          ;;
   esac
@@ -155,8 +155,8 @@ bashlyk::init() {
 
   if [[ "$_bashlyk_sArg" =~ bashlyk-test ]]; then
 
-    _bashlyk_aUnit="$(echo "${_bashlyk_sArg#*--bashlyk-test=}" | cut -f1 -d' ' \
-      | tr ',' ' ' | grep -v '\-\-bashlyk-test')"
+    _bashlyk_aUnit="$(echo "${_bashlyk_sArg#*--bashlyk-test=}" | cut -f1 -d' ' |
+      tr ',' ' ' | grep -v '\-\-bashlyk-test')"
 
     [[ $_bashlyk_aUnit ]] || _bashlyk_aUnit="$(echo $_bashlyk_aLib|tr ',' ' ')"
 

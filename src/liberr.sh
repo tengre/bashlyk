@@ -1,5 +1,5 @@
 #
-# $Id: liberr.sh 857 2018-08-15 02:45:09+04:00 yds $
+# $Id: liberr.sh 874 2018-08-24 00:34:53+04:00 yds $
 #
 #****h* BASHLYK/liberr
 #  DESCRIPTION
@@ -45,20 +45,20 @@ alias         catch='; eval "$( err::__convert_try_to_func )" ||'
 #  SOURCE
 declare -rg _bashlyk_aRequiredCmd_err="[ rm sed"
 
-declare -rg _bashlyk_methods_err="                                             \
-                                                                               \
-    __add_throw_to_command CommandNotFound __convert_try_to_func debug         \
-    EmptyArgument EmptyOrMissingArgument EmptyResult EmptyVariable             \
-    exception.message generate __generate InvalidVariable MissingArgument      \
-    NotExistNotCreated NotNumber AlreadyExist NoSuchFileOrDir NoSuchFile       \     
-    NoSuchDir orr postfix sourcecode stacktrace status status.show             \
+declare -rg _bashlyk_methods_err="
+
+    __add_throw_to_command CommandNotFound __convert_try_to_func debug
+    EmptyArgument EmptyOrMissingArgument EmptyResult EmptyVariable
+    exception.message generate __generate InvalidVariable MissingArgument
+    NotExistNotCreated NotNumber AlreadyExist NoSuchFileOrDir NoSuchFile
+    NoSuchDir orr postfix sourcecode stacktrace status status.show
 "
 
-declare -rg _bashlyk_aExport_err="                                             \
-                                                                               \
-    abort catch err::{exception.message,stacktrace,status,sourcecode} errorify \
-    errorify+echo errorify+warn exit+echo exit+warn error show throw try warn  \
-                                                                               \
+declare -rg _bashlyk_aExport_err="
+
+    abort catch err::{exception.message,stacktrace,status,sourcecode} errorify
+    errorify+echo errorify+warn exit+echo exit+warn error show throw try warn
+
 "
 
 declare -rg _bashlyk_err_reAct='^((echo|warn)|(((echo|warn)[+])?(exit|return))|(throw))$'

@@ -1,5 +1,5 @@
 #
-# $Id: libcfg.sh 855 2018-08-15 01:07:45+04:00 yds $
+# $Id: libcfg.sh 874 2018-08-24 00:34:53+04:00 yds $
 #
 #****h* BASHLYK/libcfg
 #  DESCRIPTION
@@ -111,24 +111,24 @@ declare -rg _bashlyk_INI_reKeyVal='^[[:space:]]*\b([^=]+)\b[[:space:]]*=[[:space
 declare -rg _bashlyk_CNF_fmtPairs='^[[:space:]]*\b(%KEY%)\b=(.*)[[:space:]]*$'
 declare -rg _bashlyk_INI_fmtPairs='^[[:space:]]*\b(%KEY%)\b[[:space:]]*=[[:space:]]*(.*)[[:space:]]*$'
 
-declare -rg _bashlyk_methods_cfg="                                             \
-                                                                               \
-    bind.cli get getopt keys load read save __section.byindex                  \
-    __section.getArray __section.id __section.select __section.setRawData      \
-    __section.show set settings settings.section.padding settings.shellmode    \
-    show storage.show storage.use.default storage.use free                     \
+declare -rg _bashlyk_methods_cfg="
+
+    bind.cli get getopt keys load read save __section.byindex
+    __section.getArray __section.id __section.select __section.setRawData
+    __section.show set settings settings.section.padding settings.shellmode
+    show storage.show storage.use.default storage.use free
 "
 
-declare -rg _bashlyk_externals_cfg="                                           \
-                                                                               \
-    [ getopt mkdir mv pwd readlink rm sha1sum sort stat touch                  \
-                                                                               \
+declare -rg _bashlyk_externals_cfg="
+
+    [ getopt mkdir mv pwd readlink rm sha1sum sort stat touch
+
 "
 
-declare -rg _bashlyk_exports_cfg="                                             \
-                                                                               \
-    CFG CFG::{bind.cli,free,get,getopt,keys,load,read,save,set,settings,       \
-    settings.section.padding,settings.shellmode,show,storage.show storage.use} \
+declare -rg _bashlyk_exports_cfg="
+
+    CFG CFG::{bind.cli,free,get,getopt,keys,load,read,save,set,settings,
+    settings.section.padding,settings.shellmode,show,storage.show storage.use}
 "
 
 _bashlyk_iErrorIniMissingMethod=111
@@ -1101,16 +1101,16 @@ CFG::storage.use.default() {
   std::temp fnErr
 
   if ! ( mkdir -p "${s%/*}/" && touch "$s" ) > $fnErr 2>&1; then
-    
+
     error NotExistNotCreated throw -- ${s}, details - $(< $fnErr)
 
   fi
-  
+
   pid::onExit.unlink "${s%/*}"
   pid::onExit.unlink.empty "$s"
-  
+
   ${o}.settings storage = $s
-  
+
 }
 #******
 #****e* libcfg/CFG::storage.use
@@ -1119,9 +1119,9 @@ CFG::storage.use.default() {
 #  DESCRIPTION
 #    Bind configuration file for a CFG instance. If specified a short filename,
 #    its search is first performed in the initialized configuration paths, only
-#    then in the current directory. The specified file is checked for reading 
+#    then in the current directory. The specified file is checked for reading
 #    and the ability to create it in the absence. If the specified file can't be
-#    used, an appropriate warning is issued and an internal configuration file 
+#    used, an appropriate warning is issued and an internal configuration file
 #    is generated.
 #  NOTES
 #    public method
@@ -1145,31 +1145,31 @@ CFG::storage.use() {
   o=${FUNCNAME[0]%%.*}
 
   if [[ ! $* ]]; then
-  
+
     s="$( ${o}.settings storage )"
-    
+
     [[ $s ]] && eval set -- "$s" || { ${o}.storage.use.default; return; }
-      
+
   fi
 
   if [[ "$@" == "${@##*/}" ]]; then
-    
+
     if ! s="$( readlink -eq "$_bashlyk_pathCfg/$@" )"; then
-    
+
       if ! s="$( readlink -eq "/etc/$_bashlyk_pathPrefix/$@" )"; then
-      
+
         s="$( readlink -eq "$@" )"
-      
+
       fi
 
     fi
-      
-    [[ $s ]] || s="$_bashlyk_pathCfg/$@"   
-    
+
+    [[ $s ]] || s="$_bashlyk_pathCfg/$@"
+
   else
-      
+
     s="$( readlink -eq "$@" )" || s="$@"
-      
+
   fi
 
   std::temp fnErr
@@ -1182,14 +1182,14 @@ CFG::storage.use() {
   else
 
     if ( mkdir -p "${s%/*}/" && touch "$s" ); then
-    
+
       pid::onExit.unlink "${s%/*}"
       pid::onExit.unlink.empty "$s"
       s="$( readlink -eq "$s" )" || sErr='NoSuchFile'
-      
+
     else
-    
-      sErr='NotExistNotCreated'  
+
+      sErr='NotExistNotCreated'
 
     fi
 
@@ -1198,13 +1198,13 @@ CFG::storage.use() {
   if [[ $sErr =~ ^No ]]; then
 
     [[ -s $fnErr ]] && error $sErr warn -- ${s}, details - $(< $fnErr)
-   
+
     ${o}.storage.use.default
-    
+
     err::debugf 3 'used default storage - "%s"\n' "$( ${o}.storage.show )"
 
   else
-    
+
     ${o}.settings storage = $s
 
   fi
@@ -1736,7 +1736,7 @@ CFG::load() {
     cfg="$( ${o}.storage.show )"
 
   }
-  
+
   path="${cfg%/*}/"
    cfg="${cfg##*/}"
 

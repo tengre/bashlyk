@@ -1,5 +1,5 @@
 #
-# $Id: libmsg.sh 872 2018-08-21 00:57:35+04:00 yds $
+# $Id: libmsg.sh 874 2018-08-24 00:34:53+04:00 yds $
 #
 #****h* BASHLYK/libmsg
 #  DESCRIPTION
@@ -41,17 +41,17 @@
 : ${_bashlyk_sLogin:=$( exec -c logname 2>/dev/null )}
 : ${_bashlyk_emailSubj:="${_bashlyk_sUser}@${HOSTNAME}::${0##*/}"}
 
-declare -rg _bashlyk_externals_msg="                                           \
-                                                                               \
-    grep logname mail notify-send|kdialog|zenity|xmessage pgrep rm stat sudo   \
-    write                                                                      \
-                                                                               \
+declare -rg _bashlyk_externals_msg="
+
+    grep logname mail notify-send|kdialog|zenity|xmessage pgrep rm stat sudo
+    write
+
 "
 
-declare -rg _bashlyk_exports_msg="                                             \
-                                                                               \
-    msg::{echo,getXsessionProperties,mail,notify,notify2x,notifyTool,warn}     \
-                                                                               \
+declare -rg _bashlyk_exports_msg="
+
+    msg::{echo,getXsessionProperties,mail,notify,notify2x,notifyTool,warn}
+
 "
 #******
 #****f* libmsg/msg::echo

@@ -1,5 +1,5 @@
 #
-# $Id: liblog.sh 840 2018-08-02 02:02:54+04:00 yds $
+# $Id: liblog.sh 874 2018-08-24 00:34:53+04:00 yds $
 #
 #****h* BASHLYK/liblog
 #  DESCRIPTION
@@ -42,16 +42,16 @@
 : ${_bashlyk_bNotUseLog:=1}
 : ${_bashlyk_sCond4Log:=redirect}
 
-declare -rg _bashlyk_aRequiredCmd_log="                                        \
-                                                                               \
-    [ date hostname logger mkdir mkfifo rm touch tty                           \
-                                                                               \
+declare -rg _bashlyk_aRequiredCmd_log="
+
+    [ date hostname logger mkdir mkfifo rm touch tty
+
 "
 
-declare -rg _bashlyk_aExport_log="                                             \
-                                                                               \
-    log::{add,file,ger,init,interactivity,necessity,terminality}               \
-                                                                               \
+declare -rg _bashlyk_aExport_log="
+
+    log::{add,file,ger,init,interactivity,necessity,terminality}
+
 "
 #******
 #****f* liblog/log::ger
