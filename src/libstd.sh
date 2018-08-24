@@ -1,5 +1,5 @@
 #
-# $Id: libstd.sh 873 2018-08-22 00:57:03+04:00 yds $
+# $Id: libstd.sh 875 2018-08-24 23:17:27+04:00 yds $
 #
 #****h* BASHLYK/libstd
 #  DESCRIPTION
@@ -997,31 +997,13 @@ std::inline() {
 
 }
 #******
-#****f* libstd/std::dateR
-#  SYNOPSIS
-#    std::dateR
-#  DESCRIPTION
-#    show 'date -R' like output
-#  EXAMPLE
-#    std::dateR | {{ -P "^\S{3}, \d{2} \S{3} \d{4} \d{2}:\d{2}:\d{2} .\d{4}$" }}
-#  SOURCE
-if (( _bashlyk_ShellVersion > 4002000 )); then
-
-  std::dateR() { LC_ALL=C printf -- '%(%a, %d %b %Y %T %z)T\n' '-1'; }
-
-else
-
-  std::dateR() { exec -c date -R; }
-
-fi
-#******
 #****f* libstd/std::date
 #  SYNOPSIS
 #    std::date <string with format controls>
 #  DESCRIPTION
 #    show formatted datetime output
 #  EXAMPLE
-#    std::date %s | {{ -P "^\d+$" }}
+#    std::date %s                                                               | {{ -P "^\d+$" }}
 #  SOURCE
 if (( _bashlyk_ShellVersion > 4002000 )); then
 
@@ -1033,13 +1015,27 @@ else
 
 fi
 #******
+#****f* libstd/std::dateR
+#  SYNOPSIS
+#    std::dateR
+#  DESCRIPTION
+#    show 'date -R' like output
+#  EXAMPLE
+#    std::dateR | {{ -P "^\S{3}, \d{2} \S{3} \d{4} \d{2}:\d{2}:\d{2} .\d{4}$" }}
+#  SOURCE
+std::dateR() {
+
+  LC_ALL=C std::date '%a, %d %b %Y %T %z'
+
+}
+#******
 #****f* libstd/std::uptime
 #  SYNOPSIS
 #    std::uptime
 #  DESCRIPTION
 #    show uptime value in the seconds
 #  EXAMPLE
-#    std::uptime                                       | {{ "^[[:digit:]]*$" }}
+#    std::uptime                                                                | {{ "^[[:digit:]]*$" }}
 #  SOURCE
 if (( _bashlyk_ShellVersion > 4002000 )); then
 
@@ -1065,7 +1061,7 @@ fi
 #  INPUTS
 #    <text> - prefix text before " uptime <number> sec"
 #  EXAMPLE
-#    std::finally $RANDOM      | {{ "^[[:digit:]]* uptime [[:digit:]]* sec$" }}
+#    std::finally $RANDOM                                                       | {{ "^[[:digit:]]* uptime [[:digit:]]* sec$" }}
 #  SOURCE
 std::finally() { echo "$@ uptime $( std::uptime ) sec"; }
 #******
