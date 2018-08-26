@@ -1,5 +1,5 @@
 #
-# $Id: libmsg.sh 874 2018-08-24 00:34:53+04:00 yds $
+# $Id: libmsg.sh 876 2018-08-27 00:08:40+04:00 yds $
 #
 #****h* BASHLYK/libmsg
 #  DESCRIPTION
@@ -280,11 +280,12 @@ msg::getXsessionProperties() {
   local a pid s sB sD sX sudo user userX IFS=$' \t\n'
   local -A h
 
-  a="                                                                          \
-                                                                               \
-      x-session-manager gnome-session gnome-session-flashback lxsession        \
-      mate-session-manager openbox razorqt-session xfce4-session kwin twin     \
-                                                                               \
+  a="
+
+      x-session-manager gnome-session gnome-session-flashback lxsession
+      mate-session-manager openbox razorqt-session xfce4-session kwin twin
+      Xwayland
+
   "
 
   user=$(_ sUser)
@@ -312,7 +313,7 @@ msg::getXsessionProperties() {
       sD="$(exec -c grep -az DISPLAY= /proc/${pid}/environ)"
       sX="$(exec -c grep -az XAUTHORITY= /proc/${pid}/environ)"
 
-      [[ $sB && $sD && $sX ]] && break 2
+      [[ $sB && $sD ]] && break 2
 
    done
 
@@ -322,7 +323,7 @@ msg::getXsessionProperties() {
 
   [[ $user == $userX || $user == root ]] || return $_bashlyk_iErrorNotPermitted
 
-  [[ $sB && $sD && $sX ]] || return $_bashlyk_iErrorMissingArgument
+  [[ $sB && $sD ]] || return $_bashlyk_iErrorMissingArgument
 
   [[ $(_ sUser) == root ]] && sudo="sudo -u $userX" || sudo=''
 
