@@ -1,5 +1,5 @@
 #
-# $Id: libcfg.sh 877 2018-08-28 23:28:09+04:00 yds $
+# $Id: libcfg.sh 879 2018-08-29 01:55:20+04:00 yds $
 #
 #****h* BASHLYK/libcfg
 #  DESCRIPTION
@@ -320,7 +320,7 @@ CFG::free() {
   unset -v _h${o^^}
   unset -v _h${o^^}_settings
 
-  for s in __section.get __section.set $_bashlyk_methods_ini; do
+  for s in __section.get __section.set $_bashlyk_methods_cfg; do
 
     unset -f ${o}.$s
 

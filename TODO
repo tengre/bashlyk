@@ -1,7 +1,8 @@
-# $Id: TODO 878 2018-08-29 00:01:28+04:00 yds $
+# $Id: TODO 879 2018-08-29 01:55:20+04:00 yds $
 ? #170214 - std - for 'udfMakeTemp -v var' in the eval block are autoclean not worked
 - #170614 - std - add std::settings (decimal point & etc)
 - #180308 - replace testunit.awk by testunit.sh
 - #180518 - net - net::ipv4.mask without address
 - #180827 - msg - improve support of the (X)wayland session (xmessage and etc)
 - #180828 - cfg - robodoc - some EXAMPLE sections generated with errors
+- #180829 - cfg - CFG::bind.cli - use a 'section_key' instead 'section-key'
