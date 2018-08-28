@@ -1,5 +1,5 @@
 #
-# $Id: libnet.sh 847 2018-08-08 23:24:25+04:00 yds $
+# $Id: libnet.sh 877 2018-08-28 23:28:09+04:00 yds $
 #
 #****h* BASHLYK/libnet
 #  DESCRIPTION
@@ -67,10 +67,10 @@ declare -rg _bashlyk_net_exports='net::ipv4.{broadcast,cidr,host,mask,network,ra
 #  EXAMPLE
 #    net::ipv4.host                                                             #? $_bashlyk_iErrorMissingArgument
 #    net::ipv4.host 999.8.7.6                                                   #? $_bashlyk_iErrorEmptyResult
-#    net::ipv4.host 192.168.116.116              | {{ '^192\.168\.116\.116$' }}
+#    net::ipv4.host 192.168.116.116                                             | {{ '^192\.168\.116\.116$' }}
 #    net::ipv4.host localhost                                                   #? true
-#    net::ipv4.host localhost/32                 | {{ '^127\.0\.0\.1$'       }}
-#    udfGetValidIPsOnly localhost/32             | {{ '^127\.0\.0\.1$'       }}
+#    net::ipv4.host localhost/32                                                | {{ '^127\.0\.0\.1$'       }}
+#    udfGetValidIPsOnly localhost/32                                            | {{ '^127\.0\.0\.1$'       }}
 #  SOURCE
 net::ipv4.host() {
 
@@ -106,9 +106,9 @@ net::ipv4.host() {
 #  EXAMPLE
 #    net::ipv4.mask                                                             #? $_bashlyk_iErrorMissingArgument
 #    net::ipv4.mask 999.8.7.6                                                   #? $_bashlyk_iErrorEmptyResult
-#    net::ipv4.mask 192.168.116.116/27           | {{ '^255\.255\.255\.224$' }}
+#    net::ipv4.mask 192.168.116.116/27                                          | {{ '^255\.255\.255\.224$' }}
 #    net::ipv4.mask localhost                                                   #? true
-#    net::ipv4.mask localhost/32                 | {{ '^255\.255\.255\.255$' }}
+#    net::ipv4.mask localhost/32                                                | {{ '^255\.255\.255\.255$' }}
 #  SOURCE
 net::ipv4.mask() {
 
@@ -144,9 +144,9 @@ net::ipv4.mask() {
 #  EXAMPLE
 #    net::ipv4.network                                                          #? $_bashlyk_iErrorMissingArgument
 #    net::ipv4.network 999.8.7.6                                                #? $_bashlyk_iErrorEmptyResult
-#    net::ipv4.network 192.168.116.116/27         | {{ '^192\.168\.116\.96$' }}
+#    net::ipv4.network 192.168.116.116/27                                       | {{ '^192\.168\.116\.96$' }}
 #    net::ipv4.network localhost                                                #? true
-#    net::ipv4.network localhost/32               | {{ '^127\.0\.0\.1$'      }}
+#    net::ipv4.network localhost/32                                             | {{ '^127\.0\.0\.1$'      }}
 #  SOURCE
 net::ipv4.network() {
 
@@ -181,9 +181,9 @@ net::ipv4.network() {
 #  EXAMPLE
 #    net::ipv4.broadcast                                                        #? $_bashlyk_iErrorMissingArgument
 #    net::ipv4.broadcast 999.8.7.6                                              #? $_bashlyk_iErrorEmptyResult
-#    net::ipv4.broadcast 192.168.116.116/27      | {{ '^192\.168\.116\.127$' }}
+#    net::ipv4.broadcast 192.168.116.116/27                                     | {{ '^192\.168\.116\.127$' }}
 #    net::ipv4.broadcast localhost                                              #? true
-#    net::ipv4.broadcast localhost/32            | {{ '^127\.0\.0\.1$'       }}
+#    net::ipv4.broadcast localhost/32                                           | {{ '^127\.0\.0\.1$'       }}
 #  SOURCE
 net::ipv4.broadcast() {
 
@@ -220,9 +220,9 @@ net::ipv4.broadcast() {
 #    net::ipv4.cidr                                                             #? $_bashlyk_iErrorMissingArgument
 #    net::ipv4.cidr 999.8.7.6                                                   #? $_bashlyk_iErrorEmptyResult
 #    net::ipv4.cidr 999.8.7.6/23                                                #? $_bashlyk_iErrorEmptyResult
-#    net::ipv4.cidr 1.2.3.4                           | {{ '^1\.2\.3\.4/32$' }}
-#    net::ipv4.cidr 1.2.3.4/23                        | {{ '^1\.2\.3\.4/23$' }}
-#    udfGetValidCIDR 1.2.3.4/23                       | {{ '^1\.2\.3\.4/23$' }}
+#    net::ipv4.cidr 1.2.3.4                                                     | {{ '^1\.2\.3\.4/32$' }}
+#    net::ipv4.cidr 1.2.3.4/23                                                  | {{ '^1\.2\.3\.4/23$' }}
+#    udfGetValidCIDR 1.2.3.4/23                                                 | {{ '^1\.2\.3\.4/23$' }}
 #    net::ipv4.cidr 1.2.3.4/43                                                  #? $_bashlyk_iErrorEmptyResult
 #  SOURCE
 net::ipv4.cidr() {
@@ -278,7 +278,7 @@ net::ipv4.cidr() {
 #    net::ipv4.range 999.8.7.6/33                                               #? $_bashlyk_iErrorEmptyResult
 #    net::ipv4.range 1.2.3.4                                                    #? $_bashlyk_iErrorEmptyResult
 ##   TODO use multiline comparing
-#    net::ipv4.range 192.168.116.116/27    | {{ '^192\.168\.116\.97.*\.126$' }}
+#    net::ipv4.range 192.168.116.116/27                                         | {{ '^192\.168\.116\.97.*\.126$' }}
 #    net::ipv4.range 1.2.3.4/43                                                 #? $_bashlyk_iErrorEmptyResult
 #  SOURCE
 net::ipv4.range() {

@@ -1,5 +1,5 @@
 #
-# $Id: libcfg.sh 874 2018-08-24 00:34:53+04:00 yds $
+# $Id: libcfg.sh 877 2018-08-28 23:28:09+04:00 yds $
 #
 #****h* BASHLYK/libcfg
 #  DESCRIPTION
@@ -157,7 +157,7 @@ _bashlyk_hError[$_bashlyk_iErrorIniExtraCharInKey]="extra character(s) in the ke
 #    declare -pf tnew.show >/dev/null 2>&1                                      #= true
 #    declare -pf tnew.save >/dev/null 2>&1                                      #= true
 #    declare -pf tnew.load >/dev/null 2>&1                                      #= true
-#    tnew.__section.id @ | {{ _hTNEW_settings }}
+#    tnew.__section.id @                                                        | {{ _hTNEW_settings }}
 #    tnew.free
 #  SOURCE
 CFG() {
@@ -168,34 +168,34 @@ CFG() {
 
   if [[ $o =~ ^c(o)?nf && ! $o =~ ^config ]]; then
 
-    declare -Ag -- _h${o^^}_settings='(                                        \
-                                                                               \
-      [chComment]="#"                                                          \
-      [bShellMode]="true"                                                      \
-      [bSaveConfig]="true"                                                     \
-      [bSectionPadding]="true"                                                 \
-      [reKey]="$_bashlyk_CNF_reKey"                                            \
-      [reKeyVal]="$_bashlyk_CNF_reKeyVal"                                      \
-      [fmtPairs]="$_bashlyk_CNF_fmtPairs"                                      \
-      [fmtSection0]="\n\n# [ %s ]%s\n\n"                                       \
-      [fmtSection1]="\n# %s[ %s ]\n"                                           \
-                                                                               \
+    declare -Ag -- _h${o^^}_settings='(
+
+      [chComment]="#"
+      [bShellMode]="true"
+      [bSaveConfig]="true"
+      [bSectionPadding]="true"
+      [reKey]="$_bashlyk_CNF_reKey"
+      [reKeyVal]="$_bashlyk_CNF_reKeyVal"
+      [fmtPairs]="$_bashlyk_CNF_fmtPairs"
+      [fmtSection0]="\n\n# [ %s ]%s\n\n"
+      [fmtSection1]="\n# %s[ %s ]\n"
+
     )'
 
   else
 
-    declare -Ag -- _h${o^^}_settings='(                                        \
-                                                                               \
-      [chComment]="#"                                                          \
-      [bShellMode]="false"                                                     \
-      [bSaveConfig]="true"                                                     \
-      [bSectionPadding]="true"                                                 \
-      [reKey]="$_bashlyk_INI_reKey"                                            \
-      [reKeyVal]="$_bashlyk_INI_reKeyVal"                                      \
-      [fmtPairs]="$_bashlyk_INI_fmtPairs"                                      \
-      [fmtSection0]="\n\n[ %s ]%s\n\n"                                         \
-      [fmtSection1]="\n%s[ %s ]\n"                                             \
-                                                                               \
+    declare -Ag -- _h${o^^}_settings='(
+
+      [chComment]="#"
+      [bShellMode]="false"
+      [bSaveConfig]="true"
+      [bSectionPadding]="true"
+      [reKey]="$_bashlyk_INI_reKey"
+      [reKeyVal]="$_bashlyk_INI_reKeyVal"
+      [fmtPairs]="$_bashlyk_INI_fmtPairs"
+      [fmtSection0]="\n\n[ %s ]%s\n\n"
+      [fmtSection1]="\n%s[ %s ]\n"
+
     )'
 
   fi
@@ -233,8 +233,8 @@ CFG() {
 #    CFG tSectionId1
 #    CFG tSectionId2
 #    tSectionId1.__section.select
-#    tSectionId1.__section.id   | {{ ^_hTSECTIONID1_[[:xdigit:]]*$ }}
-#    tSectionId2.__section.id @ | {{ ^_hTSECTIONID2_settings$ }}
+#    tSectionId1.__section.id                                                   | {{ ^_hTSECTIONID1_[[:xdigit:]]*$ }}
+#    tSectionId2.__section.id @                                                 | {{ ^_hTSECTIONID2_settings$ }}
 #    tSectionId1.free
 #    tSectionId2.free
 #  SOURCE
@@ -265,11 +265,11 @@ CFG::__section.id() {
 #    tSectionIndex.__section.select sItem1
 #    tSectionIndex.__section.select sItem2
 #    tSectionIndex.__section.select test "with double" quotes
-#    tSectionIndex.__section.byindex   | {{ ^4$          }}
-#    tSectionIndex.__section.byindex 0 | {{ ^__global__$ }}
-#    tSectionIndex.__section.byindex 1 | {{ ^sItem1$     }}
-#    tSectionIndex.__section.byindex 2 | {{ ^sItem2$     }}
-#    tSectionIndex.__section.byindex 3 | {{ '^test with double quotes$' }}
+#    tSectionIndex.__section.byindex                                            | {{ ^4$          }}
+#    tSectionIndex.__section.byindex 0                                          | {{ ^__global__$ }}
+#    tSectionIndex.__section.byindex 1                                          | {{ ^sItem1$     }}
+#    tSectionIndex.__section.byindex 2                                          | {{ ^sItem2$     }}
+#    tSectionIndex.__section.byindex 3                                          | {{ '^test with double quotes$' }}
 #    tSectionIndex.free
 #  SOURCE
 CFG::__section.byindex() {
@@ -343,14 +343,14 @@ CFG::free() {
 #    CFG tSel
 #    tSel.__section.select                                                      #? true
 #    tSel.__section.set key "is value from unnamed section"
-#    tSel.__section.get key               |{{'^is value from unnamed section$'}}
+#    tSel.__section.get key                                                     | {{'^is value from unnamed section$'}}
 #    tSel.__section.select tSect                                                #? true
 #    tSel.__section.set key "is value"
-#    tSel.__section.get key               | {{ '^is value$' }}
+#    tSel.__section.get key                                                     | {{ '^is value$' }}
 #    tSel.__section.select section with spaces                                  #? true
 #    tSel.__section.set "key with spaces" "is value"
-#    tSel.__section.get "key with spaces" | {{ '^is value$' }}
-#    tSel.__section.id @         | {{ -P "^_hTSEL.*(settings|[[:xdigit:]]*)$" }}
+#    tSel.__section.get "key with spaces"                                       | {{ '^is value$' }}
+#    tSel.__section.id @                                                        | {{ -P "^_hTSEL.*(settings|[[:xdigit:]]*)$" }}
 #    tSel.free
 #  SOURCE
 CFG::__section.select() {
@@ -396,7 +396,7 @@ CFG::__section.select() {
 #    CFG tSShow
 #    tSShow.__section.select tSect
 #    tSShow.__section.set key "is value"
-#    tSShow.__section.show tSect | {{{
+#    tSShow.__section.show tSect                                                | {{{
 #
 #
 #    [ tSect ]
@@ -405,7 +405,7 @@ CFG::__section.select() {
 # }}}
 #    tSShow.__section.select
 #    tSShow.__section.set key "unnamed section"
-#    tSShow.__section.show | {{{
+#    tSShow.__section.show                                                      | {{{
 #
 #    key    =    unnamed section
 # }}}
@@ -415,7 +415,7 @@ CFG::__section.select() {
 #    tSShow2.set [ tSect2 ] keyFirst   = is first value
 #    tSShow2.set [ tSect2 ] keySecond  = is second value
 #    tSShow2.set [ tSect2 ] keyOneWord = is_one_world_value
-#    tSShow2.__section.show tSect2 | {{{
+#    tSShow2.__section.show tSect2                                              | {{{
 #
 #
 #    [ tSect2 ]
@@ -428,9 +428,9 @@ CFG::__section.select() {
 #    CFG tCheckSpaces
 #    tCheckSpaces.set [ section ] key = value
 #    tCheckSpaces.settings.section.padding = false
-#    tCheckSpaces.show                                | {{ '^\[section\]$'   }}
+#    tCheckSpaces.show                                                          | {{ '^\[section\]$'   }}
 #    tCheckSpaces.settings.section.padding = true
-#    tCheckSpaces.show                                | {{ '^\[ section \]$' }}
+#    tCheckSpaces.show                                                          | {{ '^\[ section \]$' }}
 #    tCheckSpaces.free
 #  SOURCE
 CFG::__section.show() {
@@ -551,7 +551,7 @@ CFG::__section.show() {
 #    tSRawData.__section.setRawData "+" "save all 1"
 #    tSRawData.__section.setRawData "+" "save all 2"
 #    tSRawData.__section.setRawData "+" "save all 1"
-#    tSRawData.show | {{{
+#    tSRawData.show                                                             | {{{
 #
 #
 #
@@ -718,9 +718,9 @@ CFG::__section.getArray() {
 #    tGet.__section.set key "is unnamed section"
 #    tGet.__section.select section
 #    tGet.__section.set "key with spaces" "is value"
-#    tGet.get [section] key with spaces | {{ '^is value$'           }}
-#    tGet.get           key             | {{ '^is unnamed section$' }}
-#    tGet.get []key                     | {{ '^is unnamed section$' }}
+#    tGet.get [section] key with spaces                                         | {{ '^is value$'           }}
+#    tGet.get           key                                                     | {{ '^is unnamed section$' }}
+#    tGet.get []key                                                             | {{ '^is unnamed section$' }}
 #    tGet.__section.select accumu
 #    tGet.__section.set _bashlyk_raw_num 3
 #    tGet.__section.set _bashlyk_raw_incr=0 "is raw value No.1"
@@ -816,21 +816,21 @@ CFG::get() {
 #    tKeys.set  [section3] -= save value No.1
 #    tKeys.set  [section4] = save unique value No.2
 #    tKeys.set  [section4] = save unique value No.1
-#    tKeys.keys | tr ',' '\n' | sort | {{{
+#    tKeys.keys | tr ',' '\n' | sort                                            | {{{
 #
 #    keyA
 #    keyB
 #    key with spaces
 # }}}
-#    tKeys.keys [section1] | tr ',' '\n' | sort | {{{
+#    tKeys.keys [section1] | tr ',' '\n' | sort                                 | {{{
 #
 #    key1
 #    key2
 #    key with spaces
 # }}}
-#    tKeys.keys [section2] | {{ ^+$ }}
-#    tKeys.keys [section3] | {{ ^-$ }}
-#    tKeys.keys [section4] | {{ ^=$ }}
+#    tKeys.keys [section2]                                                      | {{ ^+$ }}
+#    tKeys.keys [section3]                                                      | {{ ^-$ }}
+#    tKeys.keys [section4]                                                      | {{ ^=$ }}
 #    tKeys.free
 #  SOURCE
 CFG::keys() {
@@ -907,10 +907,10 @@ CFG::keys() {
 #    tSet.set key = is unnamed section
 #    tSet.set key with spaces = is unnamed section
 #    tSet.show
-#    tSet.get [section]key                        | {{ '^is value$'           }}
-#    tSet.get   key                               | {{ '^is unnamed section$' }}
-#    tSet.get []key                               | {{ '^is unnamed section$' }}
-#    tSet.get key with spaces                     | {{ '^is unnamed section$' }}
+#    tSet.get [section]key                                                      | {{ '^is value$'           }}
+#    tSet.get   key                                                             | {{ '^is unnamed section$' }}
+#    tSet.get []key                                                             | {{ '^is unnamed section$' }}
+#    tSet.get key with spaces                                                   | {{ '^is unnamed section$' }}
 #    tSet.set [section1]+= is raw value No.1
 #    tSet.set [section1] += is raw value No.2
 #    tSet.set [section1]+  =   is raw value No.3
@@ -918,12 +918,12 @@ CFG::keys() {
 #    tSet.set [section2] =  save unique value No.2
 #    tSet.set [section2] =   save unique value No.1
 #    eval "$(tSet.get [section2])"
-#    for s in "${a[@]}"; do echo $s; done | sort | {{{
+#    for s in "${a[@]}"; do echo $s; done | sort                                | {{{
 #    save unique value No.1
 #    save unique value No.2
 # }}}
 #    eval "$(tSet.get [section1])"
-#    for s in "${a[@]}"; do echo $s; done | sort | {{{
+#    for s in "${a[@]}"; do echo $s; done | sort                                | {{{
 #    is raw value No.1
 #    is raw value No.2
 #    is raw value No.3
@@ -1010,7 +1010,7 @@ CFG::set() {
 #    tShow.__section.select
 #    tShow.__section.set key "unnamed section"
 #    tShow.set [section with spaces] key with spaces = value with spaces
-#    tShow.show | {{{
+#    tShow.show                                                                 | {{{
 #
 #        key    =    unnamed section
 #
@@ -1034,7 +1034,7 @@ CFG::set() {
 #    confAuto.set [any section]another_key = any_value_No.4
 #    confAuto.set [another section]invalid-key = any value No.5
 #    confAuto.set [another section]_Valid_Key = any value No.6
-#    confAuto.show | {{{
+#    confAuto.show                                                              | {{{
 #
 #    anotherKey="any value No.2"
 #     valid_key=any_value_No.1
@@ -1085,7 +1085,7 @@ CFG::show() {
 #
 #    CFG cfgStorDef
 #    cfgStorDef.storage.use.default
-#    cfgStorDef.settings storage | {{ ${_bashlyk_pathDat}/[[:xdigit:]]*\.cfg$ }}
+#    cfgStorDef.settings storage                                                | {{ ${_bashlyk_pathDat}/[[:xdigit:]]*\.cfg$ }}
 #    cfgStorDef.free
 #
 #  SOURCE
@@ -1130,11 +1130,11 @@ CFG::storage.use.default() {
 #  EXAMPLE
 #    CFG cfgStorage
 #    cfgStorage.storage.use
-#    cfgStorage.settings storage | {{ ${_bashlyk_pathDat}/[[:xdigit:]]*\.cfg$ }}
+#    cfgStorage.settings storage                                                | {{ ${_bashlyk_pathDat}/[[:xdigit:]]*\.cfg$ }}
 #    cfgStorage.storage.use external.ini
-#    cfgStorage.settings storage | {{ /external\.ini$ }}
+#    cfgStorage.settings storage                                                | {{ /external\.ini$ }}
 #    cfgStorage.storage.use /sys/extern.ini                                     ## can't be used
-#    cfgStorage.settings storage | {{ ${_bashlyk_pathDat}/[[:xdigit:]]*\.cfg$ }}
+#    cfgStorage.settings storage                                                | {{ ${_bashlyk_pathDat}/[[:xdigit:]]*\.cfg$ }}
 #    cfgStorage.free
 #
 #  SOURCE
@@ -1225,7 +1225,7 @@ CFG::storage.use() {
 #    CFG cfgStorageShow
 #    cfgStorageShow.storage.show                                                #? $_bashlyk_iErrorEmptyResult
 #    cfgStorageShow.storage.use external.ini
-#    cfgStorageShow.storage.show | {{ /external\.ini$ }}
+#    cfgStorageShow.storage.show                                                | {{ /external\.ini$ }}
 #    rm -f external.ini
 #    cfgStorageShow.free
 #
@@ -1264,7 +1264,7 @@ CFG::storage.show() {
 #    tSave.__section.set key "unnamed section"
 #    tSave.save $fn
 #    tSave.free
-#    tail -n +4 $fn | {{{
+#    tail -n +4 $fn                                                             | {{{
 #
 #        key    =    unnamed section
 #
@@ -1278,10 +1278,10 @@ CFG::storage.show() {
 #    ## TODO globs
 #    tComments.settings chComment = \# this is comment';'
 #    tComments.save $fn
-#    cat $fn               | {{ -Po "^# this is comment; created .* by $USER" }}
+#    cat $fn                                                                    | {{ -Po "^# this is comment; created .* by $USER" }}
 #    tComments.settings chComment =
 #    tComments.save $fn
-#    cat $fn               | {{ -Po "^# created .* by $USER" }}
+#    cat $fn                                                                    | {{ -Po "^# created .* by $USER" }}
 #    tComments.free
 #  SOURCE
 CFG::save() {
@@ -1378,7 +1378,7 @@ CFG::save() {
 #   tRead.storage.show
 #   tRead.storage.use $ini
 #   tRead.read                                                                  #? true
-#   tRead.show | {{{
+#   tRead.show                                                                  | {{{
 #
 #                    key    =    on the global unnamed section
 #       key::with::colon    =    with colon
@@ -1660,7 +1660,7 @@ CFG::read() {
 #   tLoad.load []file,main,child [exec]- [main]hint, msg, cnt [replace]- [unify]= [acc]+ #? true
 #   tLoad.save $iniSave                                                         #? true
 #   tLoad.storage.use $iniSave
-#   tLoad.show | {{{
+#   tLoad.show                                                                  | {{{
 #
 #       child    =    true
 #        file    =    child
@@ -1862,6 +1862,7 @@ CFG::load() {
 #    local cfg
 #    _bashlyk_aArg=( --file CLI -E clear -H 'Hi!' -M test -U a.2 -U a.2 --acc "with white spaces" --acc b )
 #    std::temp cfg
+##   # tLoad instance preserved from CFG::load
 #    tLoad.save $cfg                                                                 #? true
 #    tLoad.free
 #    _ onError warn+return
@@ -1871,7 +1872,7 @@ CFG::load() {
 #    tCLI.bind.cli file{F}: exec{E}:- main-hint{H}: main-msg{M}: unify{U}:= acc:+    #? true
 #    tCLI.storage.use $cfg
 #    tCLI.load file,main,child [exec]- [main]hint,msg,cnt [replace]- [unify]= [acc]+ #? true
-#    tCLI.show | {{{
+#    tCLI.show                                                                       | {{{
 #
 #    child    =    true
 #     file    =    CLI
@@ -2122,10 +2123,10 @@ CFG::getopt() {
 #    tSettings.set key = value
 #    tSettings.settings bBooleanOption     =   true
 #    tSettings.settings sSimpleFakeOption  =   simple fake option
-#    tSettings.settings sSimpleFakeOption        | {{ '^simple fake option$' }}
-#    tSettings.settings bBooleanOption           | {{ ^true$                 }}
+#    tSettings.settings sSimpleFakeOption                                       | {{ '^simple fake option$' }}
+#    tSettings.settings bBooleanOption                                          | {{ ^true$                 }}
 #    ## TODO improves required
-#    tSettings.settings | {{{
+#    tSettings.settings                                                         | {{{
 #
 #
 #    [ __settings__ ]
@@ -2191,16 +2192,16 @@ CFG::settings() {
 #    InvalidArgument - expected true or false
 #  EXAMPLE
 #    CFG tShellmode
-#    tShellmode.settings.shellmode                              | {{ ^false$ }}
+#    tShellmode.settings.shellmode                                              | {{ ^false$ }}
 #    tShellmode.settings.shellmode = YEs                                        #? true
-#    tShellmode.settings.shellmode                              | {{ ^true$  }}
+#    tShellmode.settings.shellmode                                              | {{ ^true$  }}
 #    tShellmode.settings.shellmode = error                                      #? $_bashlyk_iErrorInvalidArgument
 #    tShellmode.free
 #    CFG cnfAuto
-#    cnfAuto.settings.shellmode                                 | {{ ^true$  }}
+#    cnfAuto.settings.shellmode                                                 | {{ ^true$  }}
 #    cnfAuto.free
 #    CFG configAuto
-#    configAuto.settings.shellmode                              | {{ ^false$ }}
+#    configAuto.settings.shellmode                                              | {{ ^false$ }}
 #    configAuto.free
 #  SOURCE
 CFG::settings.shellmode() {
@@ -2263,9 +2264,9 @@ CFG::settings.shellmode() {
 #    InvalidArgument - expected true or false
 #  EXAMPLE
 #    CFG tShellmode
-#    tShellmode.settings.section.padding                        | {{ ^true$  }}
+#    tShellmode.settings.section.padding                                        | {{ ^true$  }}
 #    tShellmode.settings.section.padding = FALSE                                #? true
-#    tShellmode.settings.section.padding                        | {{ ^false$ }}
+#    tShellmode.settings.section.padding                                        | {{ ^false$ }}
 #    tShellmode.settings.section.padding = error                                #? $_bashlyk_iErrorInvalidArgument
 #    tShellmode.free
 #  SOURCE

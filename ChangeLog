@@ -775,24 +775,22 @@ debian/control
 Thu, 25 Jun 2015 14:28:10 +0400
 	Fix bugs
 	Version 1.84
- liblog.sh:
- - udfTimeStamp - исправлена ошибка паразитного форматирования командой date
-   строки аргументов, содержащих литер "%"
- - udfLogger - для режимов с использованием logger опция -s не применяется
+liblog.sh:
+ - udfTimeStamp - fixed a parasitic formatting for arguments with '%'
+ - udfLogger - command 'logger' used without -s option
  libmsg.sh:
- - добавлена поддержка дистрибутива Q4OS (1.2.x) указанием в в списке поиска
-   X-сессии функцией udfGetXSessionProperties активного приложения "twin"
+ - udfGetXSessionProperties - added support for the Q4OS distribution (1.2.x) by
+   using command "twin" in the search list of the X-session
  debian/control:
- - добавлена зависимость от пакета findutils (xargs)
+ - added a dependency from the package findutils (xargs)
  libstd.sh:
- - управление заданиями (job) удалено из-за недостаточной функциональности
+ - job management has been removed due to lack of functionality
  robodoc.rc:
- - переход на использование robodoc HTML-документации в одном файле
- - настройки CSS задаются в robodoc.css
- - добавлена подсветка синтаксиса в секции исходного кода
+ - used a 'single file' mode for robodoc HTML documentation
+ - the CSS settings are set in the robodoc.css
+ - added syntax highlighting in the source code section
  Makefile.am:
- - в сборку добавлена генерация robodoc HTML-документации и замены её заголовка
-   (логотипа)
+ - added generation of the robodoc HTML documentation with header patching
 
 
 Fri, 13 Mar 2015 14:55:31 +0400
@@ -1692,4 +1690,4 @@ Mon, 22 Sep 2008 16:44:02 +0500
 	Version 1.35
 
 --
-$Id: ChangeLog 865 2018-08-17 09:45:07+04:00 yds $
+$Id: ChangeLog 877 2018-08-28 23:28:09+04:00 yds $

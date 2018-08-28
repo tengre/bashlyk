@@ -1,5 +1,5 @@
 #
-# $Id: libpid.sh 874 2018-08-24 00:34:53+04:00 yds $
+# $Id: libpid.sh 877 2018-08-28 23:28:09+04:00 yds $
 #
 #****h* BASHLYK/libpid
 #  DESCRIPTION
@@ -286,7 +286,7 @@ pid::stop() {
 #    ( $cmd || false )                                                          #? false
 #    pid::file                                                                  #? true
 #    test -f $_bashlyk_fnPid                                                    #? true
-#    head -n 1 $_bashlyk_fnPid                                    | {{ -w $$ }}
+#    head -n 1 $_bashlyk_fnPid                                                  | {{ -w $$ }}
 #    rm -f $_bashlyk_fnPid
 #  SOURCE
 pid::file() {

@@ -1,5 +1,5 @@
 #
-# $Id: liberr.sh 874 2018-08-24 00:34:53+04:00 yds $
+# $Id: liberr.sh 877 2018-08-28 23:28:09+04:00 yds $
 #
 #****h* BASHLYK/liberr
 #  DESCRIPTION
@@ -503,11 +503,11 @@ err::generate() {
 #    local cmd
 #    cmd='err::__generate 1 NoSuchFileOrDir warn /notexist'
 #    _bashlyk_onError=debug
-#    $cmd | {{{
+#    $cmd                                                                       | {{{
 #    err::stacktrace | msg::warn -  Warn: no\ such\ file\ or\ directory\ -\ /notexist\ ..\ \(185\) >&2; err::status 185 "/notexist"; :; #
 # }}}
 #    _bashlyk_onError=echo
-#    $cmd | {{{
+#    $cmd                                                                       | {{{
 #    msg::warn  Warn: no\ such\ file\ or\ directory\ -\ /notexist\ ..\ \(185\) >&2; err::status 185 "/notexist"; :; #
 # }}}
 #  SOURCE
@@ -714,10 +714,10 @@ err::NoSuchFileOrDir() {
 #    0          - specified file are found
 #  EXAMPLE
 #    local cmdYes='/bin/sh' cmdNo1="bin_${RANDOM}" cmdNo2="bin_${RANDOM}"
-#    err::NoSuchFile                                                       #? $_bashlyk_iErrorNoSuchFile
-#    err::NoSuchFile $cmdNo1                                               #? $_bashlyk_iErrorNoSuchFile
-#    $(err::NoSuchFile $cmdNo2 || exit 123)                                #? 123
-#    err::NoSuchFile $cmdYes                                               #? true
+#    err::NoSuchFile                                                            #? $_bashlyk_iErrorNoSuchFile
+#    err::NoSuchFile $cmdNo1                                                    #? $_bashlyk_iErrorNoSuchFile
+#    $(err::NoSuchFile $cmdNo2 || exit 123)                                     #? 123
+#    err::NoSuchFile $cmdYes                                                    #? true
 #  SOURCE
 err::NoSuchFile() {
 
@@ -740,10 +740,10 @@ err::NoSuchFile() {
 #    0         - specified directory are found
 #  EXAMPLE
 #    local pathYes='/tmp' pathNo1="/bin_${RANDOM}" pathNo2="/bin_${RANDOM}"
-#    err::NoSuchDir                                                         #? $_bashlyk_iErrorNoSuchDir
-#    err::NoSuchDir $pathNo1                                                #? $_bashlyk_iErrorNoSuchDir
-#    $(err::NoSuchDir $pathNo2 || exit 123)                                 #? 123
-#    err::NoSuchDir $pathYes                                                #? true
+#    err::NoSuchDir                                                             #? $_bashlyk_iErrorNoSuchDir
+#    err::NoSuchDir $pathNo1                                                    #? $_bashlyk_iErrorNoSuchDir
+#    $(err::NoSuchDir $pathNo2 || exit 123)                                     #? 123
+#    err::NoSuchDir $pathYes                                                    #? true
 #  SOURCE
 err::NoSuchDir() {
 
@@ -1036,7 +1036,7 @@ err::postfix() {
 #    private method, used for 'try ..catch' emulation
 #  EXAMPLE
 #    local s='command --with -a -- arguments' cmd='err::__add_throw_to_command'
-#    $cmd $s | {{{
+#    $cmd $s                                                                    | {{{
 #    _bashlyk_sLastError[$BASHPID]="command: $(std::trim command --with -a -- arguments)\n output: {\n$(command --with -a -- arguments 2>&1)\n}" && echo -n . || return $?;
 # }}}
 #  SOURCE
@@ -1063,7 +1063,7 @@ err::__add_throw_to_command() {
 #  TODO
 #    error handling for input 'try' function checking not worked
 #  EXAMPLE
-#    err::__convert_try_to_func | {{"^${TMPDIR}/.*ok.*fail.*; false; }$"}}
+#    err::__convert_try_to_func                                                 | {{"^${TMPDIR}/.*ok.*fail.*; false; }$"}}
 #  SOURCE
 err::__convert_try_to_func() {
 
@@ -1125,7 +1125,7 @@ err::__convert_try_to_func() {
 #                                                                               #-
 #   }                                                                           #-
 #   EOFtry                                                                      #-
-#   . $fn | {{{
+#   . $fn                                                                       | {{{
 #   ... fail..(210)
 #
 #   try block exception:
@@ -1211,12 +1211,12 @@ err::debug() {
 #  EXAMPLE
 #    DEBUGLEVEL=0
 #    err::debugf                                                                #? $_bashlyk_iErrorMissingArgument
-#    err::debugf 0 '%s: %s\n' 'level0' "$(date -R)" 2>&1 | {{ ^level0: }}
+#    err::debugf 0 '%s: %s\n' 'level0' "$(date -R)" 2>&1                        | {{ ^level0: }}
 #    err::debugf 1 '%s\n' 'level 1'                                             #? 1
 #    DEBUGLEVEL=5
-#    err::debugf 4 "%s: %s\n" "level5" "$(date -R)" 2>&1 | {{ ^level5: }}
+#    err::debugf 4 "%s: %s\n" "level5" "$(date -R)" 2>&1                        | {{ ^level5: }}
 #    err::debugf 6 '%s:\n' 'level6'                                             #? 1
-#    err::debugf '%s:\n' 'default0' 2>&1 | {{ ^default0: }}
+#    err::debugf '%s:\n' 'default0' 2>&1                                        | {{ ^default0: }}
 #  SOURCE
 err::debugf() {
 

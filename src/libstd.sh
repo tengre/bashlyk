@@ -1,5 +1,5 @@
 #
-# $Id: libstd.sh 875 2018-08-24 23:17:27+04:00 yds $
+# $Id: libstd.sh 877 2018-08-28 23:28:09+04:00 yds $
 #
 #****h* BASHLYK/libstd
 #  DESCRIPTION
@@ -150,7 +150,7 @@ std::isDecimal() {
 #    execution capability
 #  EXAMPLE
 #    local s='text' b='true' i=2015 a='true 2015 text'
-#    std::showVariable a,b';' i s 1w | {{{
+#    std::showVariable a,b';' i s 1w                                            | {{{
 #    : Variable listing>
 #            a=true 2015 text
 #            b=true
@@ -226,9 +226,9 @@ std::isVariable() {
 #    doublequoted input with whitespaces
 #  EXAMPLE
 #    std::lazyquote                                                             #? $_bashlyk_iErrorMissingArgument
-#    std::lazyquote "word"                                   | {{ '^word$'   }}
-#    std::lazyquote two words                                | {{ '^\".*\"$' }}
-#    std::lazyquote "two words"                              | {{ '^\".*\"$' }}
+#    std::lazyquote "word"                                                      | {{ '^word$'   }}
+#    std::lazyquote two words                                                   | {{ '^\".*\"$' }}
+#    std::lazyquote "two words"                                                 | {{ '^\".*\"$' }}
 #  SOURCE
 std::lazyquote() {
 
@@ -258,9 +258,9 @@ std::lazyquote() {
 #   characters
 #  EXAMPLE
 #    a=($(std::whitespace.encode single argument expected ... ))
-#    echo ${#a[@]}                                                  | {{ ^1$ }}
+#    echo ${#a[@]}                                                              | {{ ^1$ }}
 #    a=($(echo single argument expected ... | std::whitespace.encode -))
-#    echo ${#a[@]}                                                  | {{ ^1$ }}
+#    echo ${#a[@]}                                                              | {{ ^1$ }}
 #  SOURCE
 std::whitespace.encode() {
 
@@ -301,12 +301,12 @@ std::whitespace.encode() {
 #    local text s
 #    s="${_bashlyk_sWSpaceAlias}"
 #    text="many${s}arguments${s}expected${s}..."
-#    std::whitespace.decode $text                                   | {{ '"' }}
-#    std::whitespace.decode - <<< $text                             | {{ '"' }}1
+#    std::whitespace.decode $text                                               | {{ '"' }}
+#    std::whitespace.decode - <<< $text                                         | {{ '"' }}1
 #    a=( $( std::whitespace.decode $text ) )
-#    echo ${#a[@]}                                                  | {{ ^4$ }}
+#    echo ${#a[@]}                                                              | {{ ^4$ }}
 #    a=( $( std::whitespace.decode - <<< $text ) )
-#    echo ${#a[@]}                                                  | {{ ^4$ }}
+#    echo ${#a[@]}                                                              | {{ ^4$ }}
 #  SOURCE
 std::whitespace.decode() {
 
@@ -364,23 +364,23 @@ std::whitespace.decode() {
 #    local foTemp s=$RANDOM
 #    _ onError return
 #    std::temp foTemp path=/tmp prefix=pre. suffix=.${s}1                       #? true
-#    ls -1 /tmp/pre.*.${s}1 2>/dev/null           | {{ "/tmp/pre\..*\.${s}1" }}
+#    ls -1 /tmp/pre.*.${s}1 2>/dev/null                                         | {{ "/tmp/pre\..*\.${s}1" }}
 #    rm -f $foTemp
 #    std::temp foTemp path=/tmp type=dir mode=0751 suffix=.${s}2                #? true
-#    ls -ld $foTemp 2>/dev/null                   | {{ "^drwxr-x--x.*${s}2$" }}
+#    ls -ld $foTemp 2>/dev/null                                                 | {{ "^drwxr-x--x.*${s}2$" }}
 #    rmdir $foTemp
 #    foTemp=$(std::temp prefix=pre. suffix=.${s}3)
-#    ls -1 $foTemp 2>/dev/null                    | {{ "pre\..*\.${s}3$"     }}
+#    ls -1 $foTemp 2>/dev/null                                                  | {{ "pre\..*\.${s}3$"     }}
 #    rm -f $foTemp
 #    foTemp=$(std::temp prefix=pre. suffix=.${s}4 keep=false)                   #? true
-#    echo $foTemp                                 | {{ "pre\..*\.${s}4"      }}
+#    echo $foTemp                                                               | {{ "pre\..*\.${s}4"      }}
 #    test -f $foTemp                                                            #? false
 #    rm -f $foTemp
 #    : $(std::temp foTemp path=/tmp prefix=pre. suffix=.${s}5 keep=true)
-#    ls -1 /tmp/pre.*.${s}5 2>/dev/null           | {{ "/tmp/pre\..*\.${s}5" }}
+#    ls -1 /tmp/pre.*.${s}5 2>/dev/null                                         | {{ "/tmp/pre\..*\.${s}5" }}
 #    rm -f /tmp/pre.*.${s}5
 #    $(std::temp foTemp path=/tmp prefix=pre. suffix=.${s}6)
-#    ls -1 /tmp/pre.*.${s}6 2>/dev/null           | {{ "/tmp/pre\..*\.${s}6" }}!
+#    ls -1 /tmp/pre.*.${s}6 2>/dev/null                                         | {{ "/tmp/pre\..*\.${s}6" }}!
 #    unset foTemp
 #    foTemp=$(std::temp)                                                        #? true
 #    ls -1 $foTemp 2>/dev/null                                                  #? true
@@ -390,10 +390,10 @@ std::whitespace.decode() {
 #    test -p $foTemp                                                            #? true
 #    rm -f $foTemp
 #    std::temp foTemp prefix="pref." suffix=".suffix with spaces.tmp"
-#    ls -1 "$foTemp"                              | {{ "ix with spaces.tmp$" }}
+#    ls -1 "$foTemp"                                                            | {{ "ix with spaces.tmp$" }}
 #    rm -f "$foTemp"
 #    std::temp invalid+variable                                                 #? ${_bashlyk_iErrorInvalidVariable}
-#    err::status    | {{ -P '^invalid variable - invalid\+variable \(\d+\)$' }}
+#    err::status                                                                | {{ -P '^invalid variable - invalid\+variable \(\d+\)$' }}
 #    std::temp path=/proc                                                       #? ${_bashlyk_iErrorNotExistNotCreated}
 #    err::status
 #  SOURCE
@@ -556,8 +556,8 @@ std::temp() {
 #    err::status
 #    std::acceptArrayItem 12a[te]                                               #? $_bashlyk_iErrorInvalidVariable
 ## TODO - do not worked    std::acceptArrayItem a12[]                           #? $_bashlyk_iErrorInvalidVariable
-#    std::acceptArrayItem _a                         | {{ '^_a$'             }}
-#    std::acceptArrayItem _a[1234]                   | {{ '^\{_a\[1234\]\}$' }}
+#    std::acceptArrayItem _a                                                    | {{ '^_a$'             }}
+#    std::acceptArrayItem _a[1234]                                              | {{ '^\{_a\[1234\]\}$' }}
 #  SOURCE
 std::acceptArrayItem() {
 
@@ -593,22 +593,22 @@ std::acceptArrayItem() {
 #  EXAMPLE
 #    local sS sWSpaceAlias pid=$BASHPID k=key1 v=val1
 #    _ k=sWSpaceAlias
-#    echo "$k"                             | {{ "^${_bashlyk_sWSpaceAlias}$" }}
+#    echo "$k"                                                                  | {{ "^${_bashlyk_sWSpaceAlias}$" }}
 #    _ sS=sWSpaceAlias
-#    echo "$sS"                            | {{ "^${_bashlyk_sWSpaceAlias}$" }}
+#    echo "$sS"                                                                 | {{ "^${_bashlyk_sWSpaceAlias}$" }}
 #    _ =sWSpaceAlias
-#    echo "$sWSpaceAlias"                  | {{ "^${_bashlyk_sWSpaceAlias}$" }}
-#    _ sWSpaceAlias                        | {{ "^${_bashlyk_sWSpaceAlias}$" }}
+#    echo "$sWSpaceAlias"                                                       | {{ "^${_bashlyk_sWSpaceAlias}$" }}
+#    _ sWSpaceAlias                                                             | {{ "^${_bashlyk_sWSpaceAlias}$" }}
 #    _ sWSpaceAlias _-_
-#    _ sWSpaceAlias                        | {{ "^_-_$"                      }}
+#    _ sWSpaceAlias                                                             | {{ "^_-_$"                      }}
 #    _ sWSpaceAlias ""
-#    _ sWSpaceAlias                        | {{ "^$"                         }}
+#    _ sWSpaceAlias                                                             | {{ "^$"                         }}
 #    _ sWSpaceAlias "two words"
-#    _ sWSpaceAlias                        | {{ "^two words$"                }}
+#    _ sWSpaceAlias                                                             | {{ "^two words$"                }}
 #    _ sWSpaceAlias "$sWSpaceAlias"
 #    _ sWSpaceAlias
 #    _ sLastError[$pid] "_ sLastError settings test"                            #? true
-#    _ sLastError[$pid]                    | {{"^_ sLastError settings test$"}}
+#    _ sLastError[$pid]                                                         | {{"^_ sLastError settings test$"}}
 #  SOURCE
 _(){
 
@@ -666,9 +666,9 @@ _(){
 #    local fn
 #    std::temp fn
 #    echo test > $fn                                                            #-
-#    echo test | std::getMD5 -    | {{ -w 'd8e8fca2dc0f896fd7cb4cb0031ba249' }}
-#    std::getMD5 --file "$fn"     | {{ -w 'd8e8fca2dc0f896fd7cb4cb0031ba249' }}
-#    std::getMD5 test             | {{ -w 'd8e8fca2dc0f896fd7cb4cb0031ba249' }}
+#    echo test | std::getMD5 -                                                  | {{ -w 'd8e8fca2dc0f896fd7cb4cb0031ba249' }}
+#    std::getMD5 --file "$fn"                                                   | {{ -w 'd8e8fca2dc0f896fd7cb4cb0031ba249' }}
+#    std::getMD5 test                                                           | {{ -w 'd8e8fca2dc0f896fd7cb4cb0031ba249' }}
 #  SOURCE
 std::getMD5() {
 
@@ -710,7 +710,7 @@ std::getMD5() {
 #    pid::onExit.unlink ${path}/testfile2
 #    pid::onExit.unlink ${path}/testfile3
 #    pid::onExit.unlink ${path}
-#    std::getMD5.list $path                  | {{ ^[[:xdigit:]]*.*testfile.$ }}
+#    std::getMD5.list $path                                                     | {{ ^[[:xdigit:]]*.*testfile.$ }}
 #    std::getMD5.list                                                           #? ${_bashlyk_iErrorMissingArgument}
 #    err::status
 #    std::getMD5.list /notexist/path                                            #? ${_bashlyk_iErrorNoSuchFileOrDir}
@@ -757,7 +757,7 @@ std::getMD5.list() {
 #  EXAMPLE
 #    local sTag='date TO="+0400" TZ="MSK"' sContent='Mon, 22 Apr 2013 15:55:50'
 #    local sXml='<date TO="+0400" TZ="MSK">Mon, 22 Apr 2013 15:55:50</date>'
-#    std::xml "$sTag" "$sContent"                           | {{ "^${sXml}$" }}
+#    std::xml "$sTag" "$sContent"                                               | {{ "^${sXml}$" }}
 #  SOURCE
 std::xml() {
 
@@ -791,9 +791,9 @@ std::xml() {
 #    err::status
 #    std::getTimeInSec SeventenFourSec                                          #? $_bashlyk_iErrorInvalidArgument
 #    err::status
-#    std::getTimeInSec 59seconds                       | {{ -w 59            }}
+#    std::getTimeInSec 59seconds                                                | {{ -w 59            }}
 #    std::getTimeInSec -v v ${s}minutes                                         #? true
-#    echo $v                                           | {{ -w $(( s * 60 )) }}
+#    echo $v                                                                    | {{ -w $(( s * 60 )) }}
 #    std::getTimeInSec -v 123s                                                  #? $_bashlyk_iErrorInvalidVariable
 #    err::status
 #    std::getTimeInSec -v -v                                                    #? $_bashlyk_iErrorInvalidVariable
@@ -853,7 +853,7 @@ std::getTimeInSec() {
 #  TODO
 #    race possible
 #  EXAMPLE
-#    std::getFreeFD | {{ -P "^\d+$" }}
+#    std::getFreeFD                                                             | {{ -P "^\d+$" }}
 #  SOURCE
 std::getFreeFD() {
 
@@ -928,10 +928,10 @@ std::isHash() {
 #    show input without leading and trailing spaces
 #  EXAMPLE
 #    local s=" a  b c  "
-#    std::trim "$s"                                          | {{ "^a  b c$" }}
-#    std::trim  $s                                           | {{ "^a b c$"  }}
-#    std::trim                                               | {{ ^$         }}
-#    std::trim '  '                                          | {{ ^$         }}
+#    std::trim "$s"                                                             | {{ "^a  b c$" }}
+#    std::trim  $s                                                              | {{ "^a b c$"  }}
+#    std::trim                                                                  | {{ ^$         }}
+#    std::trim '  '                                                             | {{ ^$         }}
 #  SOURCE
 std::trim() {
 
@@ -954,7 +954,7 @@ std::trim() {
 #    local s fn
 #    std::temp -v fn
 #    for s in $( seq 0 12 ); do printf -- '\t%s\n' "$RANDOM"; done > $fn        #-
-#    std::cat < $fn                        | {{ -E '^[[:space:]][0-9]{1,5}$' }}
+#    std::cat < $fn                                                             | {{ -E '^[[:space:]][0-9]{1,5}$' }}
 #  SOURCE
 std::cat() {
 
@@ -979,8 +979,8 @@ std::cat() {
 #    local s fn
 #    std::temp -v fn
 #    for s in $( seq 0 1 ); do printf -- '%s\n' "$RANDOM"; done > $fn           #-
-#    std::inline lf < $fn | {{ -E '^[0-9]{1,5} \[lf\] [0-9]{1,5} \[lf\] $' }}
-#    std::inline    < $fn | {{ -E '^[0-9]{1,5} [0-9]{1,5} $' }}
+#    std::inline lf < $fn                                                       | {{ -E '^[0-9]{1,5} \[lf\] [0-9]{1,5} \[lf\] $' }}
+#    std::inline    < $fn                                                       | {{ -E '^[0-9]{1,5} [0-9]{1,5} $' }}
 #  SOURCE
 std::inline() {
 
@@ -1021,7 +1021,7 @@ fi
 #  DESCRIPTION
 #    show 'date -R' like output
 #  EXAMPLE
-#    std::dateR | {{ -P "^\S{3}, \d{2} \S{3} \d{4} \d{2}:\d{2}:\d{2} .\d{4}$" }}
+#    std::dateR                                                                 | {{ -P "^\S{3}, \d{2} \S{3} \d{4} \d{2}:\d{2}:\d{2} .\d{4}$" }}
 #  SOURCE
 std::dateR() {
 

@@ -1,5 +1,5 @@
 #
-# $Id: liblog.sh 874 2018-08-24 00:34:53+04:00 yds $
+# $Id: liblog.sh 877 2018-08-28 23:28:09+04:00 yds $
 #
 #****h* BASHLYK/liblog
 #  DESCRIPTION
@@ -174,8 +174,8 @@ log::ger() {
 #   Depends on output parameters
 #  EXAMPLE
 #    # TODO improve test
-#    echo -n . | log::add -                                | {{ '^\.$'       }}
-#    echo test | log::add - tag                            | {{ '^tag test$' }}
+#    echo -n . | log::add -                                                     | {{ '^\.$'       }}
+#    echo test | log::add - tag                                                 | {{ '^tag test$' }}
 #  SOURCE
 log::add() {
 

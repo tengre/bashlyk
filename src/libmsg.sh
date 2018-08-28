@@ -1,5 +1,5 @@
 #
-# $Id: libmsg.sh 876 2018-08-27 00:08:40+04:00 yds $
+# $Id: libmsg.sh 877 2018-08-28 23:28:09+04:00 yds $
 #
 #****h* BASHLYK/libmsg
 #  DESCRIPTION
@@ -63,10 +63,10 @@ declare -rg _bashlyk_exports_msg="
 #    -      - data is read from standard input
 #    <text> - is used as a header for a stream from standard input
 #  EXAMPLE
-#    msg::echo 'test' | {{{
+#    msg::echo 'test'                                                           | {{{
 #    test
 # }}}
-#    msg::echo - subject <<< body | {{{
+#    msg::echo - subject <<< body                                               | {{{
 #    subject
 #    ----
 #    body
@@ -240,7 +240,7 @@ msg::notify() {
 #    local sBody="notification testing" sSubj="bashlyk::msg::notify2x" rc
 #    msg::notify2x "${sSubj}\n----\n${sBody}\n"
 #    rc=$?
-#    echo $rc | {{ "$(_ iErrorNotPermitted)\|$(_ iErrorXsessionNotFound)\|0" }}
+#    echo $rc                                                                   | {{ "$(_ iErrorNotPermitted)\|$(_ iErrorXsessionNotFound)\|0" }}
 #    [[ $rc -eq 0 ]] && sleep 1.5
 #  SOURCE
 msg::notify2x() {
@@ -358,19 +358,19 @@ msg::getXsessionProperties() {
 #    DEBUGLEVEL=$(( DEBUGLEVEL + 1 ))
 #    msg::notifyTool notify-send "$title" "$body" 8
 #    rc=$?
-#    echo $?                             | {{ "$(_ iErrorCommandNotFound)\|0" }}
+#    echo $?                                                                    | {{ "$(_ iErrorCommandNotFound)\|0" }}
 #    [[ $rc -eq 0 ]] && sleep 2
 #    msg::notifyTool kdialog     "$title" "$body" 8
 #    rc=$?
-#    echo $?                             | {{ "$(_ iErrorCommandNotFound)\|0" }}
+#    echo $?                                                                    | {{ "$(_ iErrorCommandNotFound)\|0" }}
 #    [[ $rc -eq 0 ]] && sleep 2
 #    msg::notifyTool zenity      "$title" "$body" 2
 #    rc=$?
-#    echo $?                             | {{ "$(_ iErrorCommandNotFound)\|0" }}
+#    echo $?                                                                    | {{ "$(_ iErrorCommandNotFound)\|0" }}
 #    [[ $rc -eq 0 ]] && sleep 2
 #    msg::notifyTool xmessage    "$title" "$body" 4
 #    rc=$?
-#    echo $?                             | {{ "$(_ iErrorCommandNotFound)\|0" }}
+#    echo $?                                                                    | {{ "$(_ iErrorCommandNotFound)\|0" }}
 #    DEBUGLEVEL=$(( DEBUGLEVEL - 1 ))
 #  SOURCE
 msg::notifyTool() {
@@ -385,11 +385,11 @@ msg::notifyTool() {
 
   X=$( _ sXSessionProp )
   #
-  local -A h=(                                                                                                    \
-    [zenity]="$X $1 --notification --timeout $(($t/2)) --text '$(printf -- "%s via %s\n\n%s\n" "$2" "$1" " $3")'" \
-    [xmessage]="$X $1 -center -timeout $t '$(printf -- "%s via %s\n\n%s\n" "$2" "$1" " $3")'"                     \
-    [kdialog]="$X $1 --title \"$2 via $1\" --passivepopup '$(printf -- "%s" " $3")' $t"                           \
-    [notify-send]="$X $1 -t $t \"$2 via $1\" '$(printf -- "%s" " $3")'"                                           \
+  local -A h=(
+    [zenity]="$X $1 --notification --timeout $(($t/2)) --text '$(printf -- "%s via %s\n\n%s\n" "$2" "$1" " $3")'"
+    [xmessage]="$X $1 -center -timeout $t '$(printf -- "%s via %s\n\n%s\n" "$2" "$1" " $3")'"
+    [kdialog]="$X $1 --title \"$2 via $1\" --passivepopup '$(printf -- "%s" " $3")' $t"
+    [notify-send]="$X $1 -t $t \"$2 via $1\" '$(printf -- "%s" " $3")'"
   )
 
   if hash "$1" 2>/dev/null; then
