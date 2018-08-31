@@ -1,5 +1,5 @@
 #
-# $Id: liberr.sh 877 2018-08-28 23:28:09+04:00 yds $
+# $Id: liberr.sh 880 2018-08-31 06:38:00+04:00 yds $
 #
 #****h* BASHLYK/liberr
 #  DESCRIPTION
@@ -316,10 +316,9 @@ err::stacktrace() {
     (( ${BASH_LINENO[i]} == 0 )) && continue
 
     printf -- '%s%d: call %s:%s %s ..\n%s%d: code %s\n'                        \
-              "$s" "$i"                                                        \
-              "${BASH_SOURCE[$i+1]}" "${BASH_LINENO[$i]}" "${FUNCNAME[$i]}"    \
-              "$s" "$i"                                                        \
-              "$( err::sourcecode $i )"
+              "$s" "$i" "${BASH_SOURCE[$i+1]:=<shell>}"                        \
+              "${BASH_LINENO[$i]}" "${FUNCNAME[$i]}"                           \
+              "$s" "$i" "$( err::sourcecode $i || echo ....... )"
 
     s+=" "
 
@@ -357,7 +356,15 @@ err::sourcecode() {
 
   fi
 
-  [[ -s $fn ]] && sed -n "${BASH_LINENO[i]}p" $fn || return $_bashlyk_iErrorNoSuchFileOrDir
+  if [[ $fn && -f $fn  && -s $fn ]]; then
+
+    sed -n "${BASH_LINENO[i]}p" $fn
+
+  else
+
+    return $_bashlyk_iErrorNoSuchFile
+
+  fi
 
 }
 #******
