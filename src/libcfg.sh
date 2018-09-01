@@ -1,5 +1,5 @@
 #
-# $Id: libcfg.sh 879 2018-08-29 01:55:20+04:00 yds $
+# $Id: libcfg.sh 881 2018-09-01 07:44:48+04:00 yds $
 #
 #****h* BASHLYK/libcfg
 #  DESCRIPTION
@@ -935,6 +935,8 @@ CFG::keys() {
 #    err::status
 #    InvalidInput.set [section] Thu, 30 Jun 2016 08:55:36 +0400                 #? $_bashlyk_iErrorInvalidArgument
 #    err::status
+#    InvalidInput.set []key[ff] = value                                         #? $_bashlyk_iErrorInvalidArgument
+#    err::status
 #    InvalidInput.free
 #  SOURCE
 CFG::set() {
@@ -943,11 +945,12 @@ CFG::set() {
 
   local iKeyWidth o k s v
 
-  if [[ $* =~ [[:space:]]*([^=]*)[[:space:]]*=[[:space:]]*(.*)[[:space:]]* ]];
+  if [[ $* =~ ^(\[[^]\[]*\])?([^]=\[]*)[[:space:]]*?=[[:space:]]*?(.*)[[:space:]]*?$ ]];
   then
 
     s=${BASH_REMATCH[1]}
-    v=${BASH_REMATCH[2]}
+    k=${BASH_REMATCH[2]}
+    v=${BASH_REMATCH[3]}
 
   else
 
@@ -955,11 +958,10 @@ CFG::set() {
 
   fi
 
-  k="$( std::trim "${s##*]}" )"
-  s="$( std::trim "${s%]*}"  )"
+  k="$( std::trim "$k" )"
+  s="$( std::trim "${s%]*}" )"
 
-  [[ $s == $k ]] && s=__global__
-  [[ ${s/[/}  ]] && s=$( std::trim "${s/[/}" ) || s=__global__
+  [[ ${s/[/} ]] && s=$( std::trim "${s/[/}" ) || s=__global__
 
   o=${FUNCNAME[0]%%.*}
 
@@ -977,7 +979,6 @@ CFG::set() {
     std::isNumber $iKeyWidth || iKeyWidth=0
 
     (( ${#k} > iKeyWidth )) && ${o}.__section.set _bashlyk_key_width ${#k}
-
 
     if [[ $k =~ $( ${o}.settings reKey ) ]]; then
 
