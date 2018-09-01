@@ -1,5 +1,5 @@
 #
-# $Id: libcfg.sh 881 2018-09-01 07:44:48+04:00 yds $
+# $Id: libcfg.sh 882 2018-09-02 00:27:31+04:00 toor $
 #
 #****h* BASHLYK/libcfg
 #  DESCRIPTION
@@ -937,6 +937,8 @@ CFG::keys() {
 #    err::status
 #    InvalidInput.set []key[ff] = value                                         #? $_bashlyk_iErrorInvalidArgument
 #    err::status
+#    InvalidInput.set []key = value1
+#    InvalidInput.show                                                          | {{ -P 'key\s+?=\s+?value1' }}
 #    InvalidInput.free
 #  SOURCE
 CFG::set() {
@@ -955,6 +957,7 @@ CFG::set() {
   else
 
     error InvalidArgument $*
+    return
 
   fi
 

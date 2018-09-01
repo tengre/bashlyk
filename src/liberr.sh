@@ -1,5 +1,5 @@
 #
-# $Id: liberr.sh 880 2018-08-31 06:38:00+04:00 yds $
+# $Id: liberr.sh 882 2018-09-02 00:18:57+04:00 toor $
 #
 #****h* BASHLYK/liberr
 #  DESCRIPTION
@@ -358,7 +358,7 @@ err::sourcecode() {
 
   if [[ $fn && -f $fn  && -s $fn ]]; then
 
-    sed -n "${BASH_LINENO[i]}p" $fn
+    std::isNumber ${BASH_LINENO[i]} && sed -n "${BASH_LINENO[i]}p" $fn
 
   else
 
@@ -448,13 +448,20 @@ err::generate() {
 
   local bashlyk_err_gen_rc=$?
 
-  if [[ ! "$( err::sourcecode )" =~ $_bashlyk_err_reArg ]]; then
+  if   [[ $- =~ i ]]; then
+
+    _ onError return
+    echo "echo [!]"
+
+  elif [[ "$( err::sourcecode )" =~ $_bashlyk_err_reArg ]]; then
+
+    err::__generate $bashlyk_err_gen_rc $( eval echo "${BASH_REMATCH[2]}" )
+
+  else
 
     echo "echo \"$@ - invalid arguments for error handling, abort...\"; exit $_bashlyk_iErrorInvalidArgument;"
 
   fi
-
-  err::__generate $bashlyk_err_gen_rc $( eval echo "${BASH_REMATCH[2]}")
 
 }
 #******
