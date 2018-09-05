@@ -1,11 +1,12 @@
 ```
-# $Id: README.md 885 2018-09-06 03:04:37+04:00 yds $
+# $Id: README.md 886 2018-09-06 03:34:23+04:00 yds $
 ```
 
-A tool for easy accumulation of recipes and code reuse. Depending on the purpose
-of the code is divided into a number of separate libraries, which are connected
-to the script by a special loader. This loader allows you to set conditions such
-as directories for storing a configuration, log, etc.
+A tool for easy accumulation of recipes and code reuse for bash interpreter.
+Depending on the purpose of the code is divided into a number of separate
+libraries, which are connected to the script by a special loader. This loader
+allows you to set conditions such as directories for storing a configuration,
+log, etc.
 ROBODOC is used to document the code. The EXAMPLE section is used not only for
 showing examples, but also for generating tests
 
@@ -77,7 +78,6 @@ cfg.free
 a set of functions for controlling the output of the script messages
 
 **libpid.sh:**
-control of the processes, autoclean on exit
 A set of functions for process control from shell scripts:
 * create a PID file
 * protection against restarting
