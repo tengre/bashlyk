@@ -1,4 +1,4 @@
-Tue, 28 Aug 2018 23:50:47 +0400
+Thu, 06 Sep 2018 03:03:44 +0400
 	Fix bugs
 	Version 1.94
 
@@ -30,6 +30,7 @@ Tue, 28 Aug 2018 23:50:47 +0400
   - preliminarily delete linefeeds symbols, for example, with std::inline
 - added new error states - AlreadyExist, NoSuchFile, NoSuchDir, TimeExpired and
   error handlers for err::postfix - AlreadyExist, NoSuchFile, NoSuchDir
+- added a base support for interactive input in the command interpreter
 - improved tests, descriptions and 'makefile' instructions
 - libold.sh, libini.sh, ini2csv.awk, inisection2csv.awk are now obsolete and are
   not installed
@@ -38,7 +39,8 @@ details:
 
 libcfg.sh:
 - prefix 'config' in the name of the CFG instance sets the INI style
-- CFG::get return error state for empty value
+- CFG::get - return error state for empty value
+= CFG::set - improved arguments handling
 - added helper method - CFG::storage.use.default
 - CFG::{read,load,save} - set storage if needed
 - CFG::bind.cli:
@@ -799,4 +801,4 @@ liblog.sh:
 --8<-- truncated -->8--
 
 --
-$Id: ChangeLog 878 2018-08-29 00:01:28+04:00 yds $
+$Id: ChangeLog 885 2018-09-06 03:04:37+04:00 yds $

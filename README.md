@@ -1,5 +1,5 @@
 ```
-# $Id: README.md 884 2018-09-06 02:49:28+04:00 yds $
+# $Id: README.md 885 2018-09-06 03:04:37+04:00 yds $
 ```
 
 A tool for easy accumulation of recipes and code reuse. Depending on the purpose
@@ -92,4 +92,4 @@ A set of functions for delivering messages from the script using various transpo
 
 **libnet.sh:**
 at the moment manipulating IPv4 addresses - validation, iteration, etc.
-Based on the sipcalc tool
+Based on the **sipcalc** tool
