@@ -1,5 +1,5 @@
 ```
-# $Id: README.md 886 2018-09-06 03:34:23+04:00 yds $
+# $Id: README.md 887 2018-09-06 03:51:21+04:00 yds $
 ```
 
 A tool for easy accumulation of recipes and code reuse for bash interpreter.
@@ -86,9 +86,9 @@ A set of functions for process control from shell scripts:
 
 **libmsg.sh:**
 A set of functions for delivering messages from the script using various transports:
-* X Window System Notification System
+* X Window System Notification System ( and (X)wayland base support )
 * e-mail
-* write utility
+* **write** tool
 
 **libnet.sh:**
 at the moment manipulating IPv4 addresses - validation, iteration, etc.
