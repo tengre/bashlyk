@@ -1,5 +1,5 @@
 ```
-# $Id: README.md 888 2018-09-06 04:33:47+04:00 yds $
+# $Id: README.md 889 2018-09-06 04:53:43+04:00 yds $
 ```
 
 A tool for easy accumulation of recipes and code reuse for bash interpreter.
@@ -15,7 +15,7 @@ contains two types of error generation, for example:
 ```
 . bashlyk
 
-[[ -f $filename ]] || error NoSuchFile throw -- $filename
+[[ $filename && -f $filename ]] || error NoSuchFile throw -- $filename
 throw on NoSuchFile "$filename1" "$filename2"
 ```
 Error handling is based on access to the source code of the script, so its
