@@ -1,5 +1,5 @@
 ```
-# $Id: README.md 887 2018-09-06 03:51:21+04:00 yds $
+# $Id: README.md 888 2018-09-06 04:33:47+04:00 yds $
 ```
 
 A tool for easy accumulation of recipes and code reuse for bash interpreter.
@@ -13,6 +13,8 @@ showing examples, but also for generating tests
 **liberr.sh:**
 contains two types of error generation, for example:
 ```
+. bashlyk
+
 [[ -f $filename ]] || error NoSuchFile throw -- $filename
 throw on NoSuchFile "$filename1" "$filename2"
 ```
@@ -25,6 +27,8 @@ and command line options
 
 Example:
 ```
+. bashlyk
+
 #create instance from CFG class
 CFG cfg
 
