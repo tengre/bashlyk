@@ -1,5 +1,5 @@
 ```
-# $Id: README.md 889 2018-09-06 04:53:43+04:00 yds $
+# $Id: README.md 890 2018-09-13 01:10:59+04:00 yds $
 ```
 
 A tool for easy accumulation of recipes and code reuse for bash interpreter.
@@ -78,6 +78,8 @@ cfg.save other file.ini
 # destroy CFG object, free resources
 cfg.free
 ```
+[![asciicast](https://asciinema.org/a/BbsY8T9ao7IvnOWElv69tYZ3o.png)](https://asciinema.org/a/BbsY8T9ao7IvnOWElv69tYZ3o)
+
 **liblog.sh:**
 a set of functions for controlling the output of the script messages
 
