@@ -1,5 +1,5 @@
 #
-# $Id: libnet.sh 877 2018-08-28 23:28:09+04:00 yds $
+# $Id: libnet.sh 891 2018-09-19 21:45:55+04:00 yds $
 #
 #****h* BASHLYK/libnet
 #  DESCRIPTION
@@ -46,10 +46,11 @@ declare -rg _bashlyk_net_reHost="^Host${_bashlyk_net_reAddress}"
 declare -rg _bashlyk_net_reNetwork="^Network${_bashlyk_net_reAddress}"
 declare -rg _bashlyk_net_reBroadcast="^Broadcast${_bashlyk_net_reAddress}"
 declare -rg _bashlyk_net_reMask='^Network[[:space:]]mask[[:space:]]+-[[:space:]]([0-9.]+)$'
+declare -rg _bashlyk_net_reWildcard='^Cisco[[:space:]]wildcard[[:space:]]+-[[:space:]]([0-9.]+)$'
 declare -rg _bashlyk_net_reMaskBit='^Network[[:space:]]mask[[:space:]]\(bits\)[[:space:]]+-[[:space:]]([0-9]+)$'
 declare -rg _bashlyk_net_reRange='^Usable[[:space:]]range[[:space:]]+-[[:space:]]([0-9.]+)[[:space:]]-[[:space:]]([0-9.]+)$'
 #######
-declare -rg _bashlyk_net_exports='net::ipv4.{broadcast,cidr,host,mask,network,range}'
+declare -rg _bashlyk_net_exports='net::ipv4.{broadcast,cidr,host,mask,network,range,wildcard}'
 #******
 #****f* libnet/net::ipv4.host
 #  SYNOPSIS
@@ -119,6 +120,44 @@ net::ipv4.mask() {
   while read -t 32; do
 
     [[ $REPLY =~ $_bashlyk_net_reMask ]] && h[${BASH_REMATCH[1]}]='ok'
+
+  done< <( sipcalc -d4 $* )
+
+  printf -- '%s\n' "${!h[*]}"
+
+  errorify on EmptyResult ${!h[@]}
+
+}
+#******
+#****f* libnet/net::ipv4.wildcard
+#  SYNOPSIS
+#    net::ipv4.wildcard <arg> ...
+#  DESCRIPTION
+#    get network Cisco wildcard for source arguments
+#  INPUTS
+#    <arg> ... - every arguments is a IP, DNS hostnames or CIDR -
+#                (<IPv4>|<hostname>)[/<network mask bits>] - default mask /32
+#  OUTPUT
+#    separated by white space list of the network wildcard
+#  ERRORS
+#    MissingArgument - no arguments
+#    EmptyResult     - no result
+#  EXAMPLE
+#    net::ipv4.wildcard                                                             #? $_bashlyk_iErrorMissingArgument
+#    net::ipv4.wildcard 999.8.7.6                                                   #? $_bashlyk_iErrorEmptyResult
+#    net::ipv4.wildcard 192.168.116.116/27                                          | {{ '^0\.0\.0\.31$' }}
+#    net::ipv4.wildcard localhost                                                   #? true
+#    net::ipv4.wildcard localhost/32                                                | {{ '^0\.0\.0\.0$' }}
+#  SOURCE
+net::ipv4.wildcard() {
+
+  errorify on MissingArgument $* || return
+
+  local -A h
+
+  while read -t 32; do
+
+    [[ $REPLY =~ $_bashlyk_net_reWildcard ]] && h[${BASH_REMATCH[1]}]='ok'
 
   done< <( sipcalc -d4 $* )
 
