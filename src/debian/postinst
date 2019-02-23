@@ -28,7 +28,7 @@ case "$1" in
 
       ln -sf $cmd ${path}/bashlyk || true
 
-      echo "to run a full set of tests, use 'bashlyk --bashlyk-test'"
+      echo '[!] to run a full set of tests, use "bashlyk --bashlyk-test"'
 
     fi
 
