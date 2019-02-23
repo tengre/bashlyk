@@ -1,5 +1,5 @@
 #
-# $Id: libstd.sh 877 2018-08-28 23:28:09+04:00 yds $
+# $Id: libstd.sh 893 2019-02-23 21:31:10+04:00 yds $
 #
 #****h* BASHLYK/libstd
 #  DESCRIPTION
@@ -931,15 +931,12 @@ std::isHash() {
 #    std::trim "$s"                                                             | {{ "^a  b c$" }}
 #    std::trim  $s                                                              | {{ "^a b c$"  }}
 #    std::trim                                                                  | {{ ^$         }}
+#    std::trim '+'                                                              | {{ ^\+$       }}
 #    std::trim '  '                                                             | {{ ^$         }}
 #  SOURCE
 std::trim() {
 
-  local s="$*"
-
-  [[ $s =~ ^\+$ ]] && s+=" "
-
-  printf -- '%s\n' "$( expr "$s" : "^\ *\(.*[^ ]\)\ *$" )"
+  printf -- '%s\n' "$( expr "$* " : "^\ *\(.*[^ ]\)\ *$" )"
 
 }
 #******
