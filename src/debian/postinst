@@ -19,8 +19,6 @@ set -e
 
  cmd=/usr/bin/bashlyk
 path=/usr/share/bashlyk
-CONF=/etc/bashlyk/bashlyk.conf
-BVER=0
 
 case "$1" in
 
@@ -30,16 +28,9 @@ case "$1" in
 
       ln -sf $cmd ${path}/bashlyk || true
 
-      echo "BASHLYK library tests:"
-      bashlyk --bashlyk-test
+      echo "to run a full set of tests, use 'bashlyk --bashlyk-test'"
 
     fi
-
-    BVER=$(                                                                    \
-      dpkg-query -W -f='${Depends}\n'|grep -Po 'bashlyk.\(>?=?\s?\d+\.\d+.*?\)'\
-        | sed -re "s/bashlyk.\(>?=?.?([0-9]*)\.([0-9]*).*\)/\1\2/"             \
-        | grep -Po "^\d+$" 2>/dev/null || true                                 \
-      )
 
     ## TODO message for support deprecated scripts
 
