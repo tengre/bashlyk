@@ -1,5 +1,5 @@
 #
-# $Id: libcfg.sh 882 2018-09-02 00:27:31+04:00 toor $
+# $Id: libcfg.sh 896 2019-02-25 01:49:31+04:00 yds $
 #
 #****h* BASHLYK/libcfg
 #  DESCRIPTION
@@ -804,12 +804,12 @@ CFG::get() {
 #    InvalidArgument - expected like a '[section]key', '[]key' or 'key'
 #  EXAMPLE
 #    CFG tKeys
-#    tKeys.set  [section1] key1 = is value 1
-#    tKeys.set  [section1] key2 = is value 2
-#    tKeys.set  [section1] key with spaces = is value 3
-#    tKeys.set  keyA = is value A
-#    tKeys.set  []keyB = is value B
-#    tKeys.set  key with spaces = is value C
+#    tKeys.set  [section1] 1key = is value 1
+#    tKeys.set  [section1] 2key = is value 2
+#    tKeys.set  [section1] 3key with spaces = is value 3
+#    tKeys.set  Akey = is value A
+#    tKeys.set  []Bkey = is value B
+#    tKeys.set  Ckey with spaces = is value C
 #    tKeys.set  [section2] += save value
 #    tKeys.set  [section2] += save value
 #    tKeys.set  [section3] -= save value No.2
@@ -817,16 +817,14 @@ CFG::get() {
 #    tKeys.set  [section4] = save unique value No.2
 #    tKeys.set  [section4] = save unique value No.1
 #    tKeys.keys | tr ',' '\n' | sort                                            | {{{
-#
-#    keyA
-#    keyB
-#    key with spaces
+#    Akey
+#    Bkey
+#    Ckey with spaces
 # }}}
 #    tKeys.keys [section1] | tr ',' '\n' | sort                                 | {{{
-#
-#    key1
-#    key2
-#    key with spaces
+#    1key
+#    2key
+#    3key with spaces
 # }}}
 #    tKeys.keys [section2]                                                      | {{ ^+$ }}
 #    tKeys.keys [section3]                                                      | {{ ^-$ }}
@@ -877,7 +875,7 @@ CFG::keys() {
       done;                                                                    \
                                                                                \
     "
-    echo "$csv"
+    echo "${csv%,*}"
 
   fi
 
