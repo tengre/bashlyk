@@ -1,5 +1,5 @@
 #
-# $Id: libcfg.sh 896 2019-02-25 01:49:31+04:00 yds $
+# $Id: libcfg.sh 897 2019-02-27 00:51:50+04:00 yds $
 #
 #****h* BASHLYK/libcfg
 #  DESCRIPTION
@@ -113,7 +113,7 @@ declare -rg _bashlyk_INI_fmtPairs='^[[:space:]]*\b(%KEY%)\b[[:space:]]*=[[:space
 
 declare -rg _bashlyk_methods_cfg="
 
-    bind.cli get getopt keys load read save __section.byindex
+    bind.cli get getopt keys keys.each load read save __section.byindex
     __section.getArray __section.id __section.select __section.setRawData
     __section.show set settings settings.section.padding settings.shellmode
     show storage.show storage.use.default storage.use free
@@ -127,7 +127,7 @@ declare -rg _bashlyk_externals_cfg="
 
 declare -rg _bashlyk_exports_cfg="
 
-    CFG CFG::{bind.cli,free,get,getopt,keys,load,read,save,set,settings,
+    CFG CFG::{bind.cli,free,get,getopt,keys,keys.eachload,read,save,set,settings,
     settings.section.padding,settings.shellmode,show,storage.show storage.use}
 "
 
@@ -878,6 +878,98 @@ CFG::keys() {
     echo "${csv%,*}"
 
   fi
+
+}
+#******
+#****e* libcfg/CFG::keys.each
+#  SYNOPSIS
+#    CFG::keys.each [\[<section>\]] <action>|<function>
+#  DESCRIPTION
+#    Apply action (or function) foreach keys and/or values of the selected 
+#    section.
+#  NOTES
+#    public method
+#  ARGUMENTS
+#    <section>  - specified section, default - unnamed global
+#    <action>   - single quoted sequence of the command (separated by ';') 
+#                 what applied for all non empty values of a <section>.
+#                 Positional arguments used for handling:
+#                 "$1" - key, "$2" - value 
+#    <function> - predefined function
+#  ERRORS
+#    InvalidArgument - expected like a "[section] '...'", "[] '...'" or "'...'"
+#  EXAMPLE
+#    local i=0
+#    CFG tKeysEach
+#    tKeysEach.set  [section1] 1key = 11
+#    tKeysEach.set  [section1] 2key = 23
+#    tKeysEach.set  [section1] 3key with spaces = 47
+#    tKeysEach.keys.each [section1] '
+#      i=$((i+$2))
+#      date -R
+#    '
+#    echo $i                                                                   | {{ 81 }}
+#    i=0
+#    tKeysEach.set  [section1] 4key = 18
+#    tKeysEach.keys.each [section1] 'i=$((i+$2));date -R'
+#    echo $i                                                                   | {{ 99 }}
+#  SOURCE
+CFG::keys.each() {
+
+  local b IFS f k oo ok s v
+  local -a a
+
+  s="$*"
+
+  IFS='[]' && a=( $s ) && IFS=$' \t\n'
+
+  case "${#a[@]}" in
+
+    3)
+      s="[${a[1]}]"
+      b="${a[2]}"
+      ;;
+
+    1)
+      s='[]'
+      b="${a[0]:-_bashlyk_raw}"
+      ;;
+
+    *)
+      error InvalidArgument warn+return $*
+      ;;
+
+  esac
+
+  err::debug 5 argument $b
+
+  if $( eval 'typeset -F $b >/dev/null 2>&1' ); then
+
+    f="$b"
+
+  else
+
+    f="__${FUNCNAME[0]}__internal"
+    eval "$( printf -- "${f}() {\n ${b} \n}\n" )"
+
+  fi
+
+  err::debug 5 callback function: && declare -pf $f
+
+  oo=${FUNCNAME[0]%%.*}
+  ok=${FUNCNAME[0]%.*}
+
+  while read; do
+
+    [[ $REPLY ]] || continue
+
+    k="$REPLY"
+    v="$( ${oo}.get ${s}${k} )"
+    $f "$k" "$v"
+
+  done< <( $ok $s | tr ',' '\n' | sort )
+
+  unset -f $f
 
 }
 #******
