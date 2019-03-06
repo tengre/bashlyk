@@ -1,5 +1,5 @@
 #
-# $Id: libcfg.sh 898 2019-03-06 23:50:07+04:00 yds $
+# $Id: libcfg.sh 903 2019-03-07 00:10:03+04:00 yds $
 #
 #****h* BASHLYK/libcfg
 #  DESCRIPTION
@@ -154,9 +154,9 @@ _bashlyk_hError[$_bashlyk_iErrorIniExtraCharInKey]="extra character(s) in the ke
 #    IniBadMethod     - bad method
 #  EXAMPLE
 #    CFG tnew                                                                   #? true
-#    declare -pf tnew.show >/dev/null 2>&1                                      #= true
-#    declare -pf tnew.save >/dev/null 2>&1                                      #= true
-#    declare -pf tnew.load >/dev/null 2>&1                                      #= true
+#    declare -f tnew.show >/dev/null 2>&1                                      #= true
+#    declare -f tnew.save >/dev/null 2>&1                                      #= true
+#    declare -f tnew.load >/dev/null 2>&1                                      #= true
 #    tnew.__section.id @                                                        | {{ _hTNEW_settings }}
 #    tnew.free
 #  SOURCE
@@ -207,7 +207,7 @@ CFG() {
 
   for s in $_bashlyk_methods_cfg; do
 
-    f=$( declare -pf CFG::${s} 2>/dev/null ) || error IniMissingMethod throw -- CFG::${s} for $o
+    f=$( declare -f CFG::${s} 2>/dev/null ) || error IniMissingMethod throw -- CFG::${s} for $o
 
     echo "${f/CFG::$s/${o}.$s}" >> $fn || error IniBadMethod throw -- CFG::$s for $o
 
@@ -955,7 +955,7 @@ CFG::keys.each() {
 
   fi
 
-  err::debug 5 callback function: && declare -pf $f
+  err::debug 5 callback function: && declare -f $f
 
   oo=${FUNCNAME[0]%%.*}
   ok=${FUNCNAME[0]%.*}

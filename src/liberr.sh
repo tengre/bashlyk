@@ -1,5 +1,5 @@
 #
-# $Id: liberr.sh 882 2018-09-02 00:18:57+04:00 toor $
+# $Id: liberr.sh 903 2019-03-07 00:10:03+04:00 yds $
 #
 #****h* BASHLYK/liberr
 #  DESCRIPTION
@@ -1004,7 +1004,7 @@ err::postfix() {
   [[ $1 == on  ]] && shift || error InvalidArgument throw ${1:-second argument}
   [[ $1        ]] && shift || error MissingArgument throw ${1:-third argument}
 
-  if ! declare -pf err::${aErrHandler[2]} >/dev/null 2>&1; then
+  if ! declare -f err::${aErrHandler[2]} >/dev/null 2>&1; then
 
     error InvalidArgument throw ${aErrHandler[2]}
 
@@ -1097,7 +1097,7 @@ err::__convert_try_to_func() {
 
     fi
 
-  done< <( declare -pf try 2>/dev/null)
+  done< <( declare -f try 2>/dev/null)
 
   echo $s' && echo " ok." || { err::status $?; echo " fail..($?)"; false; }'
   rm -f $s

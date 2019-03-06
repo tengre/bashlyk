@@ -1,5 +1,5 @@
 #
-# $Id: libini.sh 821 2018-04-10 18:29:12+04:00 toor $
+# $Id: libini.sh.deprecated 903 2019-03-07 00:10:03+04:00 yds $
 #
 #****h* BASHLYK/libini
 #  DESCRIPTION
@@ -144,9 +144,9 @@ _bashlyk_hError[$_bashlyk_iErrorIniExtraCharInKey]="extra character(s) in the ke
 #  EXAMPLE
 #    INI tnew                                                                   #? true
 #    ## TODO check errors
-#    declare -pf tnew.show >/dev/null 2>&1                                      #= true
-#    declare -pf tnew.save >/dev/null 2>&1                                      #= true
-#    declare -pf tnew.load >/dev/null 2>&1                                      #= true
+#    declare -f tnew.show >/dev/null 2>&1                                      #= true
+#    declare -f tnew.save >/dev/null 2>&1                                      #= true
+#    declare -f tnew.load >/dev/null 2>&1                                      #= true
 #    tnew.__section.id @ | {{ _hTNEW_settings }}
 #    tnew.free
 #  SOURCE
@@ -176,7 +176,7 @@ INI() {
 
   for s in $_bashlyk_methods_ini; do
 
-    f=$( declare -pf INI::${s} 2>/dev/null ) || error IniMissingMethod throw "INI::${s} for $o"
+    f=$( declare -f INI::${s} 2>/dev/null ) || error IniMissingMethod throw "INI::${s} for $o"
 
     echo "${f/INI::$s/${o}.$s}" >> $fn || error IniBadMethod throw "INI::$s for $o"
 
