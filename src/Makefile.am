@@ -1,17 +1,24 @@
 ##
-## $Id: Makefile.am 904 2019-03-07 00:22:50+04:00 yds $
+## $Id: Makefile.am 906 2019-03-07 16:23:03+04:00 yds $
 ##
 #
 AUTOMAKE_OPTIONS	= -Wno-portability
 #
-ETC			= /etc
 bin_SCRIPTS		= bashlyk
-sysconfdir		= ${ETC}/bashlyk
+sysconfdir		= /etc/bashlyk
 sysconf_DATA		= bashlyk.conf
-libdir			= /usr/share/bashlyk
-lib_DATA		= $(wildcard lib*.sh) $(wildcard *.awk) testunit.sh ../VERSION
+datadir			= /usr/share/bashlyk
+data_DATA		= $(wildcard lib*.sh) $(wildcard *.awk) testunit.sh ../VERSION
 DESTDIR			=
 
 install-exec-hook:
 
-	$(shell) [ -L ${libdir}/bashlyk ] || ln -s ${bindir}/bashlyk ${libdir}/bashlyk
+	$(shell) [ -d ${datadir}         ] || mkdir -p ${datadir}
+	$(shell) [ -L ${datadir}/bashlyk ] || ln -s ${bindir}/bashlyk ${datadir}/bashlyk
+
+
+uninstall-hook:
+
+	$(shell) [ -L ${datadir}/bashlyk ] && rm -f ${datadir}/bashlyk
+	$(shell) [ -d ${datadir}         ] && rmdir ${datadir}
+	$(shell) [ -d ${sysconfdir}      ] && rmdir ${sysconfdir}
