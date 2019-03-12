@@ -1,5 +1,5 @@
 #
-# $Id: libold.sh 808 2018-03-10 18:59:39+04:00 toor $
+# $Id: libold.sh.deprecated 903 2019-03-07 00:10:03+04:00 yds $
 #
 #****h* BASHLYK/libold
 #  DESCRIPTION
@@ -2943,7 +2943,7 @@ ERR::__convert_try_to_func() {
 
     fi
 
-  done< <( declare -pf try 2>/dev/null)
+  done< <( declare -f try 2>/dev/null)
 
   echo $s' && echo " ok." || { udfSetLastError $?; echo " fail..($?)"; false; }'
   rm -f $s
