@@ -1,5 +1,5 @@
 #
-# $Id: libcfg.sh 903 2019-03-07 00:10:03+04:00 yds $
+# $Id: libcfg.sh 908 2019-03-12 23:14:37+04:00 yds $
 #
 #****h* BASHLYK/libcfg
 #  DESCRIPTION
@@ -1433,7 +1433,7 @@ CFG::save() {
 #    key              = on the global unnamed section                           #-
 #    key.with.dot     = with dot                                                #-
 #    key::with::colon = with colon                                              #-
-#[section with  punct (!#%^&*+=|?$) and spaces: "Foo Bar" <user@host.domain>]   #-
+#[section with  punct (!#%^&*+=|?$) and spaces: 'Foo Bar' <user@host.domain>]   #-
 #                key = $(date -R)                                               #-
 #                   b=false                                                     #-
 #    key with spaces =  value with spaces                                       #-
@@ -1479,7 +1479,7 @@ CFG::save() {
 #           key.with.dot    =    with dot
 #
 #
-#   [ section with punct (!#%^&*+=|?$) and spaces: "Foo Bar" <user@host.domain> ]
+#   [ section with punct (!#%^&*+=|?$) and spaces: 'Foo Bar' <user@host.domain> ]
 #
 #                  b    =    false
 #                 iX    =    80
@@ -2161,7 +2161,7 @@ CFG::bind.cli() {
 #    tOpt.getopt main-hint                                                      #? true
 #    tOpt.getopt main-msg                                                       #? true
 #    tOpt.getopt unify--                                                        #? true
-#    tOpt.getopt acc--                                                          #? $_bashlyk_iErrorEmptyResult
+#    tOpt.getopt acc                                                            #? $_bashlyk_iErrorEmptyResult
 #    tOpt.free
 #  SOURCE
 CFG::getopt() {
