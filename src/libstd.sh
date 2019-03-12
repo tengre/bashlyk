@@ -1,5 +1,5 @@
 #
-# $Id: libstd.sh 908 2019-03-12 23:14:37+04:00 yds $
+# $Id: libstd.sh 909 2019-03-12 23:30:22+04:00 yds $
 #
 #****h* BASHLYK/libstd
 #  DESCRIPTION
@@ -891,7 +891,7 @@ std::getFreeFD() {
 #    Success         - argument is name of the associative array
 #  EXAMPLE
 #    declare -Ag -- hh='()' s5
-#    declare -Ag -- i1
+#    declare -ig -- i1
 #    declare -ag -- aa='()'
 #    std::isHash 5s                                                             #? $_bashlyk_iErrorInvalidVariable
 #    err::status
