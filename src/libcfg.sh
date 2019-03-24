@@ -1,5 +1,5 @@
 #
-# $Id: libcfg.sh 911 2019-03-24 18:51:38+04:00 yds $
+# $Id: libcfg.sh 914 2019-03-25 01:10:16+04:00 yds $
 #
 #****h* BASHLYK/libcfg
 #  DESCRIPTION
@@ -884,19 +884,17 @@ CFG::keys() {
 #******
 #****e* libcfg/CFG::keys.each
 #  SYNOPSIS
-#    CFG::keys.each [\[<section>\]] <action>|<function>
+#    CFG::keys.each [\[<section>\]] <function> | '<command stream>'
 #  DESCRIPTION
-#    Apply action (or function) foreach keys and/or values of the selected
-#    section.
+#    Apply single quoted sequence of the command (or wrapper-function) foreach 
+#    key as '$1' and/or value as '$2' of the selected section.
 #  NOTES
 #    public method
 #  ARGUMENTS
-#    <section>  - specified section, default - unnamed global
-#    <action>   - single quoted sequence of the command (separated by ';')
-#                 what applied for all non empty values of a <section>.
-#                 Positional arguments used for handling:
-#                 "$1" - key, "$2" - value
-#    <function> - predefined function
+#    <section>        - specified section, default - unnamed global
+#    <command stream> - single quoted sequence of the command (separated by ';')
+#                       what applied for all non empty values of a <section>.
+#    <function>       - predefined function as wrapper for command stream
 #  ERRORS
 #    InvalidArgument - expected like a "[section] '...'", "[] '...'" or "'...'"
 #  EXAMPLE
