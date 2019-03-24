@@ -917,23 +917,23 @@ CFG::keys() {
 #  SOURCE
 CFG::keys.each() {
 
-  local b IFS f k oo ok s v
-  local -a a
+  local bashlyk_cfg_keys_each_b IFS bashlyk_cfg_keys_each_f bashlyk_cfg_keys_each_k bashlyk_cfg_keys_each_s bashlyk_cfg_keys_each_v
+  local -a bashlyk_cfg_keys_each_a
 
-  s="$*"
+  bashlyk_cfg_keys_each_s="$*"
 
-  IFS='[]' && a=( $s ) && IFS=$' \t\n'
+  IFS='[]' && bashlyk_cfg_keys_each_a=( $bashlyk_cfg_keys_each_s ) && IFS=$' \t\n'
 
-  case "${#a[@]}" in
+  case "${#bashlyk_cfg_keys_each_a[@]}" in
 
     3)
-      s="[${a[1]}]"
-      b="${a[2]}"
+      bashlyk_cfg_keys_each_s="[${bashlyk_cfg_keys_each_a[1]}]"
+      bashlyk_cfg_keys_each_b="${bashlyk_cfg_keys_each_a[2]}"
       ;;
 
     1)
-      s='[]'
-      b="${a[0]:-_bashlyk_raw}"
+      bashlyk_cfg_keys_each_s='[]'
+      bashlyk_cfg_keys_each_b="${bashlyk_cfg_keys_each_a[0]:-_bashlyk_cfg_keys_each_bashlyk_raw}"
       ;;
 
     *)
@@ -942,34 +942,31 @@ CFG::keys.each() {
 
   esac
 
-  err::debug 5 argument $b
+  err::debug 5 argument $bashlyk_cfg_keys_each_b
 
-  if $( eval 'typeset -F $b >/dev/null 2>&1' ); then
+  if $( eval 'typeset -F $bashlyk_cfg_keys_each_b >/dev/null 2>&1' ); then
 
-    f="$b"
+    bashlyk_cfg_keys_each_f="$bashlyk_cfg_keys_each_b"
 
   else
 
-    f="__${FUNCNAME[0]}__internal"
-    eval "$( printf -- "${f}() {\n ${b} \n}\n" )"
+    bashlyk_cfg_keys_each_f="__${FUNCNAME[0]}__internal"
+    eval "$( printf -- "${bashlyk_cfg_keys_each_f}() {\n ${bashlyk_cfg_keys_each_b} \n}\n" )"
 
   fi
 
-  err::debug 5 callback function: && declare -f $f
+  err::debug 5 callback function: && declare -f $bashlyk_cfg_keys_each_f
 
-  oo=${FUNCNAME[0]%%.*}
-  ok=${FUNCNAME[0]%.*}
+  while read bashlyk_cfg_keys_each_k; do
 
-  while read k; do
+    [[ $bashlyk_cfg_keys_each_k ]] || continue
 
-    [[ $k ]] || continue
+    bashlyk_cfg_keys_each_v="$( ${FUNCNAME[0]%%.*}.get ${bashlyk_cfg_keys_each_s}${bashlyk_cfg_keys_each_k} )"
+    $bashlyk_cfg_keys_each_f "$bashlyk_cfg_keys_each_k" "$bashlyk_cfg_keys_each_v"
 
-    v="$( ${oo}.get ${s}${k} )"
-    $f "$k" "$v"
+  done< <( ${FUNCNAME[0]%.*} $bashlyk_cfg_keys_each_s | sort )
 
-  done< <( $ok $s )
-
-  unset -f $f
+  unset -f $bashlyk_cfg_keys_each_f
 
 }
 #******
