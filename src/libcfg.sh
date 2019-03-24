@@ -1,5 +1,5 @@
 #
-# $Id: libcfg.sh 908 2019-03-12 23:14:37+04:00 yds $
+# $Id: libcfg.sh 911 2019-03-24 18:51:38+04:00 yds $
 #
 #****h* BASHLYK/libcfg
 #  DESCRIPTION
@@ -689,7 +689,7 @@ CFG::__section.getArray() {
   # expected defined items of a result array
   #
   s=$( declare -pa a 2>/dev/null )
-  [[ $s =~ ^declare.-a.a= ]] && echo "$s" || return $( _ iErrorEmptyResult )
+  [[ $s =~ ^declare.-a.a=\(.+\) ]] && echo "$s" || return $( _ iErrorEmptyResult )
 
 }
 #******
@@ -1884,7 +1884,7 @@ CFG::load() {
 
         a=( ${BASH_REMATCH[2]//./ } )
      a[0]="${BASH_REMATCH[1]}${a[0]}"
-    a[-1]="${a[-1]}${BASH_REMATCH[3]}"
+    a[${#a[@]}-1]="${a[${#a[@]}-1]}${BASH_REMATCH[3]}"
 
   fi
 
