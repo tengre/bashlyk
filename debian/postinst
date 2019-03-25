@@ -1,6 +1,8 @@
 #!/bin/sh
 # postinst script for bashlyk
 #
+# $Id: postinst 916 2019-03-25 10:11:09+04:00 yds $
+#
 # see: dh_installdeb(1)
 
 set -e
