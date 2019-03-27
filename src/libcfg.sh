@@ -1,5 +1,5 @@
 #
-# $Id: libcfg.sh 914 2019-03-25 01:10:16+04:00 yds $
+# $Id: libcfg.sh 915 2019-03-27 06:49:14+04:00 yds $
 #
 #****h* BASHLYK/libcfg
 #  DESCRIPTION
@@ -884,7 +884,7 @@ CFG::keys() {
 #******
 #****e* libcfg/CFG::keys.each
 #  SYNOPSIS
-#    CFG::keys.each [\[<section>\]] <function> | '<command stream>'
+#    CFG::keys.each [\[<section>\]] <function wrapper> | -- '<command stream>'
 #  DESCRIPTION
 #    Apply single quoted sequence of the command (or wrapper-function) foreach 
 #    key as '$1' and/or value as '$2' of the selected section.
@@ -903,35 +903,39 @@ CFG::keys() {
 #    tKeysEach.set  [section1] 1key = 11
 #    tKeysEach.set  [section1] 2key = 23
 #    tKeysEach.set  [section1] 3key with spaces = 47
-#    tKeysEach.keys.each [section1] '
+#    tKeysEach.keys.each [section1] -- '
 #      i=$((i+$2))
 #      date -R
 #    '
 #    echo $i                                                                    | {{ 81 }}
 #    i=0
 #    tKeysEach.set  [section1] 4key = 18
-#    tKeysEach.keys.each [section1] 'i=$((i+$2));date -R'
+#    tKeysEach.keys.each [section1] -- 'i=$((i+$2));date -R'
 #    echo $i                                                                    | {{ 99 }}
 #  SOURCE
 CFG::keys.each() {
 
-  local bashlyk_cfg_keys_each_b IFS bashlyk_cfg_keys_each_f bashlyk_cfg_keys_each_k bashlyk_cfg_keys_each_s bashlyk_cfg_keys_each_v
+  local bashlyk_cfg_keys_each_b IFS bashlyk_cfg_keys_each_f bashlyk_cfg_keys_each_k
+  local bashlyk_cfg_keys_each_s0 bashlyk_cfg_keys_each_s1 bashlyk_cfg_keys_each_v
   local -a bashlyk_cfg_keys_each_a
 
-  bashlyk_cfg_keys_each_s="$*"
+  bashlyk_cfg_keys_each_s1="$*"
+  bashlyk_cfg_keys_each_s0=${bashlyk_cfg_keys_each_s1%%--*}
+  bashlyk_cfg_keys_each_s1=${bashlyk_cfg_keys_each_s1#*--}
 
-  IFS='[]' && bashlyk_cfg_keys_each_a=( $bashlyk_cfg_keys_each_s ) && IFS=$' \t\n'
+  IFS='[]' && bashlyk_cfg_keys_each_a=( $bashlyk_cfg_keys_each_s0 ) && IFS=$' \t\n'
 
   case "${#bashlyk_cfg_keys_each_a[@]}" in
 
     3)
       bashlyk_cfg_keys_each_s="[${bashlyk_cfg_keys_each_a[1]}]"
-      bashlyk_cfg_keys_each_b="${bashlyk_cfg_keys_each_a[2]}"
+      bashlyk_cfg_keys_each_b="$( std::trim "${bashlyk_cfg_keys_each_a[2]}" )"
+      : ${bashlyk_cfg_keys_each_b:=$bashlyk_cfg_keys_each_s1}
       ;;
 
     1)
       bashlyk_cfg_keys_each_s='[]'
-      bashlyk_cfg_keys_each_b="${bashlyk_cfg_keys_each_a[0]:-_bashlyk_cfg_keys_each_bashlyk_raw}"
+      bashlyk_cfg_keys_each_b="${bashlyk_cfg_keys_each_a[0]:=_bashlyk_raw_mode}"
       ;;
 
     *)
