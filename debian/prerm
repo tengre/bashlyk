@@ -1,6 +1,8 @@
 #!/bin/sh
 # prerm script for bashlyk
 #
+# $Id: prerm 916 2019-03-25 10:11:09+04:00 yds $
+#
 # see: dh_installdeb(1)
 
 set -e
