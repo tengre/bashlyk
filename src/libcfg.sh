@@ -1,5 +1,5 @@
 #
-# $Id: libcfg.sh 919 2019-04-02 13:57:25+04:00 yds $
+# $Id: libcfg.sh 920 2019-04-02 13:59:52+04:00 yds $
 #
 #****h* BASHLYK/libcfg
 #  DESCRIPTION
@@ -1913,8 +1913,10 @@ CFG::load() {
     std::temp cfg
 
     ${s}.save $cfg
+    s="$( ${o}.storage.show )"
     ${o}.storage.use $cfg
     ${o}.read $reValidSections
+    ${o}.storage.use $s
 
     rm -f $cfg
 
