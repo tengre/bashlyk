@@ -1,5 +1,5 @@
 #
-# $Id: libcfg.sh 915 2019-03-27 06:49:14+04:00 yds $
+# $Id: libcfg.sh 919 2019-04-02 13:57:25+04:00 yds $
 #
 #****h* BASHLYK/libcfg
 #  DESCRIPTION
@@ -2078,7 +2078,7 @@ CFG::bind.cli() {
     [[ $sLong  ]] &&  sLong="-l ${sLong%*,}"
 
     S=""
-    for i in "${_bashlyk_aArg[@]}";do S+="$( std::whitespace.encode $i ) "; done
+    for s in "${_bashlyk_aArg[@]}";do S+="$( std::whitespace.encode $s ) "; done
 
     s=$( LC_ALL=C getopt -u $sShort $sLong -n $0 -- ${S%* } 2>$fnErr )
     rc=$?
