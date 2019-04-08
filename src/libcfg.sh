@@ -1,5 +1,5 @@
 #
-# $Id: libcfg.sh 915 2019-03-27 06:49:14+04:00 yds $
+# $Id: libcfg.sh 920 2019-04-02 13:59:52+04:00 yds $
 #
 #****h* BASHLYK/libcfg
 #  DESCRIPTION
@@ -1913,8 +1913,10 @@ CFG::load() {
     std::temp cfg
 
     ${s}.save $cfg
+    s="$( ${o}.storage.show )"
     ${o}.storage.use $cfg
     ${o}.read $reValidSections
+    ${o}.storage.use $s
 
     rm -f $cfg
 
@@ -2078,7 +2080,7 @@ CFG::bind.cli() {
     [[ $sLong  ]] &&  sLong="-l ${sLong%*,}"
 
     S=""
-    for i in "${_bashlyk_aArg[@]}";do S+="$( std::whitespace.encode $i ) "; done
+    for s in "${_bashlyk_aArg[@]}";do S+="$( std::whitespace.encode $s ) "; done
 
     s=$( LC_ALL=C getopt -u $sShort $sLong -n $0 -- ${S%* } 2>$fnErr )
     rc=$?
