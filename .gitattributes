@@ -4,6 +4,7 @@
 /Makefile.am -text
 /NEWS -text
 /README -text
+/README.md -text
 /TODO -text
 doc/Makefile.am -text
 doc/bashlyk.html.patch -text
@@ -13,15 +14,16 @@ doc/bashlyk7.xml -text
 /robodoc.rc -text
 src/Makefile.am -text
 src/bashlyk -text
+src/Dockerfile -text
+src/get-external-commands-and-export-list.sh
 src/bashlyk.conf -text
-src/debian/control -text
-src/debian/copyright -text
-src/debian/postinst -text
-src/debian/prerm -text
+debian/control -text
+debian/copyright -text
+debian/postinst -text
+debian/prerm -text
 src/ini2csv.awk -text
 src/inisection2csv.awk -text
-src/libcnf.sh -text
-src/libini.sh -text
+src/libcfg.sh -text
 src/liblog.sh -text
 src/libmsg.sh -text
 src/libopt.sh -text
