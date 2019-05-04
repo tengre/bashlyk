@@ -1,5 +1,5 @@
 ##
-## $Id: Makefile.am 906 2019-03-07 16:23:03+04:00 yds $
+## $Id: Makefile.am 924 2019-05-04 13:33:39+04:00 yds $
 ##
 #
 AUTOMAKE_OPTIONS	= -Wno-portability
@@ -13,12 +13,12 @@ DESTDIR			=
 
 install-exec-hook:
 
-	$(shell) [ -d ${datadir}         ] || mkdir -p ${datadir}
-	$(shell) [ -L ${datadir}/bashlyk ] || ln -s ${bindir}/bashlyk ${datadir}/bashlyk
+	$(shell) [ -d ${DESTDIR}${datadir}         ] || mkdir -p ${DESTDIR}${datadir}
+	$(shell) [ -L ${DESTDIR}${datadir}/bashlyk ] || ln -s ${DESTDIR}${bindir}/bashlyk ${DESTDIR}${datadir}/bashlyk
 
 
 uninstall-hook:
 
-	$(shell) [ -L ${datadir}/bashlyk ] && rm -f ${datadir}/bashlyk
-	$(shell) [ -d ${datadir}         ] && rmdir ${datadir}
-	$(shell) [ -d ${sysconfdir}      ] && rmdir ${sysconfdir}
+	$(shell) [ -L ${DESTDIR}${datadir}/bashlyk ] && rm -f ${DESTDIR}${datadir}/bashlyk
+	$(shell) [ -d ${DESTDIR}${datadir}         ] && rmdir ${DESTDIR}${datadir}
+	$(shell) [ -d ${DESTDIR}${sysconfdir}      ] && rmdir ${DESTDIR}${sysconfdir}
