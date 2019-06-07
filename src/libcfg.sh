@@ -1,5 +1,5 @@
 #
-# $Id: libcfg.sh 923 2019-04-17 21:24:17+04:00 yds $
+# $Id: libcfg.sh 927 2019-06-07 10:51:49+04:00 yds $
 #
 #****h* BASHLYK/libcfg
 #  DESCRIPTION
@@ -886,7 +886,7 @@ CFG::keys() {
 #  SYNOPSIS
 #    CFG::keys.each [\[<section>\]] <function wrapper> | -- '<command stream>'
 #  DESCRIPTION
-#    Apply single quoted sequence of the command (or wrapper-function) foreach 
+#    Apply single quoted sequence of the command (or wrapper-function) foreach
 #    key as '$1' and/or value as '$2' of the selected section.
 #  NOTES
 #    public method
@@ -1955,7 +1955,7 @@ CFG::load() {
 #    InvalidArgument - invalid format of the arguments
 #  EXAMPLE
 #    local cfg
-#    _bashlyk_aArg=( --file CLI -E clear -H 'Hi!' -M test -U a.2 -U a.2 --acc "with white spaces" --acc b )
+#    _bashlyk_aArg=( --file CLI -E clear -H 'Hi!' --main-msg test -U a.2 -U a.2 --acc "with white spaces" --acc b )
 #    std::temp cfg
 ##   # tLoad instance preserved from CFG::load
 #    tLoad.save $cfg                                                                 #? true
@@ -2059,15 +2059,15 @@ CFG::bind.cli() {
 
     s=;S=;v=1;sSection="${a[2]}";k="${a[4]}"
 
-    [[ ${a[4]} ]] && sLong+="${a[4]}${a[7]},"
+    [[ ${a[4]} ]] && sLong+="${a[1]}${a[4]}${a[7]},"
     [[ ${a[6]} ]] && sShort+="${a[6]}${a[7]}" && s="|-${a[6]}"
     [[ ${a[7]} ]] && S="2" && v='$( std::whitespace.decode - <<< $2 )'
     [[ ${a[8]} =~ ^(=|\-|\+)$ ]] && k="${a[8]}" && sSection="${a[4]}"
 
-    sCases+="$(                                                                \
-                                                                               \
-      printf -- "$fmtCase" "${a[4]}" "$s" "${sSection}" "${k/=/}" "$v" "$S"    \
-                                                                               \
+    sCases+="$(                                                                  \
+                                                                                 \
+      printf -- "$fmtCase" "${a[1]}${a[4]}" "$s" "$sSection" "${k/=/}" "$v" "$S" \
+                                                                                 \
     ) "
 
   done
