@@ -8,7 +8,9 @@ libraries, which are connected to the script by a special loader. This loader
 allows you to set conditions such as directories for storing a configuration,
 log, etc.
 ROBODOC is used to document the code. The EXAMPLE section is used not only for
-showing examples, but also for generating tests
+showing examples, but also for generating tests.
+Prepared debian packages can be found in the repository **ppa:yds/bashlyk** 
+(`sudo add-apt-repository ppa:yds/bashlyk`).
 
 **liberr.sh:**
 contains two types of error generation, for example:
