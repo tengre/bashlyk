@@ -1,5 +1,5 @@
 #
-# $Id: libpid.sh 877 2018-08-28 23:28:09+04:00 yds $
+# $Git: libpid.sh 1.94-43-933 2019-11-29 13:33:07+04:00 yds $
 #
 #****h* BASHLYK/libpid
 #  DESCRIPTION
@@ -44,6 +44,18 @@
 #: ${_bashlyk_apidClean:=}
 #: ${_bashlyk_pidLogSock:=}
 : ${_bashlyk_s0:=${0##*/}}
+: ${_bashlyk_iPidMax:=$(
+    if [[ -f /proc/sys/kernel/pid_max ]]; then
+      echo $(< /proc/sys/kernel/pid_max)
+    else
+      if [[ $( uname -m ) == 'x86_64' ]]; then
+        echo '4194304'
+      else
+        echo '32678'
+      fi
+    fi
+  )
+}
 
 declare -rg _bashlyk_externals_pid="
 
@@ -96,7 +108,7 @@ pid::status() {
 
   errorify on MissingArgument $* || return
 
-  std::isNumber $1 && (( $1 < 65536 )) || error InvalidArgument return $1
+  std::isNumber $1 && (( $1 < $_bashlyk_iPidMax )) || error InvalidArgument return $1
 
   local re="\\b${1}\\b"
 

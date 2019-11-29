@@ -1,5 +1,5 @@
 #
-# $Git: liberr.sh 1.94-42-932 2019-11-29 00:28:46+04:00 yds $
+# $Git: liberr.sh 1.94-43-933 2019-11-29 13:33:06+04:00 yds $
 #
 #****h* BASHLYK/liberr
 #  DESCRIPTION
@@ -65,9 +65,19 @@ declare -rg _bashlyk_err_reAct='^((echo|warn)|(((echo|warn)[+])?(exit|return))|(
 declare -rg _bashlyk_err_reArg='(error|err::generate|\$\(.?err::generate.\"\$\@\".?\))[[:space:]]*?([^\>]*)[[:space:]]*?[\>\|]?'
 
 : ${_bashlyk_onError:=throw}
-: ${_bashlyk_iPidMax:=$( [[ -f /proc/sys/kernel/pid_max ]] && echo $(< /proc/sys/kernel/pid_max) || ([[ $( uname -m ) == 'x86_64' ]] && echo '4194304' || echo '32678') )}
+: ${_bashlyk_iPidMax:=$(
+    if [[ -f /proc/sys/kernel/pid_max ]]; then
+      echo $(< /proc/sys/kernel/pid_max)
+    else
+      if [[ $( uname -m ) == 'x86_64' ]]; then
+        echo '4194304'
+      else
+        echo '32678'
+      fi
+    fi
+  )
+}
 #
-
 # Error states definition
 #
 _bashlyk_iError=255
