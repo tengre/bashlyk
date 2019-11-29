@@ -1,5 +1,5 @@
 #
-# $Git: liblog.sh 1.94-43-933 2019-11-29 13:33:07+04:00 yds $
+# $Git: liblog.sh 1.94-44-934 2019-11-29 23:18:16+04:00 yds $
 #
 #****h* BASHLYK/liblog
 #  DESCRIPTION
@@ -41,18 +41,7 @@
 : ${_bashlyk_bUseSyslog:=0}
 : ${_bashlyk_bNotUseLog:=1}
 : ${_bashlyk_sCond4Log:=redirect}
-: ${_bashlyk_iPidMax:=$(
-    if [[ -f /proc/sys/kernel/pid_max ]]; then
-      echo $(< /proc/sys/kernel/pid_max)
-    else
-      if [[ $( uname -m ) == 'x86_64' ]]; then
-        echo '4194304'
-      else
-        echo '32678'
-      fi
-    fi
-  )
-}
+: ${_bashlyk_iPidMax:=999999}
 
 declare -rg _bashlyk_aRequiredCmd_log="
 

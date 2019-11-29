@@ -1,6 +1,6 @@
 #!/bin/bash
 #
-# $Id: bashlyk 874 2018-08-24 00:34:53+04:00 yds $
+# $Git: bashlyk 1.94-44-934 2019-11-29 23:18:16+04:00 yds $
 #
 #****h* BASHLYK/bashlyk
 #  DESCRIPTION
@@ -39,18 +39,28 @@
 : ${_bashlyk_sGroup:=$( exec -c id -ng )}
 : ${HOSTNAME:=$( exec -c hostname 2>/dev/null )}
 : ${DEBUGLEVEL:=0}
-: ${_bashlyk_ShellVersion:=$(                                                  \
-    printf '%d%03d%03d'                                                        \
-           "${BASH_VERSINFO[0]}"                                               \
-           "${BASH_VERSINFO[1]}"                                               \
-           "${BASH_VERSINFO[2]}"                                               \
-    )                                                                          \
+: ${_bashlyk_ShellVersion:=$(
+    printf -- '%d%03d%03d\n' ${BASH_VERSINFO[@]:0:3}
+  )
 }
+: ${_bashlyk_iPidMax:=$(
+    if [[ -f /proc/sys/kernel/pid_max ]]; then
+      echo $(< /proc/sys/kernel/pid_max)
+    else
+      if [[ $( uname -m ) == 'x86_64' ]]; then
+        echo '4194304'
+      else
+        echo '32678'
+      fi
+    fi
+  )
+}
+
 declare -rg _bashlyk_PWD=${PWD:=$(pwd)}
 declare -ag _bashlyk_aArg=( "$@" )
 declare -rg _bashlyk_externals_bashlyk="
 
-    cut findmnt getent grep hostname id printf tr tty xargs
+    cut findmnt getent grep hostname id printf tr tty uname xargs
 
 "
 #******
