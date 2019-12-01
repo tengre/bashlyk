@@ -1,5 +1,5 @@
 #
-# $Id: libpid.sh 877 2018-08-28 23:28:09+04:00 yds $
+# $Git: libpid.sh 1.94-45-935 2019-12-01 23:32:41+04:00 yds $
 #
 #****h* BASHLYK/libpid
 #  DESCRIPTION
@@ -35,15 +35,8 @@
 #  DESCRIPTION
 #    Global variables of the library
 #  SOURCE
-#: ${_bashlyk_fnPid:=}
-#: ${_bashlyk_fnSock:=}
-#: ${_bashlyk_afoEmpty:=}
-#: ${_bashlyk_afoClean:=}
-#: ${_bashlyk_afdClean:=}
-#: ${_bashlyk_ajobClean:=}
-#: ${_bashlyk_apidClean:=}
-#: ${_bashlyk_pidLogSock:=}
 : ${_bashlyk_s0:=${0##*/}}
+: ${_bashlyk_iPidMax:=999999}
 
 declare -rg _bashlyk_externals_pid="
 
@@ -96,7 +89,7 @@ pid::status() {
 
   errorify on MissingArgument $* || return
 
-  std::isNumber $1 && (( $1 < 65536 )) || error InvalidArgument return $1
+  std::isNumber $1 && (( $1 < $_bashlyk_iPidMax )) || error InvalidArgument return $1
 
   local re="\\b${1}\\b"
 

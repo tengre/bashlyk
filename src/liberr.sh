@@ -1,5 +1,5 @@
 #
-# $Id: liberr.sh 903 2019-03-07 00:10:03+04:00 yds $
+# $Git: liberr.sh 1.94-44-934 2019-11-29 23:18:16+04:00 yds $
 #
 #****h* BASHLYK/liberr
 #  DESCRIPTION
@@ -65,8 +65,8 @@ declare -rg _bashlyk_err_reAct='^((echo|warn)|(((echo|warn)[+])?(exit|return))|(
 declare -rg _bashlyk_err_reArg='(error|err::generate|\$\(.?err::generate.\"\$\@\".?\))[[:space:]]*?([^\>]*)[[:space:]]*?[\>\|]?'
 
 : ${_bashlyk_onError:=throw}
+: ${_bashlyk_iPidMax:=999999}
 #
-
 # Error states definition
 #
 _bashlyk_iError=255
@@ -205,6 +205,7 @@ err::orr() {
 #    1-254           - valid value of first argument
 #  EXAMPLE
 #    local pid=$BASHPID
+#    echo "$_bashlyk_iPidMax" | {{ "^[[:digit:]]*$" }}
 #    err::status iErrorInvalidVariable "12Invalid"                              #? $_bashlyk_iErrorInvalidVariable
 #    err::status.show                                                           #? $_bashlyk_iErrorInvalidVariable
 #    err::status.show invalid argument                                          #? $_bashlyk_iErrorInvalidVariable
@@ -214,7 +215,7 @@ err::status.show() {
 
   local pid
 
-  [[ $1 =~ ^[0-9]+$ ]] && (( $1 < 65536 )) && pid=$1 || pid=$BASHPID
+  [[ $1 =~ ^[0-9]+$ ]] && (( $1 < $_bashlyk_iPidMax )) && pid=$1 || pid=$BASHPID
 
   local i s
 

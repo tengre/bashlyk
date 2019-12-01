@@ -1,5 +1,5 @@
 #
-# $Id: liblog.sh 877 2018-08-28 23:28:09+04:00 yds $
+# $Git: liblog.sh 1.94-44-934 2019-11-29 23:18:16+04:00 yds $
 #
 #****h* BASHLYK/liblog
 #  DESCRIPTION
@@ -41,6 +41,7 @@
 : ${_bashlyk_bUseSyslog:=0}
 : ${_bashlyk_bNotUseLog:=1}
 : ${_bashlyk_sCond4Log:=redirect}
+: ${_bashlyk_iPidMax:=999999}
 
 declare -rg _bashlyk_aRequiredCmd_log="
 
@@ -76,7 +77,7 @@ declare -rg _bashlyk_aExport_log="
 #    local b=true fnExec reT reP s
 #    fnExec=$(mktemp --suffix=.sh || tempfile -s .test.sh)
 #    reT='[ADFJMNOS][abceglnoprtuyv]{2} [0-9]{2} [0-9]{2}:[0-9]{2}:[0-9]{2}'
-#    reP="[[:space:]]$HOSTNAME ${0##*/}\[[[:digit:]]{5}\]:[[:space:]].*"
+#    reP="[[:space:]]$HOSTNAME ${0##*/}\[[[:digit:]]{${#_bashlyk_iPidMax}}\]:[[:space:]].*"
 #    cat <<'EOF' > $fnExec                                                      #-
 #    local fnLog=$(mktemp --suffix=.log || tempfile -s .test.log)               #-
 #    _ fnLog $fnLog                                                             #-
@@ -109,7 +110,7 @@ log::ger() {
   bSysLog=0
   bUseLog=0
 
-  sTagLog="${_bashlyk_s0}[$(printf -- "%05d" $$)]"
+  sTagLog="${_bashlyk_s0}[$(printf -- "%0${#_bashlyk_iPidMax}d" $$)]"
 
   if [[ -z "$_bashlyk_bUseSyslog" || "$_bashlyk_bUseSyslog" -eq 0 ]]; then
 
