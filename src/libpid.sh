@@ -1,5 +1,5 @@
 #
-# $Git: libpid.sh 1.94-44-934 2019-11-29 23:18:16+04:00 yds $
+# $Git: libpid.sh 1.94-45-935 2019-12-01 23:32:41+04:00 yds $
 #
 #****h* BASHLYK/libpid
 #  DESCRIPTION
@@ -35,14 +35,6 @@
 #  DESCRIPTION
 #    Global variables of the library
 #  SOURCE
-#: ${_bashlyk_fnPid:=}
-#: ${_bashlyk_fnSock:=}
-#: ${_bashlyk_afoEmpty:=}
-#: ${_bashlyk_afoClean:=}
-#: ${_bashlyk_afdClean:=}
-#: ${_bashlyk_ajobClean:=}
-#: ${_bashlyk_apidClean:=}
-#: ${_bashlyk_pidLogSock:=}
 : ${_bashlyk_s0:=${0##*/}}
 : ${_bashlyk_iPidMax:=999999}
 
