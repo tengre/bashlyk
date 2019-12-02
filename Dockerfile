@@ -1,5 +1,5 @@
 #
-# $Id: Dockerfile 931 2019-10-10 23:45:01+04:00 yds $
+# $Git: Dockerfile 1.94-47-937 2019-12-03 00:36:03+04:00 yds $
 #
 FROM ubuntu:18.04
 USER root
@@ -17,7 +17,6 @@ ENV TERM linux
 ENV LANG C.UTF-8
 ENV LC_ALL C.UTF-8
 ENV SHELL /bin/bash
-ENV _bashlyk_log nouse
 RUN apt update -y && apt install software-properties-common -y
 RUN add-apt-repository ppa:yds/bashlyk -y
 RUN apt-key adv --keyserver keyserver.ubuntu.com --recv-keys 773461F3 || true
