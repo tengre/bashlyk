@@ -1,7 +1,7 @@
 #
-# $Git: Dockerfile 1.94-48-938 2019-12-05 17:38:22+04:00 yds $
+# $Git: Dockerfile 1.94-890-49 2020-10-16 20:13:15+04:00 yds $
 #
-FROM ubuntu:18.04
+FROM ubuntu:20.04
 USER root
 RUN groupadd -r -g 1000 toor
 RUN useradd -rm -d /home/toor -s /bin/bash -g root -G sudo -u 1000 toor
