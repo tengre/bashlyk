@@ -1,5 +1,5 @@
 #
-# $Id: libcfg.sh 927 2019-06-07 10:51:49+04:00 yds $
+# $Git: libcfg.sh 1.96-1-941 2023-05-08 13:13:14+00:00 yds $
 #
 #****h* BASHLYK/libcfg
 #  DESCRIPTION
@@ -2049,7 +2049,8 @@ CFG::bind.cli() {
     if [[ $s =~ (([[:alnum:]]+)(-))?(@|[[:alnum:]]+)(\{([[:alnum:]])\})?([:])?([:=\+\-])? ]]; then
 
       s=$( declare -p BASH_REMATCH )
-      eval "${s/-ar BASH_REMATCH/-a a}"
+      ## p. BASH_REMATCH is no longer readonly. - from bash-5.1-alpha to bash-5.1-beta - fix for #eval "${s/-ar BASH_REMATCH/-a a}"
+      eval "declare -a a=${s#*=}"
 
     else
 

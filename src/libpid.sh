@@ -1,5 +1,5 @@
 #
-# $Git: libpid.sh 1.94-45-935 2019-12-01 23:32:41+04:00 yds $
+# $Git: libpid.sh 1.96-1-941 2023-05-08 15:00:03+00:00 yds $
 #
 #****h* BASHLYK/libpid
 #  DESCRIPTION
@@ -81,7 +81,8 @@ declare -rg _bashlyk_exports_pid="
 #    pid::status $$ $0                                                          #? $_bashlyk_iErrorCurrentProcess
 #    pid::status notvalid $0                                                    #? $_bashlyk_iErrorInvalidArgument
 #    err::status
-#    pid::status 999999 $0                                                      #? $_bashlyk_iErrorInvalidArgument
+#    ## PID value more than PID_MAX
+#    pid::status 9999999 $0                                                     #? $_bashlyk_iErrorInvalidArgument
 #    err::status
 
 #  SOURCE
@@ -132,7 +133,7 @@ pid::status() {
 #    MissingArgument - no arguments
 #  EXAMPLE
 #    local a cmd1 cmd2 fmt1 fmt2 i pid                                          #-
-#    fmt1='#!/bin/bash\nread -t %s -N 0 </dev/zero\n'
+#    fmt1='#!/bin/bash\nread -t %s </dev/zero\n'
 #    fmt2='#!/bin/bash\nfor i in 900 700 600 500; do\n%s %s &\ndone\n'
 #    std::temp cmd1 path=$TMPEXEC
 #    std::temp cmd2 path=$TMPEXEC
