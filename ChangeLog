@@ -1,7 +1,53 @@
+Mon, 08 May 2023 13:00:01 +0000
+	Fix bugs
+	Version 1.96
+- fix lib{err,log,pid} tests on Oracle Linux 7.x
+- add setup.sh for self installing
+libcfg.sh:
+- add support for BASH 5.1 and above - "BASH_REMATCH is no longer readonly"
+libpid.sh:
+- add PID_MAX support
+- fix pid::stop tests
+- removed unused global variables
+
+
+Fri, 23 Aug 2019 19:22:32 +0400
+	Fix bugs
+	Version 1.95
+- achieve compatibility with CentOS 7, install with make now works. Needed
+  manual preinstall all required packages (ex docbook5-style-xsl.noarch )
+- used 'declare -f' instead 'declare -pf' for
+- CFG::bind.cli - fixed typos and handling long opt like --a-b
+- CFG::load:
+  * fixed error of losing the config name
+  * replaced [-1] indice for compatibility
+- CFG::keys - used linefeed to separate keys
+- added CFG::keys.each - functional way for key/value handling
+- std::trim - simplified code
+- std::isHash - fixed test
+- added a net::ipv4.wildcard for Cisco wildcards
+src/Makefile.am:
+- 'syslib' renamed to 'lib'
+- fixed install/uninstall by automake (partially)
+- xsl to manpages - added support for RedHat family
+- use DESTDIR for hooks
+doc/Makefile.am:
+- removed generated timestamp from doc/bashlyk.html
+debian:
+- infrastructure updated, 'debian' folder moved to root of sources
+- postinst - removed unused code, tests no longer run during installation
+- fixed lintian warnings
+- control - to 'Build-Depends' added 'patch'
+README.md:
+- added asciinema demo
+- updated example for liberr.sh
+- updated codeblocks
+- added launchpad.net repo link
+
+
 Thu, 06 Sep 2018 03:03:44 +0400
 	Fix bugs
 	Version 1.94
-
 - improved handling of both command line options and configuration files:
   - CFG::bind.cli - fixed handling of arguments with whitespaces.
   - CFG::storage.use - changed handling of the short filenames, its search is
@@ -34,29 +80,24 @@ Thu, 06 Sep 2018 03:03:44 +0400
 - improved tests, descriptions and 'makefile' instructions
 - libold.sh, libini.sh, ini2csv.awk, inisection2csv.awk are now obsolete and are
   not installed
-
-details:
-
+--details--
 libcfg.sh:
 - prefix 'config' in the name of the CFG instance sets the INI style
 - CFG::get - return error state for empty value
-= CFG::set - improved arguments handling
+- CFG::set - improved arguments handling
 - added helper method - CFG::storage.use.default
 - CFG::{read,load,save} - set storage if needed
 - CFG::bind.cli:
- - handle a error of the missing args
- - std::whitespace.{en,de}code is used for handle the arguments with whitespaces
-
+  - handle a error of the missing args
+  - std::whitespace.{en,de}code used for handle the arguments with whitespaces
 libstd.sh:
 - std::whitespace.decode - improved tests
 - added function std::inline for multi lines conversion to single line
-
 bashlyk:
 - added global array _bashlyk_aArg for command line options storing
 - libini.sh is deprecated
 - added external binary list
 - check /proc/mounts
-
 debian/control:
 - added libc-bin to Depends list
 
@@ -64,10 +105,10 @@ debian/control:
 Sun, 15 Apr 2018 14:24:16 +0400
 	New upstream release
 	Version 1.93
-
 - libini library has been renamed to libcfg, which emphasizes the versatility of
   this library as a means of managing configurations or complex data
-  conglomerations. Innovations:
+  conglomerations.
+- Innovations:
   - added a separate method for specifying an external configuration store.
   - you can specify the configuration type (shellmode or INI) by the prefix of
     the instance name of the class CFG.
@@ -78,9 +119,7 @@ Sun, 15 Apr 2018 14:24:16 +0400
   - added function err::debugf for formatted output
 - fixed debian/postinst bug for a first installation
 - updated lists of the external commands and exports
-
-details:
-
+--details--
 libcfg.sh:
 - CFG::storage.use without argument make $_bashlyk_pathDat directory and
   default storage
@@ -94,13 +133,10 @@ libcfg.sh:
 - updated descriptions
 - changed CFG::{save,read,load,bind.cli} methods for use CFG::storage.use
   method
-
 libmsg.sh:
 - msg::notifyTool - fixed variable declaration
-
 bashlyk:
 - added global variable _bashlyk_pathCfg - _bashlyk_path{Cnf,Ini} sister
-
 get-external-commands-and-export-list.sh:
 - improved a performance by caching of the search
 - agreed with the latest version of the bashlyk library
@@ -109,23 +145,21 @@ get-external-commands-and-export-list.sh:
 Mon, 05 Mar 2018 00:53:20 +0400
 	New upstream release
 	Version 1.92
-
 - simplified preparation of tests due to the use of special operators:
+##--code--begin
 <some code> | {{{
 multiline
 text to compare output
 }}}
-
+#
 <some code> | {{pattern, string, regular expression}}
-
+##--code--end
 - improved support for bash 4.4
 - added global variable $TMPEXEC as pointer to the path on the executable
   filesystem for temporary files
 - added support for old dependent packages by using libold.sh
 - improved liberr.sh library
-
-details
-
+--details--
 testunit.awk:
 - added code to create a temporary file that can be used by the diff
   command in the testunit
@@ -137,18 +171,15 @@ testunit.awk:
 - added support for indentation in blocks of embedded data to correct
   the generation of robodoc documentation
 - added support for {{...}}[0]? and {{...}}[1!] operator
-
 testunit.sh:
 - added setting of TMPDIR variable
 - added a two temporary files as diff arguments for '{{{}}}' operator
-
 debian/postinst:
 - compatibility is established for packages that depend on the version
   of the bashlyk up to 1.9x
 - fixed error maintainer-script-should-not-use-dpkg-status-directly by
   using dpkg-query -W -f='${Depends}\n' ...
 - removed unused variable
-
 liberr.sh:
 - err::eval:
   - fixed incomplete list of arguments
@@ -169,27 +200,22 @@ liberr.sh:
 - added simple test for err::stacktrace
 - added error states NotInteger and NotDecimal and new error state
   _bashlyk_iError=255
-
 libstd.sh:
 - added std::isDecimal with tests
 - std::temp - improved tests and error handling
 - behavior of 'declare -A a' changed for bash 4.4. Declaration without
   definition does not return an error. std::isHash return error for
   undefined array
-
 libini.sh:
 - improved tests for INI::{g,s}et
 - added sorting to the output of the INI::*show methods for a successful test
   run with multi-line output
 - INI::__section.getArray return error for undefined array
-
 libpid.sh:
 - testunits - temporary executables create by a command like
   'std::temp cmd path=$TMPEXEC'
-
 doc/bashlyk7.xml:
 - description updated
-
 bashlyk:
 - variable $TMPEXEC set to the path on the executable filesystem
 - bashlyk::init - removed unused local variables
@@ -198,7 +224,6 @@ bashlyk:
 Fri, 02 Jun 2017 16:12:43 +0400
 	New upstream release
 	Version 1.91
-
 - significantly redesigned library functions naming - err,pid,msg,log,std
   libraries added similar functions with {err,pid,msg,log,std}:: prefix, old
   functions moved to libold for compatibility
@@ -206,9 +231,7 @@ Fri, 02 Jun 2017 16:12:43 +0400
 - INI changes:
   - INI::load - simplified representation of arguments, improved code
   - INI constructor - for instances created files of the methods for stack trace
-
-details
-
+--details--
 libini.sh:
 - INI::save:
   - fixed test - clean temporary *.bak file
@@ -218,7 +241,6 @@ libini.sh:
   - added internal function-macros INI::load::parse
   - unset INI::load::parse after using
 - fixed typo duplicate init of the var _bashlyk_iErrorIniMissingMethod
-
 liberr.sh:
 - added iErrorNotDetected state for success code
 - error state (and details) TryBoxException renamed to TryBlockException
@@ -251,14 +273,12 @@ liberr.sh:
 - added fake error state Success (for robodoc sections)
 - udfDebug moved from liblog.sh with name err::debug
 - added new helper function err:orr - return setted status
-
 libold.sh:
 - removed udfTryEveryLine as deprecated
 - udfTimeStamp:
   - duplicate any % from arguments
   - new bug - time stamp sometimes breaks from the output of the 'date'
 - updated udfLogger for use new behavior of the udfTimeStamp
-
 bashlyk{,.conf}:
 - libold deprecated library
 - removed libcnf from default list of libraries
@@ -266,17 +286,13 @@ bashlyk{,.conf}:
 - updated robodoc sections
 - udfInit renamed to bashlyk::init
 - udfMain renamed to bashlyk::main
-
 libnet.sh:
 - updated aliases robodoc section
-
 robodoc.rc:
 - added 'aliases' (A) header type
 - added to ignore list *.deprecated
-
 get-external-commands-and-export-list.sh:
 - search all functions (remove 'udf' pattern)
-
 libpid.sh:
 udfCheckStarted replaced by pid::status:
  - improved tests and robodoc section
@@ -290,7 +306,6 @@ udfCheckStarted replaced by pid::status:
 - udfAdd{File,Path,..}2Clean replaced by pid::onExit.unlink
 - added 'flock' to external command list
 - add NOTES and flags external/private for robodoc sections
-
 libmsg.sh:
 - renamed functions:
   - udfEcho to msg::echo
@@ -300,7 +315,6 @@ libmsg.sh:
   - udfNotify2X to msg::notify2x
   - udfGetXSessionProperties to msg::getXsessionProperties
   - udfNotifyCommand to msg::notifyTool
-
 liblog.sh:
 - udfWarn (libmsg) replaced by 'on error' (liberr)
 - direct import from libmsg not required now
@@ -313,7 +327,6 @@ liblog.sh:
   - duplicate any % from arguments
   - improved test
 - updated log::ger for use new behavior of the log::stamp
-
 libstd.sh:
 - for basic function udfIsValidVariable  unusable liberr calls
 - added preloading libpid
@@ -327,10 +340,8 @@ libstd.sh:
   getTimeInSec,isHash,isNumber,isVariable,lazyquote,showVariable,temp,
   trim,uptime,whitespace::decode,whitespace::encode,xml}
 - std::cat changed for the arguments handling
-
 debian/{prerm,postinst}:
 - remove/create link for bashlyk to the /usr/share/bashlyk
-
 libcnf.sh (deprecated status):
 - __getconfig - improved robodoc
 - used new err::* functions for testing from liberr
@@ -342,7 +353,6 @@ libcnf.sh (deprecated status):
 Thu, 13 Apr 2017 16:13:37 +0400
 	New upstream release
 	Version 1.90
-
 - features of bash version 4.2 are used, performance is improved, the number of
   external utilities used is reduced:
   - small optimizations from goo.gl/tDs1In
@@ -360,12 +370,10 @@ Thu, 13 Apr 2017 16:13:37 +0400
   net::ipv4.{broadcast,mask,network,range}
 - libpid - udfStopProcess - fixed argument parsing
 - improved code, updated robodocs and tests, externals and exports lists
-
 bashlyk:
 - added _bashlyk_s0 DEBUGLEVEL HOSTNAME init
 - added global _bashlyk_ShellVersion to use available features
 - udfInit - init TMPDIR variable by writable tmpfs source or /tmp
-
 libmsg.sh:
 - udf{Echo,Mail,Notify2X} - used udfCat with timeout instead 'cat'
 - 'which mail ...OnError ..' replaced by 'udfOn CommandNotFound mail ..'
@@ -378,14 +386,12 @@ libmsg.sh:
 - udfNotifyCommand:
   - added debugging mode with saving the error log to
     $TMPDIR/msg.<random>.notify_command.<command>.err
-
 liblog.sh:
 - udfCheck4LogUse - use _bashlyk_sCond4Log='redirect' for test
 - udfLog - improved input handling
 - udfSetLogSocket updated
 - udfDebug improved
 - added some functions from libstd.sh - udf{TimeStamp,Finally,Uptime,DateR}
-
 libstd.sh:
 - removed deprecated functions udfBaseId and udfDate
 - udfMakeTemp:
@@ -393,19 +399,16 @@ libstd.sh:
   - used $TMPDIR
   - no show empty line
 - improved udfGetMd5
-
 libini.sh:
 - INI::__section.select - <o>.__section.get used $* instead $1
 - INI::get:
   - fixed a bug due to changes in the method INI::__section.select
   - added test for key with whitespaces
 - INI::__section.show - used whitespaces for ident from settings iPadding
-
 libpid.sh:
 - udfStopProcess - check argument after option checking, updated tests
 - added some functions from libstd.sh (udfAdd*, udfOnTrap)
 - udfAdd{FD,FO,Pid}2Clean - removed trap on 9 15 signals
-
 libnet.sh:
 - udfGetValid{IPsOnly,CIDR} renamed to net::ipv4.{host,cidr}
 - added functions net::ipv4.{broadcast,mask,network}
@@ -414,7 +417,6 @@ libnet.sh:
 - added aliases udfGetValid{IPsOnly,CIDR} for compatibility
 - use keys of the array for store and unification of the results
 - 'dig' and 'ipcalc' do not required now
-
 testunit.sh:
 - added temporary randomized debug log files to every lib test for stderr
   messages saving
@@ -423,11 +425,9 @@ testunit.sh:
 Mon, 27 Feb 2017 16:48:08 +0400
 	New upstream release
 	Version 1.89
-
 - CNF library moved to a safer way of handling the active configuration files
   (*.conf). Instead of executing external files (by using the "source" command)
   are used INI library functions.
-
 - INI library improvements and changes:
   - INI "class" - used "::" for the method declaration
   - added internal private array for the settings and public methods for their
@@ -442,16 +442,13 @@ Mon, 27 Feb 2017 16:48:08 +0400
   - INI::load uses a more intuitive arguments format
   - added public method - INI::keys - show all keys in the comma separated line
   - allowed to read configurations owned by the current user or root
-
 - STD library improvements:
   - fixed udfGetPathMd5 for path with spaces
   - udfIs{Number,ValidVariable} - checking for errors made less intrusive
   - changed test for udfOnTrap
-
 - ERR library improvements:
   - changed behavior of the udfSetLastError, added more safe 'try .. catch'
     construction than 'try-every-line .. catch-every-line'
-
 - used 'declare -rg' for all readonly global variables of the bashlyk
 - ERR library preloaded for all other default libs
 - code style - used the "two spaces" indentation
@@ -459,15 +456,12 @@ Mon, 27 Feb 2017 16:48:08 +0400
 - updated documentation and improved tests
 - improved error handling and code style, fixed bugs
 - used 'id -n{g,u}' instead 'ps -p $$ ..' for getting user and group
-
 - updated ROBODOC configuration, added new header types and set their order:
   - F(Files), V(Versions), L(External libraries), G(Global variables),
     e(external function), p(internal function)
   - change label 'RETURN VALUE' to 'ERRORS' where it makes sense
   - added and updated USES section of the lib headers
-
-Detailed:
-
+--details--
 libini.sh:
 - INI constructor - removed excess assignment
 - _bashlyk_iniMethods renamed to _bashlyk_methods_ini
@@ -522,7 +516,6 @@ libini.sh:
 - constructor INI - improved error handling
 - added new error states Ini{Bad,Missing}Method
 - split long lines (more 80 char) of the code
-
 libstd.sh:
 - improved udfQuoteIfNeeded - no duplicate quotes
 - udfLocalVarFromCSV - 'throw' on errors deffered for eval
@@ -531,7 +524,6 @@ libstd.sh:
 - udfGetPathMd5:
   - used 'while read .. done< <(ls -1rdt *)' instead 'for .. in * ..'
   - fixed test
-
 liberr.sh:
 - added error states 'NotAvailable', 'NotNumber', 'InvalidOption'
 - removed using STD::udfIsNumber
@@ -539,75 +531,65 @@ liberr.sh:
 - 'onError' command change to lower case
 - changed behavior of the udfSetLastError - empty input text for message of
   error are ignored
-
 libnet.sh:
 - fixed error of the DNS name resolving
 - udfGetValidCIDR - 'throw' action replaced to 'return' on empty _reIPv4
-
 libpid.sh:
 - udfStopProcess - background process sometimes starts later than will
   be checked, implement temporary fixes
-
 testunit.awk:
 - added new labels - 'e' 'p' 'm'
-
 robodoc.css:
 - disabled underline for main list
 - added style class 'ul li a'
-
 src/Makefile.am:
 - added file ../VERSION to syslib_DATA
-
 - added debian/docs
 
 
 Mon, 19 Dec 2016 15:22:59 +0400
 	New upstream release
 	Version 1.88
-
- significantly redesigned library libini.sh, which is now based on the following
- ideas:
- - associative arrays are used to store the INI configuration data, instead of
-   the CSV, as previously
- - used for the treatment of OOP style INI configuration data:
-   * functions (eg, get/set) associated with the configuration data, as
-     "methods" of the corresponding instance of the base class "INI"
-   * used the constructor and destructor to manage the life cycle of the
-     resources allocated for processing configuration data
- - a more convenient way to parse command line arguments and their binding to
-   configuration data that allows you to override the command line options
-   INI-file
- - supports simultaneous determination of long and short options of
-   configuration parameters.
- - no need to declare variables for the INI and CLI options
- - INI section is formatted by the width of the longest key at operations save
-   or output
- - old code of the libini.sh moved to the libcsv.sh for support the scripts that
-   use earlier versions of the bashlyk
-
- Example code:
-
-   INI ini
-   ini.bind.cli config{c}: source{s}:-- help{h} mode{m}: dry-run
-   conf=$( ini.getopt config )
-   ini.load $conf :mode,help dry:run source:=
-   if [[ $( ini.get [dry]run ) ]]; then
-     echo "dry run, view current config:"
-     ini.show
-     exit 0
-   fi
-
-   ini.set mode = demo
-   ini.set [source] = $HOME
-   ini.set [source] = /var/mail/$USER
-
-   ini.save $conf
-   ini.free
-
+significantly redesigned library libini.sh, which is now based on the following
+ideas:
+- associative arrays are used to store the INI configuration data, instead of
+  the CSV, as previously
+- used for the treatment of OOP style INI configuration data:
+  * functions (eg, get/set) associated with the configuration data, as
+    "methods" of the corresponding instance of the base class "INI"
+  * used the constructor and destructor to manage the life cycle of the
+    resources allocated for processing configuration data
+- a more convenient way to parse command line arguments and their binding to
+  configuration data that allows you to override the command line options
+  INI-file
+- supports simultaneous determination of long and short options of
+  configuration parameters.
+- no need to declare variables for the INI and CLI options
+- INI section is formatted by the width of the longest key at operations save
+  or output
+- old code of the libini.sh moved to the libcsv.sh for support the scripts that
+  use earlier versions of the bashlyk
+Example code:
+  INI ini
+  ini.bind.cli config{c}: source{s}:-- help{h} mode{m}: dry-run
+  conf=$( ini.getopt config )
+  ini.load $conf :mode,help dry:run source:=
+  #
+  if [[ $( ini.get [dry]run ) ]]; then
+    echo "dry run, view current config:"
+    ini.show
+    exit 0
+  fi
+  #
+  ini.set mode = demo
+  ini.set [source] = $HOME
+  ini.set [source] = /var/mail/$USER
+  ini.save $conf
+  ini.free
+  #
 liberr.sh:
 - added handler udfNoSuchFileOrDir for udfOn
 - added iErrorInvalidHash state
-
 bashlyk.conf:
 - added libcsv.sh to the standart library list for compatibility
 
@@ -615,190 +597,183 @@ bashlyk.conf:
 Sun, 30 Oct 2016 00:39:00 +0400
 	Fix bugs
 	Version 1.87
-
  - improved handling of processes through the use of pattern with the boundaries
    command-line pattern must contain the process name
  - improved tests and descriptions
-
 libpid.sh:
- - improved udfSetPid - fixed race condition by flock using for PID file locking
- - removed deprecated udfClean
- - fixed and improved udfStopProcess:
-   * added the ability to delete a group of processes associated with the
-     command line
-   * PID argument replaced by the option "pid=<PID>[,..]"
-   * added option "childs" - stop only child processes
-   * successful return code is calculated implicitly - the resulting list of
-     processes is empty and at least one process has been stopped
-
+- improved udfSetPid - fixed race condition by flock using for PID file locking
+- removed deprecated udfClean
+- fixed and improved udfStopProcess:
+  * added the ability to delete a group of processes associated with the
+    command line
+  * PID argument replaced by the option "pid=<PID>[,..]"
+  * added option "childs" - stop only child processes
+  * successful return code is calculated implicitly - the resulting list of
+    processes is empty and at least one process has been stopped
 libstd.sh:
- - added new functions:
-   * udfGetTimeInSec from project "kurenma"
-   * udfGetFreeFD for getting free filedescriptor
-   * udfAddFD2Clean for collect open file descriptors
- - improved udfOnTrap:
-   * handling open filedescriptors
-   * set {i,s}LastError on 'kill' fail
- - udfAddFObj2Clean renamed to udfAddFO2Clean and aliased for compatibility
-
+- added new functions:
+  * udfGetTimeInSec from project "kurenma"
+  * udfGetFreeFD for getting free filedescriptor
+  * udfAddFD2Clean for collect open file descriptors
+- improved udfOnTrap:
+  * handling open filedescriptors
+  * set {i,s}LastError on 'kill' fail
+- udfAddFObj2Clean renamed to udfAddFO2Clean and aliased for compatibility
 liberr.sh:
- - added error states:
-   * iErrorNotChildProcess
-   * iErrorAlreadyLocked
- - changed error message for state iErrorAlreadyStarted
- - fixed udfThrow test unit
-
+- added error states:
+  * iErrorNotChildProcess
+  * iErrorAlreadyLocked
+- changed error message for state iErrorAlreadyStarted
+- fixed udfThrow test unit
 libmsg.sh:
- - udfMail - removed using '-v' for 'mail' command
- - udfGetXSessionProperties changes:
-   * used 'pgrep -f ..." instead 'ps -C ...'
-   * ignored stderr from 'grep -az ...'
+- udfMail - removed using '-v' for 'mail' command
+- udfGetXSessionProperties changes:
+  * used 'pgrep -f ..." instead 'ps -C ...'
+  * ignored stderr from 'grep -az ...'
 
 
 Sat, 24 Sep 2016 21:53:04 +0400
 	New upstream release
 	Version 1.86
-
- - added flag _bashlyk_log=nouse for for the unconditional disabling of logging
- - added new library libnet with functions udfGetValid{IPsOnly,CIDR}
- - updated external command and exported functions lists
-
+- added flag _bashlyk_log=nouse for for the unconditional disabling of logging
+- added new library libnet with functions udfGetValid{IPsOnly,CIDR}
+- updated external command and exported functions lists
 libstd.sh:
- - enhanced udfMakeTemp with temporary pipe creating feature:
-   * used recursive call for assign result to variable
-   * randomized local variables not required
-   * added bash printf like syntax support for variable assign - '-v'
-   * rewrited robodoc and test units
-   * supported old version behavior when used first argument as valid variable
-   * used single function udfAddFObj2Clean instead udfAdd{File,Path}2Clean
-   * improved code, used 5 letters constraint for prefix (tempfile behavior)
-   * chown, chgrp executed only by root
- - updated dependence udfMakeTempV (absolete function)
- - rewrited udfCheckCsv:
-   * randomized local variable not required
-   * used  recursive call for assign result to variable
-   * added bash printf like syntax support for variable assign - '-v'
- - fixed function _() bug of mask external $k and $v variables, local variables
-   do not used now
- - added function udfAddFObj2Clean and global variable _bashlyk_afoClean for
-   collect temporary filesystem objects to single list
- - udfAdd{File,Path}2Clean now aliases for udfAddFObj2Clean
- - improved udfOntrap - child processes terminate in reverse order, handled
-   common list of temporary objects
- - added function udfLocalVarFromCSV for define local variables from CSV-string,
-   e.g. INI options list for libini::udfIni function
+- enhanced udfMakeTemp with temporary pipe creating feature:
+  * used recursive call for assign result to variable
+  * randomized local variables not required
+  * added bash printf like syntax support for variable assign - '-v'
+  * rewrited robodoc and test units
+  * supported old version behavior when used first argument as valid variable
+  * used single function udfAddFObj2Clean instead udfAdd{File,Path}2Clean
+  * improved code, used 5 letters constraint for prefix (tempfile behavior)
+  * chown, chgrp executed only by root
+- updated dependence udfMakeTempV (absolete function)
+- rewrited udfCheckCsv:
+  * randomized local variable not required
+  * used  recursive call for assign result to variable
+  * added bash printf like syntax support for variable assign - '-v'
+- fixed function _() bug of mask external $k and $v variables, local variables
+  do not used now
+- added function udfAddFObj2Clean and global variable _bashlyk_afoClean for
+  collect temporary filesystem objects to single list
+- udfAdd{File,Path}2Clean now aliases for udfAddFObj2Clean
+- improved udfOntrap - child processes terminate in reverse order, handled
+  common list of temporary objects
+- added function udfLocalVarFromCSV for define local variables from CSV-string,
+  e.g. INI options list for libini::udfIni function
 liberr.sh:
- - udfOnError now (and alias udfOnError2) printed messages to stderr
- - added function udOnfError1 that printed messages to stdout
- - updated test units for support changes, increased perceptivity
- - udfOn - check handler for the state by using 'typeset -f', added support for:
-   * Empty{Argument,Result}
-   * Invalid{Argument,Variable}
- - removed error code 255 from table ( used as 'out by range' by system), states
-   shifted
- - added new error state InvalidFunction
+- udfOnError now (and alias udfOnError2) printed messages to stderr
+- added function udOnfError1 that printed messages to stdout
+- updated test units for support changes, increased perceptivity
+- udfOn - check handler for the state by using 'typeset -f', added support for:
+  * Empty{Argument,Result}
+  * Invalid{Argument,Variable}
+- removed error code 255 from table ( used as 'out by range' by system), states
+  shifted
+- added new error state InvalidFunction
 liblog.sh:
- - udfUptime - shows only decimal number of seconds
- - udfFinally - shows the text of runtime
+- udfUptime - shows only decimal number of seconds
+- udfFinally - shows the text of runtime
 libpid.sh:
- - add new function udfStopProcess
- - improved udfCheckProcess - PID checked as number, updated test and robodoc
+- add new function udfStopProcess
+- improved udfCheckProcess - PID checked as number, updated test and robodoc
 
 
 Mon, 22 Aug 2016 02:06:21 +0400
 	New upstream release
 	Version 1.85
- - added new library liberr.sh with error message table
- - added tool get-external-commands-and-export-list.sh for show all function
-   names and search used external binaries, get main external commands list from
-   system (Debian)
- - updated and fixed external commands list and export list of functions
-   for all libraries
- - safety using of a printf - separated options and arguments, transferred
-   variables from format to arguments
- - added the library template libtst.sh for additional testing
- - removed unused libppp.sh
+- added new library liberr.sh with error message table
+- added tool get-external-commands-and-export-list.sh for show all function
+  names and search used external binaries, get main external commands list from
+  system (Debian)
+- updated and fixed external commands list and export list of functions
+  for all libraries
+- safety using of a printf - separated options and arguments, transferred
+  variables from format to arguments
+- added the library template libtst.sh for additional testing
+- removed unused libppp.sh
 liberr.sh:
- - moved from libmsg.sh functions and wrappers:
-   * udfThrow
-   * udf{,Throw,Warn}OnCommandNotFound
-   * udf{,Throw,Warn}OnEmptyVariable
- - added new function udfOn for replace udfOn{CommandNotFound,EmptyVariable}
- - added new functions udf{CommandNotFound,EmptyVariable,EmptyOrMissingArgument}
-   for single condition testing. Used from udfOn
- - refactored wrappers udf{Throw,Warn}On.. by using udfOn
- - added new wrappers udf{Throw,Warn}OnEmptyOrMissingArgument
- - udfThrowOnEmptyVariable - test fixed
- - added table of error messages $_bashlyk_hError, that used as ordinary array
- - udfSetLastError:
-   * fixed bug of return code validation
-   * added support for xLastError separated by processes
-   * added support for predefined names like 'XXX' ($_bashlyk_iErrorXXX)
-   * improved test unit
- - udfOnError:
-   * added new embedded commands 'exitecho' and 'exitwarn'
-   * added support for table of error messages ($_bashlyk_hError)
-   * changed message format
-   * improved test unit
- - added new function udfOnError2 - wrapper for udfOnError that output sent to
-   stderr, ROBOdoc refers to the udfOnError
- - udfThrow:
-   * added support for $_bashlyk_sLastError[$BASHPID]
-   * used the last command error code (or 255) if the value of the variable
-     ${_bashlyk_iLastError[$BASHPID]} is not a number
-   * improved tests
-   * used 'eval $(udfOnError ..' instead 'udfWarn ..' and 'exit ..'
- - added for testing function 'udfTryEveryLine' and alias 'try-every-line'
-   this applied control like 'try .. catch' for every lines between
-   'try-every-line' and 'catch-every-line', supress stdout for successfully
-   processing (show 'dot' only) and abort for error with stacktrace and error
-   message, used heredoc for clarity into test unit
- - added error states - Unknown,NotSupported,EmptyVariable,TryBoxException
- - iErrorUnknown equal iErrorUnexpected
- - $_bashlyk_sBehaviorOnError renamed to $_bashlyk_onError
- - removed unused global variables
+- moved from libmsg.sh functions and wrappers:
+  * udfThrow
+  * udf{,Throw,Warn}OnCommandNotFound
+  * udf{,Throw,Warn}OnEmptyVariable
+- added new function udfOn for replace udfOn{CommandNotFound,EmptyVariable}
+- added new functions udf{CommandNotFound,EmptyVariable,EmptyOrMissingArgument}
+  for single condition testing. Used from udfOn
+- refactored wrappers udf{Throw,Warn}On.. by using udfOn
+- added new wrappers udf{Throw,Warn}OnEmptyOrMissingArgument
+- udfThrowOnEmptyVariable - test fixed
+- added table of error messages $_bashlyk_hError, that used as ordinary array
+- udfSetLastError:
+  * fixed bug of return code validation
+  * added support for xLastError separated by processes
+  * added support for predefined names like 'XXX' ($_bashlyk_iErrorXXX)
+  * improved test unit
+- udfOnError:
+  * added new embedded commands 'exitecho' and 'exitwarn'
+  * added support for table of error messages ($_bashlyk_hError)
+  * changed message format
+  * improved test unit
+- added new function udfOnError2 - wrapper for udfOnError that output sent to
+  stderr, ROBOdoc refers to the udfOnError
+- udfThrow:
+  * added support for $_bashlyk_sLastError[$BASHPID]
+  * used the last command error code (or 255) if the value of the variable
+    ${_bashlyk_iLastError[$BASHPID]} is not a number
+  * improved tests
+  * used 'eval $(udfOnError ..' instead 'udfWarn ..' and 'exit ..'
+- added for testing function 'udfTryEveryLine' and alias 'try-every-line'
+  this applied control like 'try .. catch' for every lines between
+  'try-every-line' and 'catch-every-line', supress stdout for successfully
+  processing (show 'dot' only) and abort for error with stacktrace and error
+  message, used heredoc for clarity into test unit
+- added error states - Unknown,NotSupported,EmptyVariable,TryBoxException
+- iErrorUnknown equal iErrorUnexpected
+- $_bashlyk_sBehaviorOnError renamed to $_bashlyk_onError
+- removed unused global variables
 libmsg.sh:
- - udfNotify2X - used '=$(< ..)' instead '=$(cat ..)'
- - udfWarn:
-   * added support for $_bashlyk_sLastError[$BASHPID]
-   * improved test unit, but it requires more work
+- udfNotify2X - used '=$(< ..)' instead '=$(cat ..)'
+- udfWarn:
+  * added support for $_bashlyk_sLastError[$BASHPID]
+  * improved test unit, but it requires more work
 libstd.sh:
- - removed unused global variables
- - udfTimeStamp - changed test identation
- - added function udfPrepareByType - present argument 'Array[item]' as
-   '{Array[item]}'
- - _ (function) - added support for items of array ( as 'Array[item]' )
+- removed unused global variables
+- udfTimeStamp - changed test identation
+- added function udfPrepareByType - present argument 'Array[item]' as
+  '{Array[item]}'
+- _ (function) - added support for items of array ( as 'Array[item]' )
 liblog.sh:
- - udfDebug output sent to stderr
+- udfDebug output sent to stderr
 bashlyk:
- - added liberr.sh as one of the main libraries
- - udfMain (the entry point) can be called without arguments
+- added liberr.sh as one of the main libraries
+- udfMain (the entry point) can be called without arguments
 debian/control
- - added bc dependency (used by testunit.sh)
+- added bc dependency (used by testunit.sh)
 
 
 Thu, 25 Jun 2015 14:28:10 +0400
 	Fix bugs
 	Version 1.84
 liblog.sh:
- - udfTimeStamp - fixed a parasitic formatting for arguments with '%'
- - udfLogger - command 'logger' used without -s option
- libmsg.sh:
- - udfGetXSessionProperties - added support for the Q4OS distribution (1.2.x) by
-   using command "twin" in the search list of the X-session
- debian/control:
- - added a dependency from the package findutils (xargs)
- libstd.sh:
- - job management has been removed due to lack of functionality
- robodoc.rc:
- - used a 'single file' mode for robodoc HTML documentation
- - the CSS settings are set in the robodoc.css
- - added syntax highlighting in the source code section
- Makefile.am:
- - added generation of the robodoc HTML documentation with header patching
+- udfTimeStamp - fixed a parasitic formatting for arguments with '%'
+- udfLogger - command 'logger' used without -s option
+libmsg.sh:
+- udfGetXSessionProperties - added support for the Q4OS distribution (1.2.x) by
+  using command "twin" in the search list of the X-session
+debian/control:
+- added a dependency from the package findutils (xargs)
+libstd.sh:
+- job management has been removed due to lack of functionality
+robodoc.rc:
+- used a 'single file' mode for robodoc HTML documentation
+- the CSS settings are set in the robodoc.css
+- added syntax highlighting in the source code section
+Makefile.am:
+- added generation of the robodoc HTML documentation with header patching
 
 
 --8<-- truncated -->8--
 
 --
-$Id: ChangeLog 885 2018-09-06 03:04:37+04:00 yds $
+$Git: ChangeLog 1.96-1-941 2023-05-08 15:10:20+00:00 yds $
