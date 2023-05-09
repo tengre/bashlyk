@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 #
-# $Git: setup.sh 1.96-1-941 2023-05-08 15:04:54+00:00 yds $
+# $Git: setup.sh 1.96-3-941 2023-05-09 14:11:17+00:00 yds $
 #
 main() {
 
@@ -35,6 +35,7 @@ main() {
     return 1
   fi
   sed -i -e "s/AC_INIT.*/AC_INIT(${sPkg}, ${sVer}, ${sEmail})\nAM_INIT_AUTOMAKE/ig" configure.ac
+  [[ -x ./bashlyk-robodoc.sh]] && ./bashlyk-robodoc.sh || true
   aclocal
   autoconf
   autoreconf
