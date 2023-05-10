@@ -1,15 +1,15 @@
 ##
-## $Id: Makefile.am 925 2019-05-04 14:08:20+04:00 yds $
+## $Git: Makefile.am 1.96-7-941 2023-05-10 08:59:24+00:00 yds $
 ##
 #
 AUTOMAKE_OPTIONS	= -Wno-portability
 #
-bin_SCRIPTS		= bashlyk
-sysconfdir		= /etc/bashlyk
-sysconf_DATA		= bashlyk.conf
-datadir			= /usr/share/bashlyk
-data_DATA		= $(wildcard lib*.sh) $(wildcard *.awk) testunit.sh ../VERSION
-DESTDIR			=
+bin_SCRIPTS  = bashlyk
+sysconfdir   = /etc/bashlyk
+sysconf_DATA = bashlyk.conf
+datadir      = /usr/share/bashlyk
+data_DATA    = $(wildcard lib*.sh) $(wildcard *.awk) testunit.sh ../VERSION ../Dockerfile
+DESTDIR      =
 
 install-exec-hook:
 
